@@ -7,7 +7,9 @@ export interface AdminCreateUserInput {
   password: string;
   displayName: string;
   country?: string;
+  countryCode?: string;
   state?: string;
+  stateCode?: string;
   city?: string;
 }
 
@@ -51,7 +53,9 @@ export async function createUser(input: AdminCreateUserInput) {
       password: input.password,
       display_name: input.displayName,
       country: input.country,
+      country_code: input.countryCode,
       state: input.state,
+      state_code: input.stateCode,
       city: input.city,
     },
   });

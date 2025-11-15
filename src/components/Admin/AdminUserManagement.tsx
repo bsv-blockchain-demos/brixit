@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import LocationSelector from '@/components/common/LocationSelector';
 import {
   createUser,
   fetchAllUsers,
@@ -10,36 +12,39 @@ import {
   revokeRole,
   type AdminCreateUserInput,
   type UserWithRoles,
+  type AppRole,
 } from '@/lib/adminApi';
+import { LocationData } from '@/lib/locationServiceforRegister';
 
 export default function AdminUserManagement() {
-  const { toast } = useToast();
   const [users, setUsers] = useState<UserWithRoles[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const [form, setForm] = useState<AdminCreateUserInput>({
+  const [formData, setFormData] = useState<AdminCreateUserInput>({
     email: '',
     password: '',
     displayName: '',
     country: '',
+    countryCode: '',
     state: '',
+    stateCode: '',
     city: '',
   });
 
-  const onChange = (key: keyof AdminCreateUserInput) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [key]: e.target.value }));
-  };
-
   const loadUsers = async () => {
-    setLoadingUsers(true);
+    setLoading(true);
     try {
       const data = await fetchAllUsers();
       setUsers(data);
     } catch (e: any) {
-      toast({ title: 'Failed to load users', description: e?.message ?? 'Please try again.', variant: 'destructive' });
+      toast({
+        title: 'Failed to load users',
+        description: e?.message ?? 'Please try again.',
+        variant: 'destructive',
+      });
     } finally {
-      setLoadingUsers(false);
+      setLoading(false);
     }
   };
 
@@ -47,90 +52,135 @@ export default function AdminUserManagement() {
     void loadUsers();
   }, []);
 
+  const handleLocationChange = (location: LocationData) => {
+    setFormData(prev => ({
+      ...prev,
+      country: location.country,
+      countryCode: location.countryCode,
+      state: location.state,
+      stateCode: location.stateCode,
+      city: location.city,
+    }));
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCreating(true);
+    if (!formData.email || !formData.password || !formData.displayName) {
+      toast({
+        title: 'Validation Error',
+        description: 'Email, password, and display name are required.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
-      const res = await createUser(form);
+      const res = await createUser(formData);
       if (res.success) {
-        toast({ title: 'User created', description: res.message ?? 'New user account created.' });
-        setForm({ email: '', password: '', displayName: '', country: '', state: '', city: '' });
-        void loadUsers();
+        toast({ title: 'User created', description: res.message ?? 'User account created successfully.' });
+        setFormData({
+          email: '',
+          password: '',
+          displayName: '',
+          country: '',
+          countryCode: '',
+          state: '',
+          stateCode: '',
+          city: '',
+        });
+        await loadUsers();
       } else {
-        toast({ title: 'Create failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
+        toast({ title: 'Creation failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
       }
     } catch (e: any) {
-      toast({ title: 'Create failed', description: e?.message ?? 'Please try again.', variant: 'destructive' });
-    } finally {
-      setCreating(false);
+      toast({ title: 'Error', description: e?.message ?? 'Please try again.', variant: 'destructive' });
     }
   };
 
-  const handleGrant = async (userId: string, role: 'admin' | 'contributor') => {
+  const handleGrant = async (userId: string, role: Extract<AppRole, 'admin' | 'contributor'>) => {
     try {
       const res = await grantRole(userId, role);
       if (res.success) {
-        toast({ title: 'Role granted', description: res.message ?? '' });
-        void loadUsers();
+        toast({ title: 'Role granted', description: res.message ?? `${role} role granted successfully.` });
+        await loadUsers();
       } else {
-        toast({ title: 'Grant failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
+        toast({ title: 'Action failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
       }
     } catch (e: any) {
-      toast({ title: 'Grant failed', description: e?.message ?? 'Please try again.', variant: 'destructive' });
+      toast({ title: 'Error', description: e?.message ?? 'Please try again.', variant: 'destructive' });
     }
   };
 
-  const handleRevoke = async (userId: string, role: 'admin' | 'contributor') => {
+  const handleRevoke = async (userId: string, role: Extract<AppRole, 'admin' | 'contributor'>) => {
     try {
       const res = await revokeRole(userId, role);
       if (res.success) {
-        toast({ title: 'Role revoked', description: res.message ?? '' });
-        void loadUsers();
+        toast({ title: 'Role revoked', description: res.message ?? `${role} role revoked successfully.` });
+        await loadUsers();
       } else {
-        toast({ title: 'Revoke failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
+        toast({ title: 'Action failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
       }
     } catch (e: any) {
-      toast({ title: 'Revoke failed', description: e?.message ?? 'Please try again.', variant: 'destructive' });
+      toast({ title: 'Error', description: e?.message ?? 'Please try again.', variant: 'destructive' });
     }
   };
 
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-      <form onSubmit={handleCreate} className="space-y-4 border rounded p-4">
-        <h2 className="text-lg font-semibold">Create New User</h2>
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" value={form.email} onChange={onChange('email')} type="email" required />
-        </div>
-        <div>
-          <Label htmlFor="password">Password</Label>
-          <Input id="password" value={form.password} onChange={onChange('password')} type="password" required />
-        </div>
-        <div>
-          <Label htmlFor="displayName">Display Name</Label>
-          <Input id="displayName" value={form.displayName} onChange={onChange('displayName')} required />
-        </div>
-        <div>
-          <Label htmlFor="country">Country (optional)</Label>
-          <Input id="country" value={form.country} onChange={onChange('country')} />
-        </div>
-        <div>
-          <Label htmlFor="state">State (optional)</Label>
-          <Input id="state" value={form.state} onChange={onChange('state')} />
-        </div>
-        <div>
-          <Label htmlFor="city">City (optional)</Label>
-          <Input id="city" value={form.city} onChange={onChange('city')} />
-        </div>
-        <Button type="submit" disabled={creating}>
-          {creating ? 'Creating...' : 'Create User'}
-        </Button>
-      </form>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Create New User</h2>
+        <form onSubmit={handleCreate} className="space-y-4 border rounded p-4">
+          <div>
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="password">Password *</Label>
+            <Input
+              id="password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="displayName">Display Name *</Label>
+            <Input
+              id="displayName"
+              value={formData.displayName}
+              onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
+              required
+            />
+          </div>
+          <div>
+            <Label>Location (Optional)</Label>
+            <LocationSelector
+              value={{
+                country: formData.country || '',
+                countryCode: formData.countryCode || '',
+                state: formData.state || '',
+                stateCode: formData.stateCode || '',
+                city: formData.city || '',
+              }}
+              onChange={handleLocationChange}
+              showAutoDetect={false}
+            />
+          </div>
+          <Button type="submit">Create User</Button>
+        </form>
+      </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Existing Users</h2>
-          <Button variant="ghost" onClick={() => loadUsers()} disabled={loadingUsers}>
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">All Users</h2>
+          <Button variant="ghost" onClick={() => loadUsers()} disabled={loading}>
             Refresh
           </Button>
         </div>
@@ -142,36 +192,44 @@ export default function AdminUserManagement() {
             {users.map((u) => {
               const hasAdmin = u.roles?.includes('admin');
               const hasContributor = u.roles?.includes('contributor');
-              
+
               return (
-                <div key={u.id} className="border rounded p-3 flex items-center justify-between">
+                <div key={u.id} className="border rounded p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="text-sm">
-                    <div className="font-medium">{u.display_name ?? u.id}</div>
-                    <div className="text-muted-foreground">
-                      Roles: {(u.roles ?? []).join(', ') || 'user'}
+                    <div className="font-medium text-base mb-1">{u.display_name ?? u.id}</div>
+                    <div className="text-muted-foreground flex flex-wrap gap-1 items-center">
+                      <span>Roles:</span>
+                      {(u.roles ?? []).map(role => (
+                        <Badge key={role} variant="secondary">{role}</Badge>
+                      ))}
+                      {(!u.roles || u.roles.length === 0) && <Badge variant="outline">user</Badge>}
                     </div>
                   </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {!hasContributor && (
-                      <Button size="sm" onClick={() => handleGrant(u.id, 'contributor')}>
-                        Make contributor
-                      </Button>
-                    )}
-                    {!hasAdmin && (
-                      <Button size="sm" onClick={() => handleGrant(u.id, 'admin')}>
-                        Make admin
-                      </Button>
-                    )}
-                    {hasContributor && (
-                      <Button size="sm" variant="secondary" onClick={() => handleRevoke(u.id, 'contributor')}>
-                        Revoke contributor
-                      </Button>
-                    )}
-                    {hasAdmin && (
-                      <Button size="sm" variant="secondary" onClick={() => handleRevoke(u.id, 'admin')}>
-                        Revoke admin
-                      </Button>
-                    )}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2 items-center">
+                      <span className="text-xs text-muted-foreground min-w-[80px]">Contributor:</span>
+                      {!hasContributor ? (
+                        <Button size="sm" variant="outline" onClick={() => handleGrant(u.id, 'contributor')}>
+                          Make contributor
+                        </Button>
+                      ) : (
+                        <Button size="sm" variant="secondary" onClick={() => handleRevoke(u.id, 'contributor')}>
+                          Revoke contributor
+                        </Button>
+                      )}
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <span className="text-xs text-muted-foreground min-w-[80px]">Admin:</span>
+                      {!hasAdmin ? (
+                        <Button size="sm" variant="outline" onClick={() => handleGrant(u.id, 'admin')}>
+                          Make admin
+                        </Button>
+                      ) : (
+                        <Button size="sm" variant="secondary" onClick={() => handleRevoke(u.id, 'admin')}>
+                          Revoke admin
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
