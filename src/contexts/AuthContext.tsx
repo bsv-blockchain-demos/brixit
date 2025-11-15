@@ -1,3 +1,4 @@
+// src/contexts/AuthContext.tsx
 import React, {
   createContext,
   useContext,
@@ -5,7 +6,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { supabase } from "../integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UserProfile {
   id: string;
@@ -52,15 +53,32 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Never derive a name from email for display purposes.
+// Use profile.display_name first, then user_metadata, else a neutral default.
+function deriveDisplayName(sessionUser?: { email?: string | null; user_metadata?: Record<string, any> } | null): string {
+  if (!sessionUser) return "Explorer";
+  const meta = sessionUser.user_metadata || {};
+  const fromMeta =
+    meta.display_name ||
+    meta.full_name ||
+    meta.name ||
+    meta.username;
+  if (typeof fromMeta === "string" && fromMeta.trim().length > 0) {
+    return fromMeta.trim();
+  }
+  // Do NOT use email prefix (to avoid showing email)
+  return "Explorer";
+}
+
 async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
   try {
     if (!userId) return null;
 
-    // Fetch user profile from users table
+    // Fetch user profile from users table (email was removed from this table)
     const { data: profileData, error: profileError } = await supabase
       .from("users")
       .select(
-        "id, display_name, points, submission_count, last_submission, country, state, city, email"
+        "id, display_name, points, submission_count, last_submission, country, state, city"
       )
       .eq("id", userId)
       .maybeSingle();
@@ -85,18 +103,18 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
     }
 
     // Determine highest role (admin > contributor > user)
-    let userRole = 'user';
+    let userRole = "user";
     if (rolesData && rolesData.length > 0) {
-      if (rolesData.some(r => r.role === 'admin')) {
-        userRole = 'admin';
-      } else if (rolesData.some(r => r.role === 'contributor')) {
-        userRole = 'contributor';
+      if (rolesData.some((r) => r.role === "admin")) {
+        userRole = "admin";
+      } else if (rolesData.some((r) => r.role === "contributor")) {
+        userRole = "contributor";
       }
     }
 
     return {
       ...profileData,
-      role: userRole
+      role: userRole,
     } as UserProfile;
   } catch (err: any) {
     console.error("[fetchUserProfile] Unexpected error:", err.message || err);
@@ -104,10 +122,7 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
   }
 }
 
-async function ensureProfileExists(
-  userId: string,
-  retries = 3
-): Promise<UserProfile | null> {
+async function ensureProfileExists(userId: string, retries = 3): Promise<UserProfile | null> {
   for (let i = 0; i < retries; i++) {
     const profile = await fetchUserProfile(userId);
     if (profile) return profile;
@@ -121,24 +136,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true); // session loading
-  const [profileLoading, setProfileLoading] = useState(true); // 👈 new
+  const [profileLoading, setProfileLoading] = useState(true); // profile loading
 
   const isAdmin = user?.role === "admin";
 
-  // Synchronous state updates only
+  // Synchronous-only handler to avoid deadlocks inside onAuthStateChange
   const handleSessionChange = (session: any) => {
-    if (session?.user) {
-      const { id, email } = session.user;
+    const sessionUser = session?.user ?? null;
+    if (sessionUser) {
+      const { id, email } = sessionUser;
 
       setIsAuthenticated(true);
       setAuthError(null);
       setProfileLoading(true);
 
-      // Create minimal profile immediately to prevent blocking
+      // Set minimal, safe profile immediately (no email-derived display names)
       const minimalProfile: UserProfile = {
         id,
-        display_name: email?.split('@')[0] || 'User',
-        role: 'contributor',
+        display_name: deriveDisplayName(sessionUser),
+        role: "contributor",
         email: email || null,
         country: null,
         state: null,
@@ -150,7 +166,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Defer profile fetching to avoid deadlock
       setTimeout(() => {
-        fetchAndUpdateProfile(id, email);
+        fetchAndUpdateProfile(id, email || null, sessionUser);
       }, 0);
     } else {
       setUser(null);
@@ -161,12 +177,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Async profile fetching - called after state updates
-  const fetchAndUpdateProfile = async (userId: string, email: string | undefined) => {
+  const fetchAndUpdateProfile = async (
+    userId: string,
+    email: string | null,
+    sessionUser: any
+  ) => {
     try {
       const profile = await ensureProfileExists(userId);
       if (profile) {
-        if (email) profile.email = email;
-        setUser(profile);
+        // If display_name is missing, derive a safe one from metadata (not email)
+        const safeName =
+          (profile.display_name && profile.display_name.trim().length > 0)
+            ? profile.display_name
+            : deriveDisplayName(sessionUser);
+
+        setUser({
+          ...profile,
+          display_name: safeName,
+          email: email,
+        });
       } else {
         console.warn("User profile not found, keeping minimal profile");
       }
@@ -222,7 +251,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setAuthError(null);
     try {
       const userMetadata: any = {
-        display_name: displayName.trim() || email.split("@")[0],
+        display_name: displayName.trim() || "Explorer",
         ...location,
       };
 
@@ -236,42 +265,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (error) {
-        console.error('Signup error:', { error, code: error.status });
-        
-        // Handle specific error codes and messages
+        console.error("Signup error:", { error, code: error.status });
+
         let userFriendlyMessage = error.message;
-        
-        // Handle 422 Unprocessable Content errors specifically
         if (error.status === 422) {
-          userFriendlyMessage = 'Unable to create account. This might be due to server configuration. Please try again in a few moments.';
-        } else if (error.message.includes('Password should be at least 8 characters') || error.message.includes('Password should be at least 6 characters')) {
-          userFriendlyMessage = 'Password must be at least 8 characters long.';
-        } else if (error.message.includes('Password should contain at least one uppercase')) {
-          userFriendlyMessage = 'Password must contain at least one uppercase letter.';
-        } else if (error.message.includes('Password should contain at least one lowercase')) {
-          userFriendlyMessage = 'Password must contain at least one lowercase letter.';
-        } else if (error.message.includes('Password should contain at least one number')) {
-          userFriendlyMessage = 'Password must contain at least one number.';
-        } else if (error.message.includes('User already registered')) {
-          userFriendlyMessage = 'An account with this email already exists. Please try logging in instead.';
-        } else if (error.message.includes('Unable to validate email address')) {
-          userFriendlyMessage = 'Please enter a valid email address.';
-        } else if (error.message.includes('Invalid email')) {
-          userFriendlyMessage = 'Please enter a valid email address.';
+          userFriendlyMessage =
+            "Unable to create account. Please try again in a few moments.";
+        } else if (
+          error.message.includes("Password should be at least 8 characters") ||
+          error.message.includes("Password should be at least 6 characters")
+        ) {
+          userFriendlyMessage = "Password must be at least 8 characters long.";
+        } else if (error.message.includes("Password should contain at least one uppercase")) {
+          userFriendlyMessage = "Password must contain at least one uppercase letter.";
+        } else if (error.message.includes("Password should contain at least one lowercase")) {
+          userFriendlyMessage = "Password must contain at least one lowercase letter.";
+        } else if (error.message.includes("Password should contain at least one number")) {
+          userFriendlyMessage = "Password must contain at least one number.";
+        } else if (error.message.includes("Password should contain at least one special character")) {
+          userFriendlyMessage = "Password must contain at least one special character.";
         }
-        
+
         setAuthError(userFriendlyMessage);
         return false;
       }
 
-      if (!data.user) {
-        setAuthError("Registration failed - no user returned");
-        return false;
-      }
+      if (data.user) return true;
 
-      return true;
+      setAuthError("Signup failed. No user returned.");
+      return false;
     } catch (err: any) {
-      setAuthError("Unexpected error during registration.");
+      setAuthError("Unexpected error during signup.");
       return false;
     }
   };
@@ -285,20 +309,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (error) {
-        console.error('Login error:', error);
-        
-        // Parse specific error messages for better UX
-        let userFriendlyMessage = error.message;
-        
-        if (error.message.includes('Email not confirmed')) {
-          userFriendlyMessage = 'Please verify your email address before logging in. Check your inbox for the verification link.';
-        } else if (error.message.includes('Invalid login credentials')) {
-          userFriendlyMessage = 'Invalid email or password. Please check your credentials and try again.';
-        } else if (error.message.includes('Too many requests')) {
-          userFriendlyMessage = 'Too many login attempts. Please wait a moment before trying again.';
-        }
-        
-        setAuthError(userFriendlyMessage);
+        console.error("Login error:", error.message);
+        setAuthError(error.message);
         return false;
       }
 
@@ -346,7 +358,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (refreshedProfile) {
         setUser({ ...refreshedProfile, email: user.email });
       }
-
       return true;
     } catch (err: any) {
       setAuthError("Unexpected error updating username.");
@@ -379,7 +390,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (refreshedProfile) {
         setUser({ ...refreshedProfile, email: user.email });
       }
-
       return true;
     } catch (err: any) {
       setAuthError("Unexpected error updating location.");
@@ -393,7 +403,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
-      
+
       if (error) {
         setAuthError(error.message);
         return false;
@@ -411,7 +421,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password-otp`,
       });
-      
+
       if (error) {
         setAuthError(error.message);
         return false;
@@ -423,29 +433,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const resetPasswordWithOTP = async (email: string, token: string, password: string): Promise<boolean> => {
+  const resetPasswordWithOTP = async (
+    email: string,
+    token: string,
+    password: string
+  ): Promise<boolean> => {
     setAuthError(null);
     try {
       const { error } = await supabase.auth.verifyOtp({
         email,
         token,
-        type: 'recovery'
+        type: "recovery",
       });
 
       if (error) {
-        if (error.message.includes('Token has expired')) {
-          setAuthError('The reset code has expired. Please request a new one.');
-        } else if (error.message.includes('Invalid token')) {
-          setAuthError('Invalid reset code. Please check the code and try again.');
+        if (error.message.includes("Token has expired")) {
+          setAuthError("The reset code has expired. Please request a new one.");
         } else {
           setAuthError(error.message);
         }
         return false;
       }
 
-      // Now update the password
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-      
+      const { error: updateError } = await supabase.auth.updateUser({
+        password,
+      });
+
       if (updateError) {
         setAuthError(updateError.message);
         return false;
@@ -462,14 +475,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setAuthError(null);
     try {
       const { error } = await supabase.auth.updateUser({ password });
-      
       if (error) {
-        // Handle specific error messages
-        if (error.message.includes('New password should be different from the old password')) {
-          setAuthError('Please choose a different password than your current one.');
-        } else {
-          setAuthError(error.message);
-        }
+        setAuthError(error.message);
         return false;
       }
       return true;
@@ -480,30 +487,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleAuthCallback = async (): Promise<boolean> => {
-    setIsLoading(true);
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
       if (error) {
         setAuthError(error.message);
         return false;
       }
-
-      if (session?.user) {
-        const profile = await ensureProfileExists(session.user.id);
-        if (profile) {
-          if (session.user.email) profile.email = session.user.email;
-          setUser(profile);
-          setIsAuthenticated(true);
-        }
-        return true;
-      }
-      return false;
+      handleSessionChange(session);
+      return true;
     } catch (err: any) {
-      setAuthError("Authentication verification failed");
+      setAuthError("Failed to handle auth callback");
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -533,10 +530,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
+export function useAuth(): AuthContextType {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context;
-};
+  return ctx;
+}

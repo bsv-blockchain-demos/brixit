@@ -201,6 +201,13 @@ export type Database = {
             foreignKeyName: "submission_images_submission_id_fkey"
             columns: ["submission_id"]
             isOneToOne: false
+            referencedRelation: "public_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submission_images_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
             referencedRelation: "submission_with_outliers"
             referencedColumns: ["id"]
           },
@@ -304,7 +311,21 @@ export type Database = {
             foreignKeyName: "submissions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "my_public_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "my_public_profile"
             referencedColumns: ["id"]
           },
           {
@@ -340,7 +361,6 @@ export type Database = {
           country: string | null
           created_at: string | null
           display_name: string | null
-          email: string | null
           id: string
           last_submission: string | null
           points: number | null
@@ -352,7 +372,6 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           display_name?: string | null
-          email?: string | null
           id: string
           last_submission?: string | null
           points?: number | null
@@ -364,7 +383,6 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           display_name?: string | null
-          email?: string | null
           id?: string
           last_submission?: string | null
           points?: number | null
@@ -416,6 +434,122 @@ export type Database = {
           type?: string | null
         }
         Relationships: []
+      }
+      my_public_profile: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          last_submission: string | null
+          points: number | null
+          state: string | null
+          submission_count: number | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          last_submission?: string | null
+          points?: number | null
+          state?: string | null
+          submission_count?: number | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          last_submission?: string | null
+          points?: number | null
+          state?: string | null
+          submission_count?: number | null
+        }
+        Relationships: []
+      }
+      public_submissions: {
+        Row: {
+          assessment_date: string | null
+          brand_id: string | null
+          brix_value: number | null
+          crop_id: string | null
+          crop_variety: string | null
+          farm_location: string | null
+          harvest_time: string | null
+          id: string | null
+          location_id: string | null
+          outlier_notes: string | null
+          place_id: string | null
+          purchase_date: string | null
+          verified: boolean | null
+          verified_at: string | null
+        }
+        Insert: {
+          assessment_date?: string | null
+          brand_id?: string | null
+          brix_value?: number | null
+          crop_id?: string | null
+          crop_variety?: string | null
+          farm_location?: string | null
+          harvest_time?: string | null
+          id?: string | null
+          location_id?: string | null
+          outlier_notes?: string | null
+          place_id?: string | null
+          purchase_date?: string | null
+          verified?: boolean | null
+          verified_at?: string | null
+        }
+        Update: {
+          assessment_date?: string | null
+          brand_id?: string | null
+          brix_value?: number | null
+          crop_id?: string | null
+          crop_variety?: string | null
+          farm_location?: string | null
+          harvest_time?: string | null
+          id?: string | null
+          location_id?: string | null
+          outlier_notes?: string | null
+          place_id?: string | null
+          purchase_date?: string | null
+          verified?: boolean | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submissions_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_crop_id_fkey"
+            columns: ["crop_id"]
+            isOneToOne: false
+            referencedRelation: "crops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submissions_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       submission_with_outliers: {
         Row: {
