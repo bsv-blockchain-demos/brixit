@@ -13,10 +13,11 @@ import {
   Trophy,
   Menu,
   X,
+  Shield,
 } from "lucide-react";
 
 const Header = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -105,6 +106,20 @@ const Header = () => {
           </Button>
         </Link>
       )}
+
+      {isAdmin && (
+        <Link to="/admin">
+          <Button
+            variant={isActive("/admin") ? "default" : "ghost"}
+            className={`flex items-center space-x-2 w-full justify-start ${
+              isActive("/admin") ? "border-b-2 border-orange-600" : ""
+            }`}
+          >
+            <Shield className="w-4 h-4" />
+            <span>Admin</span>
+          </Button>
+        </Link>
+      )}
     </>
   );
 
@@ -122,7 +137,7 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           {user && (
-            <nav className="hidden md:flex space-x-1">
+            <nav className="hidden md:flex items-center space-x-4">
               <NavLinks />
             </nav>
           )}
@@ -130,63 +145,80 @@ const Header = () => {
           {/* User Menu */}
           <div className="flex items-center space-x-4">
             {user ? (
-              <div className="flex items-center space-x-3">
-                <Link
-                  to="/profile"
-                  className="flex items-center space-x-2 cursor-pointer"
-                >
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback className="bg-green-100 text-green-700">
-                      {getUserInitial()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="hidden sm:block">
-                    <p className="text-sm font-medium text-gray-900">
-                      {getDisplayName()}
-                    </p>
-                    {hasRole("admin") && (
-                      <Badge variant="secondary" className="text-xs">
-                        Admin
-                      </Badge>
-                    )}
-                    {hasRole("contributor") && !hasRole("admin") && (
-                      <Badge variant="secondary" className="text-xs">
-                        Citizen Scientist
-                      </Badge>
-                    )}
+              <>
+                <Link to="/profile">
+                  <div className="flex items-center space-x-3 cursor-pointer hover:opacity-80">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-green-600 text-white">
+                        {getUserInitial()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="hidden sm:block">
+                      <div className="text-sm font-medium text-gray-700">
+                        {getDisplayName()}
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        {user.role === "admin" && (
+                          <Badge variant="destructive" className="text-xs px-1 py-0">
+                            Admin
+                          </Badge>
+                        )}
+                        {user.role === "contributor" && (
+                          <Badge variant="secondary" className="text-xs px-1 py-0">
+                            Contributor
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </Link>
-                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <Button
+                  onClick={handleLogout}
+                  variant="ghost"
+                  size="sm"
+                  className="hidden md:flex items-center space-x-2"
+                >
                   <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
                 </Button>
-              </div>
+              </>
             ) : (
-              <div className="flex space-x-2">
+              <div className="flex items-center space-x-2">
                 <Link to="/login">
-                  <Button variant="ghost">Log In</Button>
-                </Link>
-                <Link to="/register">
-                  <Button>Sign Up</Button>
+                  <Button variant="ghost" size="sm">
+                    Login
+                  </Button>
                 </Link>
               </div>
             )}
 
-            {/* Mobile Menu Toggle */}
+            {/* Mobile menu toggle */}
             {user && (
-              <button
-                className="md:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100"
+              <Button
+                variant="ghost"
+                size="sm"
+                className="md:hidden"
                 onClick={() => setMenuOpen(!menuOpen)}
               >
                 {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
+              </Button>
             )}
           </div>
         </div>
 
         {/* Mobile Navigation */}
-        {menuOpen && user && (
-          <nav className="md:hidden flex flex-col space-y-1 pb-4">
+        {user && menuOpen && (
+          <nav className="md:hidden py-4 space-y-2 border-t">
             <NavLinks />
+            <Button
+              onClick={handleLogout}
+              variant="ghost"
+              size="sm"
+              className="flex items-center space-x-2 w-full justify-start text-red-600"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </Button>
           </nav>
         )}
       </div>

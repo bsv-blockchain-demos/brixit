@@ -103,6 +103,12 @@ const Login = () => {
     setIsLoading(false);
   };
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, from]);
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -118,25 +124,22 @@ const Login = () => {
             <CardTitle className="text-center text-2xl font-bold text-gray-900">
               Sign in to your account
             </CardTitle>
-            <p className="text-center text-sm text-gray-600">
-              Welcome back! Enter your credentials to access your account.
-            </p>
           </CardHeader>
 
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {(formError || authError) && (
+              {/* Form Error */}
+              {formError && (
                 <Alert variant="destructive">
-                  <AlertDescription>{formError || authError}</AlertDescription>
+                  <AlertDescription>{formError}</AlertDescription>
                 </Alert>
               )}
 
+              {/* Email Input */}
               <div>
                 <Label htmlFor="email">Email address</Label>
                 <div className="mt-1 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-gray-400" />
-                  </div>
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <Input
                     id="email"
                     name="email"
@@ -146,18 +149,16 @@ const Login = () => {
                     value={email}
                     onChange={handleEmailChange}
                     className="pl-10"
-                    placeholder="Enter your email address"
-                    maxLength={100}
+                    placeholder="you@example.com"
                   />
                 </div>
               </div>
 
+              {/* Password Input */}
               <div>
                 <Label htmlFor="password">Password</Label>
                 <div className="mt-1 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
-                  </div>
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <Input
                     id="password"
                     name="password"
@@ -167,24 +168,19 @@ const Login = () => {
                     value={password}
                     onChange={handlePasswordChange}
                     className="pl-10 pr-10"
-                    placeholder="Enter your password"
-                    maxLength={100}
+                    placeholder="••••••••"
                   />
                   <button
                     type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
                     onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <Eye className="h-5 w-5 text-gray-400" />
-                    )}
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-end">
                 <div className="text-sm">
                   <Link
                     to="/forgot-password"
@@ -206,13 +202,7 @@ const Login = () => {
 
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
-                <Link
-                  to="/register"
-                  className="font-medium text-green-600 hover:text-green-500"
-                >
-                  Sign up
-                </Link>
+                New accounts can only be created by administrators.
               </p>
             </div>
           </CardContent>

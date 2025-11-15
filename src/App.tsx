@@ -10,7 +10,7 @@ import DataBrowser from "./pages/DataBrowser";
 import DataEntry from "./pages/DataEntry";
 import YourData from "./pages/YourData";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import VerifyEmailNotice from "./pages/VerifyEmailNotice";
 import Profile from "./pages/Profile";
@@ -46,7 +46,8 @@ const RootContent = () => {
 
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* Registration disabled - redirect to login */}
+        <Route path="/register" element={<Navigate to="/login" replace />} />
         <Route path="/verify-email" element={<VerifyEmailNotice />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -100,6 +101,14 @@ const RootContent = () => {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <Admin />
             </ProtectedRoute>
           }
         />

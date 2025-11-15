@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
   }
   public: {
     Tables: {
@@ -311,21 +291,7 @@ export type Database = {
             foreignKeyName: "submissions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "my_public_profile"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "submissions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "submissions_verified_by_fkey"
-            columns: ["verified_by"]
-            isOneToOne: false
-            referencedRelation: "my_public_profile"
             referencedColumns: ["id"]
           },
           {
@@ -432,42 +398,6 @@ export type Database = {
           f_table_schema?: unknown
           srid?: number | null
           type?: string | null
-        }
-        Relationships: []
-      }
-      my_public_profile: {
-        Row: {
-          city: string | null
-          country: string | null
-          created_at: string | null
-          display_name: string | null
-          id: string | null
-          last_submission: string | null
-          points: number | null
-          state: string | null
-          submission_count: number | null
-        }
-        Insert: {
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          display_name?: string | null
-          id?: string | null
-          last_submission?: string | null
-          points?: number | null
-          state?: string | null
-          submission_count?: number | null
-        }
-        Update: {
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          display_name?: string | null
-          id?: string | null
-          last_submission?: string | null
-          points?: number | null
-          state?: string | null
-          submission_count?: number | null
         }
         Relationships: []
       }
@@ -728,6 +658,55 @@ export type Database = {
             }
             Returns: string
           }
+      admin_get_all_users: {
+        Args: never
+        Returns: {
+          city: string
+          country: string
+          created_at: string
+          display_name: string
+          id: string
+          points: number
+          roles: Database["public"]["Enums"]["app_role"][]
+          state: string
+          submission_count: number
+        }[]
+      }
+      admin_get_unverified_submissions: {
+        Args: never
+        Returns: {
+          assessment_date: string
+          brand_label: string
+          brand_name: string
+          brix_value: number
+          crop_label: string
+          crop_name: string
+          id: string
+          place_city: string
+          place_label: string
+          place_state: string
+          user_display_name: string
+          user_id: string
+        }[]
+      }
+      admin_grant_role: {
+        Args: {
+          role_to_grant: Database["public"]["Enums"]["app_role"]
+          target_user_id: string
+        }
+        Returns: Json
+      }
+      admin_revoke_role: {
+        Args: {
+          role_to_revoke: Database["public"]["Enums"]["app_role"]
+          target_user_id: string
+        }
+        Returns: Json
+      }
+      admin_verify_submission: {
+        Args: { submission_id_param: string; verify_bool?: boolean }
+        Returns: Json
+      }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
         | {
@@ -1205,7 +1184,6 @@ export type Database = {
               maxdecimaldigits?: number
               nprefix?: string
               options?: number
-              version: number
             }
             Returns: string
           }
@@ -1216,6 +1194,7 @@ export type Database = {
               maxdecimaldigits?: number
               nprefix?: string
               options?: number
+              version: number
             }
             Returns: string
           }
@@ -1678,11 +1657,11 @@ export type Database = {
           }
       st_triangulatepolygon: { Args: { g1: unknown }; Returns: unknown }
       st_union:
-        | { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
         | {
             Args: { geom1: unknown; geom2: unknown; gridsize: number }
             Returns: unknown
           }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
       st_voronoilines: {
         Args: { extend_to?: unknown; g1: unknown; tolerance?: number }
         Returns: unknown
@@ -1846,9 +1825,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       app_role: ["admin", "contributor", "viewer"],
@@ -1856,4 +1832,3 @@ export const Constants = {
     },
   },
 } as const
-
