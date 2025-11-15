@@ -20,6 +20,9 @@ import ResetPasswordOTP from "./pages/ResetPasswordOTP";
 import AuthCallback from "./pages/AuthCallback";
 import ProtectedRoute from "./components/misc/ProtectedRoute";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FilterProvider } from './contexts/FilterContext'
+import { CropThresholdProvider } from './contexts/CropThresholdContext';
+
 
 const queryClient = new QueryClient();
 
@@ -111,10 +114,15 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
-        <RootContent />
+        <FilterProvider>
+          <CropThresholdProvider>
+            <RootContent />
+          </CropThresholdProvider>
+        </FilterProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
+
 
 export default App;
