@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { MapFilter } from '../types'; // Import the updated MapFilter
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { MapFilter } from '../types';
+import { useAuth } from './AuthContext';
 
 // Define default filter values for consistency
 export const DEFAULT_MAP_FILTERS: MapFilter = {
-  cropTypes: [], // Always an array now
+  cropTypes: [],
   brixRange: [0, 30],
   dateRange: ['', ''],
   verifiedOnly: true,
@@ -34,7 +35,7 @@ interface FilterProviderProps {
 }
 
 export const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
-  const isAdmin = false;
+  const { isAdmin } = useAuth();
   const [totalSubmissions, setTotalSubmissions] = useState(0);
   const [filteredCount, setFilteredCount] = useState(0);
 
@@ -54,7 +55,7 @@ export const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
 
   const value: FilterContextType = {
     filters,
-    setFilters: updateFilters, // Use the wrapped updateFilters
+    setFilters: updateFilters,
     isAdmin,
     totalSubmissions,
     filteredCount,

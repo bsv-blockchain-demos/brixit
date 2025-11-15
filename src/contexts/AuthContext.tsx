@@ -56,20 +56,48 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
   try {
     if (!userId) return null;
 
-    const { data, error } = await supabase
+    // Fetch user profile from users table
+    const { data: profileData, error: profileError } = await supabase
       .from("users")
       .select(
-        "id, display_name, role, points, submission_count, last_submission, country, state, city"
+        "id, display_name, points, submission_count, last_submission, country, state, city, email"
       )
       .eq("id", userId)
       .maybeSingle();
 
-    if (error) {
-      console.error("[fetchUserProfile] Supabase error:", error.message);
+    if (profileError) {
+      console.error("[fetchUserProfile] Supabase error:", profileError.message);
       return null;
     }
 
-    return data as UserProfile;
+    if (!profileData) {
+      return null;
+    }
+
+    // Fetch user roles from user_roles table
+    const { data: rolesData, error: rolesError } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+
+    if (rolesError) {
+      console.error("[fetchUserProfile] Error fetching roles:", rolesError.message);
+    }
+
+    // Determine highest role (admin > contributor > user)
+    let userRole = 'user';
+    if (rolesData && rolesData.length > 0) {
+      if (rolesData.some(r => r.role === 'admin')) {
+        userRole = 'admin';
+      } else if (rolesData.some(r => r.role === 'contributor')) {
+        userRole = 'contributor';
+      }
+    }
+
+    return {
+      ...profileData,
+      role: userRole
+    } as UserProfile;
   } catch (err: any) {
     console.error("[fetchUserProfile] Unexpected error:", err.message || err);
     return null;
