@@ -110,45 +110,74 @@ export default function AdminUserManagement() {
           <Label htmlFor="displayName">Display Name</Label>
           <Input id="displayName" value={form.displayName} onChange={onChange('displayName')} required />
         </div>
-        <div className="grid grid-cols-3 gap-2">
-          <div>
-            <Label htmlFor="country">Country</Label>
-            <Input id="country" value={form.country ?? ''} onChange={onChange('country')} />
-          </div>
-          <div>
-            <Label htmlFor="state">State</Label>
-            <Input id="state" value={form.state ?? ''} onChange={onChange('state')} />
-          </div>
-          <div>
-            <Label htmlFor="city">City</Label>
-            <Input id="city" value={form.city ?? ''} onChange={onChange('city')} />
-          </div>
+        <div>
+          <Label htmlFor="country">Country (optional)</Label>
+          <Input id="country" value={form.country} onChange={onChange('country')} />
         </div>
-        <Button type="submit" disabled={creating}>{creating ? 'Creating...' : 'Create user'}</Button>
+        <div>
+          <Label htmlFor="state">State (optional)</Label>
+          <Input id="state" value={form.state} onChange={onChange('state')} />
+        </div>
+        <div>
+          <Label htmlFor="city">City (optional)</Label>
+          <Input id="city" value={form.city} onChange={onChange('city')} />
+        </div>
+        <Button type="submit" disabled={creating}>
+          {creating ? 'Creating...' : 'Create User'}
+        </Button>
       </form>
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Users</h2>
-          <Button variant="ghost" onClick={() => loadUsers()} disabled={loadingUsers}>Refresh</Button>
+          <h2 className="text-lg font-semibold">Existing Users</h2>
+          <Button variant="ghost" onClick={() => loadUsers()} disabled={loadingUsers}>
+            Refresh
+          </Button>
         </div>
 
-        <div className="space-y-2">
-          {users.map((u) => (
-            <div key={u.id} className="border rounded p-3 flex items-center justify-between">
-              <div className="text-sm">
-                <div className="font-medium">{u.display_name ?? u.id}</div>
-                <div className="text-muted-foreground">Roles: {(u.roles ?? []).join(', ') || 'user'}</div>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={() => handleGrant(u.id, 'contributor')}>Make contributor</Button>
-                <Button size="sm" onClick={() => handleGrant(u.id, 'admin')}>Make admin</Button>
-                <Button size="sm" variant="secondary" onClick={() => handleRevoke(u.id, 'contributor')}>Revoke contributor</Button>
-                <Button size="sm" variant="secondary" onClick={() => handleRevoke(u.id, 'admin')}>Revoke admin</Button>
-              </div>
-            </div>
-          ))}
-        </div>
+        {users.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No users found.</p>
+        ) : (
+          <div className="space-y-2">
+            {users.map((u) => {
+              const hasAdmin = u.roles?.includes('admin');
+              const hasContributor = u.roles?.includes('contributor');
+              
+              return (
+                <div key={u.id} className="border rounded p-3 flex items-center justify-between">
+                  <div className="text-sm">
+                    <div className="font-medium">{u.display_name ?? u.id}</div>
+                    <div className="text-muted-foreground">
+                      Roles: {(u.roles ?? []).join(', ') || 'user'}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {!hasContributor && (
+                      <Button size="sm" onClick={() => handleGrant(u.id, 'contributor')}>
+                        Make contributor
+                      </Button>
+                    )}
+                    {!hasAdmin && (
+                      <Button size="sm" onClick={() => handleGrant(u.id, 'admin')}>
+                        Make admin
+                      </Button>
+                    )}
+                    {hasContributor && (
+                      <Button size="sm" variant="secondary" onClick={() => handleRevoke(u.id, 'contributor')}>
+                        Revoke contributor
+                      </Button>
+                    )}
+                    {hasAdmin && (
+                      <Button size="sm" variant="secondary" onClick={() => handleRevoke(u.id, 'admin')}>
+                        Revoke admin
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

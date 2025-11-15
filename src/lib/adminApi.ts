@@ -26,15 +26,13 @@ export interface UserWithRoles {
   points: number | null;
   submission_count: number | null;
   created_at: string | null;
-  roles: AppRole[]; // do NOT require email here
+  roles: AppRole[];
 }
 
 export interface UnverifiedSubmission {
   id: string;
   assessment_date: string | null;
   brix_value: number;
-  verified: boolean;
-  // Flattened fields expected from RPC; adjust only if your RPC returns different names
   crop_name: string | null;
   crop_label: string | null;
   brand_name: string | null;

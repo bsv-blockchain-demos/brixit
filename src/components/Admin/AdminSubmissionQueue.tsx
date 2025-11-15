@@ -33,12 +33,12 @@ export default function AdminSubmissionQueue() {
     void load();
   }, []);
 
-  const handleVerify = async (submissionId: string, value: boolean) => {
+  const handleVerify = async (submissionId: string) => {
     try {
-      const res = await verifySubmission(submissionId, value);
+      const res = await verifySubmission(submissionId, true);
       if (res.success) {
         setSubmissions((prev) => prev.filter((s) => s.id !== submissionId));
-        toast({ title: value ? 'Verified' : 'Unverified', description: res.message ?? '' });
+        toast({ title: 'Approved', description: res.message ?? 'Submission has been approved.' });
       } else {
         toast({ title: 'Action failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
       }
@@ -83,9 +83,20 @@ export default function AdminSubmissionQueue() {
                 <div>By: {s.user_display_name ?? s.user_id}</div>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" onClick={() => handleVerify(s.id, true)}>Verify</Button>
-                <Button size="sm" variant="secondary" onClick={() => handleVerify(s.id, false)}>Unverify</Button>
-                <Button size="sm" variant="destructive" onClick={() => handleDelete(s.id)}>Delete</Button>
+                <Button 
+                  size="sm" 
+                  onClick={() => handleVerify(s.id)}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  Approve
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="destructive" 
+                  onClick={() => handleDelete(s.id)}
+                >
+                  Delete
+                </Button>
               </div>
             </div>
           ))}
