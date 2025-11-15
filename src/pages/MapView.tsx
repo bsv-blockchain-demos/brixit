@@ -10,7 +10,7 @@ import { getMapboxToken } from '../lib/getMapboxToken';
 
 const MapView = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, profileLoading } = useAuth();
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearMeTriggered, setNearMeTriggered] = useState(false);
@@ -66,7 +66,20 @@ const MapView = () => {
     setNearMeTriggered(false);
   };
 
-  if (!user?.city || !user?.state || !user?.country) {
+  if (profileLoading) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Header />
+      <main className="flex-1 flex items-center justify-center px-4">
+        <div className="text-center">
+          <p className="text-gray-600">Loading your profile...</p>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+if (!user?.city || !user?.state || !user?.country) {
     // Guard in case ProtectedRoute didn’t catch it
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
