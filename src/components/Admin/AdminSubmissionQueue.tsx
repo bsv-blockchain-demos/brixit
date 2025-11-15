@@ -40,12 +40,23 @@ export default function AdminSubmissionQueue() {
       const res = await verifySubmission(submissionId, true);
       if (res.success) {
         setSubmissions((prev) => prev.filter((s) => s.id !== submissionId));
-        toast({ title: 'Approved', description: res.message ?? 'Submission has been approved.' });
+        toast({ 
+          title: 'Submission verified', 
+          description: res.message ?? 'Submission has been verified and is now visible to all users.' 
+        });
       } else {
-        toast({ title: 'Action failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
+        toast({ 
+          title: 'Verification failed', 
+          description: res.error ?? 'Unknown error', 
+          variant: 'destructive' 
+        });
       }
     } catch (e: any) {
-      toast({ title: 'Error', description: e?.message ?? 'Please try again.', variant: 'destructive' });
+      toast({ 
+        title: 'Error', 
+        description: e?.message ?? 'Please try again.', 
+        variant: 'destructive' 
+      });
     }
   };
 
@@ -53,9 +64,16 @@ export default function AdminSubmissionQueue() {
     try {
       await deleteSubmission(submissionId);
       setSubmissions((prev) => prev.filter((s) => s.id !== submissionId));
-      toast({ title: 'Deleted', description: 'Submission removed.' });
+      toast({ 
+        title: 'Submission removed', 
+        description: 'The submission has been permanently deleted without verification.' 
+      });
     } catch (e: any) {
-      toast({ title: 'Delete failed', description: e?.message ?? 'Please try again.', variant: 'destructive' });
+      toast({ 
+        title: 'Delete failed', 
+        description: e?.message ?? 'Please try again.', 
+        variant: 'destructive' 
+      });
     }
   };
 
@@ -64,7 +82,7 @@ export default function AdminSubmissionQueue() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Pending Verification</h2>
-          <p className="text-sm text-muted-foreground">Review and approve new submissions</p>
+          <p className="text-sm text-muted-foreground">Review and verify new submissions before they appear publicly</p>
         </div>
         <Button variant="ghost" onClick={() => load()} disabled={loading}>
           Refresh
@@ -80,7 +98,7 @@ export default function AdminSubmissionQueue() {
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
-                    Pending
+                    Awaiting Verification
                   </Badge>
                   {s.assessment_date && (
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -109,13 +127,13 @@ export default function AdminSubmissionQueue() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2 sm:flex-col sm:min-w-[100px]">
+              <div className="flex gap-2 sm:flex-col sm:min-w-[180px]">
                 <Button 
                   size="sm" 
                   onClick={() => handleVerify(s.id)}
                   className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"
                 >
-                  Approve
+                  Verify Submission
                 </Button>
                 <Button 
                   size="sm" 
@@ -123,7 +141,7 @@ export default function AdminSubmissionQueue() {
                   onClick={() => handleDelete(s.id)}
                   className="flex-1 sm:flex-none"
                 >
-                  Delete
+                  Remove Without Verifying
                 </Button>
               </div>
             </div>

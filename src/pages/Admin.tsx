@@ -1,22 +1,27 @@
-import React from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminUserManagement from '@/components/Admin/AdminUserManagement';
 import AdminSubmissionQueue from '@/components/Admin/AdminSubmissionQueue';
 import Header from '@/components/Layout/Header';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Admin() {
-  const { isAdmin, isLoading } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
 
-  if (isLoading) return <div className="p-8 text-center">Loading...</div>;
-  if (!isAdmin) return <Navigate to="/" replace />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
-    <>
+    <div className="min-h-screen bg-background">
       <Header />
       <div className="container mx-auto p-6">
         <div className="flex items-center gap-4 mb-6">
@@ -28,17 +33,24 @@ export default function Admin() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         </div>
-        <Tabs defaultValue="users">
-          <TabsList>
-            <TabsTrigger value="users">Users</TabsTrigger>
+
+        <Tabs defaultValue="submissions" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="submissions">Submissions</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
-          <TabsContent value="users"><AdminUserManagement /></TabsContent>
-          <TabsContent value="submissions"><AdminSubmissionQueue /></TabsContent>
+          
+          <TabsContent value="submissions" className="mt-6">
+            <AdminSubmissionQueue />
+          </TabsContent>
+          
+          <TabsContent value="users" className="mt-6">
+            <AdminUserManagement />
+          </TabsContent>
         </Tabs>
       </div>
-    </>
+    </div>
   );
 }

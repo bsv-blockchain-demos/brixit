@@ -8,11 +8,12 @@ import LocationSelector from '@/components/common/LocationSelector';
 import {
   createUser,
   fetchAllUsers,
-  grantRole,
-  revokeRole,
+  upgradeToContributor,
+  upgradeToAdmin,
+  downgradeToContributor,
+  downgradeToUser,
   type AdminCreateUserInput,
   type UserWithRoles,
-  type AppRole,
 } from '@/lib/adminApi';
 import { LocationData } from '@/lib/locationServiceforRegister';
 
@@ -97,11 +98,11 @@ export default function AdminUserManagement() {
     }
   };
 
-  const handleGrant = async (userId: string, role: Extract<AppRole, 'admin' | 'contributor'>) => {
+  const handleUpgradeToContributor = async (userId: string) => {
     try {
-      const res = await grantRole(userId, role);
+      const res = await upgradeToContributor(userId);
       if (res.success) {
-        toast({ title: 'Role granted', description: res.message ?? `${role} role granted successfully.` });
+        toast({ title: 'User upgraded', description: 'User is now a contributor.' });
         await loadUsers();
       } else {
         toast({ title: 'Action failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
@@ -111,17 +112,61 @@ export default function AdminUserManagement() {
     }
   };
 
-  const handleRevoke = async (userId: string, role: Extract<AppRole, 'admin' | 'contributor'>) => {
+  const handleUpgradeToAdmin = async (userId: string) => {
     try {
-      const res = await revokeRole(userId, role);
+      const res = await upgradeToAdmin(userId);
       if (res.success) {
-        toast({ title: 'Role revoked', description: res.message ?? `${role} role revoked successfully.` });
+        toast({ title: 'User upgraded', description: 'User is now an admin.' });
         await loadUsers();
       } else {
         toast({ title: 'Action failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
       }
     } catch (e: any) {
       toast({ title: 'Error', description: e?.message ?? 'Please try again.', variant: 'destructive' });
+    }
+  };
+
+  const handleDowngradeToContributor = async (userId: string) => {
+    try {
+      const res = await downgradeToContributor(userId);
+      if (res.success) {
+        toast({ title: 'User downgraded', description: 'User is now a contributor.' });
+        await loadUsers();
+      } else {
+        toast({ title: 'Action failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
+      }
+    } catch (e: any) {
+      toast({ title: 'Error', description: e?.message ?? 'Please try again.', variant: 'destructive' });
+    }
+  };
+
+  const handleDowngradeToUser = async (userId: string) => {
+    try {
+      const res = await downgradeToUser(userId);
+      if (res.success) {
+        toast({ title: 'User downgraded', description: 'User is now a regular user.' });
+        await loadUsers();
+      } else {
+        toast({ title: 'Action failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
+      }
+    } catch (e: any) {
+      toast({ title: 'Error', description: e?.message ?? 'Please try again.', variant: 'destructive' });
+    }
+  };
+
+  // Helper to determine user's current role level
+  const getUserRole = (roles: string[] | null | undefined): 'user' | 'contributor' | 'admin' => {
+    if (!roles || roles.length === 0) return 'user';
+    if (roles.includes('admin')) return 'admin';
+    if (roles.includes('contributor')) return 'contributor';
+    return 'user';
+  };
+
+  const getRoleBadgeVariant = (role: string) => {
+    switch (role) {
+      case 'admin': return 'default';
+      case 'contributor': return 'secondary';
+      default: return 'outline';
     }
   };
 
@@ -190,46 +235,56 @@ export default function AdminUserManagement() {
         ) : (
           <div className="space-y-2">
             {users.map((u) => {
-              const hasAdmin = u.roles?.includes('admin');
-              const hasContributor = u.roles?.includes('contributor');
+              const currentRole = getUserRole(u.roles);
 
               return (
                 <div key={u.id} className="border rounded p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="text-sm">
+                  <div className="text-sm flex-1">
                     <div className="font-medium text-base mb-1">{u.display_name ?? u.id}</div>
-                    <div className="text-muted-foreground flex flex-wrap gap-1 items-center">
-                      <span>Roles:</span>
-                      {(u.roles ?? []).map(role => (
-                        <Badge key={role} variant="secondary">{role}</Badge>
-                      ))}
-                      {(!u.roles || u.roles.length === 0) && <Badge variant="outline">user</Badge>}
+                    <div className="text-muted-foreground flex items-center gap-2">
+                      <span>Current role:</span>
+                      <Badge variant={getRoleBadgeVariant(currentRole)}>
+                        {currentRole}
+                      </Badge>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <div className="flex gap-2 items-center">
-                      <span className="text-xs text-muted-foreground min-w-[80px]">Contributor:</span>
-                      {!hasContributor ? (
-                        <Button size="sm" variant="outline" onClick={() => handleGrant(u.id, 'contributor')}>
-                          Make contributor
+                  <div className="flex gap-2">
+                    {currentRole === 'user' && (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => handleUpgradeToContributor(u.id)}
+                      >
+                        Make Contributor
+                      </Button>
+                    )}
+                    {currentRole === 'contributor' && (
+                      <>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handleUpgradeToAdmin(u.id)}
+                        >
+                          Upgrade to Admin
                         </Button>
-                      ) : (
-                        <Button size="sm" variant="secondary" onClick={() => handleRevoke(u.id, 'contributor')}>
-                          Revoke contributor
+                        <Button 
+                          size="sm" 
+                          variant="secondary" 
+                          onClick={() => handleDowngradeToUser(u.id)}
+                        >
+                          Downgrade to User
                         </Button>
-                      )}
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <span className="text-xs text-muted-foreground min-w-[80px]">Admin:</span>
-                      {!hasAdmin ? (
-                        <Button size="sm" variant="outline" onClick={() => handleGrant(u.id, 'admin')}>
-                          Make admin
-                        </Button>
-                      ) : (
-                        <Button size="sm" variant="secondary" onClick={() => handleRevoke(u.id, 'admin')}>
-                          Revoke admin
-                        </Button>
-                      )}
-                    </div>
+                      </>
+                    )}
+                    {currentRole === 'admin' && (
+                      <Button 
+                        size="sm" 
+                        variant="secondary" 
+                        onClick={() => handleDowngradeToContributor(u.id)}
+                      >
+                        Downgrade to Contributor
+                      </Button>
+                    )}
                   </div>
                 </div>
               );
