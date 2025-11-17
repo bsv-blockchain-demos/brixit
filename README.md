@@ -1,88 +1,98 @@
-# Welcome to your Lovable project
+# Project Overview
 
-## Project info
+This repository contains a prototype application developed with significant AI-assisted code generation. The goal of this documentation is to provide a clear, concise foundation for any developer who will continue building, stabilizing, or productionizing the system.
 
-**URL**: https://lovable.dev/projects/b7722ef7-cfd5-4ef2-801f-e4445c3cc277
+This overview describes:
+- What the project does  
+- The current state of implementation  
+- How the repository is structured  
+- Where to find deeper documentation  
+- Known limitations of the prototype  
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 📁 Repository Structure
+<project-root>
+├── docs/                      # Extended project documentation
+├── public/                    # Static assets (favicon, placeholder images, robots.txt)
+├── src/                       # All application source code
+│   ├── components/            # Reusable UI components and feature-specific component groups
+│   ├── contexts/              # React context providers and global state containers
+│   ├── data/                  # Static data, configuration objects, mock data, or loaders
+│   ├── hooks/                 # Custom React hooks for shared logic
+│   ├── integrations/          # API integrations, external service clients, adapters
+│   ├── lib/                   # Utility functions, helpers, and non-UI logic
+│   ├── pages/                 # Route-level components (screen pages)
+│   ├── types/                 # TypeScript type definitions and interfaces
+│   ├── App.css                # Global styling for the app container
+│   ├── App.tsx                # Root-level application component
+│   ├── index.css              # Global stylesheet
+│   └── main.tsx               # Application entry point (React root, mounting logic)
+├── supabase/                  # Supabase client, seeds, migrations, and edge functions
+└── README.md                  # Project overview
 
-**Use Lovable**
+See the [`docs`](docs/) folder for detailed documentation.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/b7722ef7-cfd5-4ef2-801f-e4445c3cc277) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## ⚠ Prototype Disclaimer
 
-**Use your preferred IDE**
+This repository contains AI-generated code. Some components may:
+- Include duplicated or unused logic  
+- Contain mismatched interfaces or assumptions  
+- Lack validation or error-handling  
+- Require architectural cleanup  
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+See **AI Caveats & Risk Areas** for details.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+---
 
-Follow these steps:
+# Sweet Earth Mapper — Prototype
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+This repository contains a prototype geospatial data-collection web application built primarily with AI-assisted development (Lovable, ChatGPT, Claude, Gemini, and Cursor). The project uses:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- **React + TypeScript** (Lovable-generated structure)
+- **Supabase** (database, auth, edge functions, migrations)
+- **Mapbox** (maps + geocoding)
+- **Lovable hosting** (preview + production environments)
 
-# Step 3: Install the necessary dependencies.
-npm i
+This documentation exists so another developer can confidently continue the project. I hear you (because yes this documentation is also mostly AI-generated, but I'm not writing markdown from scratch. And you got this!)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+---
 
-**Edit a file directly in GitHub**
+## 🚀 Project Overview
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The application allows users (primarily citizen scientists worldwide) to create submissions for [BRIX](https://en.wikipedia.org/wiki/Brix) bionutrient data. There's more information in the [`Design Perspective doc`](docs/Design_Perspective). Admin users have additional management tools for reviewing submissions.
 
-**Use GitHub Codespaces**
+All data is stored in **Supabase Postgres**, with business logic implemented through:
+- SQL functions
+- Database triggers
+- Supabase Edge Functions
+- Row-Level Security policies
+- Supabase auth templates
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Front-end components were generated within Lovable but organized in `src/` similar to a typical React project.
 
-## What technologies are used for this project?
+--- 
 
-This project is built with:
+## 🧠 Important Notes for Future Developers
+- **Local development is optional.**
+    - Supabase migrations can be run locally, but the canonical database is the hosted one.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Edge functions are NOT stored locally.**
+    - They are deployed directly in Supabase; names and purposes are documented in [`docs/Supabase.md`](docs/Supabase.md).
 
-## How can I deploy this project?
+- **Database logic (triggers + SQL functions) is extremely important for the app to function.** 
 
-Simply open [Lovable](https://lovable.dev/projects/b7722ef7-cfd5-4ef2-801f-e4445c3cc277) and click on Share -> Publish.
+- **Lovable** automatically pushes to Github, which has a trigger to push to Gitlab. The Gitlab trigger isn't being maintained and I think broken at this point, but it exists and just needs to be cleaned up. It's a pull trigger from Gitlab because of money reasons. 
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
-
-
----------------
-TODO: Redo this awful README 
-
-// Explanation of .github YAML 
-// Adding a line in the readme to trigger the action
-`on: push` triggers this workflow every time you push
-`jobs:` defines a job (i.e., set of steps to run on "runner" VM)
-`runs-on: ubuntu-latest` GitHub gives you a free Linux VM 
-`actions/checkout` Clones your repo into that VM 
-`git config` sets user info for pushing
-`git remote add` adds gitlab as a second remote 
-`git push` pushes from GitHub -> GitLab
-
+## 📚 Additional Documentation
+All extended documentation is in [`docs/`](docs/)
+- [AI Assistance](docs/AI_Assistance.md) - notes for working with the AI-driven workflow used in development
+- [Architecture](docs/Architecture.md)  - Application structure, folders, front-end architecture
+- [Design Perspective](docs/Design_Perspective.md)  - User journey, client perspective and overall design philosophy thus far
+- [Original Lovable README](docs/Lovable_Original_README.md) - The original Lovable-generated Readme
+- [Roadmap](docs/Roadmap.md)  - Current bugs, future steps, general direction from meetings thus far
+- [Supabase](docs/Supabase.md)  - Database schema, migrations, functions, secrets, triggers, edge functions, and SQL reference 
