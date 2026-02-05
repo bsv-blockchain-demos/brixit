@@ -7,10 +7,10 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getSupabaseUrl(): string {
-  return 'https://wbkzczcqlorsewoofwqe.supabase.co';
+  return import.meta.env.VITE_SUPABASE_URL2 || import.meta.env.VITE_SUPABASE_URL;
 }
 
 // this is apparently necessary to use as a bearer token and safe to expose for use as the "app key" and only allows access to public data
 export function getPublishableKey(): string {
-  return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6India3pjemNxbG9yc2V3b29md3FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxNTkyMDYsImV4cCI6MjA2NzczNTIwNn0.2SjN-hegbgQviXkjNULudnDuFJtNnePJhlNHGcr4Cfg';
+  return import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
 }

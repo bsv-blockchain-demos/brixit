@@ -4,20 +4,17 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { WalletProvider } from "./contexts/WalletContext";
 import MapView from "./pages/MapView";
 import Leaderboard from "./pages/Leaderboard";
 import DataBrowser from "./pages/DataBrowser";
 import DataEntry from "./pages/DataEntry";
 import YourData from "./pages/YourData";
-import Login from "./pages/Login";
+import WalletLogin from "./pages/WalletLogin";
+import WalletError from "./pages/WalletError";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
-import VerifyEmailNotice from "./pages/VerifyEmailNotice";
 import Profile from "./pages/Profile";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import ResetPasswordOTP from "./pages/ResetPasswordOTP";
-import AuthCallback from "./pages/AuthCallback";
 import ProtectedRoute from "./components/misc/ProtectedRoute";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FilterProvider } from './contexts/FilterContext'
@@ -39,20 +36,20 @@ const RootContent = () => {
   }
 
   return (
-    <BrowserRouter>
       <Routes>
         {/* Redirect root to leaderboard */}
         <Route path="/" element={<Navigate to="/leaderboard" replace />} />
 
         {/* Public routes */}
-        <Route path="/login" element={<Login />} />
-        {/* Registration disabled - redirect to login */}
+        <Route path="/login" element={<WalletLogin />} />
+        <Route path="/wallet-error" element={<WalletError />} />
+        {/* Legacy routes redirect to wallet login */}
         <Route path="/register" element={<Navigate to="/login" replace />} />
-        <Route path="/verify-email" element={<VerifyEmailNotice />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/reset-password-otp" element={<ResetPasswordOTP />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/verify-email" element={<Navigate to="/login" replace />} />
+        <Route path="/forgot-password" element={<Navigate to="/login" replace />} />
+        <Route path="/reset-password" element={<Navigate to="/login" replace />} />
+        <Route path="/reset-password-otp" element={<Navigate to="/login" replace />} />
+        <Route path="/auth/callback" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<NotFound />} />
 
         {/* Protected routes */}
@@ -113,7 +110,6 @@ const RootContent = () => {
           }
         />
       </Routes>
-    </BrowserRouter>
   );
 };
 
@@ -122,13 +118,17 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AuthProvider>
-        <FilterProvider>
-          <CropThresholdProvider>
-            <RootContent />
-          </CropThresholdProvider>
-        </FilterProvider>
-      </AuthProvider>
+      <BrowserRouter>
+        <WalletProvider>
+          <AuthProvider>
+            <FilterProvider>
+              <CropThresholdProvider>
+                <RootContent />
+              </CropThresholdProvider>
+            </FilterProvider>
+          </AuthProvider>
+        </WalletProvider>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );

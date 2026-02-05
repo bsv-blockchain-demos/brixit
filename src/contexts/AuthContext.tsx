@@ -49,6 +49,7 @@ interface AuthContextType {
   resetPasswordWithOTP: (email: string, token: string, password: string) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
   handleAuthCallback: () => Promise<boolean>;
+  walletLogin: (identityKey: string, certificate: any, userData: any) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -504,6 +505,82 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const walletLogin = async (
+    identityKey: string,
+    certificate: any,
+    userData: any
+  ): Promise<boolean> => {
+    setAuthError(null);
+
+    // Development mode: Skip Edge Function for testing
+    const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
+
+    if (DEV_MODE) {
+      console.log('🔧 DEV MODE: Simulating wallet login');
+      console.log('Identity Key:', identityKey);
+      console.log('Certificate:', certificate);
+      console.log('User Data:', userData);
+
+      // Simulate successful login
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      console.log('✅ DEV MODE: Login simulated successfully');
+      alert(`DEV MODE: Wallet login successful!\n\nIdentity: ${identityKey}\nName: ${userData.displayName}\nLocation: ${userData.locationLat}, ${userData.locationLng}`);
+
+      return true;
+    }
+
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL2 || import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseKey) {
+        setAuthError('Missing Supabase environment variables');
+        return false;
+      }
+
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/wallet-auth-verify`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`
+          },
+          body: JSON.stringify({
+            identityKey,
+            certificateSerialNumber: certificate.serialNumber,
+            certificate,
+            userData
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!data.success) {
+        setAuthError(data.error || 'Wallet authentication failed');
+        return false;
+      }
+
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token
+      });
+
+      if (sessionError) {
+        setAuthError(sessionError.message);
+        return false;
+      }
+
+      return true;
+    } catch (err: any) {
+      console.error('Wallet login error:', err);
+      setAuthError('Unexpected error during wallet login');
+      return false;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -523,6 +600,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         resetPasswordWithOTP,
         updatePassword,
         handleAuthCallback,
+        walletLogin,
       }}
     >
       {children}

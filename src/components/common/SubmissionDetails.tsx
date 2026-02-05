@@ -40,7 +40,6 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
       setImagesLoading(true);
       setImagesError(null);
       const urls: string[] = [];
-      const projectRef = 'wbkzczcqlorsewoofwqe'; // Your Supabase Project Reference
       const bucketName = 'submission-images-bucket';
 
       for (const imagePath of dataPoint.images) {
@@ -49,8 +48,8 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
           continue;
         }
 
-        // The key fix: Manually construct the public URL
-        const publicUrl = `https://${projectRef}.supabase.co/storage/v1/object/public/${bucketName}/${imagePath}`;
+        const { data } = supabase.storage.from(bucketName).getPublicUrl(imagePath);
+        const publicUrl = data.publicUrl;
         urls.push(publicUrl);
       }
 

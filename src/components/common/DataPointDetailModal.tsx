@@ -172,10 +172,14 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
       setImagesLoading(true);
       console.log('Attempting to fetch images. initialDataPoint.images:', initialDataPoint.images);
 
+      const bucketName = 'submission-images-bucket';
       const urls = Array.isArray(initialDataPoint.images)
-        ? initialDataPoint.images.map(imagePath =>
-            `https://wbkzczcqlorsewoofwqe.supabase.co/storage/v1/object/public/submission-images-bucket/${imagePath}`
-          )
+        ? initialDataPoint.images
+            .filter((imagePath): imagePath is string => typeof imagePath === 'string' && imagePath.length > 0)
+            .map((imagePath) => {
+              const { data } = supabase.storage.from(bucketName).getPublicUrl(imagePath);
+              return data.publicUrl;
+            })
         : [];
 
       console.log('Generated image URLs:', urls);
