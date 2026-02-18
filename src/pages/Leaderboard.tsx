@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import Header from "../components/Layout/Header";
 import LocationSelector from "../components/common/LocationSelector";
 import { fetchCropTypes, CropType } from "../lib/fetchCropTypes";
@@ -10,6 +10,7 @@ import {
   fetchUserLeaderboard,
   LeaderboardEntry,
 } from "../lib/fetchLeaderboards";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   computeNormalizedScore,
   rankColorFromNormalized,
@@ -34,6 +35,9 @@ const emptyLocation = {
 const LeaderboardPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const pageSize = 20;
 
   const [location, setLocation] = useState(() => ({
     ...emptyLocation,
@@ -50,8 +54,29 @@ const LeaderboardPage: React.FC = () => {
   const [locationData, setLocationData] = useState<LeaderboardEntry[]>([]);
   const [brandData, setBrandData] = useState<LeaderboardEntry[]>([]);
   const [userData, setUserData] = useState<LeaderboardEntry[]>([]);
+
+  const [locationFetchFilters, setLocationFetchFilters] = useState<any | null>(null);
+  const [brandFetchFilters, setBrandFetchFilters] = useState<any | null>(null);
+  const [userFetchFilters, setUserFetchFilters] = useState<any | null>(null);
+
+  const [locationHasMore, setLocationHasMore] = useState(false);
+  const [brandHasMore, setBrandHasMore] = useState(false);
+  const [userHasMore, setUserHasMore] = useState(false);
+
+  const [loadingMore, setLoadingMore] = useState<{ location: boolean; brand: boolean; user: boolean }>({
+    location: false,
+    brand: false,
+    user: false,
+  });
+
   const [brandScope, setBrandScope] = useState<'city' | 'state' | 'country' | 'global'>('city');
   const [loading, setLoading] = useState<boolean>(false);
+
+  const [lastRefreshAt, setLastRefreshAt] = useState<number>(0);
+  const refreshCooldownMs = 15_000;
+  const canRefresh = Date.now() - lastRefreshAt >= refreshCooldownMs;
+
+  const [refreshNonce, setRefreshNonce] = useState(0);
 
   // Computed loading state for full page
   const isPageLoading = isInitializing || loading || cropsLoading;
@@ -145,17 +170,37 @@ const LeaderboardPage: React.FC = () => {
           state: location.state || undefined,
           city: location.city || undefined,
           crop,
+          limit: pageSize,
+          offset: 0,
         };
         let scope: 'city' | 'state' | 'country' | 'global' = 'city';
 
+        const fetchLoc = (f: any) =>
+          queryClient.fetchQuery({
+            queryKey: ['leaderboard', 'location', f],
+            queryFn: () => fetchLocationLeaderboard(f),
+            staleTime: 5 * 60 * 1000,
+          });
+
+        const fetchBrand = (f: any) =>
+          queryClient.fetchQuery({
+            queryKey: ['leaderboard', 'brand', f],
+            queryFn: () => fetchBrandLeaderboard(f),
+            staleTime: 5 * 60 * 1000,
+          });
+
+        const fetchUsers = (f: any) =>
+          queryClient.fetchQuery({
+            queryKey: ['leaderboard', 'user', f],
+            queryFn: () => fetchUserLeaderboard(f),
+            staleTime: 5 * 60 * 1000,
+          });
+
         // Fetch location and brand data with regional filters
-        let [loc, brand] = await Promise.all([
-          fetchLocationLeaderboard(filters),
-          fetchBrandLeaderboard(filters),
-        ]);
+        let [loc, brand] = await Promise.all([fetchLoc(filters), fetchBrand(filters)]);
 
         // Always fetch users globally (ignore location filters)
-        let users = await fetchUserLeaderboard({ crop: filters.crop || undefined });
+        let users = await fetchUsers({ crop: filters.crop || undefined, limit: pageSize, offset: 0 });
 
         // fallback: broaden scope if locations and brands have nothing found
         if (
@@ -166,12 +211,10 @@ const LeaderboardPage: React.FC = () => {
         ) {
           filters = { ...filters, city: undefined };
           scope = 'state';
-          const [newLoc, newBrand] = await Promise.all([
-            fetchLocationLeaderboard(filters),
-            fetchBrandLeaderboard(filters),
-          ]);
+          const [newLoc, newBrand] = await Promise.all([fetchLoc(filters), fetchBrand(filters)]);
           loc = newLoc;
           brand = newBrand;
+
           // Keep global users (no need to refetch)
           if (loc.length || brand.length) {
             setDataScopeMessage(
@@ -188,12 +231,10 @@ const LeaderboardPage: React.FC = () => {
         ) {
           filters = { ...filters, state: undefined };
           scope = 'country';
-          const [newLoc, newBrand] = await Promise.all([
-            fetchLocationLeaderboard(filters),
-            fetchBrandLeaderboard(filters),
-          ]);
+          const [newLoc, newBrand] = await Promise.all([fetchLoc(filters), fetchBrand(filters)]);
           loc = newLoc;
           brand = newBrand;
+
           // Keep global users (no need to refetch)
           if (loc.length || brand.length) {
             setDataScopeMessage(
@@ -203,14 +244,12 @@ const LeaderboardPage: React.FC = () => {
         }
 
         if (mounted && !loc.length && !brand.length) {
-          filters = { country: undefined, state: undefined, city: undefined, crop };
+          filters = { country: undefined, state: undefined, city: undefined, crop, limit: pageSize, offset: 0 };
           scope = 'global';
-          const [newLoc, newBrand] = await Promise.all([
-            fetchLocationLeaderboard(filters),
-            fetchBrandLeaderboard(filters),
-          ]);
+          const [newLoc, newBrand] = await Promise.all([fetchLoc(filters), fetchBrand(filters)]);
           loc = newLoc;
           brand = newBrand;
+
           // Keep global users (no need to refetch)
           if (loc.length || brand.length) {
             setDataScopeMessage("Showing global data (no regional data found)");
@@ -222,6 +261,14 @@ const LeaderboardPage: React.FC = () => {
           setBrandData(brand || []);
           setUserData(users || []);
           setBrandScope(scope);
+
+          setLocationFetchFilters(filters);
+          setBrandFetchFilters(filters);
+          setUserFetchFilters({ crop: filters.crop || undefined, limit: pageSize, offset: 0 });
+
+          setLocationHasMore(Array.isArray(loc) && loc.length === pageSize);
+          setBrandHasMore(Array.isArray(brand) && brand.length === pageSize);
+          setUserHasMore(Array.isArray(users) && users.length === pageSize);
         }
       } catch (err) {
         console.error("Error loading leaderboards:", err);
@@ -234,23 +281,83 @@ const LeaderboardPage: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, [location, crop, isInitializing]);
+  }, [location, crop, isInitializing, refreshNonce]);
+
+  const handleRefresh = async () => {
+    if (!canRefresh) return;
+    setLastRefreshAt(Date.now());
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['leaderboard'] }),
+    ]);
+
+    setRefreshNonce((n) => n + 1);
+  };
+
+  const loadMore = async (type: 'location' | 'brand' | 'user') => {
+    const filters = type === 'location'
+      ? locationFetchFilters
+      : type === 'brand'
+        ? brandFetchFilters
+        : userFetchFilters;
+
+    if (!filters) return;
+
+    setLoadingMore((s) => ({ ...s, [type]: true }));
+    try {
+      const currentLen = type === 'location'
+        ? locationData.length
+        : type === 'brand'
+          ? brandData.length
+          : userData.length;
+
+      const nextFilters = { ...filters, limit: pageSize, offset: currentLen };
+
+      const queryKey = ['leaderboard', type, nextFilters];
+      const queryFn =
+        type === 'location'
+          ? () => fetchLocationLeaderboard(nextFilters)
+          : type === 'brand'
+            ? () => fetchBrandLeaderboard(nextFilters)
+            : () => fetchUserLeaderboard(nextFilters);
+
+      const nextPage = await queryClient.fetchQuery({
+        queryKey,
+        queryFn,
+        staleTime: 5 * 60 * 1000,
+      });
+
+      const nextArr = Array.isArray(nextPage) ? nextPage : [];
+
+      if (type === 'location') {
+        setLocationData((prev) => [...prev, ...nextArr]);
+        setLocationHasMore(nextArr.length === pageSize);
+      } else if (type === 'brand') {
+        setBrandData((prev) => [...prev, ...nextArr]);
+        setBrandHasMore(nextArr.length === pageSize);
+      } else {
+        setUserData((prev) => [...prev, ...nextArr]);
+        setUserHasMore(nextArr.length === pageSize);
+      }
+    } finally {
+      setLoadingMore((s) => ({ ...s, [type]: false }));
+    }
+  };
 
   const handleNavigate = (
     entry: any,
     leaderboardType: 'location' | 'brand' | 'user'
   ) => {
     if (leaderboardType === "user") return; // Users not clickable
-    
+
     console.log('🔍 Navigation entry:', entry, 'type:', leaderboardType);
-    
+
     const filters: Record<string, string> = {};
-    
+
     if (leaderboardType === 'location') {
       // Location leaderboard returns: location_label, location_name, city, state, country
       const locationName = entry.location_label || entry.location_name;
       if (locationName) filters.location = locationName;
-      
+
       // Use the geographic data from the leaderboard entry itself
       if (entry.city) filters.city = entry.city;
       if (entry.state) filters.state = entry.state;
@@ -261,7 +368,7 @@ const LeaderboardPage: React.FC = () => {
       const brandName = entry.brand_label || entry.brand_name;
       if (brandName) filters.brand = brandName;
       if (crop) filters.crop = crop;
-      
+
       // Scope-aware geographic filters based on the breadth we fetched
       switch (brandScope) {
         case 'city':
@@ -282,13 +389,13 @@ const LeaderboardPage: React.FC = () => {
           break;
       }
     }
-    
+
     console.log('🎯 Navigation filters being set:', filters);
-    
+
     const params = new URLSearchParams(
       Object.entries(filters).filter(([_, v]) => v && v.trim() !== '')
     ).toString();
-    
+
     console.log('🔗 Navigating to URL with params:', params);
     navigate(`/data?${params}`);
   };
@@ -296,7 +403,9 @@ const LeaderboardPage: React.FC = () => {
   const renderLeaderboardCard = (
     title: string,
     data: LeaderboardEntry[],
-    labelKey: string
+    labelKey: string,
+    loadMoreType: 'location' | 'brand' | 'user',
+    hasMore: boolean
   ) => {
     return (
       <Card className="w-full shadow-md rounded-lg overflow-hidden">
@@ -362,68 +471,80 @@ const LeaderboardPage: React.FC = () => {
                     const isTie = rankCounts[rank] > 1;
 
                     // Use neutral color for user rankings, normalized color for others
-                    const { bgClass } = labelKey === "user" 
+                    const { bgClass } = labelKey === "user"
                       ? { bgClass: "bg-gray-700" }
                       : rankColorFromNormalized(normalizedScore);
 
-                  return (
-                    <div
-                      key={(entry as any)[`${labelKey}_id`] ?? label ?? idx}
-                      onClick={() =>
-                        handleNavigate(
-                          entry,
-                          labelKey as 'location' | 'brand' | 'user'
-                        )
-                      }
-                      className={`grid grid-cols-3 items-center px-4 py-2 border-b last:border-0 odd:bg-white even:bg-gray-50 hover:bg-gray-100 text-sm ${
-                        labelKey !== "user" ? "cursor-pointer" : ""
-                      }`}
-                    >
-                      {/* Left: Label + details */}
-                      <div className="flex flex-col min-w-0">
-                        <div className="font-medium">{label}</div>
-                        {labelKey === "location" && (
-                          <div className="text-xs text-gray-500">
-                            {(entry as any).city
-                              ? `${(entry as any).city}${
-                                  (entry as any).state
-                                    ? `, ${(entry as any).state}`
-                                    : ""
-                                }`
-                              : ""}
+                    return (
+                      <div
+                        key={(entry as any)[`${labelKey}_id`] ?? label ?? idx}
+                        onClick={() =>
+                          handleNavigate(
+                            entry,
+                            labelKey as 'location' | 'brand' | 'user'
+                          )
+                        }
+                        className={`grid grid-cols-3 items-center px-4 py-2 border-b last:border-0 odd:bg-white even:bg-gray-50 hover:bg-gray-100 text-sm ${
+                          labelKey !== "user" ? "cursor-pointer" : ""
+                        }`}
+                      >
+                        {/* Left: Label + details */}
+                        <div className="flex flex-col min-w-0">
+                          <div className="font-medium">{label}</div>
+                          {labelKey === "location" && (
+                            <div className="text-xs text-gray-500">
+                              {(entry as any).city
+                                ? `${(entry as any).city}${
+                                    (entry as any).state
+                                      ? `, ${(entry as any).state}`
+                                      : ""
+                                  }`
+                                : ""}
+                            </div>
+                          )}
+                          <div className="mt-1 text-xs text-gray-500 italic">
+                            {entry.submission_count ?? 0} submissions
                           </div>
-                        )}
-                        <div className="mt-1 text-xs text-gray-500 italic">
-                          {entry.submission_count ?? 0} submissions
+                        </div>
+
+                        {/* Middle: Score or Submissions */}
+                        <div className="text-center text-gray-800 text-sm">
+                          {labelKey === "user"
+                            ? entry.submission_count ?? 0
+                            : Number(normalizedScore ?? 0).toFixed(2)}
+                        </div>
+
+                        {/* Right: Rank */}
+                        <div className="flex flex-col items-center">
+                          <span
+                            className={`px-3 py-1 text-sm font-semibold rounded-full text-white ${bgClass}`}
+                          >
+                            {rank}
+                          </span>
+                          {isTie && (
+                            <span className="text-xs text-gray-500 mt-1">
+                              (tie)
+                            </span>
+                          )}
                         </div>
                       </div>
-
-                      {/* Middle: Score or Submissions */}
-                      <div className="text-center text-gray-800 text-sm">
-                        {labelKey === "user" 
-                          ? entry.submission_count ?? 0 
-                          : Number(normalizedScore ?? 0).toFixed(2)
-                        }
-                      </div>
-
-                      {/* Right: Rank */}
-                      <div className="flex flex-col items-center">
-                        <span
-                          className={`px-3 py-1 text-sm font-semibold rounded-full text-white ${bgClass}`}
-                        >
-                          {rank}
-                        </span>
-                        {isTie && (
-                          <span className="text-xs text-gray-500 mt-1">
-                            (tie)
-                          </span>
-                        )}
-                      </div>
-                    </div>
                     );
                   });
                 })()}
               </div>
+
+              {hasMore && (
+                <div className="p-3 border-t bg-white">
+                  <button
+                    onClick={() => loadMore(loadMoreType)}
+                    disabled={loadingMore[loadMoreType]}
+                    className="w-full flex items-center justify-center gap-2 text-sm text-blue-600 hover:underline disabled:text-gray-400"
+                  >
+                    <span>{loadingMore[loadMoreType] ? 'Loading…' : 'Load more'}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
@@ -455,12 +576,20 @@ const LeaderboardPage: React.FC = () => {
           <aside className="w-full md:w-72 border-r md:pr-4">
             <h2 className="text-lg font-semibold mb-4">Filters</h2>
             <div className="space-y-4">
+              <button
+                onClick={handleRefresh}
+                disabled={!canRefresh}
+                className={`text-sm ${canRefresh ? 'text-blue-600 hover:underline' : 'text-gray-400'} text-left`}
+              >
+                Refresh Leaderboards
+              </button>
               <LocationSelector
                 value={location}
                 onChange={setLocation}
                 required={false}
                 showAutoDetect={false}
               />
+
               <div>
                 <label className="block text-sm font-medium mb-2">Crop</label>
                 <select
@@ -512,9 +641,9 @@ const LeaderboardPage: React.FC = () => {
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {renderLeaderboardCard("Top Locations", locationData, "location")}
-              {renderLeaderboardCard("Top Brands", brandData, "brand")}
-              {renderLeaderboardCard("Most Submissions", userData, "user")}
+              {renderLeaderboardCard("Top Locations", locationData, "location", 'location', locationHasMore)}
+              {renderLeaderboardCard("Top Brands", brandData, "brand", 'brand', brandHasMore)}
+              {renderLeaderboardCard("Most Submissions", userData, "user", 'user', userHasMore)}
             </div>
           </section>
         </div>

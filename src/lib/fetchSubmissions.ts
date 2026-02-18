@@ -113,8 +113,74 @@ function formatSubmissionData(item: SupabaseSubmissionRow): BrixDataPoint {
   };
 }
 
+export async function fetchMySubmissions(userId: string): Promise<BrixDataPoint[]> {
+  const { data, error } = await supabase
+    .from('submissions')
+    .select(SUBMISSIONS_SELECT_QUERY_STRING)
+    .eq('user_id', userId)
+    .order('assessment_date', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching user submissions:', error);
+    return [];
+  }
+
+  const rows = Array.isArray(data) ? data : [];
+  return rows.map((row) => formatSubmissionData(row as SupabaseSubmissionRow));
+}
+
 // SAFE public fetch for the map: reads from the view and rehydrates labels/coords client-side
 export async function fetchFormattedSubmissions(): Promise<BrixDataPoint[]> {
+  // Prefer a single joined public view if present (reduces DB calls drastically).
+  try {
+    const { data: joinedRows, error: joinedErr } = await (supabase as any)
+      .from('public_submission_details' as any)
+      .select('*')
+      .order('assessment_date', { ascending: false });
+
+    if (!joinedErr && Array.isArray(joinedRows)) {
+      return joinedRows.map((r: any) => ({
+        id: r.id,
+        brixLevel: r.brix_value,
+        verified: !!r.verified,
+        verifiedAt: r.verified_at ?? null,
+        variety: r.crop_variety ?? '',
+        cropType: r.crop_name ?? 'Unknown',
+        category: r.category ?? '',
+        latitude: r.latitude ?? null,
+        longitude: r.longitude ?? null,
+        placeName: r.place_label ?? '',
+        locationName: r.location_label ?? r.location_name ?? '',
+        streetAddress: r.street_address ?? '',
+        city: r.city ?? '',
+        state: r.state ?? '',
+        country: r.country ?? '',
+        brandName: r.brand_label ?? r.brand_name ?? '',
+        submittedBy: '',
+        userId: undefined,
+        verifiedBy: '',
+        submittedAt: r.assessment_date,
+        outlier_notes: r.outlier_notes ?? '',
+        purchaseDate: r.purchase_date ?? null,
+        images: [],
+        poorBrix: r.poor_brix ?? null,
+        averageBrix: r.average_brix ?? null,
+        goodBrix: r.good_brix ?? null,
+        excellentBrix: r.excellent_brix ?? null,
+        name_normalized: r.crop_label ?? r.crop_name ?? 'Unknown',
+        locationId: r.location_id ?? '',
+        cropId: r.crop_id ?? '',
+        placeId: r.place_id ?? '',
+        brandId: r.brand_id ?? '',
+        verifiedByUserId: '',
+        cropLabel: r.crop_label ?? null,
+        brandLabel: r.brand_label ?? null,
+      }));
+    }
+  } catch {
+    // fall through to legacy multi-query path
+  }
+
   // 1) Get safe rows (no PII) from public view
   const { data: rows, error } = await supabase
     .from('public_submissions')

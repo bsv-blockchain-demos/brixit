@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { fetchBrixByCrop } from '../lib/fetchBrixByCrop';
-import { fetchCropTypes } from '../lib/fetchCropTypes';
+import { supabase } from '../integrations/supabase/client';
 import { BrixThresholds } from '../lib/getBrixQuality';
 
 type CropThresholdCache = Record<string, BrixThresholds>;
@@ -21,35 +20,63 @@ export const CropThresholdProvider: React.FC<CropThresholdProviderProps> = ({ ch
   const [cache, setCache] = useState<CropThresholdCache>({});
   const [loading, setLoading] = useState(true);
 
+  const storageKey = 'crop_threshold_cache_v1';
+  const ttlMs = 60 * 60 * 1000;
+
+  const readFromStorage = (): CropThresholdCache | null => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as { cachedAt: number; cache: CropThresholdCache };
+      if (!parsed?.cachedAt || !parsed?.cache) return null;
+      if (Date.now() - parsed.cachedAt > ttlMs) return null;
+      return parsed.cache;
+    } catch {
+      return null;
+    }
+  };
+
+  const writeToStorage = (next: CropThresholdCache) => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({ cachedAt: Date.now(), cache: next }));
+    } catch {
+      // ignore storage errors
+    }
+  };
+
   const reloadCache = async () => {
     setLoading(true);
 
     try {
-      // Fetch crop types dynamically from DB
-      const cropTypes = await fetchCropTypes();
-      console.log('🌾 CropThresholdContext: Fetched crop types:', cropTypes.map(c => c.name));
+      const fromStorage = readFromStorage();
+      if (fromStorage) {
+        setCache(fromStorage);
+        return;
+      }
 
-      const newCache: CropThresholdCache = {};
+      const { data, error } = await supabase
+        .from('crops')
+        .select('name, poor_brix, average_brix, good_brix, excellent_brix');
 
-      await Promise.all(
-        cropTypes.map(async (cropType) => {
-          try {
-            const normalizedCropName = cropType.name.toLowerCase().trim();
-            const cropData = await fetchBrixByCrop(normalizedCropName);
-            if (cropData?.brixLevels) {
-              newCache[normalizedCropName] = cropData.brixLevels;
-              console.log(`🌾 CropThresholdContext: Cached thresholds for ${normalizedCropName}:`, cropData.brixLevels);
-            } else {
-              console.warn(`🌾 CropThresholdContext: No brix levels found for ${normalizedCropName}`);
-            }
-          } catch (error) {
-            console.error(`🌾 CropThresholdContext: Failed to fetch brix for ${cropType.name}`, error);
-          }
-        })
-      );
+      if (error) {
+        console.error('🌾 CropThresholdContext: Error fetching crop thresholds:', error);
+        return;
+      }
 
-      console.log('🌾 CropThresholdContext: Final cache keys:', Object.keys(newCache));
-      setCache(newCache);
+      const next: CropThresholdCache = {};
+      for (const row of data || []) {
+        const normalizedCropName = (row as any).name?.toLowerCase?.().trim?.();
+        if (!normalizedCropName) continue;
+        next[normalizedCropName] = {
+          poor: Number((row as any).poor_brix) || 0,
+          average: Number((row as any).average_brix) || 0,
+          good: Number((row as any).good_brix) || 0,
+          excellent: Number((row as any).excellent_brix) || 0,
+        };
+      }
+
+      setCache(next);
+      writeToStorage(next);
     } catch (error) {
       console.error('🌾 CropThresholdContext: Error reloading cache:', error);
     } finally {

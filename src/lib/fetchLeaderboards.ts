@@ -1,7 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-import { getSupabaseUrl, getPublishableKey } from './utils';
-
-const supabase = createClient(getSupabaseUrl(), getPublishableKey());
+import { supabase } from '../integrations/supabase/client';
 
 export type Filter = {
   city?: string;
@@ -10,6 +7,8 @@ export type Filter = {
   crop?: string;
   locationName?: string;
   placeId?: string;
+  limit?: number;
+  offset?: number;
 };
 
 export interface LeaderboardEntry {
@@ -51,10 +50,12 @@ async function fetchLeaderboard<R extends LeaderboardEntry>(
     state_filter: sanitizeFilter(state),
     city_filter: sanitizeFilter(city),
     crop_filter: sanitizeFilter(crop),
+    limit_count: typeof filters.limit === 'number' ? filters.limit : 50,
+    offset_count: typeof filters.offset === 'number' ? filters.offset : 0,
   };
 
   try {
-    const { data, error } = await supabase.rpc(rpcName, params);
+    const { data, error } = await (supabase as any).rpc(rpcName as any, params as any);
     
     if (error) {
       console.error(`❌ Error fetching ${rpcName}:`, error);

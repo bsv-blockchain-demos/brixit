@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { BrixDataPoint } from '../../types';
-import { fetchFormattedSubmissions } from '../../lib/fetchSubmissions';
+import { useFormattedSubmissionsQuery } from '../../hooks/useSubmissions';
 import { useFilters } from '../../contexts/FilterContext';
 import { applyFilters } from '../../lib/filterUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -15,6 +15,8 @@ import { useCropThresholds } from '../../contexts/CropThresholdContext';
 import { getBrixColor, computeNormalizedScore, rankColorFromNormalized } from '../../lib/getBrixColor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
+
+import { useQueryClient } from '@tanstack/react-query';
 
 // Leaderboard API imports
 import {
@@ -47,6 +49,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   onNearMeHandled,
 }) => {
   const location = useLocation();
+  const queryClient = useQueryClient();
   const { highlightedPoint } = (location.state || {}) as any;
   const { filters, isAdmin } = useFilters();
 
@@ -57,6 +60,8 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [allData, setAllData] = useState<BrixDataPoint[]>([]);
   const [filteredData, setFilteredData] = useState<BrixDataPoint[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<BrixDataPoint | null>(null);
+
+  const submissionsQuery = useFormattedSubmissionsQuery();
 
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [groupBy, setGroupBy] = useState<'none' | 'crop' | 'brand'>('crop');
@@ -94,13 +99,14 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   // Fetch submissions once
   useEffect(() => {
-    fetchFormattedSubmissions()
-      .then((data) => setAllData(data || []))
-      .catch((error) => {
-        console.error('Error fetching submissions:', error);
-        setAllData([]);
-      });
-  }, []);
+    if (submissionsQuery.data) {
+      setAllData(submissionsQuery.data || []);
+    }
+    if (submissionsQuery.error) {
+      console.error('Error fetching submissions:', submissionsQuery.error);
+      setAllData([]);
+    }
+  }, [submissionsQuery.data, submissionsQuery.error]);
 
   // When a point is selected, ensure group and entry state are set
   useEffect(() => {
@@ -388,13 +394,34 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       city: selectedPoint.city ?? (selectedPoint as any).city_name ?? undefined,
       state: selectedPoint.state ?? undefined,
       country: selectedPoint.country ?? undefined,
+      limit: 25,
+      offset: 0,
     };
 
-    Promise.all([
-      fetchLocationLeaderboard(localFilters),
-      fetchCropLeaderboard(localFilters),
-      fetchBrandLeaderboard(localFilters),
-    ])
+    const staleTime = 5 * 60 * 1000;
+
+    const getLoc = () =>
+      queryClient.fetchQuery({
+        queryKey: ['leaderboard', 'location', 'map', localFilters],
+        queryFn: () => fetchLocationLeaderboard(localFilters),
+        staleTime,
+      });
+
+    const getCrop = () =>
+      queryClient.fetchQuery({
+        queryKey: ['leaderboard', 'crop', 'map', localFilters],
+        queryFn: () => fetchCropLeaderboard(localFilters),
+        staleTime,
+      });
+
+    const getBrand = () =>
+      queryClient.fetchQuery({
+        queryKey: ['leaderboard', 'brand', 'map', localFilters],
+        queryFn: () => fetchBrandLeaderboard(localFilters),
+        staleTime,
+      });
+
+    Promise.all([getLoc(), getCrop(), getBrand()])
       .then(([loc, crop, brand]) => {
         // adapt returned shape into LeaderboardEntry[] if necessary
         setLocationLeaderboard((loc as any) || []);
@@ -408,7 +435,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         setBrandLeaderboard([]);
       })
       .finally(() => setIsLoading(false));
-  }, [selectedPoint, filters]);
+  }, [selectedPoint, filters, queryClient]);
 
   // Render helpers (kept your original markup and logic)
   const renderSubmissionItem = (sub: BrixDataPoint, key: string) => {

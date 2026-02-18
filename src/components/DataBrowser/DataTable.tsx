@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { BrixDataPoint, MapFilter } from '../../types';
+
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -18,9 +19,11 @@ import {
   ChevronRight,
   Check, ChevronDown, X
 } from 'lucide-react';
-import { fetchFormattedSubmissions } from '../../lib/fetchSubmissions';
+import { useQueryClient } from '@tanstack/react-query';
+import { useFormattedSubmissionsQuery } from '../../hooks/useSubmissions';
 import { useFilters, DEFAULT_MAP_FILTERS } from '../../contexts/FilterContext';
 import { applyFilters, getFilterSummary } from '../../lib/filterUtils';
+
 import SubmissionTableRow from '../common/SubmissionTableRow';
 import { useAuth } from '../../contexts/AuthContext';
 import { Command, CommandInput, CommandItem, CommandList, CommandEmpty } from "@/components/ui/command";
@@ -113,6 +116,7 @@ const BrixRangeSlider = ({
 const DataTable: React.FC = () => {
   const { filters, setFilters, isAdmin, setFilteredCount } = useFilters();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [urlFiltersApplied, setUrlFiltersApplied] = useState(false);
@@ -124,10 +128,8 @@ const DataTable: React.FC = () => {
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
 
   // State for data submissions
-  const [data, setData] = useState<BrixDataPoint[]>([]);
-  // Local loading state for fetching submissions and categories
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const submissionsQuery = useFormattedSubmissionsQuery();
+  const data = submissionsQuery.data || [];
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -169,22 +171,12 @@ const DataTable: React.FC = () => {
   // Use a single useEffect to fetch submissions and categories
   useEffect(() => {
     const loadData = async () => {
-      setLoading(true);
       try {
-        const [submissions, categories] = await Promise.all([
-          fetchFormattedSubmissions(),
-          fetchCropCategories()
-        ]);
-        setData(submissions);
+        const categories = await fetchCropCategories();
         setAvailableCategories(categories);
-        setError(null);
       } catch (err) {
         console.error('Error fetching data:', err);
-        setError('Failed to load data.');
-        setData([]);
         setAvailableCategories([]);
-      } finally {
-        setLoading(false);
       }
     };
     loadData();
@@ -321,26 +313,30 @@ const DataTable: React.FC = () => {
   };
 
   const handleUpdateSuccess = (updatedData: BrixDataPoint) => {
-    setData(currentData =>
-      currentData.map(item => (item.id === updatedData.id ? updatedData : item))
-    );
+    queryClient.setQueryData(['submissions', 'public_formatted'], (old: any) => {
+      if (!Array.isArray(old)) return old;
+      return old.map((item) => (item?.id === updatedData.id ? updatedData : item));
+    });
     setSelectedDataPoint(updatedData);
   };
 
   const handleDeleteSuccess = (deletedId: string) => {
-    setData(currentData => currentData.filter(dp => dp.id !== deletedId));
+    queryClient.setQueryData(['submissions', 'public_formatted'], (old: any) => {
+      if (!Array.isArray(old)) return old;
+      return old.filter((dp) => dp?.id !== deletedId);
+    });
     handleCloseModal();
   };
 
-  if (loading || isLoadingStaticData) {
+  if (submissionsQuery.isLoading || isLoadingStaticData) {
     return (
       <div className="text-center py-12 text-gray-600">Loading data...</div>
     );
   }
 
-  if (error) {
+  if (submissionsQuery.error) {
     return (
-      <div className="text-center py-12 text-red-600">Error: {error}</div>
+      <div className="text-center py-12 text-red-600">Error: Failed to load data.</div>
     );
   }
 
@@ -689,7 +685,7 @@ const DataTable: React.FC = () => {
                       <SubmissionTableRow
                         key={submission.id}
                         submission={submission}
-                        onDelete={handleDeleteSuccess}
+                        onDelete={() => handleOpenModal(submission)}
                         isOwner={isOwner}
                         canDeleteByOwner={canDeleteByOwner}
                         onOpenModal={handleOpenModal}
