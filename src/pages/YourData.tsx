@@ -1,20 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Header from '../components/Layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Plus, Beaker, CheckCircle, MapPin, Trash2, Loader2, AlertCircle, Lock } from 'lucide-react';
+import { Plus, Beaker, CheckCircle, MapPin, AlertCircle, Lock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { deleteSubmission } from '../lib/fetchSubmissions';
-import { useMySubmissionsQuery } from '../hooks/useSubmissions';
+import { fetchMySubmissionsPage } from '../lib/fetchSubmissions';
+import { useMySubmissionsCountQuery, useMySubmissionsCropIdsQuery, useMySubmissionsPageQuery } from '../hooks/useSubmissions';
 
 import SubmissionTableRow from '../components/common/SubmissionTableRow';
 import { BrixDataPoint } from '../types';
 import { useToast } from '../hooks/use-toast';
 import DataPointDetailModal from '../components/common/DataPointDetailModal';
-import { useStaticData } from '../hooks/useStaticData'; // New Import
+import { useStaticData } from '../hooks/useStaticData';
+import { useQueryClient } from '@tanstack/react-query';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +33,7 @@ const YourData: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const canSubmit = user?.role === 'admin' || user?.role === 'contributor';
   const [isSubmitInfoOpen, setIsSubmitInfoOpen] = useState(false);
@@ -37,50 +41,113 @@ const YourData: React.FC = () => {
   // Use the useStaticData hook to handle loading state
   const { isLoading: isLoadingStaticData } = useStaticData();
 
-  const submissionsQuery = useMySubmissionsQuery(user?.id);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const chunkSize = 50;
 
-  const [userSubmissions, setUserSubmissions] = useState<BrixDataPoint[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Calculate which chunk we're on and set offset for db query
+  const chunkIndex = Math.floor(((currentPage - 1) * itemsPerPage) / chunkSize);
+  const chunkOffset = chunkIndex * chunkSize;
+  const inChunkStart = ((currentPage - 1) * itemsPerPage) - chunkOffset;
+
+  const submissionsCountQuery = useMySubmissionsCountQuery(
+    user?.id ? { userId: user.id } : undefined
+  );
+  const verifiedCountQuery = useMySubmissionsCountQuery(
+    user?.id ? { userId: user.id, verified: true } : undefined
+  );
+
+  const submissionsPageQuery = useMySubmissionsPageQuery(
+    user?.id
+      ? {
+          userId: user.id,
+          limit: chunkSize,
+          offset: chunkOffset,
+          sortBy: 'assessment_date',
+          sortOrder: 'desc',
+        }
+      : undefined
+  );
+
+  const cropIdsQuery = useMySubmissionsCropIdsQuery(user?.id);
+
+  const userSubmissions = submissionsPageQuery.data || [];
+  const totalCount = submissionsCountQuery.data ?? 0;
+  const verifiedCount = verifiedCountQuery.data ?? 0;
+  const uniqueCropTypesCount = useMemo(() => {
+    const ids = cropIdsQuery.data || [];
+    return new Set(ids).size;
+  }, [cropIdsQuery.data]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  // Determine if we should prefetch the next chunk
+  const shouldPrefetchNextChunk =
+    // Is there any data?
+    totalCount > 0 &&
+    // Are we at the end of a chunk?
+    (currentPage * itemsPerPage) % chunkSize === 0 &&
+    // Is there more data to fetch?
+    chunkOffset + chunkSize < totalCount;
+
+  const nextPageQuery = useMemo(() => {
+    return user?.id
+      ? {
+          userId: user.id,
+          limit: chunkSize,
+          offset: chunkOffset + chunkSize,
+          sortBy: 'assessment_date' as const,
+          sortOrder: 'desc' as const,
+        }
+      : undefined;
+  }, [chunkOffset, user?.id]);
+
+  useEffect(() => {
+    if (!shouldPrefetchNextChunk || !nextPageQuery) return;
+
+    queryClient.prefetchQuery({
+      queryKey: ['submissions', 'mine', 'page', nextPageQuery],
+      queryFn: () => fetchMySubmissionsPage(nextPageQuery),
+      staleTime: 60 * 60 * 1000,
+    });
+  }, [nextPageQuery, queryClient, shouldPrefetchNextChunk]);
+
+  const currentItems = useMemo(() => {
+    const endIndex = inChunkStart + itemsPerPage;
+    return userSubmissions.slice(inChunkStart, endIndex);
+  }, [userSubmissions, inChunkStart]);
 
   // New state for the modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDataPoint, setSelectedDataPoint] = useState<BrixDataPoint | null>(null);
 
-  useEffect(() => {
-    if (!user?.id) {
-      setUserSubmissions([]);
-      setLoading(false);
-      return;
-    }
+  const isLoading =
+    submissionsPageQuery.isLoading ||
+    submissionsCountQuery.isLoading ||
+    verifiedCountQuery.isLoading ||
+    cropIdsQuery.isLoading;
 
-    if (submissionsQuery.isLoading) {
-      setLoading(true);
-      return;
-    }
-
-    if (submissionsQuery.error) {
-      setLoading(false);
-      setUserSubmissions([]);
-      toast({ title: 'Error loading your data', description: 'Please try again later.', variant: 'destructive' });
-      return;
-    }
-
-    const submissions = submissionsQuery.data || [];
-    setUserSubmissions(submissions);
-    setLoading(false);
-  }, [user?.id, submissionsQuery.data, submissionsQuery.isLoading, submissionsQuery.error, toast]);
+  const isError =
+    submissionsPageQuery.error ||
+    submissionsCountQuery.error ||
+    verifiedCountQuery.error ||
+    cropIdsQuery.error;
 
   const handleAttemptSubmit = () => {
     setIsSubmitInfoOpen(true);
   };
 
-  // Handler to open the modal with a specific data point
   const handleOpenModal = (dataPoint: BrixDataPoint) => {
     setSelectedDataPoint(dataPoint);
     setIsModalOpen(true);
   };
 
-  // Handler to close the modal
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedDataPoint(null);
@@ -92,8 +159,7 @@ const YourData: React.FC = () => {
       const success = await deleteSubmission(id);
       if (success) {
         toast({ title: 'Submission deleted successfully!', variant: 'default' });
-        // Update local state after successful deletion
-        setUserSubmissions(prev => prev.filter(sub => sub.id !== id));
+        queryClient.invalidateQueries({ queryKey: ['submissions', 'mine'] });
         handleCloseModal(); // Close the modal
       } else {
         toast({ title: 'Failed to delete submission.', description: 'Please try again.', variant: 'destructive' });
@@ -126,12 +192,23 @@ const YourData: React.FC = () => {
   }
 
   // Combined loading state check
-  if (loading || isLoadingStaticData) {
+  if (isLoading || isLoadingStaticData) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
           <p className="text-gray-600">Loading your submissions...</p>
+        </main>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+          <p className="text-red-600">Error: Failed to load your submissions.</p>
         </main>
       </div>
     );
@@ -180,10 +257,10 @@ const YourData: React.FC = () => {
           <TabsContent value="submissions">
             <Card>
               <CardHeader>
-                <CardTitle>Submitted Measurements ({userSubmissions.length})</CardTitle>
+                <CardTitle>Submitted Measurements ({totalCount})</CardTitle>
               </CardHeader>
               <CardContent>
-                {userSubmissions.length === 0 ? (
+                {totalCount === 0 ? (
                   <div className="text-center py-12">
                     {canSubmit ? (
                       <>
@@ -231,7 +308,7 @@ const YourData: React.FC = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {userSubmissions.map((submission) => {
+                        {currentItems.map((submission) => {
                           const isOwner = user?.id === submission.userId;
                           const canDeleteByOwner = (isOwner && !submission.verified);
                           return (
@@ -247,6 +324,26 @@ const YourData: React.FC = () => {
                         })}
                       </TableBody>
                     </Table>
+
+                    <div className="mt-6 flex items-center justify-between">
+                      <Button
+                        variant="outline"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm text-gray-700">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Next
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -260,7 +357,7 @@ const YourData: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <Beaker className="w-8 h-8 text-blue-600" />
                     <div>
-                      <p className="text-2xl font-bold">{userSubmissions.length}</p>
+                      <p className="text-2xl font-bold">{totalCount}</p>
                       <p className="text-sm text-gray-600">Total Submissions</p>
                     </div>
                   </div>
@@ -273,7 +370,7 @@ const YourData: React.FC = () => {
                     <CheckCircle className="w-8 h-8 text-green-600" />
                     <div>
                       <p className="text-2xl font-bold">
-                        {userSubmissions.filter(s => s.verified).length}
+                        {verifiedCount}
                       </p>
                       <p className="text-sm text-gray-600">Verified Measurements</p>
                     </div>
@@ -287,7 +384,7 @@ const YourData: React.FC = () => {
                     <MapPin className="w-8 h-8 text-purple-600" />
                     <div>
                       <p className="text-2xl font-bold">
-                        {new Set(userSubmissions.map(s => s.cropType)).size}
+                        {uniqueCropTypesCount}
                       </p>
                       <p className="text-sm text-gray-600">Unique Crop Types</p>
                     </div>

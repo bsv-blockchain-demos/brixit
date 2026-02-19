@@ -1,26 +1,13 @@
-import { getSupabaseUrl, getPublishableKey } from '@/lib/utils';
-
 export async function getMapboxToken(): Promise<string | null> {
-  try {
-    const supabaseUrl = getSupabaseUrl();
-    const publishKey = getPublishableKey();
-    const response = await fetch(`${supabaseUrl}/functions/v1/mapbox-token`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${publishKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
+  const token =
+    import.meta.env.VITE_MAPBOX_ACCESS_TOKEN ||
+    import.meta.env.VITE_MAPBOX_TOKEN ||
+    null;
 
-    if (!response.ok) {
-      console.error('Failed to fetch Mapbox token:', response.status, await response.text());
-      return null;
-    }
-
-    const data = await response.json();
-    return data.token ?? null;
-  } catch (error) {
-    console.error('Failed to fetch Mapbox token:', error);
+  if (!token) {
+    console.error('Missing Mapbox token. Set VITE_MAPBOX_ACCESS_TOKEN (or VITE_MAPBOX_TOKEN).');
     return null;
   }
+
+  return token;
 }

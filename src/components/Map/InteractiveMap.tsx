@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { BrixDataPoint } from '../../types';
-import { useFormattedSubmissionsQuery } from '../../hooks/useSubmissions';
+import { useFormattedSubmissionByIdQuery, useFormattedSubmissionsBoundsQuery } from '../../hooks/useSubmissions';
 import { useFilters } from '../../contexts/FilterContext';
 import { applyFilters } from '../../lib/filterUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -28,7 +28,7 @@ import {
 } from '../../lib/fetchLeaderboards';
 
 interface InteractiveMapProps {
-  userLocation: { lat: number; lng: number };
+  userLocation: { lat: number; lng: number } | null;
   nearMeTriggered?: boolean;
   onNearMeHandled?: () => void;
 }
@@ -61,13 +61,54 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [filteredData, setFilteredData] = useState<BrixDataPoint[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<BrixDataPoint | null>(null);
 
-  const submissionsQuery = useFormattedSubmissionsQuery();
+  const MIN_ZOOM_TO_QUERY = 6;
+  const BOUNDS_PADDING_RATIO = 0.25;
+  const MAP_QUERY_LIMIT = 2000;
+
+  const [viewportQuery, setViewportQuery] = useState<
+    | {
+        west: number;
+        south: number;
+        east: number;
+        north: number;
+        zoom: number;
+      }
+    | null
+  >(null);
 
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [groupBy, setGroupBy] = useState<'none' | 'crop' | 'brand'>('crop');
   const [minBrix, setMinBrix] = useState<number>(0);
   const [maxBrix, setMaxBrix] = useState<number>(1);
   const [isLoading, setIsLoading] = useState(false);
+
+  const zoomLevel = viewportQuery?.zoom ?? 0;
+
+  const submissionsQuery = useFormattedSubmissionsBoundsQuery(
+    viewportQuery
+      ? {
+          west: viewportQuery.west,
+          south: viewportQuery.south,
+          east: viewportQuery.east,
+          north: viewportQuery.north,
+          limit: MAP_QUERY_LIMIT,
+          sortBy: 'assessment_date',
+          sortOrder: 'desc',
+        }
+      : undefined,
+    {
+      enabled: !!viewportQuery && viewportQuery.zoom >= MIN_ZOOM_TO_QUERY,
+      staleTimeMs: 10 * 60 * 1000,
+      gcTimeMs: 60 * 60 * 1000,
+    }
+  );
+
+  const highlightedId = (highlightedPoint as any)?.id ? String((highlightedPoint as any).id) : undefined;
+  const highlightedQuery = useFormattedSubmissionByIdQuery(highlightedId, {
+    enabled: !!highlightedId,
+    staleTimeMs: 10 * 60 * 1000,
+    gcTimeMs: 60 * 60 * 1000,
+  });
 
   const [selectedEntry, setSelectedEntry] = useState<SelectedView>(null);
   const [locationLeaderboard, setLocationLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -97,8 +138,13 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     return isMobile;
   }
 
-  // Fetch submissions once
+  // Viewport-based submissions fetch
   useEffect(() => {
+    if (viewportQuery && viewportQuery.zoom < MIN_ZOOM_TO_QUERY) {
+      setAllData([]);
+      return;
+    }
+
     if (submissionsQuery.data) {
       setAllData(submissionsQuery.data || []);
     }
@@ -106,7 +152,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       console.error('Error fetching submissions:', submissionsQuery.error);
       setAllData([]);
     }
-  }, [submissionsQuery.data, submissionsQuery.error]);
+  }, [submissionsQuery.data, submissionsQuery.error, viewportQuery]);
 
   // When a point is selected, ensure group and entry state are set
   useEffect(() => {
@@ -222,7 +268,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   // initialize Mapbox map
   useEffect(() => {
-    if (!mapContainer.current || mapRef.current) return;
+    if (!mapContainer.current || mapRef.current || !userLocation) return;
 
     let mounted = true;
     (async function init() {
@@ -256,20 +302,77 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     };
   }, [userLocation]);
 
+  // Update viewport query on moveend/zoomend (debounced)
+  useEffect(() => {
+    if (!mapRef.current || !isMapLoaded) return;
+
+    let timeout: any = null;
+
+    const update = () => {
+      if (!mapRef.current) return;
+      const zoom = mapRef.current.getZoom();
+      if (zoom < MIN_ZOOM_TO_QUERY) {
+        setViewportQuery({ west: 0, south: 0, east: 0, north: 0, zoom });
+        return;
+      }
+
+      const b = mapRef.current.getBounds();
+      const west = b.getWest();
+      const east = b.getEast();
+      const south = b.getSouth();
+      const north = b.getNorth();
+
+      const padLng = (east - west) * BOUNDS_PADDING_RATIO;
+      const padLat = (north - south) * BOUNDS_PADDING_RATIO;
+
+      setViewportQuery({
+        west: west - padLng,
+        south: south - padLat,
+        east: east + padLng,
+        north: north + padLat,
+        zoom,
+      });
+    };
+
+    const scheduleUpdate = () => {
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(update, 300);
+    };
+
+    scheduleUpdate();
+    mapRef.current.on('moveend', scheduleUpdate);
+    mapRef.current.on('zoomend', scheduleUpdate);
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+      if (mapRef.current) {
+        mapRef.current.off('moveend', scheduleUpdate);
+        mapRef.current.off('zoomend', scheduleUpdate);
+      }
+    };
+  }, [isMapLoaded]);
+
   // handle highlighted point (from navigation state)
   useEffect(() => {
-    if (highlightedPoint && mapRef.current) {
-      const point = allData.find((d) => d.id === highlightedPoint.id);
-      if (point && (point.latitude ?? (point as any).lat) && (point.longitude ?? (point as any).lng)) {
-        mapRef.current.easeTo({
-          center: [(point.longitude ?? (point as any).lng), (point.latitude ?? (point as any).lat)],
-          zoom: 16,
-          duration: 1000,
-        });
-        setSelectedPoint(point);
-      }
-    }
-  }, [highlightedPoint, allData]);
+    if (!highlightedPoint || !mapRef.current) return;
+
+    const hpId = (highlightedPoint as any)?.id;
+    const localPoint = hpId ? allData.find((d) => d.id === hpId) : null;
+    const resolvedPoint = (localPoint ?? highlightedQuery.data) as any;
+
+    if (!resolvedPoint) return;
+
+    const lat = resolvedPoint.latitude ?? resolvedPoint.lat;
+    const lng = resolvedPoint.longitude ?? resolvedPoint.lng;
+    if (typeof lat !== 'number' || typeof lng !== 'number') return;
+
+    mapRef.current.easeTo({
+      center: [lng, lat],
+      zoom: 16,
+      duration: 1000,
+    });
+    setSelectedPoint(resolvedPoint as BrixDataPoint);
+  }, [highlightedPoint, allData, highlightedQuery.data]);
 
   // Draw markers and attach click handlers
   useEffect(() => {
@@ -636,7 +739,15 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)] w-full">
       {/* Map container must be non-zero height for Mapbox to render correctly */}
-      <div ref={mapContainer} className="flex-1 relative" />
+      <div ref={mapContainer} className="flex-1 relative">
+        {isMapLoaded && zoomLevel > 0 && zoomLevel < MIN_ZOOM_TO_QUERY && (
+          <div className="absolute inset-0 z-10 flex items-start justify-center pointer-events-none">
+            <div className="mt-4 bg-white/90 backdrop-blur border border-gray-200 text-gray-800 px-4 py-2 rounded-md shadow-sm text-sm">
+              Zoom in to load submissions
+            </div>
+          </div>
+        )}
+      </div>
 
      {/* Desktop Right Panel (persistent, integrated into layout) */}
       <div className="hidden md:flex md:w-96 flex-col border-l border-gray-200 bg-white shadow-inner">

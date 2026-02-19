@@ -129,6 +129,417 @@ export async function fetchMySubmissions(userId: string): Promise<BrixDataPoint[
   return rows.map((row) => formatSubmissionData(row as SupabaseSubmissionRow));
 }
 
+export type MySubmissionsPageQuery = {
+  userId: string;
+  limit: number;
+  offset: number;
+  sortBy?: 'assessment_date' | 'brix_value';
+  sortOrder?: 'asc' | 'desc';
+};
+
+export type MySubmissionsCountQuery = {
+  userId: string;
+  verified?: boolean;
+};
+
+export async function fetchMySubmissionsPage(
+  query: MySubmissionsPageQuery
+): Promise<BrixDataPoint[]> {
+  const {
+    userId,
+    limit,
+    offset,
+    sortBy = 'assessment_date',
+    sortOrder = 'desc',
+  } = query;
+
+  const safeLimit = Math.max(1, Math.min(limit, 200));
+  const safeOffset = Math.max(0, offset);
+
+  const { data, error } = await supabase
+    .from('submissions')
+    .select(SUBMISSIONS_SELECT_QUERY_STRING)
+    .eq('user_id', userId)
+    .order(sortBy, { ascending: sortOrder === 'asc' })
+    .range(safeOffset, safeOffset + safeLimit - 1);
+
+  if (error) {
+    console.error('Error fetching user submissions page:', error);
+    return [];
+  }
+
+  const rows = Array.isArray(data) ? data : [];
+  return rows.map((row) => formatSubmissionData(row as SupabaseSubmissionRow));
+}
+
+export async function fetchMySubmissionsCount(
+  query: MySubmissionsCountQuery
+): Promise<number> {
+  const { userId, verified } = query;
+
+  let base = supabase
+    .from('submissions')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId);
+
+  if (typeof verified === 'boolean') {
+    base = base.eq('verified', verified);
+  }
+
+  const { count, error } = await base;
+  if (error) {
+    console.error('Error fetching user submissions count:', error);
+    return 0;
+  }
+  return typeof count === 'number' ? count : 0;
+}
+
+export async function fetchMySubmissionsCropIds(userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('submissions')
+    .select('crop_id')
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Error fetching user crop ids:', error);
+    return [];
+  }
+
+  const rows = Array.isArray(data) ? data : [];
+  return rows.map((r: any) => r?.crop_id).filter(Boolean);
+}
+
+export type PublicFormattedSubmissionsQuery = {
+  limit: number;
+  offset: number;
+  cropTypes?: string[];
+  category?: string;
+  brand?: string;
+  place?: string;
+  location?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  brixMin?: number;
+  brixMax?: number;
+  dateStart?: string;
+  dateEnd?: string;
+  search?: string;
+  sortBy?: 'assessment_date' | 'brix_value' | 'crop_name' | 'place_label';
+  sortOrder?: 'asc' | 'desc';
+};
+
+ export type PublicFormattedSubmissionsBoundsQuery = {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+  limit: number;
+  sortBy?: 'assessment_date' | 'brix_value' | 'crop_name' | 'place_label';
+  sortOrder?: 'asc' | 'desc';
+ };
+
+function applyPublicFormattedSubmissionsQuery(
+  base: any,
+  q: Omit<PublicFormattedSubmissionsQuery, 'limit' | 'offset'>
+) {
+  if (q.cropTypes && q.cropTypes.length > 0) {
+    base = base.in('crop_name', q.cropTypes);
+  }
+  if (q.category && q.category.trim().length > 0) {
+    base = base.eq('category', q.category);
+  }
+  if (q.city && q.city.trim().length > 0) {
+    base = base.ilike('city', q.city);
+  }
+  if (q.state && q.state.trim().length > 0) {
+    base = base.ilike('state', q.state);
+  }
+  if (q.country && q.country.trim().length > 0) {
+    base = base.ilike('country', q.country);
+  }
+  if (typeof q.brixMin === 'number') {
+    base = base.gte('brix_value', q.brixMin);
+  }
+  if (typeof q.brixMax === 'number') {
+    base = base.lte('brix_value', q.brixMax);
+  }
+  if (q.dateStart && q.dateStart.trim().length > 0) {
+    base = base.gte('assessment_date', q.dateStart);
+  }
+  if (q.dateEnd && q.dateEnd.trim().length > 0) {
+    base = base.lte('assessment_date', q.dateEnd);
+  }
+
+  const brand = q.brand?.trim();
+  if (brand) {
+    const s = brand.replace(/,/g, '');
+    base = base.or(`brand_label.ilike.%${s}%,brand_name.ilike.%${s}%`);
+  }
+
+  const placeOrLocation = (q.place || q.location)?.trim();
+  if (placeOrLocation) {
+    const s = placeOrLocation.replace(/,/g, '');
+    base = base.or(`place_label.ilike.%${s}%,location_label.ilike.%${s}%,location_name.ilike.%${s}%`);
+  }
+
+  const search = q.search?.trim();
+  if (search) {
+    const s = search.replace(/,/g, '');
+    base = base.or(
+      `crop_name.ilike.%${s}%,crop_label.ilike.%${s}%,brand_label.ilike.%${s}%,brand_name.ilike.%${s}%,place_label.ilike.%${s}%,location_label.ilike.%${s}%,location_name.ilike.%${s}%,outlier_notes.ilike.%${s}%`
+    );
+  }
+
+  return base;
+}
+
+function formatPublicSubmissionDetailsRow(r: any): BrixDataPoint {
+  return {
+    id: r.id,
+    brixLevel: r.brix_value,
+    verified: !!r.verified,
+    verifiedAt: r.verified_at ?? null,
+    variety: r.crop_variety ?? '',
+    cropType: r.crop_name ?? 'Unknown',
+    category: r.category ?? '',
+    latitude: r.latitude ?? null,
+    longitude: r.longitude ?? null,
+    placeName: r.place_label ?? '',
+    locationName: r.location_label ?? r.location_name ?? '',
+    streetAddress: r.street_address ?? '',
+    city: r.city ?? '',
+    state: r.state ?? '',
+    country: r.country ?? '',
+    brandName: r.brand_label ?? r.brand_name ?? '',
+    submittedBy: '',
+    userId: undefined,
+    verifiedBy: '',
+    submittedAt: r.assessment_date,
+    outlier_notes: r.outlier_notes ?? '',
+    purchaseDate: r.purchase_date ?? null,
+    images: [],
+    poorBrix: r.poor_brix ?? null,
+    averageBrix: r.average_brix ?? null,
+    goodBrix: r.good_brix ?? null,
+    excellentBrix: r.excellent_brix ?? null,
+    name_normalized: r.crop_label ?? r.crop_name ?? 'Unknown',
+    locationId: r.location_id ?? '',
+    cropId: r.crop_id ?? '',
+    placeId: r.place_id ?? '',
+    brandId: r.brand_id ?? '',
+    verifiedByUserId: '',
+    cropLabel: r.crop_label ?? null,
+    brandLabel: r.brand_label ?? null,
+  };
+}
+
+export async function fetchFormattedSubmissionsPage(
+  query: PublicFormattedSubmissionsQuery
+): Promise<BrixDataPoint[]> {
+  const {
+    limit,
+    offset,
+    sortBy = 'assessment_date',
+    sortOrder = 'desc',
+    ...rest
+  } = query;
+
+  const safeLimit = Math.max(1, Math.min(limit, 200));
+  const safeOffset = Math.max(0, offset);
+
+  const selectCols = [
+    'id',
+    'assessment_date',
+    'brix_value',
+    'verified',
+    'verified_at',
+    'crop_variety',
+    'outlier_notes',
+    'purchase_date',
+    'crop_id',
+    'crop_name',
+    'crop_label',
+    'poor_brix',
+    'average_brix',
+    'good_brix',
+    'excellent_brix',
+    'category',
+    'brand_id',
+    'brand_name',
+    'brand_label',
+    'location_id',
+    'location_name',
+    'location_label',
+    'place_id',
+    'place_label',
+    'latitude',
+    'longitude',
+    'street_address',
+    'city',
+    'state',
+    'country',
+  ].join(',');
+
+  let base = (supabase as any)
+    .from('public_submission_details' as any)
+    .select(selectCols)
+    .order(sortBy, { ascending: sortOrder === 'asc' })
+    .range(safeOffset, safeOffset + safeLimit - 1);
+
+  base = applyPublicFormattedSubmissionsQuery(base, rest);
+
+  const { data, error } = await base;
+
+  if (error) {
+    console.error('Error fetching public submissions page:', error);
+    return [];
+  }
+
+  const rows = Array.isArray(data) ? data : [];
+  return rows.map(formatPublicSubmissionDetailsRow);
+}
+
+export async function fetchFormattedSubmissionsInBounds(
+  query: PublicFormattedSubmissionsBoundsQuery
+): Promise<BrixDataPoint[]> {
+  const {
+    west,
+    south,
+    east,
+    north,
+    limit,
+    sortBy = 'assessment_date',
+    sortOrder = 'desc',
+  } = query;
+
+  const safeLimit = Math.max(1, Math.min(limit, 2000));
+
+  const selectCols = [
+    'id',
+    'assessment_date',
+    'brix_value',
+    'verified',
+    'verified_at',
+    'crop_variety',
+    'outlier_notes',
+    'purchase_date',
+    'crop_id',
+    'crop_name',
+    'crop_label',
+    'poor_brix',
+    'average_brix',
+    'good_brix',
+    'excellent_brix',
+    'category',
+    'brand_id',
+    'brand_name',
+    'brand_label',
+    'location_id',
+    'location_name',
+    'location_label',
+    'place_id',
+    'place_label',
+    'latitude',
+    'longitude',
+    'street_address',
+    'city',
+    'state',
+    'country',
+  ].join(',');
+
+  const { data, error } = await (supabase as any)
+    .from('public_submission_details' as any)
+    .select(selectCols)
+    .not('latitude', 'is', null)
+    .not('longitude', 'is', null)
+    .gte('longitude', west)
+    .lte('longitude', east)
+    .gte('latitude', south)
+    .lte('latitude', north)
+    .order(sortBy, { ascending: sortOrder === 'asc' })
+    .range(0, safeLimit - 1);
+
+  if (error) {
+    console.error('Error fetching public submissions in bounds:', error);
+    return [];
+  }
+
+  const rows = Array.isArray(data) ? data : [];
+  return rows.map(formatPublicSubmissionDetailsRow);
+}
+
+export async function fetchFormattedSubmissionById(id: string): Promise<BrixDataPoint | null> {
+  const safeId = (id ?? '').toString().trim();
+  if (!safeId) return null;
+
+  const selectCols = [
+    'id',
+    'assessment_date',
+    'brix_value',
+    'verified',
+    'verified_at',
+    'crop_variety',
+    'outlier_notes',
+    'purchase_date',
+    'crop_id',
+    'crop_name',
+    'crop_label',
+    'poor_brix',
+    'average_brix',
+    'good_brix',
+    'excellent_brix',
+    'category',
+    'brand_id',
+    'brand_name',
+    'brand_label',
+    'location_id',
+    'location_name',
+    'location_label',
+    'place_id',
+    'place_label',
+    'latitude',
+    'longitude',
+    'street_address',
+    'city',
+    'state',
+    'country',
+  ].join(',');
+
+  const { data, error } = await (supabase as any)
+    .from('public_submission_details' as any)
+    .select(selectCols)
+    .eq('id', safeId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching public submission by id:', error);
+    return null;
+  }
+
+  if (!data) return null;
+  return formatPublicSubmissionDetailsRow(data);
+}
+
+export async function fetchFormattedSubmissionsCount(
+  query: Omit<PublicFormattedSubmissionsQuery, 'limit' | 'offset'>
+): Promise<number> {
+  const { sortBy: _sortBy, sortOrder: _sortOrder, ...rest } = query;
+
+  let base = (supabase as any)
+    .from('public_submission_details' as any)
+    .select('id', { count: 'exact', head: true });
+
+  base = applyPublicFormattedSubmissionsQuery(base, rest);
+
+  const { count, error } = await base;
+  if (error) {
+    console.error('Error fetching public submissions count:', error);
+    return 0;
+  }
+  return typeof count === 'number' ? count : 0;
+}
+
 // SAFE public fetch for the map: reads from the view and rehydrates labels/coords client-side
 export async function fetchFormattedSubmissions(): Promise<BrixDataPoint[]> {
   // Prefer a single joined public view if present (reduces DB calls drastically).
@@ -139,43 +550,7 @@ export async function fetchFormattedSubmissions(): Promise<BrixDataPoint[]> {
       .order('assessment_date', { ascending: false });
 
     if (!joinedErr && Array.isArray(joinedRows)) {
-      return joinedRows.map((r: any) => ({
-        id: r.id,
-        brixLevel: r.brix_value,
-        verified: !!r.verified,
-        verifiedAt: r.verified_at ?? null,
-        variety: r.crop_variety ?? '',
-        cropType: r.crop_name ?? 'Unknown',
-        category: r.category ?? '',
-        latitude: r.latitude ?? null,
-        longitude: r.longitude ?? null,
-        placeName: r.place_label ?? '',
-        locationName: r.location_label ?? r.location_name ?? '',
-        streetAddress: r.street_address ?? '',
-        city: r.city ?? '',
-        state: r.state ?? '',
-        country: r.country ?? '',
-        brandName: r.brand_label ?? r.brand_name ?? '',
-        submittedBy: '',
-        userId: undefined,
-        verifiedBy: '',
-        submittedAt: r.assessment_date,
-        outlier_notes: r.outlier_notes ?? '',
-        purchaseDate: r.purchase_date ?? null,
-        images: [],
-        poorBrix: r.poor_brix ?? null,
-        averageBrix: r.average_brix ?? null,
-        goodBrix: r.good_brix ?? null,
-        excellentBrix: r.excellent_brix ?? null,
-        name_normalized: r.crop_label ?? r.crop_name ?? 'Unknown',
-        locationId: r.location_id ?? '',
-        cropId: r.crop_id ?? '',
-        placeId: r.place_id ?? '',
-        brandId: r.brand_id ?? '',
-        verifiedByUserId: '',
-        cropLabel: r.crop_label ?? null,
-        brandLabel: r.brand_label ?? null,
-      }));
+      return joinedRows.map(formatPublicSubmissionDetailsRow);
     }
   } catch {
     // fall through to legacy multi-query path

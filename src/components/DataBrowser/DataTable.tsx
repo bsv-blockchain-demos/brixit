@@ -20,9 +20,11 @@ import {
   Check, ChevronDown, X
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useFormattedSubmissionsQuery } from '../../hooks/useSubmissions';
+import { useFormattedSubmissionsCountQuery, useFormattedSubmissionsPageQuery } from '../../hooks/useSubmissions';
 import { useFilters, DEFAULT_MAP_FILTERS } from '../../contexts/FilterContext';
-import { applyFilters, getFilterSummary } from '../../lib/filterUtils';
+import { getFilterSummary } from '../../lib/filterUtils';
+import { fetchFormattedSubmissionsPage, type PublicFormattedSubmissionsQuery } from '../../lib/fetchSubmissions';
+import { parseURLSearchParams, mergeFiltersWithDefaults } from '../../lib/urlFilterUtils';
 
 import SubmissionTableRow from '../common/SubmissionTableRow';
 import { useAuth } from '../../contexts/AuthContext';
@@ -32,7 +34,6 @@ import { Slider } from "@/components/ui/slider";
 import DataPointDetailModal from '../common/DataPointDetailModal';
 import { useStaticData } from '../../hooks/useStaticData';
 import { fetchCropCategories } from '../../lib/fetchCropCategories';
-import { parseURLSearchParams, mergeFiltersWithDefaults } from '../../lib/urlFilterUtils';
 
 // Constants for Brix Range Slider
 const STEP = 0.5;
@@ -128,14 +129,99 @@ const DataTable: React.FC = () => {
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
 
   // State for data submissions
-  const submissionsQuery = useFormattedSubmissionsQuery();
-  const data = submissionsQuery.data || [];
-
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const itemsPerPage = 10;
+  const chunkSize = 50;
+
   const [sortBy, setSortBy] = useState<keyof BrixDataPoint>('submittedAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [searchTerm, setSearchTerm] = useState('');
+
+  const countQuery = useMemo(() => {
+    const serverSortBy: NonNullable<PublicFormattedSubmissionsQuery['sortBy']> =
+      sortBy === 'submittedAt'
+        ? 'assessment_date'
+        : sortBy === 'brixLevel'
+          ? 'brix_value'
+          : sortBy === 'cropType'
+            ? 'crop_name'
+            : sortBy === 'locationName'
+              ? 'place_label'
+              : 'assessment_date';
+
+    const hasCustomBrixRange =
+      filters.brixRange?.[0] !== DEFAULT_MAP_FILTERS.brixRange[0] ||
+      filters.brixRange?.[1] !== DEFAULT_MAP_FILTERS.brixRange[1];
+
+    const q: Omit<PublicFormattedSubmissionsQuery, 'limit' | 'offset'> = {
+      cropTypes: filters.cropTypes.length > 0 ? filters.cropTypes : undefined,
+      category: filters.category || undefined,
+      brand: filters.brand || undefined,
+      place: filters.place || undefined,
+      location: filters.location || undefined,
+      city: filters.city || undefined,
+      state: filters.state || undefined,
+      country: filters.country || undefined,
+      brixMin: hasCustomBrixRange ? filters.brixRange?.[0] : undefined,
+      brixMax: hasCustomBrixRange ? filters.brixRange?.[1] : undefined,
+      dateStart: filters.dateRange?.[0] || undefined,
+      dateEnd: filters.dateRange?.[1] || undefined,
+      search: searchTerm || undefined,
+      sortBy: serverSortBy,
+      sortOrder,
+    };
+
+    return q;
+  }, [filters, searchTerm, sortBy, sortOrder]);
+
+  const submissionsCountQuery = useFormattedSubmissionsCountQuery(countQuery);
+  const totalCount = submissionsCountQuery.data ?? 0;
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
+
+  // Calculate which chunk we're on and set offset for db query
+  const chunkIndex = Math.floor(((currentPage - 1) * itemsPerPage) / chunkSize);
+  const chunkOffset = chunkIndex * chunkSize;
+  const inChunkStart = ((currentPage - 1) * itemsPerPage) - chunkOffset;
+
+  const pageQuery = useMemo(() => {
+    return {
+      ...countQuery,
+      limit: chunkSize,
+      offset: chunkOffset,
+    };
+  }, [countQuery, chunkOffset]);
+
+  const submissionsPageQuery = useFormattedSubmissionsPageQuery(pageQuery);
+  const chunkData = submissionsPageQuery.data || [];
+
+ // Determine if we should prefetch the next chunk
+  const shouldPrefetchNextChunk =
+    // Is there any data?
+    totalCount > 0 &&
+    // Are we at the end of a chunk?
+    (currentPage * itemsPerPage) % chunkSize === 0 &&
+    // Is there more data to fetch?
+    chunkOffset + chunkSize < totalCount;
+
+  const nextPageQuery = useMemo(() => {
+    return {
+      ...countQuery,
+      limit: chunkSize,
+      offset: chunkOffset + chunkSize,
+    };
+  }, [countQuery, chunkOffset]);
+
+  useEffect(() => {
+    if (!shouldPrefetchNextChunk) return;
+
+    queryClient.prefetchQuery({
+      queryKey: ["submissions", "public_formatted", "page", nextPageQuery],
+      queryFn: () => fetchFormattedSubmissionsPage(nextPageQuery),
+      staleTime: 60 * 60 * 1000,
+    });
+  }, [nextPageQuery, queryClient, shouldPrefetchNextChunk]);
+
   const [showFilters, setShowFilters] = useState(false);
 
   // Queries for searching within filter popovers
@@ -152,13 +238,13 @@ const DataTable: React.FC = () => {
   // Apply URL filters on component mount
   useEffect(() => {
     if (!urlFiltersApplied && searchParams.toString()) {
-      console.log('🔍 Raw URL search params:', searchParams.toString());
+      console.log(' Raw URL search params:', searchParams.toString());
       const urlFilters = parseURLSearchParams(searchParams);
-      console.log('📋 Parsed URL filters:', urlFilters);
+      console.log(' Parsed URL filters:', urlFilters);
       
       if (Object.keys(urlFilters).length > 0) {
         const mergedFilters = mergeFiltersWithDefaults(urlFilters);
-        console.log('✅ Merged filters being applied:', mergedFilters);
+        console.log(' Merged filters being applied:', mergedFilters);
         setFilters(mergedFilters);
         setUrlFiltersApplied(true);
         setFromLeaderboard(true);
@@ -185,54 +271,16 @@ const DataTable: React.FC = () => {
   // Reset to first page whenever filters or search terms change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters, searchTerm]);
+  }, [filters, searchTerm, sortBy, sortOrder]);
 
-  const filteredAndSortedData = useMemo(() => {
-    let filtered = applyFilters(data, filters, isAdmin);
+  useEffect(() => {
+    setFilteredCount(totalCount);
+  }, [setFilteredCount, totalCount]);
 
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter((point) => {
-        const matches =
-          (point.cropType && point.cropType.toLowerCase().includes(searchLower)) ||
-          (point.submittedBy && point.submittedBy.toLowerCase().includes(searchLower)) ||
-          // Refactored search term from `storeName` to `locationName`
-          (point.locationName && point.locationName.toLowerCase().includes(searchLower)) ||
-          (point.brandName && point.brandName.toLowerCase().includes(searchLower)) ||
-          (point.outlier_notes && point.outlier_notes.toLowerCase().includes(searchLower));
-        return matches;
-      });
-    }
-
-    setFilteredCount(filtered.length);
-
-    filtered = [...filtered].sort((a, b) => {
-      let aValue: any = a[sortBy];
-      let bValue: any = b[sortBy];
-
-      if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
-      }
-
-      if (aValue < bValue) {
-        return sortOrder === 'asc' ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return sortOrder === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-
-    return filtered;
-  }, [data, filters, isAdmin, searchTerm, sortBy, sortOrder, setFilteredCount]);
-
-  const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage);
   const currentItems = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredAndSortedData.slice(startIndex, endIndex);
-  }, [filteredAndSortedData, currentPage, itemsPerPage]);
+    const endIndex = inChunkStart + itemsPerPage;
+    return chunkData.slice(inChunkStart, endIndex);
+  }, [chunkData, inChunkStart]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage > 0 && newPage <= totalPages) {
@@ -313,28 +361,22 @@ const DataTable: React.FC = () => {
   };
 
   const handleUpdateSuccess = (updatedData: BrixDataPoint) => {
-    queryClient.setQueryData(['submissions', 'public_formatted'], (old: any) => {
-      if (!Array.isArray(old)) return old;
-      return old.map((item) => (item?.id === updatedData.id ? updatedData : item));
-    });
+    queryClient.invalidateQueries({ queryKey: ['submissions', 'public_formatted'] });
     setSelectedDataPoint(updatedData);
   };
 
   const handleDeleteSuccess = (deletedId: string) => {
-    queryClient.setQueryData(['submissions', 'public_formatted'], (old: any) => {
-      if (!Array.isArray(old)) return old;
-      return old.filter((dp) => dp?.id !== deletedId);
-    });
+    queryClient.invalidateQueries({ queryKey: ['submissions', 'public_formatted'] });
     handleCloseModal();
   };
 
-  if (submissionsQuery.isLoading || isLoadingStaticData) {
+  if (submissionsPageQuery.isLoading || submissionsCountQuery.isLoading || isLoadingStaticData) {
     return (
       <div className="text-center py-12 text-gray-600">Loading data...</div>
     );
   }
 
-  if (submissionsQuery.error) {
+  if (submissionsPageQuery.error || submissionsCountQuery.error) {
     return (
       <div className="text-center py-12 text-red-600">Error: Failed to load data.</div>
     );
