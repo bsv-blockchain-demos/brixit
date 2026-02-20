@@ -23,6 +23,7 @@ import submissionsRoutes from './routes/submissions.js';
 import leaderboardsRoutes from './routes/leaderboards.js';
 import usersRoutes from './routes/users.js';
 import adminRoutes from './routes/admin.js';
+import adminCrudRoutes from './routes/adminCrud.js';
 import uploadRoutes from './routes/upload.js';
 
 const app = express();
@@ -67,6 +68,7 @@ app.use('/api/users', usersRoutes);
 
 // --- Admin routes (authenticated + admin role) ---
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin/crud', adminCrudRoutes);
 
 // --- File upload (authenticated) ---
 app.use('/api/upload', uploadRoutes);
@@ -109,6 +111,11 @@ app.listen(config.port, () => {
   console.log(`   POST   /api/admin/roles/revoke`);
   console.log(`   POST   /api/admin/submissions/:id/verify`);
   console.log(`   DELETE /api/admin/submissions/:id`);
+  console.log(`   GET/POST/PUT/DELETE /api/admin/crud/crops`);
+  console.log(`   GET/POST/PUT/DELETE /api/admin/crud/brands`);
+  console.log(`   GET/POST/PUT/DELETE /api/admin/crud/locations`);
+  console.log(`   GET/POST/PUT/DELETE /api/admin/crud/categories`);
+  console.log(`   GET/POST/PUT/DELETE /api/admin/crud/location-types`);
   console.log(`   POST   /api/upload`);
   console.log('');
 });

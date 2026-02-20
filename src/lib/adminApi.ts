@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
 
 export type AppRole = 'admin' | 'contributor' | 'user';
 
@@ -125,3 +125,124 @@ export async function verifySubmission(submissionId: string, verify = true) {
 export async function deleteSubmission(submissionId: string) {
   await apiDelete(`/api/admin/submissions/${submissionId}`);
 }
+
+// ─── CRUD Types ──────────────────────────────────────────────────────────────
+
+export interface AdminCrop {
+  id: string;
+  name: string;
+  label: string | null;
+  category: string | null;
+  poor_brix: number | null;
+  average_brix: number | null;
+  good_brix: number | null;
+  excellent_brix: number | null;
+}
+
+export interface AdminBrand {
+  id: string;
+  name: string;
+  label: string | null;
+}
+
+export interface AdminLocation {
+  id: string;
+  name: string;
+  label: string | null;
+  type: string | null;
+}
+
+export interface AdminCategory {
+  id: string;
+  name: string;
+  label: string | null;
+  sort_order: number;
+}
+
+export interface AdminLocationType {
+  id: string;
+  name: string;
+  label: string | null;
+  sort_order: number;
+}
+
+// ─── CRUD Helpers ─────────────────────────────────────────────────────────────
+
+function buildQs(p: { search?: string; limit?: number; offset?: number }) {
+  const qs = new URLSearchParams();
+  if (p.search) qs.set('search', p.search);
+  if (p.limit !== undefined) qs.set('limit', String(p.limit));
+  if (p.offset !== undefined) qs.set('offset', String(p.offset));
+  const s = qs.toString();
+  return s ? `?${s}` : '';
+}
+
+// ─── Crops ────────────────────────────────────────────────────────────────────
+
+export const fetchAdminCrops = (p: { search?: string; limit: number; offset: number }) =>
+  apiGet<PaginatedResult<AdminCrop>>(`/api/admin/crud/crops${buildQs(p)}`);
+
+export const createAdminCrop = (d: Partial<AdminCrop>) =>
+  apiPost<AdminCrop>('/api/admin/crud/crops', d);
+
+export const updateAdminCrop = (id: string, d: Partial<AdminCrop>) =>
+  apiPut<AdminCrop>(`/api/admin/crud/crops/${id}`, d);
+
+export const deleteAdminCrop = (id: string) =>
+  apiDelete(`/api/admin/crud/crops/${id}`);
+
+// ─── Brands ───────────────────────────────────────────────────────────────────
+
+export const fetchAdminBrands = (p: { search?: string; limit: number; offset: number }) =>
+  apiGet<PaginatedResult<AdminBrand>>(`/api/admin/crud/brands${buildQs(p)}`);
+
+export const createAdminBrand = (d: Partial<AdminBrand>) =>
+  apiPost<AdminBrand>('/api/admin/crud/brands', d);
+
+export const updateAdminBrand = (id: string, d: Partial<AdminBrand>) =>
+  apiPut<AdminBrand>(`/api/admin/crud/brands/${id}`, d);
+
+export const deleteAdminBrand = (id: string) =>
+  apiDelete(`/api/admin/crud/brands/${id}`);
+
+// ─── Locations ────────────────────────────────────────────────────────────────
+
+export const fetchAdminLocations = (p: { search?: string; limit: number; offset: number }) =>
+  apiGet<PaginatedResult<AdminLocation>>(`/api/admin/crud/locations${buildQs(p)}`);
+
+export const createAdminLocation = (d: Partial<AdminLocation>) =>
+  apiPost<AdminLocation>('/api/admin/crud/locations', d);
+
+export const updateAdminLocation = (id: string, d: Partial<AdminLocation>) =>
+  apiPut<AdminLocation>(`/api/admin/crud/locations/${id}`, d);
+
+export const deleteAdminLocation = (id: string) =>
+  apiDelete(`/api/admin/crud/locations/${id}`);
+
+// ─── Categories ───────────────────────────────────────────────────────────────
+
+export const fetchAdminCategories = (p: { search?: string; limit: number; offset: number }) =>
+  apiGet<PaginatedResult<AdminCategory>>(`/api/admin/crud/categories${buildQs(p)}`);
+
+export const createAdminCategory = (d: Partial<AdminCategory>) =>
+  apiPost<AdminCategory>('/api/admin/crud/categories', d);
+
+export const updateAdminCategory = (id: string, d: Partial<AdminCategory>) =>
+  apiPut<AdminCategory>(`/api/admin/crud/categories/${id}`, d);
+
+export const deleteAdminCategory = (id: string) =>
+  apiDelete(`/api/admin/crud/categories/${id}`);
+
+// ─── Location Types ───────────────────────────────────────────────────────────
+
+export const fetchAdminLocationTypes = (p: { search?: string; limit: number; offset: number }) =>
+  apiGet<PaginatedResult<AdminLocationType>>(`/api/admin/crud/location-types${buildQs(p)}`);
+
+export const createAdminLocationType = (d: Partial<AdminLocationType>) =>
+  apiPost<AdminLocationType>('/api/admin/crud/location-types', d);
+
+export const updateAdminLocationType = (id: string, d: Partial<AdminLocationType>) =>
+  apiPut<AdminLocationType>(`/api/admin/crud/location-types/${id}`, d);
+
+export const deleteAdminLocationType = (id: string) =>
+  apiDelete(`/api/admin/crud/location-types/${id}`);

@@ -12,26 +12,11 @@ datasource db {
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
+// AppRole stays as an enum — it's an auth boundary, not an admin-editable value.
 enum AppRole {
   admin
   contributor
   viewer
-}
-
-enum CropCategory {
-  fruit
-  vegetable
-  grass
-}
-
-enum LocationType {
-  Grocery
-  Health
-  Community
-  Specialty
-  Club
-  Farmers
-  Other
 }
 
 // ─── Users ───────────────────────────────────────────────────────────────────
@@ -89,11 +74,31 @@ model WalletIdentity {
 
 // ─── Reference Data ──────────────────────────────────────────────────────────
 
+// Lookup table — replaces the old CropCategory enum so admins can add/edit categories.
+model CropCategory {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String  @unique
+  label     String?
+  sortOrder Int     @default(0) @map("sort_order")
+
+  @@map("crop_categories")
+}
+
+// Lookup table — replaces the old LocationType enum.
+model LocationType {
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String  @unique
+  label     String?
+  sortOrder Int     @default(0) @map("sort_order")
+
+  @@map("location_types")
+}
+
 model Crop {
-  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name         String        @unique
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String   @unique
   label        String?
-  category     CropCategory?
+  category     String?   // references crop_categories.name
   poorBrix     Decimal?      @map("poor_brix") @db.Decimal(5, 2)
   averageBrix  Decimal?      @map("average_brix") @db.Decimal(5, 2)
   goodBrix     Decimal?      @map("good_brix") @db.Decimal(5, 2)
@@ -115,10 +120,10 @@ model Brand {
 }
 
 model Location {
-  id    String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name  String       @unique
+  id    String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name  String  @unique
   label String?
-  type  LocationType?
+  type  String?  // references location_types.name
 
   places      Place[]
   submissions Submission[]

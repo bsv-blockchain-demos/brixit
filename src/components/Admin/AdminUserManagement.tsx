@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -15,103 +16,50 @@ import {
 } from '@/lib/adminApi';
 
 const PAGE_SIZE = 20;
+const QUERY_KEY = 'admin-users';
 
 export default function AdminUserManagement() {
-  const [users, setUsers] = useState<UserWithRoles[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { user: currentUser } = useAuth();
+
   const [search, setSearch] = useState('');
   const [committedSearch, setCommittedSearch] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { user: currentUser } = useAuth();
-  const { toast } = useToast();
+  const [page, setPage] = useState(1);
 
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: [QUERY_KEY, committedSearch, page],
+    queryFn: () => fetchAllUsers({
+      search: committedSearch || undefined,
+      limit: PAGE_SIZE,
+      offset: (page - 1) * PAGE_SIZE,
+    }),
+    placeholderData: (prev) => prev,
+    staleTime: Infinity,
+  });
+
+  const users = data?.data ?? [];
+  const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const load = async (searchQ = committedSearch, pg = page) => {
-    setLoading(true);
-    try {
-      const result = await fetchAllUsers({
-        search: searchQ || undefined,
-        limit: PAGE_SIZE,
-        offset: (pg - 1) * PAGE_SIZE,
-      });
-      setUsers(result.data);
-      setTotal(result.total);
-    } catch (e: any) {
-      toast({
-        title: 'Failed to load users',
-        description: e?.message ?? 'Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { void load(); }, []);
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       setPage(1);
       setCommittedSearch(search);
-      void load(search, 1);
     }
   };
 
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-    void load(committedSearch, newPage);
-  };
-
-  const handleUpgradeToContributor = async (userId: string) => {
+  const handleRoleAction = async (
+    action: () => Promise<{ success: boolean; error?: string }>,
+    successMsg: string
+  ) => {
     try {
-      const res = await upgradeToContributor(userId);
+      const res = await action();
       if (res.success) {
-        toast({ title: 'User upgraded', description: 'User is now a contributor.' });
-        void load();
-      } else {
-        toast({ title: 'Action failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
-      }
-    } catch (e: any) {
-      toast({ title: 'Error', description: e?.message ?? 'Please try again.', variant: 'destructive' });
-    }
-  };
-
-  const handleUpgradeToAdmin = async (userId: string) => {
-    try {
-      const res = await upgradeToAdmin(userId);
-      if (res.success) {
-        toast({ title: 'User upgraded', description: 'User is now an admin.' });
-        void load();
-      } else {
-        toast({ title: 'Action failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
-      }
-    } catch (e: any) {
-      toast({ title: 'Error', description: e?.message ?? 'Please try again.', variant: 'destructive' });
-    }
-  };
-
-  const handleDowngradeToContributor = async (userId: string) => {
-    try {
-      const res = await downgradeToContributor(userId);
-      if (res.success) {
-        toast({ title: 'User downgraded', description: 'User is now a contributor.' });
-        void load();
-      } else {
-        toast({ title: 'Action failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
-      }
-    } catch (e: any) {
-      toast({ title: 'Error', description: e?.message ?? 'Please try again.', variant: 'destructive' });
-    }
-  };
-
-  const handleDowngradeToUser = async (userId: string) => {
-    try {
-      const res = await downgradeToUser(userId);
-      if (res.success) {
-        toast({ title: 'User downgraded', description: 'User is now a regular user.' });
-        void load();
+        toast({ title: successMsg });
+        invalidate();
       } else {
         toast({ title: 'Action failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
       }
@@ -121,7 +69,7 @@ export default function AdminUserManagement() {
   };
 
   const getUserRole = (roles: string[] | null | undefined): 'user' | 'contributor' | 'admin' => {
-    if (!roles || roles.length === 0) return 'user';
+    if (!roles?.length) return 'user';
     if (roles.includes('admin')) return 'admin';
     if (roles.includes('contributor')) return 'contributor';
     return 'user';
@@ -129,9 +77,9 @@ export default function AdminUserManagement() {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case 'admin': return 'default';
-      case 'contributor': return 'secondary';
-      default: return 'outline';
+      case 'admin': return 'default' as const;
+      case 'contributor': return 'secondary' as const;
+      default: return 'outline' as const;
     }
   };
 
@@ -146,7 +94,7 @@ export default function AdminUserManagement() {
               : `${total} total user${total !== 1 ? 's' : ''}`}
           </p>
         </div>
-        <Button variant="ghost" onClick={() => load()} disabled={loading}>
+        <Button variant="ghost" onClick={invalidate} disabled={isFetching}>
           Refresh
         </Button>
       </div>
@@ -162,12 +110,14 @@ export default function AdminUserManagement() {
         />
       </div>
 
-      {users.length === 0 ? (
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      ) : users.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {committedSearch ? 'No users match your search.' : 'No users found.'}
         </p>
       ) : (
-        <div className="space-y-2">
+        <div className={`space-y-2 ${isFetching ? 'opacity-60 pointer-events-none' : ''}`}>
           {users.map((u) => {
             const currentRole = getUserRole(u.roles);
             const isSelf = u.id === currentUser?.id;
@@ -185,29 +135,35 @@ export default function AdminUserManagement() {
                   </div>
                   <div className="text-muted-foreground flex items-center gap-2">
                     <span>Current role:</span>
-                    <Badge variant={getRoleBadgeVariant(currentRole)}>
-                      {currentRole}
-                    </Badge>
+                    <Badge variant={getRoleBadgeVariant(currentRole)}>{currentRole}</Badge>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   {currentRole === 'user' && (
-                    <Button size="sm" variant="outline" onClick={() => handleUpgradeToContributor(u.id)}>
+                    <Button size="sm" variant="outline"
+                      onClick={() => handleRoleAction(() => upgradeToContributor(u.id), 'User upgraded to contributor')}
+                    >
                       Make Contributor
                     </Button>
                   )}
                   {currentRole === 'contributor' && (
                     <>
-                      <Button size="sm" variant="outline" onClick={() => handleUpgradeToAdmin(u.id)}>
+                      <Button size="sm" variant="outline"
+                        onClick={() => handleRoleAction(() => upgradeToAdmin(u.id), 'User upgraded to admin')}
+                      >
                         Upgrade to Admin
                       </Button>
-                      <Button size="sm" variant="secondary" onClick={() => handleDowngradeToUser(u.id)}>
+                      <Button size="sm" variant="secondary"
+                        onClick={() => handleRoleAction(() => downgradeToUser(u.id), 'User downgraded to user')}
+                      >
                         Downgrade to User
                       </Button>
                     </>
                   )}
                   {currentRole === 'admin' && (
-                    <Button size="sm" variant="secondary" onClick={() => handleDowngradeToContributor(u.id)}>
+                    <Button size="sm" variant="secondary"
+                      onClick={() => handleRoleAction(() => downgradeToContributor(u.id), 'Admin downgraded to contributor')}
+                    >
                       Downgrade to Contributor
                     </Button>
                   )}
@@ -223,19 +179,17 @@ export default function AdminUserManagement() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handlePageChange(page - 1)}
-            disabled={page === 1 || loading}
+            onClick={() => setPage((p) => p - 1)}
+            disabled={page === 1 || isFetching}
           >
             <ChevronLeft className="w-4 h-4 mr-1" /> Previous
           </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
+          <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handlePageChange(page + 1)}
-            disabled={page === totalPages || loading}
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page === totalPages || isFetching}
           >
             Next <ChevronRight className="w-4 h-4 ml-1" />
           </Button>

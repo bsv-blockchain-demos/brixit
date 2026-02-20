@@ -1,12 +1,6 @@
 -- CreateEnum
 CREATE TYPE "AppRole" AS ENUM ('admin', 'contributor', 'viewer');
 
--- CreateEnum
-CREATE TYPE "CropCategory" AS ENUM ('fruit', 'vegetable', 'grass');
-
--- CreateEnum
-CREATE TYPE "LocationType" AS ENUM ('Grocery', 'Health', 'Community', 'Specialty', 'Club', 'Farmers', 'Other');
-
 -- CreateTable
 CREATE TABLE "users" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
@@ -46,11 +40,31 @@ CREATE TABLE "wallet_identities" (
 );
 
 -- CreateTable
+CREATE TABLE "crop_categories" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "name" TEXT NOT NULL,
+    "label" TEXT,
+    "sort_order" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "crop_categories_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "location_types" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "name" TEXT NOT NULL,
+    "label" TEXT,
+    "sort_order" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "location_types_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "crops" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "name" TEXT NOT NULL,
     "label" TEXT,
-    "category" "CropCategory",
+    "category" TEXT,
     "poor_brix" DECIMAL(5,2),
     "average_brix" DECIMAL(5,2),
     "good_brix" DECIMAL(5,2),
@@ -73,7 +87,7 @@ CREATE TABLE "locations" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "name" TEXT NOT NULL,
     "label" TEXT,
-    "type" "LocationType",
+    "type" TEXT,
 
     CONSTRAINT "locations_pkey" PRIMARY KEY ("id")
 );
@@ -148,6 +162,12 @@ CREATE UNIQUE INDEX "wallet_identities_user_id_key" ON "wallet_identities"("user
 
 -- CreateIndex
 CREATE INDEX "idx_wallet_identities_user_id" ON "wallet_identities"("user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "crop_categories_name_key" ON "crop_categories"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "location_types_name_key" ON "location_types"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "crops_name_key" ON "crops"("name");

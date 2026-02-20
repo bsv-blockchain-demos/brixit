@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -7,46 +8,30 @@ import {
   fetchUnverifiedSubmissions,
   verifySubmission,
   deleteSubmission,
-  type UnverifiedSubmission,
 } from '@/lib/adminApi';
 
 const PAGE_SIZE = 20;
+const QUERY_KEY = 'admin-unverified';
 
 export default function AdminSubmissionQueue() {
-  const [submissions, setSubmissions] = useState<UnverifiedSubmission[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [page, setPage] = useState(1);
 
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: [QUERY_KEY, page],
+    queryFn: () => fetchUnverifiedSubmissions({ limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
+    placeholderData: (prev) => prev,
+    staleTime: Infinity,
+  });
+
+  const submissions = data?.data ?? [];
+  const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const load = async (pg = page) => {
-    setLoading(true);
-    try {
-      const result = await fetchUnverifiedSubmissions({
-        limit: PAGE_SIZE,
-        offset: (pg - 1) * PAGE_SIZE,
-      });
-      setSubmissions(result.data);
-      setTotal(result.total);
-    } catch (e: any) {
-      toast({
-        title: 'Failed to load submissions',
-        description: e?.message ?? 'Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
 
-  useEffect(() => { void load(); }, []);
-
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-    void load(newPage);
-  };
+  const handlePageChange = (newPage: number) => setPage(newPage);
 
   const handleVerify = async (submissionId: string) => {
     try {
@@ -54,14 +39,12 @@ export default function AdminSubmissionQueue() {
       if (res.success) {
         toast({
           title: 'Submission verified',
-          description: res.message ?? 'Submission has been verified and is now visible to all users.',
+          description: res.message ?? 'Submission is now publicly visible.',
         });
-        // Reload current page; if it becomes empty and we're not on page 1, go back
-        const newTotal = total - 1;
-        const newTotalPages = Math.max(1, Math.ceil(newTotal / PAGE_SIZE));
-        const targetPage = page > newTotalPages ? newTotalPages : page;
-        setPage(targetPage);
-        void load(targetPage);
+        // If verifying the last item on a non-first page, step back
+        const newTotalPages = Math.max(1, Math.ceil((total - 1) / PAGE_SIZE));
+        if (page > newTotalPages) setPage(newTotalPages);
+        invalidate();
       } else {
         toast({ title: 'Verification failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
       }
@@ -73,15 +56,10 @@ export default function AdminSubmissionQueue() {
   const handleDelete = async (submissionId: string) => {
     try {
       await deleteSubmission(submissionId);
-      toast({
-        title: 'Submission removed',
-        description: 'The submission has been permanently deleted without verification.',
-      });
-      const newTotal = total - 1;
-      const newTotalPages = Math.max(1, Math.ceil(newTotal / PAGE_SIZE));
-      const targetPage = page > newTotalPages ? newTotalPages : page;
-      setPage(targetPage);
-      void load(targetPage);
+      toast({ title: 'Submission removed', description: 'Permanently deleted without verification.' });
+      const newTotalPages = Math.max(1, Math.ceil((total - 1) / PAGE_SIZE));
+      if (page > newTotalPages) setPage(newTotalPages);
+      invalidate();
     } catch (e: any) {
       toast({ title: 'Delete failed', description: e?.message ?? 'Please try again.', variant: 'destructive' });
     }
@@ -96,15 +74,17 @@ export default function AdminSubmissionQueue() {
             {total} submission{total !== 1 ? 's' : ''} awaiting review
           </p>
         </div>
-        <Button variant="ghost" onClick={() => load()} disabled={loading}>
+        <Button variant="ghost" onClick={invalidate} disabled={isFetching}>
           Refresh
         </Button>
       </div>
 
-      {submissions.length === 0 ? (
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      ) : submissions.length === 0 ? (
         <p className="text-sm text-muted-foreground">No pending submissions to review.</p>
       ) : (
-        <div className="space-y-3">
+        <div className={`space-y-3 ${isFetching ? 'opacity-60 pointer-events-none' : ''}`}>
           {submissions.map((s) => (
             <div key={s.id} className="border rounded-lg p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex-1 space-y-2">
@@ -167,18 +147,16 @@ export default function AdminSubmissionQueue() {
             variant="outline"
             size="sm"
             onClick={() => handlePageChange(page - 1)}
-            disabled={page === 1 || loading}
+            disabled={page === 1 || isFetching}
           >
             <ChevronLeft className="w-4 h-4 mr-1" /> Previous
           </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
+          <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
           <Button
             variant="outline"
             size="sm"
             onClick={() => handlePageChange(page + 1)}
-            disabled={page === totalPages || loading}
+            disabled={page === totalPages || isFetching}
           >
             Next <ChevronRight className="w-4 h-4 ml-1" />
           </Button>

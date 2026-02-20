@@ -1,7 +1,27 @@
 -- Brixit Reference Data Seed
--- Populates crops, brands, and locations (point-of-purchase chains).
+-- Populates lookup tables, crops, brands, and locations.
 -- Safe to re-run — all inserts use ON CONFLICT DO NOTHING.
 -- Run after migrations: npm run db:data (from backend/)
+
+-- ─── Crop Categories (lookup table) ──────────────────────────────────────────
+
+INSERT INTO crop_categories (name, label, sort_order) VALUES
+  ('fruit',     'Fruit',     1),
+  ('vegetable', 'Vegetable', 2),
+  ('grass',     'Grass',     3)
+ON CONFLICT (name) DO NOTHING;
+
+-- ─── Location Types (lookup table) ───────────────────────────────────────────
+
+INSERT INTO location_types (name, label, sort_order) VALUES
+  ('Grocery',   'Grocery Store',     1),
+  ('Health',    'Health Food Store', 2),
+  ('Community', 'Community Market',  3),
+  ('Specialty', 'Specialty Store',   4),
+  ('Club',      'Club / Warehouse',  5),
+  ('Farmers',   'Farmers Market',    6),
+  ('Other',     'Other',             7)
+ON CONFLICT (name) DO NOTHING;
 
 -- ─── Crops ───────────────────────────────────────────────────────────────────
 
