@@ -1,6 +1,6 @@
 // src/components/DataBrowser/DataTable.tsx
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { BrixDataPoint, MapFilter } from '../../types';
 
@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import {
   Calendar,
   Filter,
+  RefreshCw,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -136,6 +137,28 @@ const DataTable: React.FC = () => {
   const [sortBy, setSortBy] = useState<keyof BrixDataPoint>('submittedAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [searchTerm, setSearchTerm] = useState('');
+
+  const REFRESH_COOLDOWN_S = 15;
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const handleRefresh = useCallback(() => {
+    if (cooldownSeconds > 0) return;
+    queryClient.invalidateQueries({ queryKey: ['submissions'] });
+    setCooldownSeconds(REFRESH_COOLDOWN_S);
+    cooldownRef.current = setInterval(() => {
+      setCooldownSeconds((s) => {
+        if (s <= 1) {
+          clearInterval(cooldownRef.current!);
+          cooldownRef.current = null;
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  }, [queryClient, cooldownSeconds]);
+
+  useEffect(() => () => { if (cooldownRef.current) clearInterval(cooldownRef.current); }, []);
 
   const countQuery = useMemo(() => {
     const serverSortBy: NonNullable<PublicFormattedSubmissionsQuery['sortBy']> =
@@ -384,7 +407,19 @@ const DataTable: React.FC = () => {
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-8">
-      <h2 className="text-3xl font-bold text-gray-900 mb-6">All Submissions</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-3xl font-bold text-gray-900">All Submissions</h2>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={cooldownSeconds > 0}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className={`w-4 h-4 ${submissionsPageQuery.isFetching ? 'animate-spin' : ''}`} />
+          {cooldownSeconds > 0 ? `Refresh (${cooldownSeconds}s)` : 'Refresh'}
+        </Button>
+      </div>
 
       {fromLeaderboard && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">

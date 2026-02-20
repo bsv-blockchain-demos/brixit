@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminUserManagement from '@/components/Admin/AdminUserManagement';
 import AdminSubmissionQueue from '@/components/Admin/AdminSubmissionQueue';
+import AdminOverview from '@/components/Admin/AdminOverview';
 import Header from '@/components/Layout/Header';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -36,16 +37,21 @@ export default function Admin() {
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         </div>
 
-        <Tabs defaultValue="submissions" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full max-w-lg grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="submissions">Submissions</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
-          
+
+          <TabsContent value="overview" className="mt-6">
+            <AdminOverview />
+          </TabsContent>
+
           <TabsContent value="submissions" className="mt-6">
             <AdminSubmissionQueue />
           </TabsContent>
-          
+
           <TabsContent value="users" className="mt-6">
             <AdminUserManagement />
           </TabsContent>

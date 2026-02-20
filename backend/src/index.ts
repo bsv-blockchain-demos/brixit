@@ -8,6 +8,7 @@ import path from 'path';
 import { config } from './config.js';
 import { corsMiddleware } from './middleware/cors.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { requestLogger } from './middleware/logger.js';
 import { requireAuth, requireContributor } from './middleware/auth.js';
 
 // Route imports
@@ -29,6 +30,7 @@ const app = express();
 // --- Global middleware ---
 app.use(corsMiddleware);
 app.use(express.json({ limit: '10mb' }));
+app.use(requestLogger);
 
 // --- Static file serving for uploads ---
 app.use('/uploads', express.static(path.resolve(config.uploadDir)));
@@ -55,7 +57,7 @@ app.use('/api/leaderboards', leaderboardsRoutes);
 // --- Submissions (public GET + authenticated POST/DELETE) ---
 app.use('/api/submissions', submissionsRoutes);
 // POST /api/submissions/create requires auth + contributor (auto-verify handler)
-app.post('/api/submissions/create', requireAuth as any, requireContributor as any, autoVerifySubmissionRoutes);
+app.use('/api/submissions/create', requireAuth as any, requireContributor as any, autoVerifySubmissionRoutes);
 
 // --- GeoNames proxy (username is public, proxy requires auth) ---
 app.use('/api/geonames', geonamesRoutes);

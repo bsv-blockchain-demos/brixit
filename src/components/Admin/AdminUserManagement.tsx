@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { Search } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   fetchAllUsers,
   upgradeToContributor,
@@ -14,6 +17,8 @@ import {
 export default function AdminUserManagement() {
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const { user: currentUser } = useAuth();
   const { toast } = useToast();
 
   const loadUsers = async () => {
@@ -92,6 +97,16 @@ export default function AdminUserManagement() {
     }
   };
 
+  const filteredUsers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter(
+      (u) =>
+        u.id.toLowerCase().includes(q) ||
+        (u.display_name ?? '').toLowerCase().includes(q),
+    );
+  }, [users, search]);
+
   // Helper to determine user's current role level
   const getUserRole = (roles: string[] | null | undefined): 'user' | 'contributor' | 'admin' => {
     if (!roles || roles.length === 0) return 'user';
@@ -118,17 +133,37 @@ export default function AdminUserManagement() {
           </Button>
         </div>
 
-        {users.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No users found.</p>
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name or UUID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        {filteredUsers.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            {search ? 'No users match your search.' : 'No users found.'}
+          </p>
         ) : (
           <div className="space-y-2">
-            {users.map((u) => {
+            {filteredUsers.map((u) => {
               const currentRole = getUserRole(u.roles);
+              const isSelf = u.id === currentUser?.id;
 
               return (
                 <div key={u.id} className="border rounded p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="text-sm flex-1">
-                    <div className="font-medium text-base mb-1">{u.display_name ?? u.id}</div>
+                    <div className="font-medium text-base mb-1 flex items-center gap-2">
+                      {u.display_name ?? u.id}
+                      {isSelf && (
+                        <Badge className="bg-green-500 hover:bg-green-500 text-white text-xs px-1.5 py-0">
+                          You
+                        </Badge>
+                      )}
+                    </div>
                     <div className="text-muted-foreground flex items-center gap-2">
                       <span>Current role:</span>
                       <Badge variant={getRoleBadgeVariant(currentRole)}>
