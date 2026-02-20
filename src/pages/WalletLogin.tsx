@@ -62,12 +62,8 @@ export default function WalletLogin() {
       const success = await walletLogin(userPubKey, certificate, userData);
 
       if (success) {
-        if (DEV_MODE) {
-          // In dev mode, don't redirect - show success state
-          alert('✅ Wallet login flow completed!\n\nDEV MODE is enabled, so no actual Supabase session was created.\n\nTo test with real authentication:\n1. Deploy the Edge Function\n2. Set VITE_DEV_MODE=false in .env.local\n3. Restart the dev server');
-        } else {
-          navigate('/leaderboard');
-        }
+        console.log('Wallet login successful, navigating to leaderboard');
+        navigate('/leaderboard');
       } else {
         setCertificateError('Authentication failed. Please try again.');
       }

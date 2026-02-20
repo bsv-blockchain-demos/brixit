@@ -6,7 +6,15 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  apiPost,
+  apiGet,
+  apiPut,
+  setTokens,
+  clearTokens,
+  getAccessToken,
+  loadTokensFromStorage,
+} from "@/lib/api";
 
 interface UserProfile {
   id: string;
@@ -54,82 +62,45 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Never derive a name from email for display purposes.
-// Use profile.display_name first, then user_metadata, else a neutral default.
-function deriveDisplayName(sessionUser?: { email?: string | null; user_metadata?: Record<string, any> } | null): string {
-  if (!sessionUser) return "Explorer";
-  const meta = sessionUser.user_metadata || {};
-  const fromMeta =
-    meta.display_name ||
-    meta.full_name ||
-    meta.name ||
-    meta.username;
-  if (typeof fromMeta === "string" && fromMeta.trim().length > 0) {
-    return fromMeta.trim();
-  }
-  // Do NOT use email prefix (to avoid showing email)
-  return "Explorer";
-}
-
-async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
+async function fetchUserProfile(): Promise<UserProfile | null> {
   try {
-    if (!userId) return null;
+    const data = await apiGet<{
+      id: string;
+      email: string | null;
+      display_name: string | null;
+      country: string | null;
+      state: string | null;
+      city: string | null;
+      points: number | null;
+      submission_count: number | null;
+      last_submission: string | null;
+      roles: string[];
+    }>("/api/users/me");
 
-    // Fetch user profile from users table (email was removed from this table)
-    const { data: profileData, error: profileError } = await supabase
-      .from("users")
-      .select(
-        "id, display_name, points, submission_count, last_submission, country, state, city"
-      )
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (profileError) {
-      console.error("[fetchUserProfile] Supabase error:", profileError.message);
-      return null;
-    }
-
-    if (!profileData) {
-      return null;
-    }
-
-    // Fetch user roles from user_roles table
-    const { data: rolesData, error: rolesError } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-
-    if (rolesError) {
-      console.error("[fetchUserProfile] Error fetching roles:", rolesError.message);
-    }
-
-    // Determine highest role (admin > contributor > user)
+    // Determine highest role
     let userRole = "user";
-    if (rolesData && rolesData.length > 0) {
-      if (rolesData.some((r) => r.role === "admin")) {
-        userRole = "admin";
-      } else if (rolesData.some((r) => r.role === "contributor")) {
-        userRole = "contributor";
-      }
+    if (data.roles?.includes("admin")) {
+      userRole = "admin";
+    } else if (data.roles?.includes("contributor")) {
+      userRole = "contributor";
     }
 
     return {
-      ...profileData,
+      id: data.id,
+      display_name: data.display_name,
       role: userRole,
-    } as UserProfile;
+      email: data.email,
+      country: data.country,
+      state: data.state,
+      city: data.city,
+      points: data.points,
+      submission_count: data.submission_count,
+      last_submission: data.last_submission,
+    };
   } catch (err: any) {
-    console.error("[fetchUserProfile] Unexpected error:", err.message || err);
+    console.error("[fetchUserProfile] Error:", err.message || err);
     return null;
   }
-}
-
-async function ensureProfileExists(userId: string, retries = 3): Promise<UserProfile | null> {
-  for (let i = 0; i < retries; i++) {
-    const profile = await fetchUserProfile(userId);
-    if (profile) return profile;
-    await new Promise((resolve) => setTimeout(resolve, 500 * (i + 1)));
-  }
-  return null;
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -141,197 +112,69 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isAdmin = user?.role === "admin";
 
-  // Synchronous-only handler to avoid deadlocks inside onAuthStateChange
-  const handleSessionChange = (session: any) => {
-    const sessionUser = session?.user ?? null;
-    if (sessionUser) {
-      const { id, email } = sessionUser;
-
-      setIsAuthenticated(true);
-      setAuthError(null);
-      setProfileLoading(true);
-
-      // Set minimal, safe profile immediately (no email-derived display names)
-      const minimalProfile: UserProfile = {
-        id,
-        display_name: deriveDisplayName(sessionUser),
-        role: "contributor",
-        email: email || null,
-        country: null,
-        state: null,
-        city: null,
-        points: 0,
-        submission_count: 0,
-      };
-      setUser(minimalProfile);
-
-      // Defer profile fetching to avoid deadlock
-      setTimeout(() => {
-        fetchAndUpdateProfile(id, email || null, sessionUser);
-      }, 0);
-    } else {
-      setUser(null);
-      setIsAuthenticated(false);
-      setAuthError(null);
-      setProfileLoading(false);
-    }
-  };
-
-  // Async profile fetching - called after state updates
-  const fetchAndUpdateProfile = async (
-    userId: string,
-    email: string | null,
-    sessionUser: any
-  ) => {
-    try {
-      const profile = await ensureProfileExists(userId);
-      if (profile) {
-        // If display_name is missing, derive a safe one from metadata (not email)
-        const safeName =
-          (profile.display_name && profile.display_name.trim().length > 0)
-            ? profile.display_name
-            : deriveDisplayName(sessionUser);
-
-        setUser({
-          ...profile,
-          display_name: safeName,
-          email: email,
-        });
-      } else {
-        console.warn("User profile not found, keeping minimal profile");
-      }
-    } catch (err: any) {
-      console.error("Error fetching user profile:", err);
-      // Keep the minimal profile that was already set
-    } finally {
-      setProfileLoading(false);
-    }
-  };
-
   const loadSession = async () => {
     setIsLoading(true);
+    setProfileLoading(true);
     try {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
+      loadTokensFromStorage();
+      const token = getAccessToken();
 
-      if (error) {
-        setAuthError(error.message);
+      if (!token) {
+        setUser(null);
+        setIsAuthenticated(false);
         return;
       }
 
-      handleSessionChange(session);
+      // Validate token by fetching profile
+      const profile = await fetchUserProfile();
+      if (profile) {
+        setUser(profile);
+        setIsAuthenticated(true);
+        setAuthError(null);
+      } else {
+        // Token is invalid or expired
+        clearTokens();
+        setUser(null);
+        setIsAuthenticated(false);
+      }
     } catch (err: any) {
-      setAuthError("Unexpected error loading session.");
+      console.error("Error loading session:", err);
+      clearTokens();
+      setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
+      setProfileLoading(false);
     }
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST - synchronous callbacks only
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      handleSessionChange(session);
-    });
-
-    // THEN check for existing session
     loadSession();
-
-    return () => subscription.unsubscribe();
   }, []);
 
+  // Email/password auth stubs — wallet-only auth now, these are kept for interface compat
   const register = async (
-    email: string,
-    password: string,
-    displayName: string,
-    location?: LocationData
+    _email: string,
+    _password: string,
+    _displayName: string,
+    _location?: LocationData
   ): Promise<boolean> => {
-    setAuthError(null);
-    try {
-      const userMetadata: any = {
-        display_name: displayName.trim() || "Explorer",
-        ...location,
-      };
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: userMetadata,
-          emailRedirectTo: `${window.location.origin}/`,
-        },
-      });
-
-      if (error) {
-        console.error("Signup error:", { error, code: error.status });
-
-        let userFriendlyMessage = error.message;
-        if (error.status === 422) {
-          userFriendlyMessage =
-            "Unable to create account. Please try again in a few moments.";
-        } else if (
-          error.message.includes("Password should be at least 8 characters") ||
-          error.message.includes("Password should be at least 6 characters")
-        ) {
-          userFriendlyMessage = "Password must be at least 8 characters long.";
-        } else if (error.message.includes("Password should contain at least one uppercase")) {
-          userFriendlyMessage = "Password must contain at least one uppercase letter.";
-        } else if (error.message.includes("Password should contain at least one lowercase")) {
-          userFriendlyMessage = "Password must contain at least one lowercase letter.";
-        } else if (error.message.includes("Password should contain at least one number")) {
-          userFriendlyMessage = "Password must contain at least one number.";
-        } else if (error.message.includes("Password should contain at least one special character")) {
-          userFriendlyMessage = "Password must contain at least one special character.";
-        }
-
-        setAuthError(userFriendlyMessage);
-        return false;
-      }
-
-      if (data.user) return true;
-
-      setAuthError("Signup failed. No user returned.");
-      return false;
-    } catch (err: any) {
-      setAuthError("Unexpected error during signup.");
-      return false;
-    }
+    setAuthError("Registration is handled via wallet login.");
+    return false;
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    setAuthError(null);
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        console.error("Login error:", error.message);
-        setAuthError(error.message);
-        return false;
-      }
-
-      if (data.user) return true;
-
-      setAuthError("Login failed. No user returned.");
-      return false;
-    } catch (err: any) {
-      setAuthError("Unexpected error during login.");
-      return false;
-    }
+  const login = async (_email: string, _password: string): Promise<boolean> => {
+    setAuthError("Email/password login is no longer supported. Please use wallet login.");
+    return false;
   };
 
   const logout = async (): Promise<void> => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) setAuthError(error.message);
-    } catch (err: any) {
-      setAuthError("Unexpected error during logout.");
+      await apiPost("/api/auth/logout", {}).catch(() => {});
+    } catch {
+      // ignore
     } finally {
+      clearTokens();
       setUser(null);
       setIsAuthenticated(false);
       setAuthError(null);
@@ -345,23 +188,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const { error } = await supabase
-        .from("users")
-        .update({ display_name: newUsername })
-        .eq("id", user.id);
-
-      if (error) {
-        setAuthError(error.message);
-        return false;
-      }
-
-      const refreshedProfile = await fetchUserProfile(user.id);
-      if (refreshedProfile) {
-        setUser({ ...refreshedProfile, email: user.email });
-      }
+      await apiPut("/api/users/me", { display_name: newUsername });
+      const refreshedProfile = await fetchUserProfile();
+      if (refreshedProfile) setUser(refreshedProfile);
       return true;
     } catch (err: any) {
-      setAuthError("Unexpected error updating username.");
+      setAuthError(err.message || "Unexpected error updating username.");
       return false;
     }
   };
@@ -373,136 +205,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const { error } = await supabase
-        .from("users")
-        .update({
-          country: location.country,
-          state: location.state,
-          city: location.city,
-        })
-        .eq("id", user.id);
-
-      if (error) {
-        setAuthError(error.message);
-        return false;
-      }
-
-      const refreshedProfile = await fetchUserProfile(user.id);
-      if (refreshedProfile) {
-        setUser({ ...refreshedProfile, email: user.email });
-      }
+      await apiPut("/api/users/me", {
+        country: location.country,
+        state: location.state,
+        city: location.city,
+      });
+      const refreshedProfile = await fetchUserProfile();
+      if (refreshedProfile) setUser(refreshedProfile);
       return true;
     } catch (err: any) {
-      setAuthError("Unexpected error updating location.");
+      setAuthError(err.message || "Unexpected error updating location.");
       return false;
     }
   };
 
-  const resetPassword = async (email: string): Promise<boolean> => {
-    setAuthError(null);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) {
-        setAuthError(error.message);
-        return false;
-      }
-      return true;
-    } catch (err: any) {
-      setAuthError("Failed to send password reset email");
-      return false;
-    }
+  // Password-related stubs (not applicable for wallet-only auth)
+  const resetPassword = async (_email: string): Promise<boolean> => {
+    setAuthError("Password reset is not available with wallet authentication.");
+    return false;
   };
 
-  const sendPasswordResetOTP = async (email: string): Promise<boolean> => {
-    setAuthError(null);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password-otp`,
-      });
-
-      if (error) {
-        setAuthError(error.message);
-        return false;
-      }
-      return true;
-    } catch (err: any) {
-      setAuthError("Failed to send password reset code");
-      return false;
-    }
+  const sendPasswordResetOTP = async (_email: string): Promise<boolean> => {
+    setAuthError("Password reset is not available with wallet authentication.");
+    return false;
   };
 
   const resetPasswordWithOTP = async (
-    email: string,
-    token: string,
-    password: string
+    _email: string,
+    _token: string,
+    _password: string
   ): Promise<boolean> => {
-    setAuthError(null);
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token,
-        type: "recovery",
-      });
-
-      if (error) {
-        if (error.message.includes("Token has expired")) {
-          setAuthError("The reset code has expired. Please request a new one.");
-        } else {
-          setAuthError(error.message);
-        }
-        return false;
-      }
-
-      const { error: updateError } = await supabase.auth.updateUser({
-        password,
-      });
-
-      if (updateError) {
-        setAuthError(updateError.message);
-        return false;
-      }
-
-      return true;
-    } catch (err: any) {
-      setAuthError("Failed to reset password");
-      return false;
-    }
+    setAuthError("Password reset is not available with wallet authentication.");
+    return false;
   };
 
-  const updatePassword = async (password: string): Promise<boolean> => {
-    setAuthError(null);
-    try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) {
-        setAuthError(error.message);
-        return false;
-      }
-      return true;
-    } catch (err: any) {
-      setAuthError("Failed to update password");
-      return false;
-    }
+  const updatePassword = async (_password: string): Promise<boolean> => {
+    setAuthError("Password update is not available with wallet authentication.");
+    return false;
   };
 
   const handleAuthCallback = async (): Promise<boolean> => {
-    try {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
-      if (error) {
-        setAuthError(error.message);
-        return false;
-      }
-      handleSessionChange(session);
-      return true;
-    } catch (err: any) {
-      setAuthError("Failed to handle auth callback");
-      return false;
-    }
+    // No-op for wallet auth — session is managed via JWT tokens
+    return isAuthenticated;
   };
 
   const walletLogin = async (
@@ -512,71 +256,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   ): Promise<boolean> => {
     setAuthError(null);
 
-    // Development mode: Skip Edge Function for testing
-    const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
-
-    if (DEV_MODE) {
-      console.log('🔧 DEV MODE: Simulating wallet login');
-      console.log('Identity Key:', identityKey);
-      console.log('Certificate:', certificate);
-      console.log('User Data:', userData);
-
-      // Simulate successful login
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      console.log('✅ DEV MODE: Login simulated successfully');
-      alert(`DEV MODE: Wallet login successful!\n\nIdentity: ${identityKey}\nName: ${userData.displayName}\nLocation: ${userData.locationLat}, ${userData.locationLng}`);
-
-      return true;
-    }
-
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL2 || import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      if (!supabaseUrl || !supabaseKey) {
-        setAuthError('Missing Supabase environment variables');
-        return false;
-      }
-
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/wallet-auth-verify`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseKey}`
-          },
-          body: JSON.stringify({
-            identityKey,
-            certificateSerialNumber: certificate.serialNumber,
-            certificate,
-            userData
-          })
-        }
-      );
-
-      const data = await response.json();
+      const data = await apiPost<{
+        success: boolean;
+        access_token: string;
+        refresh_token: string;
+        user: any;
+        error?: string;
+      }>("/api/auth/wallet-login", {
+        identityKey,
+        certificateSerialNumber: certificate.serialNumber,
+        certificate,
+        userData,
+      }, { skipAuth: true });
 
       if (!data.success) {
-        setAuthError(data.error || 'Wallet authentication failed');
+        setAuthError(data.error || "Wallet authentication failed");
         return false;
       }
 
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: data.access_token,
-        refresh_token: data.refresh_token
-      });
+      // Store tokens
+      setTokens(data.access_token, data.refresh_token);
 
-      if (sessionError) {
-        setAuthError(sessionError.message);
-        return false;
+      // Fetch full profile
+      setProfileLoading(true);
+      const profile = await fetchUserProfile();
+      if (profile) {
+        setUser(profile);
+        setIsAuthenticated(true);
+      } else {
+        // Use the user data from the login response as fallback
+        setUser({
+          id: data.user?.id || "",
+          display_name: data.user?.display_name || userData.displayName || "Explorer",
+          role: "contributor",
+          email: null,
+          country: null,
+          state: null,
+          city: null,
+        });
+        setIsAuthenticated(true);
       }
+      setProfileLoading(false);
 
       return true;
     } catch (err: any) {
-      console.error('Wallet login error:', err);
-      setAuthError('Unexpected error during wallet login');
+      console.error("Wallet login error:", err);
+      setAuthError(err.message || "Unexpected error during wallet login");
       return false;
     }
   };

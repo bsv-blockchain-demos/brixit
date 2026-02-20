@@ -1,4 +1,4 @@
-import { supabase } from '../integrations/supabase/client';
+import { apiGet } from './api';
 
 /**
  * Interface for a brand, including its unique name and human-readable label.
@@ -14,15 +14,5 @@ export interface Brand {
  * @returns A promise that resolves to an array of Brand objects.
  */
 export const fetchBrands = async (): Promise<Brand[]> => {
-  const { data, error } = await supabase
-    .from('brands')
-    .select('id, name, label') 
-    .order('label'); 
-
-  if (error) {
-    console.error('Error fetching brands:', error);
-    throw error;
-  }
-
-  return data || [];
+  return apiGet<Brand[]>('/api/brands', { skipAuth: true });
 };

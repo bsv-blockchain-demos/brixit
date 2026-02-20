@@ -23,8 +23,7 @@ import {
   Building2
 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import { supabase } from '../integrations/supabase/client';
-import { getSupabaseUrl, getPublishableKey } from '@/lib/utils';
+import { apiPost, apiFetch } from '@/lib/api';
 import ComboBoxAddable from '../components/ui/combo-box-addable';
 import Combobox from '../components/ui/combo-box'; 
 import LocationSearch from '../components/common/LocationSearch';
@@ -147,53 +146,10 @@ const DataEntry = () => {
   };
 
   // Helper function to actually create brands and stores in database
+  // Note: The auto-verify-submission endpoint handles brand/location creation server-side,
+  // so this is now a no-op. Pending entries are passed in the submission payload.
   const createPendingEntries = async () => {
-    const createdBrands = [];
-    const createdStores = [];
-
-    // Create pending brands
-    for (const brandName of pendingBrands) {
-      try {
-        const { data, error } = await supabase
-          .from('brands')
-          .insert([{ name: brandName }])
-          .select();
-
-        if (error) {
-          console.error('Error creating brand:', error);
-          continue;
-        }
-
-        if (data && data.length > 0) {
-          createdBrands.push(data[0]);
-        }
-      } catch (err) {
-        console.error('Error creating brand:', err);
-      }
-    }
-
-    // Create pending stores
-    for (const storeName of pendingStores) {
-      try {
-        const { data, error } = await supabase
-          .from('locations')
-          .insert([{ name: storeName }])
-          .select();
-
-        if (error) {
-          console.error('Error creating store:', error);
-          continue;
-        }
-        
-        if (data && data.length > 0) {
-          createdStores.push(data[0]);
-        }
-      } catch (err) {
-        console.error('Error creating store:', err);
-      }
-    }
-
-    return { createdBrands, createdStores };
+    return { createdBrands: [], createdStores: [] };
   };
 
   const validateFile = (file: File): boolean => {
@@ -343,67 +299,46 @@ const DataEntry = () => {
         poi_name: formData.poi_name || null,
         business_name: formData.business_name || null,
         normalized_address: formData.normalized_address || null,
-        store_name: formData.store
+        store_name: formData.store,
       };
 
-      // Call the Edge Function with enhanced location data
-      const supabaseUrl = getSupabaseUrl();
-      const publishKey = getPublishableKey();
-      const response = await fetch(`${supabaseUrl}/functions/v1/auto-verify-submission`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${publishKey}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || errorData.error || 'Failed to submit data via Edge Function.');
-      }
-      
-      const result = await response.json();
+      // Submit to Express backend
+      const result = await apiPost<{ verified: boolean; submission_id: string }>(
+        '/api/submissions/create',
+        payload
+      );
+
       const { verified, submission_id } = result;
       
       if (!submission_id) {
         throw new Error('Submission ID was not returned by the server.');
       }
       
-      // Handle image uploads
+      // Handle image uploads via Express backend
       if (formData.images.length > 0) {
-        const userId = user?.id;
-        if (!userId) throw new Error('User not authenticated for image upload.');
-        
-        for (let i = 0; i < formData.images.length; i++) {
-          const file = formData.images[i];
-          const fileExtension = file.name?.split('.').pop()?.toLowerCase() || 'jpg';
-          const filePath = [userId, submission_id, `${Date.now()}_${i}.${fileExtension}`].join('/');
-          
-          const { error: uploadError } = await supabase.storage
-            .from('submission-images-bucket')
-            .upload(filePath, file);
-          
-          if (uploadError) {
-            console.error('Image upload failed:', uploadError);
+        const uploadData = new FormData();
+        uploadData.append('submission_id', submission_id);
+        for (const file of formData.images) {
+          uploadData.append('images', file);
+        }
+
+        try {
+          const uploadRes = await apiFetch('/api/upload', {
+            method: 'POST',
+            body: uploadData,
+          });
+
+          if (!uploadRes.ok) {
+            const uploadErr = await uploadRes.json().catch(() => ({}));
+            console.error('Image upload failed:', uploadErr);
             toast({
               title: 'Image upload failed',
-              description: `Some images could not be uploaded. Error: ${uploadError.message}`,
+              description: uploadErr.error || 'Some images could not be uploaded.',
               variant: 'destructive',
             });
-            continue;
           }
-          
-          const { error: insertError } = await supabase
-            .from('submission_images')
-            .insert({
-              submission_id: submission_id,
-              image_url: filePath,
-            });
-          
-          if (insertError) {
-            console.error('Failed to save image metadata:', insertError);
-          }
+        } catch (uploadErr) {
+          console.error('Image upload error:', uploadErr);
         }
       }
       

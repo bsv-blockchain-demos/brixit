@@ -1,4 +1,4 @@
-import { supabase } from '../integrations/supabase/client';
+import { apiGet } from './api';
 
 export type Filter = {
   city?: string;
@@ -30,6 +30,14 @@ export interface LeaderboardEntry {
   entity_name?: string;
 }
 
+// Map old RPC names to backend leaderboard endpoints
+const RPC_TO_ENDPOINT: Record<string, string> = {
+  get_brand_leaderboard: '/api/leaderboards/brand',
+  get_crop_leaderboard: '/api/leaderboards/crop',
+  get_location_leaderboard: '/api/leaderboards/location',
+  get_user_leaderboard_safe: '/api/leaderboards/user',
+};
+
 async function fetchLeaderboard<R extends LeaderboardEntry>(
   rpcName: string,
   filters: Filter = {}
@@ -37,46 +45,22 @@ async function fetchLeaderboard<R extends LeaderboardEntry>(
   const { city, state, country, crop } = filters;
   console.log(`🔍 Fetching ${rpcName} with filters:`, { city, state, country, crop });
 
-  // Sanitize filters - treat "All countries" and similar values as null
-  const sanitizeFilter = (value?: string) => {
-    if (!value || value === "All countries" || value === "All states" || value === "All cities") {
-      return null;
-    }
-    return value;
-  };
+  const endpoint = RPC_TO_ENDPOINT[rpcName] || `/api/leaderboards/${rpcName}`;
 
-  const params = {
-    country_filter: sanitizeFilter(country),
-    state_filter: sanitizeFilter(state),
-    city_filter: sanitizeFilter(city),
-    crop_filter: sanitizeFilter(crop),
-    limit_count: typeof filters.limit === 'number' ? filters.limit : 50,
-    offset_count: typeof filters.offset === 'number' ? filters.offset : 0,
-  };
+  const params = new URLSearchParams();
+  if (country && country !== 'All countries') params.set('country', country);
+  if (state && state !== 'All states') params.set('state', state);
+  if (city && city !== 'All cities') params.set('city', city);
+  if (crop) params.set('crop', crop);
+  if (typeof filters.limit === 'number') params.set('limit', String(filters.limit));
+  if (typeof filters.offset === 'number') params.set('offset', String(filters.offset));
+
+  const qs = params.toString();
+  const url = qs ? `${endpoint}?${qs}` : endpoint;
 
   try {
-    const { data, error } = await (supabase as any).rpc(rpcName as any, params as any);
-    
-    if (error) {
-      console.error(`❌ Error fetching ${rpcName}:`, error);
-      throw error;
-    }
-
-    if (Array.isArray(data)) {
-      return data.map((item) => {
-        // normalize numeric fields
-        ['average_normalized_score', 'average_brix', 'submission_count', 'rank'].forEach(field => {
-          if (item[field] !== null && item[field] !== undefined) {
-            const val = Number(item[field]);
-            item[field] = isNaN(val) ? 0 : val;
-          }
-        });
-        return item;
-      });
-    } else {
-      console.warn(`⚠️ ${rpcName} returned non-array data:`, data);
-      return [];
-    }
+    const data = await apiGet<R[]>(url, { skipAuth: true });
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error(`❌ Exception in fetchLeaderboard for ${rpcName}:`, error);
     return [];

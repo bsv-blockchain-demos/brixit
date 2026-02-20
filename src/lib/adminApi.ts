@@ -1,17 +1,6 @@
-import { supabase } from '@/integrations/supabase/client';
+import { apiGet, apiPost, apiDelete } from '@/lib/api';
 
 export type AppRole = 'admin' | 'contributor' | 'user';
-
-export interface AdminCreateUserInput {
-  email: string;
-  password: string;
-  displayName: string;
-  country?: string;
-  countryCode?: string;
-  state?: string;
-  stateCode?: string;
-  city?: string;
-}
 
 export interface AdminResponse {
   success: boolean;
@@ -46,51 +35,26 @@ export interface UnverifiedSubmission {
   user_id: string;
 }
 
-export async function createUser(input: AdminCreateUserInput) {
-  const { data, error } = await supabase.functions.invoke('admin-create-user', {
-    body: {
-      email: input.email,
-      password: input.password,
-      display_name: input.displayName,
-      country: input.country,
-      country_code: input.countryCode,
-      state: input.state,
-      state_code: input.stateCode,
-      city: input.city,
-    },
-  });
-  if (error) throw error;
-  return data as (AdminResponse & { user?: { id: string; email: string } });
-}
-
 export async function fetchAllUsers() {
-  const { data, error } = await (supabase.rpc as any)('admin_get_all_users');
-  if (error) throw error;
-  return data as UserWithRoles[];
+  return apiGet<UserWithRoles[]>('/api/admin/users');
 }
 
 export async function fetchUnverifiedSubmissions() {
-  const { data, error } = await (supabase.rpc as any)('admin_get_unverified_submissions');
-  if (error) throw error;
-  return data as UnverifiedSubmission[];
+  return apiGet<UnverifiedSubmission[]>('/api/admin/submissions/unverified');
 }
 
 export async function grantRole(userId: string, role: Extract<AppRole, 'admin' | 'contributor'>) {
-  const { data, error } = await (supabase.rpc as any)('admin_grant_role', {
+  return apiPost<AdminResponse>('/api/admin/roles/grant', {
     target_user_id: userId,
     role_to_grant: role,
   });
-  if (error) throw error;
-  return data as AdminResponse;
 }
 
 export async function revokeRole(userId: string, role: Extract<AppRole, 'admin' | 'contributor'>) {
-  const { data, error } = await (supabase.rpc as any)('admin_revoke_role', {
+  return apiPost<AdminResponse>('/api/admin/roles/revoke', {
     target_user_id: userId,
     role_to_revoke: role,
   });
-  if (error) throw error;
-  return data as AdminResponse;
 }
 
 // Helper function to upgrade user to contributor (from user)
@@ -141,15 +105,9 @@ export async function downgradeToUser(userId: string) {
 }
 
 export async function verifySubmission(submissionId: string, verify = true) {
-  const { data, error } = await (supabase.rpc as any)('admin_verify_submission', {
-    submission_id_param: submissionId,
-    verify_bool: verify,
-  });
-  if (error) throw error;
-  return data as AdminResponse;
+  return apiPost<AdminResponse>(`/api/admin/submissions/${submissionId}/verify`, { verify });
 }
 
 export async function deleteSubmission(submissionId: string) {
-  const { error } = await supabase.from('submissions').delete().eq('id', submissionId);
-  if (error) throw error;
+  await apiDelete(`/api/admin/submissions/${submissionId}`);
 }

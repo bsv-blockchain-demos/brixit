@@ -1,4 +1,4 @@
-import { getSupabaseUrl, getPublishableKey } from '@/lib/utils';
+import { apiFetch } from '@/lib/api';
 
 interface GeoNamesProxyParams {
   endpoint: string;
@@ -6,20 +6,11 @@ interface GeoNamesProxyParams {
 }
 
 export async function fetchFromGeonamesProxy({ endpoint, queryParams }: GeoNamesProxyParams) {
-  const supabaseUrl = getSupabaseUrl();
-  const supabaseKey = getPublishableKey();
-
   const encodedParams = btoa(new URLSearchParams(queryParams).toString());
 
-  const url = `${supabaseUrl}/functions/v1/get-geonames-username?endpoint=${encodeURIComponent(endpoint)}&params=${encodeURIComponent(encodedParams)}`;
+  const url = `/api/geonames?endpoint=${encodeURIComponent(endpoint)}&params=${encodeURIComponent(encodedParams)}`;
 
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${supabaseKey}`
-    }
-  });
+  const response = await apiFetch(url, { method: 'GET' });
 
   if (!response.ok) {
     const errorText = await response.text();

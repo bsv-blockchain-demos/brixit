@@ -26,6 +26,30 @@ router.get('/', async (_req: Request, res: Response) => {
   }
 });
 
+// GET /api/crops/thresholds — all crops with brix thresholds (for CropThresholdContext)
+router.get('/thresholds', async (_req: Request, res: Response) => {
+  try {
+    const crops = await prisma.crop.findMany({
+      select: { name: true, poorBrix: true, averageBrix: true, goodBrix: true, excellentBrix: true },
+      orderBy: { name: 'asc' },
+    });
+    const result: Record<string, { poor: number; average: number; good: number; excellent: number }> = {};
+    for (const c of crops) {
+      const key = c.name.toLowerCase().trim();
+      result[key] = {
+        poor: c.poorBrix ? Number(c.poorBrix) : 0,
+        average: c.averageBrix ? Number(c.averageBrix) : 0,
+        good: c.goodBrix ? Number(c.goodBrix) : 0,
+        excellent: c.excellentBrix ? Number(c.excellentBrix) : 0,
+      };
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('[crops/thresholds] Error:', err);
+    res.status(500).json({ error: 'Failed to fetch crop thresholds' });
+  }
+});
+
 // GET /api/crops/categories
 router.get('/categories', async (_req: Request, res: Response) => {
   try {

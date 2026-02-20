@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '../integrations/supabase/client';
+import { apiGet } from '../lib/api';
 import { BrixThresholds } from '../lib/getBrixQuality';
 
 type CropThresholdCache = Record<string, BrixThresholds>;
@@ -54,26 +54,7 @@ export const CropThresholdProvider: React.FC<CropThresholdProviderProps> = ({ ch
         return;
       }
 
-      const { data, error } = await supabase
-        .from('crops')
-        .select('name, poor_brix, average_brix, good_brix, excellent_brix');
-
-      if (error) {
-        console.error('🌾 CropThresholdContext: Error fetching crop thresholds:', error);
-        return;
-      }
-
-      const next: CropThresholdCache = {};
-      for (const row of data || []) {
-        const normalizedCropName = (row as any).name?.toLowerCase?.().trim?.();
-        if (!normalizedCropName) continue;
-        next[normalizedCropName] = {
-          poor: Number((row as any).poor_brix) || 0,
-          average: Number((row as any).average_brix) || 0,
-          good: Number((row as any).good_brix) || 0,
-          excellent: Number((row as any).excellent_brix) || 0,
-        };
-      }
+      const next = await apiGet<CropThresholdCache>('/api/crops/thresholds', { skipAuth: true });
 
       setCache(next);
       writeToStorage(next);

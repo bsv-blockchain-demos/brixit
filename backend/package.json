@@ -10,10 +10,12 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:migrate": "npx prisma migrate dev",
-    "db:seed": "psql $DATABASE_URL -f prisma/seed.sql",
+    "db:seed": "docker exec -i brixit-postgres psql -U brixit -d brixit < prisma/seed.sql",
     "db:generate": "npx prisma generate",
     "db:studio": "npx prisma studio",
-    "db:reset": "npx prisma migrate reset"
+    "db:reset": "npx prisma migrate reset",
+    "create-superuser": "tsx scripts/create-superuser.ts",
+    "kill-port": "powershell -Command \"$p = Get-NetTCPConnection -LocalPort $env:PORT -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -First 1; if ($p) { Stop-Process -Id $p -Force; Write-Host 'Killed PID' $p } else { Write-Host 'Port is already free' }\""
   },
   "dependencies": {
     "@bsv/sdk": "^1.10.3",

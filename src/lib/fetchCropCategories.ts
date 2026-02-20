@@ -1,23 +1,16 @@
-import { supabase } from '../integrations/supabase/client';
+import { apiGet } from './api';
 
 /**
  * Fetches unique crop categories.
  * @returns A promise that resolves to an array of category names.
  */
 export async function fetchCropCategories(): Promise<string[]> {
-  const { data, error } = await supabase
-    .from('crops')
-    .select('category')
-    .not('category', 'is', null)
-    .order('category', { ascending: true });
-
-  if (error) {
+  try {
+    return await apiGet<string[]>('/api/crops/categories', { skipAuth: true });
+  } catch (error) {
     console.error('Error fetching crop categories:', error);
     return [];
   }
-
-  const categories = Array.from(new Set(data.map((row) => row.category)));
-  return categories;
 }
 
 /**
@@ -26,16 +19,11 @@ export async function fetchCropCategories(): Promise<string[]> {
  * @returns A promise that resolves to an object containing the category or null if not found.
  */
 export async function fetchCropCategoryByName(cropName: string): Promise<{ category: string } | null> {
-  const { data, error } = await supabase
-    .from('crops')
-    .select('category')
-    .eq('name', cropName)
-    .single();
-
-  if (error) {
+  try {
+    const crop = await apiGet<{ category: string }>(`/api/crops/${encodeURIComponent(cropName)}`, { skipAuth: true });
+    return { category: crop.category };
+  } catch (error) {
     console.error('Error fetching crop by name:', error);
     return null;
   }
-
-  return data;
 }

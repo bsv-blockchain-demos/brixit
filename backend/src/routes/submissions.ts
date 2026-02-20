@@ -373,6 +373,62 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
+// --- Authenticated: PUT /api/submissions/:id ---
+router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.sub;
+    const roles = req.user!.roles || [];
+
+    const submission = await prisma.submission.findUnique({
+      where: { id: req.params.id },
+      select: { userId: true, verified: true },
+    });
+
+    if (!submission) {
+      res.status(404).json({ error: 'Submission not found' });
+      return;
+    }
+
+    // Only owner or admin can update
+    const isAdmin = roles.includes('admin');
+    if (submission.userId !== userId && !isAdmin) {
+      res.status(403).json({ error: 'Not authorized to update this submission' });
+      return;
+    }
+
+    // Build Prisma update data from request body
+    const body = req.body;
+    const data: any = {};
+
+    if (body.brix_value !== undefined) data.brixValue = body.brix_value;
+    if (body.crop_variety !== undefined) data.cropVariety = body.crop_variety;
+    if (body.assessment_date !== undefined) data.assessmentDate = new Date(body.assessment_date);
+    if (body.purchase_date !== undefined) data.purchaseDate = body.purchase_date ? new Date(body.purchase_date) : null;
+    if (body.outlier_notes !== undefined) data.outlierNotes = body.outlier_notes;
+    if (body.crop_id !== undefined) data.cropId = body.crop_id;
+    if (body.brand_id !== undefined) data.brandId = body.brand_id;
+    if (body.location_id !== undefined) data.locationId = body.location_id;
+
+    // Only admin can update verification status
+    if (isAdmin) {
+      if (body.verified !== undefined) data.verified = body.verified;
+      if (body.verified_by !== undefined) data.verifiedBy = body.verified_by;
+      if (body.verified_at !== undefined) data.verifiedAt = body.verified_at ? new Date(body.verified_at) : null;
+    }
+
+    const updated = await prisma.submission.update({
+      where: { id: req.params.id },
+      data,
+      include: FULL_SUBMISSION_INCLUDE,
+    });
+
+    res.json(formatFullSubmission(updated));
+  } catch (err) {
+    console.error('[submissions/:id PUT] Error:', err);
+    res.status(500).json({ error: 'Failed to update submission' });
+  }
+});
+
 // --- Authenticated: DELETE /api/submissions/:id ---
 router.delete('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Response) => {
   try {

@@ -6,7 +6,7 @@ import { useCropThresholds } from '../../contexts/CropThresholdContext';
 import { getBrixColor } from '../../lib/getBrixColor';
 import { getBrixQuality } from '../../lib/getBrixQuality';
 import { BrixDataPoint } from '../../types';
-import { supabase } from '../../integrations/supabase/client';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 interface SubmissionDetailsProps {
   dataPoint: BrixDataPoint;
@@ -40,7 +40,6 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
       setImagesLoading(true);
       setImagesError(null);
       const urls: string[] = [];
-      const bucketName = 'submission-images-bucket';
 
       for (const imagePath of dataPoint.images) {
         if (typeof imagePath !== 'string' || imagePath === '') {
@@ -48,8 +47,8 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
           continue;
         }
 
-        const { data } = supabase.storage.from(bucketName).getPublicUrl(imagePath);
-        const publicUrl = data.publicUrl;
+        // Images are served from the Express backend's static uploads directory
+        const publicUrl = `${API_BASE}/uploads/${imagePath}`;
         urls.push(publicUrl);
       }
 

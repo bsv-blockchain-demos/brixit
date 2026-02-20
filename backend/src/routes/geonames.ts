@@ -65,4 +65,14 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/geonames/username — explicit endpoint for fetching just the username
+router.get('/username', (_req, res) => {
+  const username = config.geonamesUsername;
+  if (!username) {
+    res.status(500).json({ error: 'Missing GeoNames username (set GEONAMES_USERNAME in .env)' });
+    return;
+  }
+  res.json({ username });
+});
+
 export default router;

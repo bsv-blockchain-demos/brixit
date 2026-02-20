@@ -57,8 +57,8 @@ app.use('/api/submissions', submissionsRoutes);
 // POST /api/submissions/create requires auth + contributor (auto-verify handler)
 app.post('/api/submissions/create', requireAuth as any, requireContributor as any, autoVerifySubmissionRoutes);
 
-// --- GeoNames proxy (authenticated) ---
-app.use('/api/geonames', requireAuth as any, geonamesRoutes);
+// --- GeoNames proxy (username is public, proxy requires auth) ---
+app.use('/api/geonames', geonamesRoutes);
 
 // --- User profile (authenticated) ---
 app.use('/api/users', usersRoutes);

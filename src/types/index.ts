@@ -39,7 +39,7 @@ export interface BrixDataPoint {
   brandLabel: string | null;
 }
 
-// Data format returned from Supabase, aligned with BrixDataPoint
+// Data format returned from API, aligned with BrixDataPoint
 export interface FormattedSubmission {
   id: string;
   brixLevel: number;

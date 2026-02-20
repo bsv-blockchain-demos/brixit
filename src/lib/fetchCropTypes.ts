@@ -1,4 +1,4 @@
-import { supabase } from '../integrations/supabase/client';
+import { apiGet } from './api';
 import { BrixThresholds } from './getBrixQuality';
 
 export interface CropType {
@@ -22,15 +22,5 @@ export interface Crop {
  * @returns A promise that resolves to an array of CropType objects.
  */
 export const fetchCropTypes = async (): Promise<CropType[]> => {
-  const { data, error } = await supabase
-    .from('crops')
-    .select('id, name, label')
-    .order('label');
-
-  if (error) {
-    console.error('Error fetching crop types:', error);
-    throw error;
-  }
-
-  return data as CropType[] || [];
+  return apiGet<CropType[]>('/api/crops', { skipAuth: true });
 };

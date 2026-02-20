@@ -1,37 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import LocationSelector from '@/components/common/LocationSelector';
 import {
-  createUser,
   fetchAllUsers,
   upgradeToContributor,
   upgradeToAdmin,
   downgradeToContributor,
   downgradeToUser,
-  type AdminCreateUserInput,
   type UserWithRoles,
 } from '@/lib/adminApi';
-import { LocationData } from '@/lib/locationServiceforRegister';
 
 export default function AdminUserManagement() {
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-
-  const [formData, setFormData] = useState<AdminCreateUserInput>({
-    email: '',
-    password: '',
-    displayName: '',
-    country: '',
-    countryCode: '',
-    state: '',
-    stateCode: '',
-    city: '',
-  });
 
   const loadUsers = async () => {
     setLoading(true);
@@ -52,51 +35,6 @@ export default function AdminUserManagement() {
   useEffect(() => {
     void loadUsers();
   }, []);
-
-  const handleLocationChange = (location: LocationData) => {
-    setFormData(prev => ({
-      ...prev,
-      country: location.country,
-      countryCode: location.countryCode,
-      state: location.state,
-      stateCode: location.stateCode,
-      city: location.city,
-    }));
-  };
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.email || !formData.password || !formData.displayName) {
-      toast({
-        title: 'Validation Error',
-        description: 'Email, password, and display name are required.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      const res = await createUser(formData);
-      if (res.success) {
-        toast({ title: 'User created', description: res.message ?? 'User account created successfully.' });
-        setFormData({
-          email: '',
-          password: '',
-          displayName: '',
-          country: '',
-          countryCode: '',
-          state: '',
-          stateCode: '',
-          city: '',
-        });
-        await loadUsers();
-      } else {
-        toast({ title: 'Creation failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
-      }
-    } catch (e: any) {
-      toast({ title: 'Error', description: e?.message ?? 'Please try again.', variant: 'destructive' });
-    }
-  };
 
   const handleUpgradeToContributor = async (userId: string) => {
     try {
@@ -172,56 +110,6 @@ export default function AdminUserManagement() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Create New User</h2>
-        <form onSubmit={handleCreate} className="space-y-4 border rounded p-4">
-          <div>
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="password">Password *</Label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="displayName">Display Name *</Label>
-            <Input
-              id="displayName"
-              value={formData.displayName}
-              onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
-              required
-            />
-          </div>
-          <div>
-            <Label>Location (Optional)</Label>
-            <LocationSelector
-              value={{
-                country: formData.country || '',
-                countryCode: formData.countryCode || '',
-                state: formData.state || '',
-                stateCode: formData.stateCode || '',
-                city: formData.city || '',
-              }}
-              onChange={handleLocationChange}
-              showAutoDetect={false}
-            />
-          </div>
-          <Button type="submit">Create User</Button>
-        </form>
-      </div>
-
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">All Users</h2>

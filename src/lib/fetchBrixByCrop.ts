@@ -1,4 +1,4 @@
-import { supabase } from '../integrations/supabase/client';
+import { apiGet } from './api';
 import { Crop } from './fetchCropTypes';
 
 /**
@@ -7,28 +7,11 @@ import { Crop } from './fetchCropTypes';
  * @returns A promise that resolves to a Crop object or null if not found.
  */
 export async function fetchBrixByCrop(cropName: string): Promise<Crop | null> {
-  const { data, error } = await supabase
-    .from('crops')
-    .select('id, name, label, poor_brix, average_brix, good_brix, excellent_brix')
-    .eq('name', cropName.toLowerCase())
-    .single();
-
-  if (error) {
+  try {
+    const data = await apiGet<Crop>(`/api/crops/${encodeURIComponent(cropName.toLowerCase())}`, { skipAuth: true });
+    return data;
+  } catch (error) {
     console.error('Error fetching crop:', error);
     return null;
   }
-
-  if (!data) return null;
-
-  return {
-    id: data.id,
-    name: data.name,
-    label: data.label,
-    brixLevels: {
-      poor: data.poor_brix as number || 0,
-      average: data.average_brix as number || 0,
-      good: data.good_brix as number || 0,
-      excellent: data.excellent_brix as number || 0,
-    },
-  };
 }

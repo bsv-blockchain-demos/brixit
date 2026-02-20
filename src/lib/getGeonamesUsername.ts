@@ -1,27 +1,12 @@
-import { getSupabaseUrl, getPublishableKey } from '@/lib/utils';
+import { apiGet } from '@/lib/api';
 
 /**
- * Fetches the GeoNames username from a Supabase Edge Function.
+ * Fetches the GeoNames username from the Express backend.
  * @returns The GeoNames username or null if fetching fails.
  */
 export async function getGeonamesUsername(): Promise<string | null> {
   try {
-    const supabaseUrl = getSupabaseUrl();
-    const publishKey = getPublishableKey();
-    const response = await fetch(`${supabaseUrl}/functions/v1/get-geonames-username`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${publishKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      console.error('Failed to fetch GeoNames username:', response.status, await response.text());
-      return null;
-    }
-
-    const data = await response.json();
+    const data = await apiGet<{ username: string }>('/api/geonames/username');
     return data.username ?? null;
   } catch (error) {
     console.error('Failed to fetch GeoNames username:', error);

@@ -31,7 +31,8 @@ import { useToast } from '../ui/use-toast';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
-import { supabase } from '../../integrations/supabase/client';
+import { apiPut } from '../../lib/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 import { getBrixColor } from '../../lib/getBrixColor';
 import { getBrixQuality } from '../../lib/getBrixQuality';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
@@ -172,13 +173,11 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
       setImagesLoading(true);
       console.log('Attempting to fetch images. initialDataPoint.images:', initialDataPoint.images);
 
-      const bucketName = 'submission-images-bucket';
       const urls = Array.isArray(initialDataPoint.images)
         ? initialDataPoint.images
             .filter((imagePath): imagePath is string => typeof imagePath === 'string' && imagePath.length > 0)
             .map((imagePath) => {
-              const { data } = supabase.storage.from(bucketName).getPublicUrl(imagePath);
-              return data.publicUrl;
+              return `${API_BASE}/uploads/${imagePath}`;
             })
         : [];
 
@@ -344,19 +343,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
       console.log('Final update data:', updateData);
       console.log('Updating submission with ID:', initialDataPoint.id);
 
-      const { data, error: updateError } = await supabase
-        .from('submissions')
-        .update(updateData)
-        .eq('id', initialDataPoint.id)
-        .select()
-        .maybeSingle(); // avoid hard throw when no row returned
+      await apiPut(`/api/submissions/${initialDataPoint.id}`, updateData);
 
-      if (updateError) {
-        console.error('Supabase update error:', updateError);
-        throw updateError;
-      }
-
-      console.log('Supabase update successful, returned data:', data);
+      console.log('Update successful');
 
       toast({
         title: 'Success',
