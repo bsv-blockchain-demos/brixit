@@ -52,11 +52,6 @@ interface AuthContextType {
   ) => Promise<boolean>;
   updateUsername: (newUsername: string) => Promise<boolean>;
   updateLocation: (location: LocationData) => Promise<boolean>;
-  resetPassword: (email: string) => Promise<boolean>;
-  sendPasswordResetOTP: (email: string) => Promise<boolean>;
-  resetPasswordWithOTP: (email: string, token: string, password: string) => Promise<boolean>;
-  updatePassword: (password: string) => Promise<boolean>;
-  handleAuthCallback: () => Promise<boolean>;
   walletLogin: (identityKey: string, certificate: any, userData: any) => Promise<boolean>;
 }
 
@@ -219,36 +214,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Password-related stubs (not applicable for wallet-only auth)
-  const resetPassword = async (_email: string): Promise<boolean> => {
-    setAuthError("Password reset is not available with wallet authentication.");
-    return false;
-  };
-
-  const sendPasswordResetOTP = async (_email: string): Promise<boolean> => {
-    setAuthError("Password reset is not available with wallet authentication.");
-    return false;
-  };
-
-  const resetPasswordWithOTP = async (
-    _email: string,
-    _token: string,
-    _password: string
-  ): Promise<boolean> => {
-    setAuthError("Password reset is not available with wallet authentication.");
-    return false;
-  };
-
-  const updatePassword = async (_password: string): Promise<boolean> => {
-    setAuthError("Password update is not available with wallet authentication.");
-    return false;
-  };
-
-  const handleAuthCallback = async (): Promise<boolean> => {
-    // No-op for wallet auth — session is managed via JWT tokens
-    return isAuthenticated;
-  };
-
   const walletLogin = async (
     identityKey: string,
     certificate: any,
@@ -321,11 +286,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         register,
         updateUsername,
         updateLocation,
-        resetPassword,
-        sendPasswordResetOTP,
-        resetPasswordWithOTP,
-        updatePassword,
-        handleAuthCallback,
         walletLogin,
       }}
     >
