@@ -23,21 +23,21 @@ export default function AdminOverview() {
     setLoading(true);
     setError(null);
     try {
-      const [users, pending, countData] = await Promise.all([
-        fetchAllUsers(),
-        fetchUnverifiedSubmissions(),
+      const [usersResult, pendingResult, countData] = await Promise.all([
+        fetchAllUsers({ limit: 100, offset: 0 }),
+        fetchUnverifiedSubmissions({ limit: 1, offset: 0 }),
         apiGet<{ count: number }>('/api/submissions/count', { skipAuth: true }),
       ]);
 
-      const adminCount = users.filter((u: UserWithRoles) => u.roles?.includes('admin')).length;
-      const contributorCount = users.filter((u: UserWithRoles) => u.roles?.includes('contributor') && !u.roles?.includes('admin')).length;
+      const adminCount = usersResult.data.filter((u: UserWithRoles) => u.roles?.includes('admin')).length;
+      const contributorCount = usersResult.data.filter((u: UserWithRoles) => u.roles?.includes('contributor') && !u.roles?.includes('admin')).length;
 
       setStats({
-        totalUsers: users.length,
+        totalUsers: usersResult.total,
         adminCount,
         contributorCount,
         totalSubmissions: countData.count,
-        pendingVerifications: pending.length,
+        pendingVerifications: pendingResult.total,
       });
     } catch (e: any) {
       setError(e?.message ?? 'Failed to load stats');

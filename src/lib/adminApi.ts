@@ -35,12 +35,26 @@ export interface UnverifiedSubmission {
   user_id: string;
 }
 
-export async function fetchAllUsers() {
-  return apiGet<UserWithRoles[]>('/api/admin/users');
+export interface PaginatedResult<T> {
+  data: T[];
+  total: number;
 }
 
-export async function fetchUnverifiedSubmissions() {
-  return apiGet<UnverifiedSubmission[]>('/api/admin/submissions/unverified');
+export async function fetchAllUsers(params?: { search?: string; limit?: number; offset?: number }) {
+  const qs = new URLSearchParams();
+  if (params?.search) qs.set('search', params.search);
+  if (params?.limit !== undefined) qs.set('limit', String(params.limit));
+  if (params?.offset !== undefined) qs.set('offset', String(params.offset));
+  const query = qs.toString() ? `?${qs}` : '';
+  return apiGet<PaginatedResult<UserWithRoles>>(`/api/admin/users${query}`);
+}
+
+export async function fetchUnverifiedSubmissions(params?: { limit?: number; offset?: number }) {
+  const qs = new URLSearchParams();
+  if (params?.limit !== undefined) qs.set('limit', String(params.limit));
+  if (params?.offset !== undefined) qs.set('offset', String(params.offset));
+  const query = qs.toString() ? `?${qs}` : '';
+  return apiGet<PaginatedResult<UnverifiedSubmission>>(`/api/admin/submissions/unverified${query}`);
 }
 
 export async function grantRole(userId: string, role: Extract<AppRole, 'admin' | 'contributor'>) {

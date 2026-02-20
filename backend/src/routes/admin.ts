@@ -19,15 +19,34 @@ const router = Router();
 // All admin routes require auth + admin role
 router.use(requireAuth as any, requireAdmin as any);
 
-// GET /api/admin/users
-router.get('/users', async (_req: AuthenticatedRequest, res: Response) => {
+// GET /api/admin/users?search=&limit=20&offset=0
+router.get('/users', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const users = await prisma.user.findMany({
-      include: { roles: true },
-      orderBy: { createdAt: 'desc' },
-    });
+    const limit = Math.max(1, Math.min(Number(req.query.limit) || 20, 100));
+    const offset = Math.max(0, Number(req.query.offset) || 0);
+    const search = (req.query.search as string | undefined)?.trim() || undefined;
 
-    const result = users.map((u: any) => ({
+    const where = search
+      ? {
+          OR: [
+            { displayName: { contains: search, mode: 'insensitive' as const } },
+            { id: { contains: search, mode: 'insensitive' as const } },
+          ],
+        }
+      : undefined;
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        include: { roles: true },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    const data = users.map((u: any) => ({
       id: u.id,
       display_name: u.displayName,
       country: u.country,
@@ -39,28 +58,38 @@ router.get('/users', async (_req: AuthenticatedRequest, res: Response) => {
       roles: u.roles.map((r: any) => r.role),
     }));
 
-    res.json(result);
+    res.json({ data, total });
   } catch (err) {
     console.error('[admin/users] Error:', err);
     res.status(500).json({ error: 'Failed to fetch users' });
   }
 });
 
-// GET /api/admin/submissions/unverified
-router.get('/submissions/unverified', async (_req: AuthenticatedRequest, res: Response) => {
+// GET /api/admin/submissions/unverified?limit=20&offset=0
+router.get('/submissions/unverified', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const submissions = await prisma.submission.findMany({
-      where: { verified: false },
-      include: {
-        crop: { select: { name: true, label: true } },
-        brand: { select: { name: true, label: true } },
-        place: { select: { label: true, city: true, state: true } },
-        user: { select: { id: true, displayName: true } },
-      },
-      orderBy: { assessmentDate: 'desc' },
-    });
+    const limit = Math.max(1, Math.min(Number(req.query.limit) || 20, 100));
+    const offset = Math.max(0, Number(req.query.offset) || 0);
 
-    const result = submissions.map((s: any) => ({
+    const where = { verified: false };
+
+    const [submissions, total] = await Promise.all([
+      prisma.submission.findMany({
+        where,
+        include: {
+          crop: { select: { name: true, label: true } },
+          brand: { select: { name: true, label: true } },
+          place: { select: { label: true, city: true, state: true } },
+          user: { select: { id: true, displayName: true } },
+        },
+        orderBy: { assessmentDate: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.submission.count({ where }),
+    ]);
+
+    const data = submissions.map((s: any) => ({
       id: s.id,
       assessment_date: s.assessmentDate,
       brix_value: Number(s.brixValue),
@@ -75,7 +104,7 @@ router.get('/submissions/unverified', async (_req: AuthenticatedRequest, res: Re
       user_id: s.user?.id ?? null,
     }));
 
-    res.json(result);
+    res.json({ data, total });
   } catch (err) {
     console.error('[admin/submissions/unverified] Error:', err);
     res.status(500).json({ error: 'Failed to fetch unverified submissions' });

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   fetchUnverifiedSubmissions,
   verifySubmission,
@@ -10,16 +10,26 @@ import {
   type UnverifiedSubmission,
 } from '@/lib/adminApi';
 
+const PAGE_SIZE = 20;
+
 export default function AdminSubmissionQueue() {
   const [submissions, setSubmissions] = useState<UnverifiedSubmission[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const load = async () => {
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const load = async (pg = page) => {
     setLoading(true);
     try {
-      const data = await fetchUnverifiedSubmissions();
-      setSubmissions(data);
+      const result = await fetchUnverifiedSubmissions({
+        limit: PAGE_SIZE,
+        offset: (pg - 1) * PAGE_SIZE,
+      });
+      setSubmissions(result.data);
+      setTotal(result.total);
     } catch (e: any) {
       toast({
         title: 'Failed to load submissions',
@@ -31,49 +41,49 @@ export default function AdminSubmissionQueue() {
     }
   };
 
-  useEffect(() => {
-    void load();
-  }, []);
+  useEffect(() => { void load(); }, []);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    void load(newPage);
+  };
 
   const handleVerify = async (submissionId: string) => {
     try {
       const res = await verifySubmission(submissionId, true);
       if (res.success) {
-        setSubmissions((prev) => prev.filter((s) => s.id !== submissionId));
-        toast({ 
-          title: 'Submission verified', 
-          description: res.message ?? 'Submission has been verified and is now visible to all users.' 
+        toast({
+          title: 'Submission verified',
+          description: res.message ?? 'Submission has been verified and is now visible to all users.',
         });
+        // Reload current page; if it becomes empty and we're not on page 1, go back
+        const newTotal = total - 1;
+        const newTotalPages = Math.max(1, Math.ceil(newTotal / PAGE_SIZE));
+        const targetPage = page > newTotalPages ? newTotalPages : page;
+        setPage(targetPage);
+        void load(targetPage);
       } else {
-        toast({ 
-          title: 'Verification failed', 
-          description: res.error ?? 'Unknown error', 
-          variant: 'destructive' 
-        });
+        toast({ title: 'Verification failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
       }
     } catch (e: any) {
-      toast({ 
-        title: 'Error', 
-        description: e?.message ?? 'Please try again.', 
-        variant: 'destructive' 
-      });
+      toast({ title: 'Error', description: e?.message ?? 'Please try again.', variant: 'destructive' });
     }
   };
 
   const handleDelete = async (submissionId: string) => {
     try {
       await deleteSubmission(submissionId);
-      setSubmissions((prev) => prev.filter((s) => s.id !== submissionId));
-      toast({ 
-        title: 'Submission removed', 
-        description: 'The submission has been permanently deleted without verification.' 
+      toast({
+        title: 'Submission removed',
+        description: 'The submission has been permanently deleted without verification.',
       });
+      const newTotal = total - 1;
+      const newTotalPages = Math.max(1, Math.ceil(newTotal / PAGE_SIZE));
+      const targetPage = page > newTotalPages ? newTotalPages : page;
+      setPage(targetPage);
+      void load(targetPage);
     } catch (e: any) {
-      toast({ 
-        title: 'Delete failed', 
-        description: e?.message ?? 'Please try again.', 
-        variant: 'destructive' 
-      });
+      toast({ title: 'Delete failed', description: e?.message ?? 'Please try again.', variant: 'destructive' });
     }
   };
 
@@ -82,7 +92,9 @@ export default function AdminSubmissionQueue() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Pending Verification</h2>
-          <p className="text-sm text-muted-foreground">Review and verify new submissions before they appear publicly</p>
+          <p className="text-sm text-muted-foreground">
+            {total} submission{total !== 1 ? 's' : ''} awaiting review
+          </p>
         </div>
         <Button variant="ghost" onClick={() => load()} disabled={loading}>
           Refresh
@@ -112,7 +124,7 @@ export default function AdminSubmissionQueue() {
                     {s.crop_label ?? s.crop_name ?? 'Unknown crop'} • {s.brand_label ?? s.brand_name ?? 'Unknown brand'}
                   </div>
                   <div className="text-muted-foreground mt-1">
-                    {s.place_label ?? 'Unknown place'} 
+                    {s.place_label ?? 'Unknown place'}
                     {(s.place_city || s.place_state) && (
                       <span className="ml-1">
                         ({s.place_city ?? ''}{s.place_state ? `, ${s.place_state}` : ''})
@@ -128,16 +140,16 @@ export default function AdminSubmissionQueue() {
                 </div>
               </div>
               <div className="flex gap-2 sm:flex-col sm:min-w-[180px]">
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   onClick={() => handleVerify(s.id)}
                   className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"
                 >
                   Verify Submission
                 </Button>
-                <Button 
-                  size="sm" 
-                  variant="destructive" 
+                <Button
+                  size="sm"
+                  variant="destructive"
                   onClick={() => handleDelete(s.id)}
                   className="flex-1 sm:flex-none"
                 >
@@ -146,6 +158,30 @@ export default function AdminSubmissionQueue() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(page - 1)}
+            disabled={page === 1 || loading}
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" /> Previous
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(page + 1)}
+            disabled={page === totalPages || loading}
+          >
+            Next <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
         </div>
       )}
     </div>
