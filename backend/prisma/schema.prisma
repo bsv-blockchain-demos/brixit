@@ -1,0 +1,194 @@
+// Brixit Database Schema
+// Consolidated from 131 Supabase migrations into a single Prisma schema.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum AppRole {
+  admin
+  contributor
+  viewer
+}
+
+enum CropCategory {
+  fruit
+  vegetable
+  grass
+}
+
+enum LocationType {
+  Grocery
+  Health
+  Community
+  Specialty
+  Club
+  Farmers
+  Other
+}
+
+// ─── Users ───────────────────────────────────────────────────────────────────
+
+model User {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  displayName      String?   @map("display_name")
+  email            String?   @unique
+  country          String?
+  state            String?
+  city             String?
+  locationLat      Float?    @map("location_lat")
+  locationLng      Float?    @map("location_lng")
+  points           Int       @default(0)
+  submissionCount  Int       @default(0) @map("submission_count")
+  lastSubmission   DateTime? @map("last_submission") @db.Timestamptz
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  roles            UserRole[]
+  walletIdentity   WalletIdentity?
+  submissions      Submission[]      @relation("UserSubmissions")
+  verifiedItems    Submission[]      @relation("VerifiedByUser")
+
+  @@index([country], name: "users_country_idx")
+  @@index([state], name: "users_state_idx")
+  @@index([city], name: "users_city_idx")
+  @@index([locationLat, locationLng], name: "idx_users_location")
+  @@map("users")
+}
+
+model UserRole {
+  id     String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String  @map("user_id") @db.Uuid
+  role   AppRole
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@map("user_roles")
+}
+
+model WalletIdentity {
+  identityKey       String   @id @map("identity_key")
+  userId            String   @unique @map("user_id") @db.Uuid
+  certificateSerial String   @map("certificate_serial")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  lastVerifiedAt    DateTime? @map("last_verified_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "idx_wallet_identities_user_id")
+  @@map("wallet_identities")
+}
+
+// ─── Reference Data ──────────────────────────────────────────────────────────
+
+model Crop {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String        @unique
+  label        String?
+  category     CropCategory?
+  poorBrix     Decimal?      @map("poor_brix") @db.Decimal(5, 2)
+  averageBrix  Decimal?      @map("average_brix") @db.Decimal(5, 2)
+  goodBrix     Decimal?      @map("good_brix") @db.Decimal(5, 2)
+  excellentBrix Decimal?     @map("excellent_brix") @db.Decimal(5, 2)
+
+  submissions Submission[]
+
+  @@map("crops")
+}
+
+model Brand {
+  id    String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name  String  @unique
+  label String?
+
+  submissions Submission[]
+
+  @@map("brands")
+}
+
+model Location {
+  id    String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name  String       @unique
+  label String?
+  type  LocationType?
+
+  places      Place[]
+  submissions Submission[]
+
+  @@map("locations")
+}
+
+model Place {
+  id                String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  label             String?
+  latitude          Float?
+  longitude         Float?
+  streetAddress     String? @map("street_address")
+  city              String?
+  state             String?
+  country           String?
+  normalizedAddress String? @map("normalized_address")
+  locationId        String? @map("location_id") @db.Uuid
+
+  location    Location?    @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  submissions Submission[]
+
+  @@index([locationId], name: "idx_places_location_id")
+  @@index([country], name: "idx_places_country")
+  @@map("places")
+}
+
+// ─── Submissions ─────────────────────────────────────────────────────────────
+
+model Submission {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String?   @map("user_id") @db.Uuid
+  cropId          String    @map("crop_id") @db.Uuid
+  brandId         String?   @map("brand_id") @db.Uuid
+  locationId      String?   @map("location_id") @db.Uuid
+  placeId         String?   @map("place_id") @db.Uuid
+  brixValue       Decimal   @map("brix_value") @db.Decimal(5, 2)
+  cropVariety     String?   @map("crop_variety")
+  assessmentDate  DateTime  @map("assessment_date") @db.Timestamptz
+  purchaseDate    DateTime? @map("purchase_date") @db.Date
+  contributorName String?   @map("contributor_name")
+  outlierNotes    String?   @map("outlier_notes")
+  verified        Boolean   @default(false)
+  verifiedBy      String?   @map("verified_by") @db.Uuid
+  verifiedAt      DateTime? @map("verified_at") @db.Timestamptz
+
+  // Relations
+  user     User?     @relation("UserSubmissions", fields: [userId], references: [id])
+  crop     Crop      @relation(fields: [cropId], references: [id])
+  brand    Brand?    @relation(fields: [brandId], references: [id])
+  location Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  place    Place?    @relation(fields: [placeId], references: [id])
+  verifier User?     @relation("VerifiedByUser", fields: [verifiedBy], references: [id])
+  images   SubmissionImage[]
+
+  @@index([cropId], name: "submissions_crop_id_idx")
+  @@index([placeId], name: "submissions_place_id_idx")
+  @@index([locationId], name: "submissions_location_id_idx")
+  @@index([userId], name: "submissions_user_id_idx")
+  @@map("submissions")
+}
+
+model SubmissionImage {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  submissionId String   @map("submission_id") @db.Uuid
+  imageUrl     String   @map("image_url")
+  uploadedAt   DateTime @default(now()) @map("uploaded_at") @db.Timestamptz
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId], name: "idx_submission_images_submission_id")
+  @@map("submission_images")
+}

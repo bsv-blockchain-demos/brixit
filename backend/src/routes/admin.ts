@@ -1,0 +1,197 @@
+/**
+ * Admin routes (requires admin role).
+ *
+ * Endpoints:
+ *   GET  /api/admin/users                        → List all users with roles
+ *   GET  /api/admin/submissions/unverified        → List unverified submissions
+ *   POST /api/admin/roles/grant                   → Grant role to user
+ *   POST /api/admin/roles/revoke                  → Revoke role from user
+ *   POST /api/admin/submissions/:id/verify        → Verify/unverify a submission
+ *   DELETE /api/admin/submissions/:id             → Delete a submission
+ */
+import { Router } from 'express';
+import type { Response } from 'express';
+import prisma from '../db/client.js';
+import { requireAuth, requireAdmin, type AuthenticatedRequest } from '../middleware/auth.js';
+
+const router = Router();
+
+// All admin routes require auth + admin role
+router.use(requireAuth as any, requireAdmin as any);
+
+// GET /api/admin/users
+router.get('/users', async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    const users = await prisma.user.findMany({
+      include: { roles: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const result = users.map((u: any) => ({
+      id: u.id,
+      display_name: u.displayName,
+      country: u.country,
+      state: u.state,
+      city: u.city,
+      points: u.points,
+      submission_count: u.submissionCount,
+      created_at: u.createdAt,
+      roles: u.roles.map((r: any) => r.role),
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error('[admin/users] Error:', err);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// GET /api/admin/submissions/unverified
+router.get('/submissions/unverified', async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    const submissions = await prisma.submission.findMany({
+      where: { verified: false },
+      include: {
+        crop: { select: { name: true, label: true } },
+        brand: { select: { name: true, label: true } },
+        place: { select: { label: true, city: true, state: true } },
+        user: { select: { id: true, displayName: true } },
+      },
+      orderBy: { assessmentDate: 'desc' },
+    });
+
+    const result = submissions.map((s: any) => ({
+      id: s.id,
+      assessment_date: s.assessmentDate,
+      brix_value: Number(s.brixValue),
+      crop_name: s.crop?.name ?? null,
+      crop_label: s.crop?.label ?? null,
+      brand_name: s.brand?.name ?? null,
+      brand_label: s.brand?.label ?? null,
+      place_label: s.place?.label ?? null,
+      place_city: s.place?.city ?? null,
+      place_state: s.place?.state ?? null,
+      user_display_name: s.user?.displayName ?? null,
+      user_id: s.user?.id ?? null,
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error('[admin/submissions/unverified] Error:', err);
+    res.status(500).json({ error: 'Failed to fetch unverified submissions' });
+  }
+});
+
+// POST /api/admin/roles/grant
+router.post('/roles/grant', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { target_user_id, role_to_grant } = req.body;
+
+    if (!target_user_id || !role_to_grant) {
+      res.status(400).json({ success: false, error: 'target_user_id and role_to_grant are required' });
+      return;
+    }
+
+    if (!['admin', 'contributor', 'viewer'].includes(role_to_grant)) {
+      res.status(400).json({ success: false, error: 'Invalid role' });
+      return;
+    }
+
+    // Upsert: create if not exists, ignore if already exists
+    await prisma.userRole.upsert({
+      where: { userId_role: { userId: target_user_id, role: role_to_grant } },
+      update: {},
+      create: { userId: target_user_id, role: role_to_grant },
+    });
+
+    res.json({ success: true, message: `Role '${role_to_grant}' granted` });
+  } catch (err) {
+    console.error('[admin/roles/grant] Error:', err);
+    res.status(500).json({ success: false, error: 'Failed to grant role' });
+  }
+});
+
+// POST /api/admin/roles/revoke
+router.post('/roles/revoke', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { target_user_id, role_to_revoke } = req.body;
+
+    if (!target_user_id || !role_to_revoke) {
+      res.status(400).json({ success: false, error: 'target_user_id and role_to_revoke are required' });
+      return;
+    }
+
+    await prisma.userRole.deleteMany({
+      where: { userId: target_user_id, role: role_to_revoke },
+    });
+
+    res.json({ success: true, message: `Role '${role_to_revoke}' revoked` });
+  } catch (err) {
+    console.error('[admin/roles/revoke] Error:', err);
+    res.status(500).json({ success: false, error: 'Failed to revoke role' });
+  }
+});
+
+// POST /api/admin/submissions/:id/verify
+router.post('/submissions/:id/verify', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const submissionId = req.params.id;
+    const verify = req.body.verify !== false; // default true
+    const adminUserId = req.user!.sub;
+
+    const submission = await prisma.submission.findUnique({ where: { id: submissionId } });
+    if (!submission) {
+      res.status(404).json({ success: false, error: 'Submission not found' });
+      return;
+    }
+
+    await prisma.submission.update({
+      where: { id: submissionId },
+      data: {
+        verified: verify,
+        verifiedBy: verify ? adminUserId : null,
+        verifiedAt: verify ? new Date() : null,
+      },
+    });
+
+    res.json({ success: true, message: verify ? 'Submission verified' : 'Submission unverified' });
+  } catch (err) {
+    console.error('[admin/submissions/verify] Error:', err);
+    res.status(500).json({ success: false, error: 'Failed to verify submission' });
+  }
+});
+
+// DELETE /api/admin/submissions/:id
+router.delete('/submissions/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const submissionId = req.params.id;
+
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionId },
+      select: { userId: true },
+    });
+
+    if (!submission) {
+      res.status(404).json({ success: false, error: 'Submission not found' });
+      return;
+    }
+
+    await prisma.submissionImage.deleteMany({ where: { submissionId } });
+    await prisma.submission.delete({ where: { id: submissionId } });
+
+    // Decrement user stats
+    if (submission.userId) {
+      await prisma.user.update({
+        where: { id: submission.userId },
+        data: { submissionCount: { decrement: 1 } },
+      });
+    }
+
+    res.json({ success: true, message: 'Submission deleted' });
+  } catch (err) {
+    console.error('[admin/submissions/delete] Error:', err);
+    res.status(500).json({ success: false, error: 'Failed to delete submission' });
+  }
+});
+
+export default router;
