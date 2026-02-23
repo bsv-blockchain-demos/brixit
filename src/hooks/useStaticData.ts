@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { fetchCropTypes } from '../lib/fetchCropTypes';
 import { fetchBrands } from '../lib/fetchBrands';
 import { fetchLocations } from '../lib/fetchLocations';
@@ -29,19 +30,7 @@ const initialData = {
   error: null,
 };
 
-// Global cache to prevent re-fetching on every component mount.
-let staticDataCache: StaticData = {
-  ...initialData,
-  // The initial state of the cache needs a no-op refresh function.
-  refreshData: () => { },
-};
-let isFetching = false;
-const subscribers: React.Dispatch<React.SetStateAction<StaticData>>[] = [];
-
-// Function to update all subscribers
-const updateSubscribers = (newData: StaticData) => {
-  subscribers.forEach(setter => setter(newData));
-};
+const ONE_HOUR_MS = 60 * 60 * 1000;
 
 // Helper function to safely convert any data to DatabaseItem format
 const normalizeToItems = (data: any[], type: string): DatabaseItem[] => {
@@ -88,97 +77,52 @@ const normalizeToItems = (data: any[], type: string): DatabaseItem[] => {
   });
 };
 
+async function fetchStaticData(): Promise<Pick<StaticData, 'crops' | 'brands' | 'locations'>> {
+  const [cropsResult, brandsResult, locationsResult] = await Promise.all([
+    fetchCropTypes().catch(() => []),
+    fetchBrands().catch(() => []),
+    fetchLocations().catch(() => []),
+  ]);
+
+  return {
+    crops: normalizeToItems(cropsResult as any[], 'crop'),
+    brands: normalizeToItems(brandsResult as any[], 'brand'),
+    locations: normalizeToItems(locationsResult as any[], 'location'),
+  };
+}
+
 export const useStaticData = (): StaticData => {
-  const [data, setData] = useState<StaticData>(staticDataCache);
+  const query = useQuery({
+    queryKey: ['staticData'],
+    queryFn: fetchStaticData,
+    staleTime: ONE_HOUR_MS,
+    gcTime: 2 * ONE_HOUR_MS,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
 
-  // This useCallback function encapsulates the data fetching logic.
-  const fetchData = useCallback(async () => {
-    // This check ensures only one fetch operation runs at a time.
-    if (isFetching) return;
-    isFetching = true;
+  const refreshData = useCallback(() => {
+    query.refetch();
+  }, [query.refetch]);
 
-    try {
-      console.log('Fetching static data...');
+  const error = useMemo(() => {
+    if (!query.error) return null;
+    if (query.error instanceof Error) return query.error.message;
+    return 'Failed to load static data';
+  }, [query.error]);
 
-      const [cropsResult, brandsResult, locationsResult] = await Promise.all([
-        fetchCropTypes().catch(e => {
-          console.error('Error fetching crops:', e);
-          return [];
-        }),
-        fetchBrands().catch(e => {
-          console.error('Error fetching brands:', e);
-          return [];
-        }),
-        fetchLocations().catch(e => {
-          console.error('Error fetching locations:', e);
-          return [];
-        }),
-      ]);
+  const payload = query.data ?? {
+    crops: initialData.crops,
+    brands: initialData.brands,
+    locations: initialData.locations,
+  };
 
-      console.log('Raw fetched results:', {
-        cropsResult: cropsResult?.slice(0, 3),
-        brandsResult: brandsResult?.slice(0, 3),
-        locationsResult: locationsResult?.slice(0, 3),
-      });
-
-      const formattedCrops = normalizeToItems(cropsResult, 'crop');
-      const formattedBrands = normalizeToItems(brandsResult, 'brand');
-      const formattedLocations = normalizeToItems(locationsResult, 'location');
-
-      console.log('Formatted data:', {
-        formattedCrops: formattedCrops.slice(0, 3),
-        formattedBrands: formattedBrands.slice(0, 3),
-        formattedLocations: formattedLocations.slice(0, 3),
-      });
-
-      // Update the global cache with the new data.
-      staticDataCache = {
-        crops: formattedCrops,
-        brands: formattedBrands,
-        locations: formattedLocations,
-        isLoading: false,
-        error: null,
-        refreshData: fetchData, // Pass the fetchData function to the cache.
-      };
-
-      updateSubscribers(staticDataCache);
-      console.log('Static data cache updated successfully');
-    } catch (e) {
-      console.error('Failed to fetch static data:', e);
-      staticDataCache = {
-        ...staticDataCache,
-        isLoading: false,
-        error: `Failed to load static data: ${e instanceof Error ? e.message : 'Unknown error'}`,
-        refreshData: fetchData, // Pass the fetchData function even on error.
-      };
-      updateSubscribers(staticDataCache);
-    } finally {
-      isFetching = false;
-    }
-  }, []); // Empty dependency array ensures this function is created only once.
-
-  useEffect(() => {
-    // On mount, subscribe the component to updates.
-    subscribers.push(setData);
-
-    // If the data is not yet loaded, start the fetch process.
-    if (staticDataCache.isLoading) {
-      fetchData();
-    } else {
-      // If data is already in the cache, update state immediately.
-      setData(staticDataCache);
-    }
-
-    // Cleanup: remove the setter when the component unmounts.
-    return () => {
-      const index = subscribers.indexOf(setData);
-      if (index > -1) {
-        subscribers.splice(index, 1);
-      }
-    };
-  }, [fetchData]); // Dependency on fetchData ensures the effect has access to the latest function.
-
-  // Return the data object with the fetchData function.
-  // This allows components to trigger a refresh manually.
-  return { ...data, refreshData: fetchData };
+  return {
+    crops: payload.crops,
+    brands: payload.brands,
+    locations: payload.locations,
+    isLoading: query.isLoading,
+    error,
+    refreshData,
+  };
 };

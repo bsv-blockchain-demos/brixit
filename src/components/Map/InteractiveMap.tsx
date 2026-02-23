@@ -58,7 +58,6 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
   const [allData, setAllData] = useState<BrixDataPoint[]>([]);
-  const [filteredData, setFilteredData] = useState<BrixDataPoint[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<BrixDataPoint | null>(null);
 
   const MIN_ZOOM_TO_QUERY = 6;
@@ -164,6 +163,15 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     }
   }, [selectedPoint]);
 
+  const filteredData = useMemo(() => {
+    try {
+      return applyFilters(allData, filters, isAdmin);
+    } catch (err) {
+      console.error('Error applying filters:', err);
+      return allData;
+    }
+  }, [allData, filters, isAdmin]);
+
   // Base dataset for the selected place (uses filteredData for consistency with map)
   const selectedPlaceId = useMemo(() => {
     if (!selectedPoint) return null;
@@ -243,16 +251,6 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       setMaxBrix(Math.max(...bVals));
     }
   }, [allData]);
-
-  // apply filters
-  useEffect(() => {
-    try {
-      setFilteredData(applyFilters(allData, filters, isAdmin));
-    } catch (err) {
-      console.error('Error applying filters:', err);
-      setFilteredData(allData);
-    }
-  }, [filters, allData, isAdmin]);
 
   // near me handling
   useEffect(() => {
