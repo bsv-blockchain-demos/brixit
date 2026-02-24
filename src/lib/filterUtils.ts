@@ -4,12 +4,6 @@ import { BrixDataPoint, MapFilter } from '../types'; // Removed QueryData from h
 import { DEFAULT_MAP_FILTERS } from '../contexts/FilterContext'; // Import DEFAULT_MAP_FILTERS
 
 export function applyFilters(data: BrixDataPoint[], filters: MapFilter, isAdmin: boolean = false): BrixDataPoint[] {
-  console.log(`Applying filters to ${data.length} submissions:`, {
-    filters,
-    isAdmin,
-    samplePoint: data[0]
-  });
-
   const filtered = data.filter((point) => {
     // Verified filter - for non-admin users, always filter to verified only
     // If isAdmin is false, filters.verifiedOnly is automatically true via context logic.
@@ -37,7 +31,6 @@ export function applyFilters(data: BrixDataPoint[], filters: MapFilter, isAdmin:
 
     // Brand filter - case-insensitive comparison with point.brandName - use includes for partial matching
     if (filters.brand && filters.brand !== DEFAULT_MAP_FILTERS.brand) {
-      console.log('Filtering by brand:', filters.brand, 'vs point.brandName:', point.brandName);
       if (!point.brandName || !point.brandName.toLowerCase().includes(filters.brand.toLowerCase())) {
         return false;
       }
@@ -45,7 +38,6 @@ export function applyFilters(data: BrixDataPoint[], filters: MapFilter, isAdmin:
 
     // Place filter - match against locationName (store chain) or placeName (specific location)
     if (filters.place && filters.place !== DEFAULT_MAP_FILTERS.place) {
-      console.log('Filtering by place:', filters.place, 'vs point.locationName:', point.locationName, 'point.placeName:', point.placeName);
       const placeMatches = (point.locationName && point.locationName.toLowerCase().includes(filters.place.toLowerCase())) ||
                           (point.placeName && point.placeName.toLowerCase().includes(filters.place.toLowerCase()));
       if (!placeMatches) {
@@ -55,7 +47,6 @@ export function applyFilters(data: BrixDataPoint[], filters: MapFilter, isAdmin:
 
     // Location filter - for backward compatibility, same as place filter
     if (filters.location && filters.location !== DEFAULT_MAP_FILTERS.location) {
-      console.log('Filtering by location:', filters.location, 'vs point.locationName:', point.locationName, 'point.placeName:', point.placeName);
       const locationMatches = (point.locationName && point.locationName.toLowerCase().includes(filters.location.toLowerCase())) ||
                              (point.placeName && point.placeName.toLowerCase().includes(filters.location.toLowerCase()));
       if (!locationMatches) {
@@ -109,7 +100,6 @@ export function applyFilters(data: BrixDataPoint[], filters: MapFilter, isAdmin:
     // Geographic location filters
     // City filter
     if (filters.city && filters.city !== DEFAULT_MAP_FILTERS.city) {
-      console.log('Filtering by city:', filters.city, 'vs point.city:', point.city);
       if (point.city?.toLowerCase() !== filters.city.toLowerCase()) {
         return false;
       }
@@ -117,7 +107,6 @@ export function applyFilters(data: BrixDataPoint[], filters: MapFilter, isAdmin:
 
     // State filter
     if (filters.state && filters.state !== DEFAULT_MAP_FILTERS.state) {
-      console.log('Filtering by state:', filters.state, 'vs point.state:', point.state);
       if (point.state?.toLowerCase() !== filters.state.toLowerCase()) {
         return false;
       }
@@ -125,24 +114,12 @@ export function applyFilters(data: BrixDataPoint[], filters: MapFilter, isAdmin:
 
     // Country filter
     if (filters.country && filters.country !== DEFAULT_MAP_FILTERS.country) {
-      console.log('Filtering by country:', filters.country, 'vs point.country:', point.country);
       if (point.country?.toLowerCase() !== filters.country.toLowerCase()) {
         return false;
       }
     }
 
     return true;
-  });
-
-  console.log(`Filtered ${data.length} submissions down to ${filtered.length}:`, {
-    verifiedOnly: !isAdmin || filters.verifiedOnly,
-    cropTypesCount: filters.cropTypes.length,
-    brixRange: filters.brixRange,
-    dateRange: filters.dateRange,
-    brand: filters.brand,
-    place: filters.place,
-    category: filters.category,
-    hasImage: filters.hasImage
   });
 
   return filtered;

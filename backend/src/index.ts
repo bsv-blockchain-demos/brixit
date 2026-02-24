@@ -10,6 +10,7 @@ import { corsMiddleware } from './middleware/cors.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
 import { requireAuth, requireContributor } from './middleware/auth.js';
+import { authLimiter, submissionLimiter, geonamesLimiter, generalLimiter } from './utils/rateLimiter.js';
 
 // Route imports
 import authRoutes from './routes/auth.js';
@@ -32,6 +33,13 @@ const app = express();
 app.use(corsMiddleware);
 app.use(express.json({ limit: '10mb' }));
 app.use(requestLogger);
+
+// --- Rate limiting ---
+app.use('/api', generalLimiter);
+app.use('/api/auth/wallet-login', authLimiter);
+app.use('/api/auth/refresh', authLimiter);
+app.use('/api/submissions/create', submissionLimiter);
+app.use('/api/geonames', geonamesLimiter);
 
 // --- Static file serving for uploads ---
 app.use('/uploads', express.static(path.resolve(config.uploadDir)));

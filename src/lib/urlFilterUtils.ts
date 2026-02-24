@@ -62,7 +62,6 @@ export const parseURLSearchParams = (searchParams: URLSearchParams): Partial<Map
     }
   }
 
-  console.log('Parsed URL filters:', filters);
   return filters;
 };
 

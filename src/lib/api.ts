@@ -1,78 +1,66 @@
 /**
  * Frontend API client for the Express backend.
- * Replaces all Supabase client usage with fetch-based calls.
+ *
+ * Access token is kept in-memory only — never written to localStorage.
+ * Refresh token is managed by the backend as an HttpOnly cookie and is
+ * never accessible to JavaScript.
  */
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-// --- Token management ---
+// --- Access token (in-memory only) ---
 
 let accessToken: string | null = null;
-let refreshToken: string | null = null;
 
-const TOKEN_STORAGE_KEY = 'brixit_access_token';
-const REFRESH_STORAGE_KEY = 'brixit_refresh_token';
-
-export function loadTokensFromStorage() {
-  accessToken = localStorage.getItem(TOKEN_STORAGE_KEY);
-  refreshToken = localStorage.getItem(REFRESH_STORAGE_KEY);
+export function setAccessToken(token: string) {
+  accessToken = token;
 }
 
-export function setTokens(access: string, refresh: string) {
-  accessToken = access;
-  refreshToken = refresh;
-  localStorage.setItem(TOKEN_STORAGE_KEY, access);
-  localStorage.setItem(REFRESH_STORAGE_KEY, refresh);
-}
-
-export function clearTokens() {
+export function clearAccessToken() {
   accessToken = null;
-  refreshToken = null;
-  localStorage.removeItem(TOKEN_STORAGE_KEY);
-  localStorage.removeItem(REFRESH_STORAGE_KEY);
 }
 
 export function getAccessToken(): string | null {
   return accessToken;
 }
 
-export function getRefreshToken(): string | null {
-  return refreshToken;
-}
+// --- Token refresh ---
 
-// --- Core fetch helpers ---
-
-async function tryRefreshToken(): Promise<boolean> {
-  if (!refreshToken) return false;
-
+/**
+ * Requests a new access token from the backend using the HttpOnly refresh
+ * token cookie. The cookie is sent automatically by the browser.
+ * Returns true if a new access token was obtained.
+ */
+export async function refreshAccessToken(): Promise<boolean> {
   try {
     const res = await fetch(`${API_BASE}/api/auth/refresh`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: refreshToken }),
     });
 
-    if (!res.ok) {
-      clearTokens();
-      return false;
-    }
+    if (!res.ok) return false;
 
     const data = await res.json();
-    accessToken = data.access_token;
-    localStorage.setItem(TOKEN_STORAGE_KEY, data.access_token);
-    return true;
+    if (data.access_token) {
+      accessToken = data.access_token;
+      return true;
+    }
+    return false;
   } catch {
-    clearTokens();
     return false;
   }
 }
+
+// --- Core fetch helpers ---
 
 interface FetchOptions extends RequestInit {
   skipAuth?: boolean;
 }
 
 /**
- * Authenticated fetch wrapper. Automatically attaches JWT and retries on 401.
+ * Authenticated fetch wrapper. Automatically attaches the JWT Bearer token
+ * and retries once on 401 by attempting a cookie-based token refresh.
  */
 export async function apiFetch(path: string, options: FetchOptions = {}): Promise<Response> {
   const { skipAuth, ...fetchOptions } = options;
@@ -91,14 +79,14 @@ export async function apiFetch(path: string, options: FetchOptions = {}): Promis
     headers['Authorization'] = `Bearer ${accessToken}`;
   }
 
-  let res = await fetch(url, { ...fetchOptions, headers });
+  let res = await fetch(url, { ...fetchOptions, headers, credentials: 'include' });
 
   // Auto-refresh on 401
-  if (res.status === 401 && !skipAuth && refreshToken) {
-    const refreshed = await tryRefreshToken();
+  if (res.status === 401 && !skipAuth) {
+    const refreshed = await refreshAccessToken();
     if (refreshed) {
       headers['Authorization'] = `Bearer ${accessToken}`;
-      res = await fetch(url, { ...fetchOptions, headers });
+      res = await fetch(url, { ...fetchOptions, headers, credentials: 'include' });
     }
   }
 
@@ -108,7 +96,7 @@ export async function apiFetch(path: string, options: FetchOptions = {}): Promis
 /**
  * GET helper that returns parsed JSON.
  */
-export async function apiGet<T = any>(path: string, options: FetchOptions = {}): Promise<T> {
+export async function apiGet<T = unknown>(path: string, options: FetchOptions = {}): Promise<T> {
   const res = await apiFetch(path, { method: 'GET', ...options });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -120,7 +108,7 @@ export async function apiGet<T = any>(path: string, options: FetchOptions = {}):
 /**
  * POST helper that returns parsed JSON.
  */
-export async function apiPost<T = any>(path: string, body?: any, options: FetchOptions = {}): Promise<T> {
+export async function apiPost<T = unknown>(path: string, body?: unknown, options: FetchOptions = {}): Promise<T> {
   const fetchOptions: FetchOptions = { method: 'POST', ...options };
   if (body instanceof FormData) {
     fetchOptions.body = body;
@@ -138,7 +126,7 @@ export async function apiPost<T = any>(path: string, body?: any, options: FetchO
 /**
  * PUT helper.
  */
-export async function apiPut<T = any>(path: string, body?: any, options: FetchOptions = {}): Promise<T> {
+export async function apiPut<T = unknown>(path: string, body?: unknown, options: FetchOptions = {}): Promise<T> {
   const res = await apiFetch(path, {
     method: 'PUT',
     body: body ? JSON.stringify(body) : undefined,
@@ -154,7 +142,7 @@ export async function apiPut<T = any>(path: string, body?: any, options: FetchOp
 /**
  * DELETE helper.
  */
-export async function apiDelete<T = any>(path: string, options: FetchOptions = {}): Promise<T> {
+export async function apiDelete<T = unknown>(path: string, options: FetchOptions = {}): Promise<T> {
   const res = await apiFetch(path, { method: 'DELETE', ...options });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));

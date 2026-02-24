@@ -43,7 +43,6 @@ async function fetchLeaderboard<R extends LeaderboardEntry>(
   filters: Filter = {}
 ): Promise<R[]> {
   const { city, state, country, crop } = filters;
-  console.log(`🔍 Fetching ${rpcName} with filters:`, { city, state, country, crop });
 
   const endpoint = RPC_TO_ENDPOINT[rpcName] || `/api/leaderboards/${rpcName}`;
 
@@ -83,10 +82,3 @@ export async function fetchUserLeaderboard(filters: Filter = {}) {
   return await fetchLeaderboard('get_user_leaderboard_safe', filters);
 }
 
-// Utility function for debugging in browser console
-if (typeof window !== 'undefined') {
-  (window as any).fetchBrandLeaderboard = fetchBrandLeaderboard;
-  (window as any).fetchCropLeaderboard = fetchCropLeaderboard;
-  (window as any).fetchLocationLeaderboard = fetchLocationLeaderboard;
-  (window as any).fetchUserLeaderboard = fetchUserLeaderboard;
-}

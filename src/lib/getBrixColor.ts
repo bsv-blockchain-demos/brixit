@@ -101,23 +101,12 @@ export function useBrixColorFromContext(
   const { cache, loading } = useCropThresholds();
   
   if (loading) {
-    console.log('🔍 useBrixColorFromContext: Still loading, returning fallback');
     return mode === 'bg' ? 'bg-gray-300' : '#d1d5db';
   }
-  
-  // Normalize crop name for better matching
+
   const normalizedCropName = cropName.toLowerCase().trim();
   const thresholds = cache?.[normalizedCropName];
-  
-  console.log('🔍 useBrixColorFromContext:', { 
-    originalCropName: cropName,
-    normalizedCropName, 
-    brixLevel, 
-    thresholds, 
-    cacheKeys: Object.keys(cache || {}),
-    hasThresholds: !!thresholds
-  });
-  
+
   return getBrixColor(brixLevel, thresholds, mode);
 }
 

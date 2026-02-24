@@ -91,16 +91,6 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
 
   useEffect(() => {
     async function initializeModalData() {
-      console.log('=== MODAL INITIALIZATION DEBUG ===');
-      console.log('Modal useEffect triggered.');
-      console.log('isOpen:', isOpen);
-      console.log('initialDataPoint exists:', !!initialDataPoint);
-      console.log('staticDataLoading:', staticDataLoading);
-      console.log('staticDataError:', staticDataError);
-      console.log('crops length:', crops?.length);
-      console.log('brands length:', brands?.length);
-      console.log('locations length:', locations?.length); // Updated log name
-
       if (!isOpen || !initialDataPoint) {
         setIsInitializing(false);
         // Reset state when modal is not open to prepare for next opening
@@ -122,17 +112,13 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
         setImagesLoading(false);
         setError(null);
         setIsEditing(false);
-        console.log('Modal is not open or initialDataPoint is null. Exiting useEffect.');
         return;
       }
 
       setIsInitializing(true);
-      console.log('Modal is open with initialDataPoint:', initialDataPoint);
-      console.log('Static data status - crops:', crops, 'brands:', brands, 'locations:', locations); // Updated log name
 
       try {
         // Populate form state from prop immediately
-        console.log('Setting form state...');
         setBrixLevel(initialDataPoint.brixLevel ?? '');
         setCropType(initialDataPoint.cropType || '');
         setVariety(initialDataPoint.variety || '');
@@ -147,41 +133,34 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
         setVerified(initialDataPoint.verified ?? false);
         setVerifiedBy(initialDataPoint.verifiedBy || '');
         setVerifiedAt(initialDataPoint.verifiedAt || '');
-        console.log('Form state set successfully');
 
-        // Set any static data errors
         if (staticDataError) {
-          console.log('Setting static data error:', staticDataError);
           setError(staticDataError);
         }
 
         setIsInitializing(false);
-        console.log('=== MODAL INITIALIZATION COMPLETE ===');
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
         console.error('Error during modal initialization:', err);
-        setError(`Modal initialization failed: ${err.message}`);
+        setError(`Modal initialization failed: ${message}`);
         setIsInitializing(false);
       }
     }
     initializeModalData();
-  }, [isOpen, initialDataPoint, staticDataError, staticDataLoading, crops, brands, locations]); // Updated dependency array to 'locations'
+  }, [isOpen, initialDataPoint, staticDataError, staticDataLoading, crops, brands, locations]);
 
   useEffect(() => {
     // Separate image fetching into its own effect to prevent state reset race conditions
     const fetchImages = async () => {
       if (!isOpen || !initialDataPoint) return;
       setImagesLoading(true);
-      console.log('Attempting to fetch images. initialDataPoint.images:', initialDataPoint.images);
 
       const urls = Array.isArray(initialDataPoint.images)
         ? initialDataPoint.images
             .filter((imagePath): imagePath is string => typeof imagePath === 'string' && imagePath.length > 0)
-            .map((imagePath) => {
-              return `${API_BASE}/uploads/${imagePath}`;
-            })
+            .map((imagePath) => `${API_BASE}/uploads/${imagePath}`)
         : [];
 
-      console.log('Generated image URLs:', urls);
       setImageUrls(urls);
       setImagesLoading(false);
     };

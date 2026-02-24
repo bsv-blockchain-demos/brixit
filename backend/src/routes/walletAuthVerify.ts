@@ -196,10 +196,16 @@ router.post('/', async (req, res) => {
       roleNames,
     );
 
+    // Set refresh token as HttpOnly cookie — never exposed to JS
+    const secure = config.nodeEnv === 'production' ? '; Secure' : '';
+    res.setHeader(
+      'Set-Cookie',
+      `refresh_token=${encodeURIComponent(refreshToken)}; HttpOnly; SameSite=Strict; Path=/api/auth; Max-Age=${7 * 24 * 60 * 60}${secure}`,
+    );
+
     res.json({
       success: true,
       access_token: accessToken,
-      refresh_token: refreshToken,
       expires_in: 3600,
       token_type: 'bearer',
       user: {

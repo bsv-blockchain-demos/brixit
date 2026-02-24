@@ -27,14 +27,27 @@ function loadEnv() {
 
 loadEnv();
 
+const DEFAULT_JWT_PLACEHOLDER = 'change-this-to-a-strong-random-secret-in-production';
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret || jwtSecret === DEFAULT_JWT_PLACEHOLDER) {
+  throw new Error(
+    'JWT_SECRET is not set or is still the default placeholder. ' +
+    'Set a strong random value in your .env file before starting the server.'
+  );
+}
+
 export const config = {
   port: parseInt(process.env.PORT || '3001', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
 
   // Auth
-  jwtSecret: process.env.JWT_SECRET || 'change-this-to-a-strong-random-secret-in-production',
+  jwtSecret,
   jwtAccessExpiry: process.env.JWT_ACCESS_EXPIRY || '1h',
   jwtRefreshExpiry: process.env.JWT_REFRESH_EXPIRY || '7d',
+
+  // CORS — comma-separated list of allowed frontend origins
+  corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173').split(',').map(s => s.trim()),
+
   // BSV Wallet
   commonsourceServerKey: process.env.COMMONSOURCE_SERVER_KEY || '',
 
