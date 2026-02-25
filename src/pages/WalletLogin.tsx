@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useWallet } from '@/contexts/WalletContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,6 +22,7 @@ export default function WalletLogin() {
   const [certificateError, setCertificateError] = useState<string | null>(null);
   const [isCheckingCertificates, setIsCheckingCertificates] = useState(false);
   const [hasStartedLogin, setHasStartedLogin] = useState(false);
+  const isFetchingRef = useRef(false); // prevents concurrent invocations (StrictMode + re-render races)
 
   // Check if we should auto-connect (from CommonSource app)
   const shouldAutoConnect = searchParams.get('from') === 'commonsource';
@@ -33,11 +34,11 @@ export default function WalletLogin() {
 
   const checkUserCertificates = useCallback(async () => {
     if (!userWallet || !userPubKey) return;
+    if (isFetchingRef.current) return; // prevent double-fire (StrictMode / re-render races)
 
+    isFetchingRef.current = true;
     setIsCheckingCertificates(true);
     setCertificateError(null);
-
-    const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
 
     try {
       const certificates = await userWallet.listCertificates({
@@ -52,7 +53,7 @@ export default function WalletLogin() {
       }
 
       const certificate = certificates.certificates[0];
-      const userData = await getDataFromWallet(userWallet);
+      const userData = await getDataFromWallet(userWallet, certificate);
 
       if (!userData) {
         setCertificateError('Unable to retrieve wallet profile data. Please ensure your profile is set up in CommonSource.');
@@ -62,7 +63,6 @@ export default function WalletLogin() {
       const success = await walletLogin(userPubKey, certificate, userData);
 
       if (success) {
-        console.log('Wallet login successful, navigating to leaderboard');
         navigate('/leaderboard');
       } else {
         setCertificateError('Authentication failed. Please try again.');
@@ -73,6 +73,7 @@ export default function WalletLogin() {
       setCertificateError('Unable to check certificates. Please approve the request in your wallet.');
     } finally {
       setIsCheckingCertificates(false);
+      isFetchingRef.current = false;
     }
   }, [userWallet, userPubKey, walletLogin, navigate]);
 
