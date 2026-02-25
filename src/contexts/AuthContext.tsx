@@ -51,7 +51,7 @@ interface AuthContextType {
   ) => Promise<boolean>;
   updateUsername: (newUsername: string) => Promise<boolean>;
   updateLocation: (location: LocationData) => Promise<boolean>;
-  walletLogin: (identityKey: string, certificate: unknown, userData: unknown) => Promise<boolean>;
+  walletLogin: (identityKey: string, certificate: unknown, userData: unknown, nonce: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -218,7 +218,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const walletLogin = async (
     identityKey: string,
     certificate: unknown,
-    userData: unknown
+    userData: unknown,
+    nonce: string
   ): Promise<boolean> => {
     setAuthError(null);
 
@@ -233,6 +234,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         certificateSerialNumber: (certificate as { serialNumber: string }).serialNumber,
         certificate,
         userData,
+        nonce,
       }, { skipAuth: true });
 
       if (!data.success) {

@@ -19,7 +19,7 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
 
   res.on('finish', () => {
     const duration = Date.now() - start;
-    const { method, path } = req;
+    const { method, originalUrl: path } = req;
     const status = res.statusCode;
     const color = statusColor(status);
 

@@ -21,11 +21,12 @@
  *       These will be implemented once the database layer is decided.
  */
 import { Router } from 'express';
-import { Certificate as BsvCertificate } from '@bsv/sdk';
+import { Certificate as BsvCertificate, verifyNonce } from '@bsv/sdk';
 import * as jose from 'jose';
 import { config } from '../config.js';
 import { reverseGeocode } from '../utils/geocode.js';
 import prisma from '../db/client.js';
+import serverWallet from '../serverWallet.js';
 
 const router = Router();
 
@@ -56,6 +57,7 @@ interface WalletAuthRequest {
   certificateSerialNumber: string;
   certificate: CertificateDTO;
   userData: UserData;
+  nonce: string;
 }
 
 // --- JWT helper ---
@@ -91,11 +93,18 @@ async function generateTokens(userId: string, email: string, displayName: string
 router.post('/', async (req, res) => {
   try {
     const body = req.body as WalletAuthRequest;
-    const { identityKey, certificateSerialNumber, certificate, userData } = body;
+    const { identityKey, certificateSerialNumber, certificate, userData, nonce } = body;
 
     // 1. Validate input
-    if (!identityKey || !certificateSerialNumber || !certificate || !userData) {
+    if (!identityKey || !certificateSerialNumber || !certificate || !userData || !nonce) {
       res.status(400).json({ success: false, error: 'Missing required fields' });
+      return;
+    }
+
+    // 1b. Verify nonce — proves the request came from the wallet that owns certificate.subject
+    const nonceValid = await verifyNonce(nonce, serverWallet as any, certificate.subject);
+    if (!nonceValid) {
+      res.status(401).json({ success: false, error: 'Invalid nonce' });
       return;
     }
 
