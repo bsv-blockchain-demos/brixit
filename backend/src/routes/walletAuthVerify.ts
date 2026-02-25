@@ -105,6 +105,11 @@ router.post('/', async (req, res) => {
       return;
     }
 
+    if (certificate.subject !== identityKey) {
+      res.status(401).json({ success: false, error: 'Certificate subject mismatch' });
+      return;
+    }
+
     // 3. Verify certificate signature using @bsv/sdk
     const cert = new BsvCertificate(
       certificate.type,
