@@ -78,7 +78,7 @@ export function applyFilters(data: BrixDataPoint[], filters: MapFilter, isAdmin:
       
       if (filters.dateRange[1]) {
         const endDate = new Date(filters.dateRange[1]);
-        endDate.setHours(23, 59, 59, 999); // End of day
+        endDate.setUTCHours(23, 59, 59, 999); // End of day in UTC (timestamps are stored as UTC)
         if (submittedDate > endDate) {
           return false;
         }

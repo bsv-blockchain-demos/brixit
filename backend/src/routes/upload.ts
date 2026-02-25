@@ -32,12 +32,23 @@ const storage = multer.diskStorage({
   },
 });
 
+const ALLOWED_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp|heic|heif)$/i;
+const ALLOWED_MIMETYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+]);
+
 const upload = multer({
   storage,
   limits: { fileSize: config.maxFileSizeMb * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const allowed = /\.(jpg|jpeg|png|gif|webp|heic|heif)$/i;
-    if (allowed.test(path.extname(file.originalname))) {
+    const extOk = ALLOWED_EXTENSIONS.test(path.extname(file.originalname));
+    const mimeOk = ALLOWED_MIMETYPES.has(file.mimetype);
+    if (extOk && mimeOk) {
       cb(null, true);
     } else {
       cb(new Error('Only image files are allowed'));

@@ -3,7 +3,7 @@ import { WalletClient } from '@bsv/sdk';
 import { useNavigate } from 'react-router-dom';
 
 const MAX_RETRIES = 3;
-const RETRY_INTERVAL_MS = 3000;
+const RETRY_BASE_MS = 3000; // 3 s, 6 s, 12 s with exponential backoff
 
 type WalletContextType = {
   userWallet: WalletClient | null;
@@ -23,14 +23,17 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isConnecting, setIsConnecting] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [maxRetriesExceeded, setMaxRetriesExceeded] = useState(false);
-  const retryIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Refs track retry state without causing useCallback to recreate on every retry
+  const retryCountRef = useRef(0);
+  const maxRetriesExceededRef = useRef(false);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInitializingRef = useRef(false);
   const hasAutoInitialized = useRef(false);
 
   const navigate = useNavigate();
 
   const initializeWallet = useCallback(async () => {
-    if (isInitializingRef.current || maxRetriesExceeded) return;
+    if (isInitializingRef.current || maxRetriesExceededRef.current) return;
 
     isInitializingRef.current = true;
     setIsConnecting(true);
@@ -47,58 +50,59 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       setUserWallet(newWallet);
       setUserPubKey(publicKey);
+      retryCountRef.current = 0;
+      setRetryCount(0);
       setIsConnecting(false);
 
-      if (retryIntervalRef.current) {
-        clearInterval(retryIntervalRef.current);
-        retryIntervalRef.current = null;
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
       }
     } catch (error) {
       console.error('Failed to initialize wallet:', error);
 
-      if (!retryIntervalRef.current && retryCount < MAX_RETRIES) {
-        retryIntervalRef.current = setInterval(() => {
-          setRetryCount((prev) => {
-            const newCount = prev + 1;
-            if (newCount >= MAX_RETRIES) {
-              if (retryIntervalRef.current) {
-                clearInterval(retryIntervalRef.current);
-                retryIntervalRef.current = null;
-              }
-              setMaxRetriesExceeded(true);
-              setIsConnecting(false);
-              navigate('/wallet-error');
-            }
-            return newCount;
-          });
-
+      const currentRetry = retryCountRef.current;
+      if (currentRetry < MAX_RETRIES) {
+        retryCountRef.current = currentRetry + 1;
+        setRetryCount(currentRetry + 1);
+        // Exponential backoff: 3 s, 6 s, 12 s
+        const delay = RETRY_BASE_MS * Math.pow(2, currentRetry);
+        retryTimeoutRef.current = setTimeout(() => {
+          retryTimeoutRef.current = null;
           isInitializingRef.current = false;
           initializeWallet();
-        }, RETRY_INTERVAL_MS);
+        }, delay);
+      } else {
+        maxRetriesExceededRef.current = true;
+        setMaxRetriesExceeded(true);
+        setIsConnecting(false);
+        navigate('/wallet-error');
       }
     } finally {
       isInitializingRef.current = false;
-      if (!retryIntervalRef.current) {
+      if (!retryTimeoutRef.current) {
         setIsConnecting(false);
       }
     }
-  }, [retryCount, maxRetriesExceeded, navigate]);
+  }, [navigate]); // navigate is the only external dep; retry state tracked via refs
 
   const resetWalletState = useCallback(() => {
+    retryCountRef.current = 0;
+    maxRetriesExceededRef.current = false;
     setRetryCount(0);
     setMaxRetriesExceeded(false);
     setIsConnecting(false);
-    if (retryIntervalRef.current) {
-      clearInterval(retryIntervalRef.current);
-      retryIntervalRef.current = null;
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
     }
   }, []);
 
   useEffect(() => {
     // Cleanup on unmount
     return () => {
-      if (retryIntervalRef.current) {
-        clearInterval(retryIntervalRef.current);
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
       }
     };
   }, []);

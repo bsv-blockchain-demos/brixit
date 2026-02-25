@@ -10,10 +10,9 @@ import {
   apiPost,
   apiGet,
   apiPut,
-  setTokens,
-  clearTokens,
-  getAccessToken,
-  loadTokensFromStorage,
+  setAccessToken,
+  clearAccessToken,
+  refreshAccessToken,
 } from "@/lib/api";
 
 interface UserProfile {
@@ -52,7 +51,7 @@ interface AuthContextType {
   ) => Promise<boolean>;
   updateUsername: (newUsername: string) => Promise<boolean>;
   updateLocation: (location: LocationData) => Promise<boolean>;
-  walletLogin: (identityKey: string, certificate: any, userData: any) => Promise<boolean>;
+  walletLogin: (identityKey: string, certificate: unknown, userData: unknown) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -92,8 +91,9 @@ async function fetchUserProfile(): Promise<UserProfile | null> {
       submission_count: data.submission_count,
       last_submission: data.last_submission,
     };
-  } catch (err: any) {
-    console.error("[fetchUserProfile] Error:", err.message || err);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[fetchUserProfile] Error:", message);
     return null;
   }
 }
@@ -102,39 +102,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // session loading
-  const [profileLoading, setProfileLoading] = useState(true); // profile loading
+  const [isLoading, setIsLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   const isAdmin = user?.role === "admin";
 
+  // On mount, attempt a silent token refresh using the HttpOnly cookie.
+  // If the cookie is present and valid, the backend returns a fresh access
+  // token and we can restore the session without any user interaction.
   const loadSession = async () => {
     setIsLoading(true);
     setProfileLoading(true);
     try {
-      loadTokensFromStorage();
-      const token = getAccessToken();
-
-      if (!token) {
+      const refreshed = await refreshAccessToken();
+      if (!refreshed) {
         setUser(null);
         setIsAuthenticated(false);
         return;
       }
 
-      // Validate token by fetching profile
       const profile = await fetchUserProfile();
       if (profile) {
         setUser(profile);
         setIsAuthenticated(true);
         setAuthError(null);
       } else {
-        // Token is invalid or expired
-        clearTokens();
+        clearAccessToken();
         setUser(null);
         setIsAuthenticated(false);
       }
-    } catch (err: any) {
-      console.error("Error loading session:", err);
-      clearTokens();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("Error loading session:", message);
+      clearAccessToken();
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -147,7 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loadSession();
   }, []);
 
-  // Email/password auth stubs — wallet-only auth now, these are kept for interface compat
+  // Email/password auth stubs — wallet-only auth, kept for interface compat
   const register = async (
     _email: string,
     _password: string,
@@ -165,11 +165,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async (): Promise<void> => {
     try {
+      // Backend clears the HttpOnly refresh token cookie
       await apiPost("/api/auth/logout", {}).catch(() => {});
-    } catch {
-      // ignore
     } finally {
-      clearTokens();
+      clearAccessToken();
       setUser(null);
       setIsAuthenticated(false);
       setAuthError(null);
@@ -187,8 +186,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const refreshedProfile = await fetchUserProfile();
       if (refreshedProfile) setUser(refreshedProfile);
       return true;
-    } catch (err: any) {
-      setAuthError(err.message || "Unexpected error updating username.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unexpected error updating username.";
+      setAuthError(message);
       return false;
     }
   };
@@ -208,16 +208,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const refreshedProfile = await fetchUserProfile();
       if (refreshedProfile) setUser(refreshedProfile);
       return true;
-    } catch (err: any) {
-      setAuthError(err.message || "Unexpected error updating location.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unexpected error updating location.";
+      setAuthError(message);
       return false;
     }
   };
 
   const walletLogin = async (
     identityKey: string,
-    certificate: any,
-    userData: any
+    certificate: unknown,
+    userData: unknown
   ): Promise<boolean> => {
     setAuthError(null);
 
@@ -225,12 +226,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const data = await apiPost<{
         success: boolean;
         access_token: string;
-        refresh_token: string;
-        user: any;
+        user: { id: string; display_name: string; roles: string[] };
         error?: string;
       }>("/api/auth/wallet-login", {
         identityKey,
-        certificateSerialNumber: certificate.serialNumber,
+        certificateSerialNumber: (certificate as { serialNumber: string }).serialNumber,
         certificate,
         userData,
       }, { skipAuth: true });
@@ -240,20 +240,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return false;
       }
 
-      // Store tokens
-      setTokens(data.access_token, data.refresh_token);
+      // Store access token in memory; refresh token is in the HttpOnly cookie set by the backend
+      setAccessToken(data.access_token);
 
-      // Fetch full profile
       setProfileLoading(true);
       const profile = await fetchUserProfile();
       if (profile) {
         setUser(profile);
         setIsAuthenticated(true);
       } else {
-        // Use the user data from the login response as fallback
+        // Fallback to data from login response
         setUser({
           id: data.user?.id || "",
-          display_name: data.user?.display_name || userData.displayName || "Explorer",
+          display_name: data.user?.display_name || (userData as { displayName?: string }).displayName || "Explorer",
           role: "contributor",
           email: null,
           country: null,
@@ -265,9 +264,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setProfileLoading(false);
 
       return true;
-    } catch (err: any) {
-      console.error("Wallet login error:", err);
-      setAuthError(err.message || "Unexpected error during wallet login");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unexpected error during wallet login";
+      console.error("Wallet login error:", message);
+      setAuthError(message);
       return false;
     }
   };

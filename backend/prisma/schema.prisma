@@ -148,6 +148,7 @@ model Place {
 
   @@index([locationId], name: "idx_places_location_id")
   @@index([country], name: "idx_places_country")
+  @@index([latitude, longitude], name: "idx_places_lat_lng")
   @@map("places")
 }
 
