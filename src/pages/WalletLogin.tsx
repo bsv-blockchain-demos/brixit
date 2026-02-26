@@ -6,7 +6,15 @@ import { Utils, createNonce } from '@bsv/sdk';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wallet, Lock, TrendingUp } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Wallet, Lock, TrendingUp, ExternalLink } from 'lucide-react';
 import { getDataFromWallet } from '@/utils/getDataFromWallet';
 
 const COMMONSOURCE_SERVER_KEY = import.meta.env.VITE_COMMONSOURCE_SERVER_KEY;
@@ -16,13 +24,14 @@ const BACKEND_PUBLIC_KEY = import.meta.env.VITE_BACKEND_PUBLIC_KEY;
 
 export default function WalletLogin() {
   const [searchParams] = useSearchParams();
-  const { userWallet, userPubKey, isConnecting, maxRetriesExceeded, retryCount, initializeWallet } = useWallet();
+  const { userWallet, userPubKey, isConnecting, maxRetriesExceeded, retryCount, initializeWallet, resetWalletState } = useWallet();
   const { walletLogin, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const [certificateError, setCertificateError] = useState<string | null>(null);
   const [isCheckingCertificates, setIsCheckingCertificates] = useState(false);
   const [hasStartedLogin, setHasStartedLogin] = useState(false);
+  const [showNoCertModal, setShowNoCertModal] = useState(false);
   const isFetchingRef = useRef(false); // prevents concurrent invocations (StrictMode + re-render races)
 
   // Check if we should auto-connect (from CommonSource app)
@@ -32,6 +41,15 @@ export default function WalletLogin() {
     setHasStartedLogin(true);
     initializeWallet();
   }, [initializeWallet]);
+
+  const handleResetLogin = useCallback(() => {
+    setShowNoCertModal(false);
+    setHasStartedLogin(false);
+    setCertificateError(null);
+    setIsCheckingCertificates(false);
+    isFetchingRef.current = false;
+    resetWalletState();
+  }, [resetWalletState]);
 
   const checkUserCertificates = useCallback(async () => {
     if (!userWallet || !userPubKey) return;
@@ -49,7 +67,7 @@ export default function WalletLogin() {
       });
 
       if (certificates.certificates.length === 0) {
-        window.location.href = EXTERNAL_ONBOARDING_URL;
+        setShowNoCertModal(true);
         return;
       }
 
@@ -184,7 +202,7 @@ export default function WalletLogin() {
     );
   }
 
-  // Default: Show welcome screen with login button
+  // Default: Show welcome screen with login button (modal overlays it when needed)
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-gray-100 flex items-center justify-center p-4">
       <div className="max-w-4xl w-full">
@@ -266,6 +284,30 @@ export default function WalletLogin() {
           Powered by CommonSource Network • Secured by BSV Blockchain
         </p>
       </div>
+
+      <Dialog open={showNoCertModal} onOpenChange={(open) => { if (!open) handleResetLogin(); }}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Certificate Required</DialogTitle>
+            <DialogDescription className="pt-2">
+              We noticed you don't have a CommonSource certificate yet. A certificate is required to use BRIX.
+              You can get one by registering with CommonSource — clicking the link below will take you there.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
+            <Button variant="outline" onClick={handleResetLogin} className="sm:order-first">
+              Cancel
+            </Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => { window.location.href = EXTERNAL_ONBOARDING_URL; }}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Get a CommonSource Certificate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
