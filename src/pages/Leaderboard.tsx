@@ -10,6 +10,7 @@ import {
   fetchUserLeaderboard,
   LeaderboardEntry,
 } from "../lib/fetchLeaderboards";
+import { ALL_COUNTRIES } from "../lib/locationConstants";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   computeNormalizedScore,
@@ -535,7 +536,7 @@ const LeaderboardPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => {
-                    setLocation({ ...emptyLocation, country: "All countries" });
+                    setLocation({ ...emptyLocation, country: ALL_COUNTRIES });
                     setCrop("");
                   }}
                   className="text-sm text-gray-600 hover:underline text-left"

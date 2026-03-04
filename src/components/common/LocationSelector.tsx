@@ -17,6 +17,7 @@ import {
   PopoverTrigger,
 } from '../ui/popover';
 import { locationService, Country, State, City, LocationData } from '../../lib/locationServiceforRegister';
+import { ALL_COUNTRIES } from '../../lib/locationConstants';
 
 interface LocationSelectorProps {
   value: {
@@ -381,8 +382,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
               className="w-full mt-1 justify-between"
               disabled={disabled || loading.countries}
             >
-              {value.country === "All countries"
-                ? "All countries"
+              {value.country === ALL_COUNTRIES
+                ? ALL_COUNTRIES
                 : value.country || (loading.countries ? "Loading countries..." : "Select country")}
               <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -419,10 +420,10 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
                       ))}
                       <CommandItem
                         key="all"
-                        value="All countries"
+                        value={ALL_COUNTRIES}
                         onSelect={() =>
                           onChange({
-                            country: "All countries",
+                            country: ALL_COUNTRIES,
                             countryCode: "",
                             state: "",
                             stateCode: "",
@@ -442,7 +443,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       </div>
 
       {/* State/Province Selection */}
-      {value.countryCode && value.country !== "All countries" && (
+      {value.countryCode && value.country !== ALL_COUNTRIES && (
         <div>
           <Label htmlFor="state">
             State/Province {required && <span className="text-red-500">*</span>}
@@ -498,7 +499,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       )}
 
       {/* City Selection */}
-      {value.countryCode && value.state && value.country !== "All countries" && (
+      {value.countryCode && value.state && value.country !== ALL_COUNTRIES && (
         <div>
           <Label htmlFor="city">
             City {required && <span className="text-red-500">*</span>}

@@ -1,4 +1,5 @@
 import { apiGet } from './api';
+import { ALL_COUNTRIES, ALL_STATES, ALL_CITIES } from './locationConstants';
 
 export type Filter = {
   city?: string;
@@ -47,9 +48,9 @@ async function fetchLeaderboard<R extends LeaderboardEntry>(
   const endpoint = RPC_TO_ENDPOINT[rpcName] || `/api/leaderboards/${rpcName}`;
 
   const params = new URLSearchParams();
-  if (country && country !== 'All countries') params.set('country', country);
-  if (state && state !== 'All states') params.set('state', state);
-  if (city && city !== 'All cities') params.set('city', city);
+  if (country && country !== ALL_COUNTRIES) params.set('country', country);
+  if (state && state !== ALL_STATES) params.set('state', state);
+  if (city && city !== ALL_CITIES) params.set('city', city);
   if (crop) params.set('crop', crop);
   if (typeof filters.limit === 'number') params.set('limit', String(filters.limit));
   if (typeof filters.offset === 'number') params.set('offset', String(filters.offset));
