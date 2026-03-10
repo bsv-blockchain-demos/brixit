@@ -13,6 +13,10 @@ import { requestLogger } from './middleware/logger.js';
 import { requireAuth, requireContributor } from './middleware/auth.js';
 import { authLimiter, submissionLimiter, geonamesLimiter, generalLimiter } from './utils/rateLimiter.js';
 
+// Probe imports
+import { healthProbe } from './routes/health.js';
+import { readyProbe } from './routes/ready.js';
+
 // Route imports
 import authRoutes from './routes/auth.js';
 import walletAuthRoutes from './routes/walletAuthVerify.js';
@@ -45,14 +49,9 @@ app.use('/api/geonames', geonamesLimiter);
 // --- Static file serving for uploads ---
 app.use('/uploads', express.static(path.resolve(config.uploadDir)));
 
-// --- Health check ---
-app.get('/api/health', (_req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    env: config.nodeEnv,
-  });
-});
+// --- Health / readiness probes  ---
+app.get('/health', healthProbe);
+app.get('/ready', readyProbe);
 
 // --- Auth routes ---
 app.use('/api/auth', authRoutes);                    // refresh, logout, me
@@ -89,7 +88,8 @@ app.use(errorHandler);
 app.listen(config.port, () => {
   console.log(`\n🚀 Brixit backend running on http://localhost:${config.port}`);
   console.log(`   Environment: ${config.nodeEnv}`);
-  console.log(`   Health check: http://localhost:${config.port}/api/health`);
+  console.log(`   Health check:     http://localhost:${config.port}/health`);
+  console.log(`   Readiness check:  http://localhost:${config.port}/ready`);
   console.log(`\n📋 Registered routes:`);
   console.log(`   POST   /api/auth/wallet-login`);
   console.log(`   POST   /api/auth/refresh`);
