@@ -6,7 +6,7 @@
 import express from 'express';
 import path from 'path';
 import { config } from './config.js';
-import './serverWallet.js'; // initialise and validate BACKEND_PRIVATE_KEY on startup
+import './serverWallet.js'; // initialise and validate SERVER_PRIVATE_KEY on startup
 import { corsMiddleware } from './middleware/cors.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';

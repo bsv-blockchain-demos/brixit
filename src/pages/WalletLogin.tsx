@@ -20,7 +20,7 @@ import { getDataFromWallet } from '@/utils/getDataFromWallet';
 const COMMONSOURCE_SERVER_KEY = import.meta.env.VITE_COMMONSOURCE_SERVER_KEY;
 const CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'CommonSource identity';
 const EXTERNAL_ONBOARDING_URL = import.meta.env.VITE_EXTERNAL_ONBOARDING_URL;
-const BACKEND_PUBLIC_KEY = import.meta.env.VITE_BACKEND_PUBLIC_KEY;
+const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 
 export default function WalletLogin() {
   const [searchParams] = useSearchParams();

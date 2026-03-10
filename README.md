@@ -88,6 +88,45 @@ Front-end components were generated within Lovable but organized in `src/` simil
 
 ---
 
+## 🔑 Environment Setup
+
+Copy the example files and fill in your values before running the app.
+
+```bash
+cp .env.example .env
+cp backend/.env.example backend/.env
+```
+
+### Frontend (`/.env`)
+
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_API_URL` | No | Backend base URL (default: `http://localhost:3001`) |
+| `VITE_MAPBOX_TOKEN` | Yes | Mapbox public access token |
+| `VITE_COMMONSOURCE_SERVER_KEY` | Yes | Public key of the CommonSource certificate issuer |
+| `VITE_CERT_TYPE` | No | Certificate type string (default: `CommonSource identity`) |
+| `VITE_EXTERNAL_ONBOARDING_URL` | Yes | URL to redirect users who have no certificate |
+| `VITE_SERVER_PUBKEY` | Yes | Backend wallet public key — used to create login nonces; must match `BACKEND_PRIVATE_KEY` |
+
+### Backend (`/backend/.env`)
+
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | Yes | PostgreSQL connection string (Prisma) |
+| `JWT_SECRET` | Yes | Strong random secret for signing JWTs |
+| `JWT_ACCESS_EXPIRY` | No | Access token lifetime (default: `1h`) |
+| `JWT_REFRESH_EXPIRY` | No | Refresh token lifetime (default: `7d`) |
+| `CORS_ORIGINS` | No | Comma-separated allowed origins (default: `http://localhost:5173`) |
+| `COMMONSOURCE_SERVER_KEY` | Yes | Public key of the CommonSource certificate issuer |
+| `BACKEND_PRIVATE_KEY` | Yes | Private key for the server-side wallet used to verify login nonces; the corresponding public key is `VITE_SERVER_PUBKEY` |
+| `GEONAMES_USERNAME` | Yes | GeoNames account username for reverse-geocoding |
+| `AUTO_VERIFY_USER_ID` | No | User ID used for automatic submission verification |
+| `UPLOAD_DIR` | No | File upload directory (default: `./uploads`) |
+| `MAX_FILE_SIZE_MB` | No | Max upload size in MB (default: `10`) |
+| `PORT` | No | Server port (default: `3001`) |
+
+---
+
 ## 📚 Additional Documentation
 All extended documentation is in [`docs/`](docs/)
 - [AI Assistance](docs/AI_Assistance.md) - notes for working with the AI-driven workflow used in development

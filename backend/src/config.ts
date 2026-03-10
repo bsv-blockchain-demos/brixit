@@ -50,7 +50,7 @@ export const config = {
 
   // BSV Wallet
   commonsourceServerKey: process.env.COMMONSOURCE_SERVER_KEY || '',
-  backendPrivateKey: process.env.BACKEND_PRIVATE_KEY || '',
+  backendPrivateKey: process.env.SERVER_PRIVATE_KEY || '',
 
   // Auto-verification
   autoVerifyUserId: process.env.AUTO_VERIFY_USER_ID || '',
