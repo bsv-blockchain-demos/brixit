@@ -1,0 +1,10 @@
+node_modules
+dist
+backend
+.git
+.github
+docs
+*.md
+.env*
+.gitignore
+bun.lockb
