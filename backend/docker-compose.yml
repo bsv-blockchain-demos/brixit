@@ -17,5 +17,23 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: brixit-backend
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      # These are always the same in the compose network — no need to put in .env.docker
+      DATABASE_URL: postgresql://brixit:brixit_dev_password@postgres:5432/brixit
+      NODE_ENV: development
+      PORT: 3001
+
 volumes:
   brixit_pgdata:

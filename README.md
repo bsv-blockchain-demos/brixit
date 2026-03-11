@@ -106,7 +106,7 @@ cp backend/.env.example backend/.env
 | `VITE_COMMONSOURCE_SERVER_KEY` | Yes | Public key of the CommonSource certificate issuer |
 | `VITE_CERT_TYPE` | No | Certificate type string (default: `CommonSource identity`) |
 | `VITE_EXTERNAL_ONBOARDING_URL` | Yes | URL to redirect users who have no certificate |
-| `VITE_SERVER_PUBKEY` | Yes | Backend wallet public key — used to create login nonces; must match `BACKEND_PRIVATE_KEY` |
+| `VITE_SERVER_PUBLIC_KEY` | Yes | Backend wallet public key — used to create login nonces; must match `BACKEND_PRIVATE_KEY` |
 
 ### Backend (`/backend/.env`)
 
@@ -118,7 +118,7 @@ cp backend/.env.example backend/.env
 | `JWT_REFRESH_EXPIRY` | No | Refresh token lifetime (default: `7d`) |
 | `CORS_ORIGINS` | No | Comma-separated allowed origins (default: `http://localhost:5173`) |
 | `COMMONSOURCE_SERVER_KEY` | Yes | Public key of the CommonSource certificate issuer |
-| `BACKEND_PRIVATE_KEY` | Yes | Private key for the server-side wallet used to verify login nonces; the corresponding public key is `VITE_SERVER_PUBKEY` |
+| `BACKEND_PRIVATE_KEY` | Yes | Private key for the server-side wallet used to verify login nonces; the corresponding public key is `VITE_SERVER_PUBLIC_KEY` |
 | `GEONAMES_USERNAME` | Yes | GeoNames account username for reverse-geocoding |
 | `AUTO_VERIFY_USER_ID` | No | User ID used for automatic submission verification |
 | `UPLOAD_DIR` | No | File upload directory (default: `./uploads`) |

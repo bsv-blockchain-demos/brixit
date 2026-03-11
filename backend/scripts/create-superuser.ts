@@ -35,6 +35,12 @@ async function main() {
     create: { userId: user.id, role: 'admin' },
   });
 
+  // Container mode: print bare UUID and exit (entrypoint.sh captures it)
+  if (process.env.PRINT_ID_ONLY === '1') {
+    console.log(user.id);
+    return;
+  }
+
   console.log('\n✅ System superuser ready');
   console.log(`   ID:    ${user.id}`);
   console.log(`   Email: ${user.email}`);
