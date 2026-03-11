@@ -58,8 +58,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ghcr.io/bsv-blockchain-demos/{your-project-name}-frontend:${{ github.sha }}
-            ghcr.io/bsv-blockchain-demos/{your-project-name}-frontend:${{ needs.get_tag.outputs.deployment_tag }}
+            ghcr.io/bsv-blockchain-demos/brixit-frontend:${{ github.sha }}
+            ghcr.io/bsv-blockchain-demos/brixit-frontend:${{ needs.get_tag.outputs.deployment_tag }}
           build-args: |
             VITE_API_URL=${{ vars.VITE_API_URL }}
           cache-from: type=gha
@@ -73,15 +73,15 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ghcr.io/bsv-blockchain-demos/{your-project-name}-backend:${{ github.sha }}
-            ghcr.io/bsv-blockchain-demos/{your-project-name}-backend:${{ needs.get_tag.outputs.deployment_tag }}
+            ghcr.io/bsv-blockchain-demos/brixit-backend:${{ github.sha }}
+            ghcr.io/bsv-blockchain-demos/brixit-backend:${{ needs.get_tag.outputs.deployment_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Generate deployment summary
         run: |
           echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "**Frontend:** \`ghcr.io/bsv-blockchain-demos/{your-project-name}-frontend:${{ needs.get_tag.outputs.deployment_tag }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Backend:** \`ghcr.io/bsv-blockchain-demos/{your-project-name}-backend:${{ needs.get_tag.outputs.deployment_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Frontend:** \`ghcr.io/bsv-blockchain-demos/brixit-frontend:${{ needs.get_tag.outputs.deployment_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend:** \`ghcr.io/bsv-blockchain-demos/brixit-backend:${{ needs.get_tag.outputs.deployment_tag }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Platforms:** linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY
           echo "**Tag:** ${{ needs.get_tag.outputs.deployment_tag }}" >> $GITHUB_STEP_SUMMARY
