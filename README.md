@@ -1,13 +1,30 @@
-# Project Overview
+## 🚀 Project Overview
 
-This repository contains a prototype application developed with significant AI-assisted code generation. The goal of this documentation is to provide a clear, concise foundation for any developer who will continue building, stabilizing, or productionizing the system.
+The application allows users (primarily citizen scientists worldwide) to create submissions for [BRIX](https://en.wikipedia.org/wiki/Brix) bionutrient data. There's more information in the [`Design Perspective doc`](docs/Design_Perspective). Admin users have additional management tools for reviewing submissions.
 
-This overview describes:
-- What the project does  
-- The current state of implementation  
-- How the repository is structured  
-- Where to find deeper documentation  
-- Known limitations of the prototype  
+All data is stored in **Supabase Postgres**, with business logic implemented through:
+- SQL functions
+- Database triggers
+- Supabase Edge Functions
+- Row-Level Security policies
+- Supabase auth templates
+
+Front-end components were generated within Lovable but organized in `src/` similar to a typical React project.
+
+--
+
+# BRIXIT - Prototype
+
+This repository contains a prototype geospatial data-collection web application built primarily with AI-assisted development (Lovable, ChatGPT, Claude, Gemini, and Cursor). The project uses:
+
+- **React + TypeScript** (Lovable-generated structure)
+- **Supabase** (database, auth, edge functions, migrations)
+- **Mapbox** (maps + geocoding)
+- **Lovable hosting** (preview + production environments)
+
+This documentation exists so another developer can confidently continue the project. I hear you (because yes this documentation is also mostly AI-generated, but I'm not writing markdown from scratch. And you got this!)
+
+
 
 ---
 
@@ -47,31 +64,9 @@ See **AI Caveats & Risk Areas** for details.
 
 ---
 
-# Sweet Earth Mapper — Prototype
 
-This repository contains a prototype geospatial data-collection web application built primarily with AI-assisted development (Lovable, ChatGPT, Claude, Gemini, and Cursor). The project uses:
 
-- **React + TypeScript** (Lovable-generated structure)
-- **Supabase** (database, auth, edge functions, migrations)
-- **Mapbox** (maps + geocoding)
-- **Lovable hosting** (preview + production environments)
 
-This documentation exists so another developer can confidently continue the project. I hear you (because yes this documentation is also mostly AI-generated, but I'm not writing markdown from scratch. And you got this!)
-
----
-
-## 🚀 Project Overview
-
-The application allows users (primarily citizen scientists worldwide) to create submissions for [BRIX](https://en.wikipedia.org/wiki/Brix) bionutrient data. There's more information in the [`Design Perspective doc`](docs/Design_Perspective). Admin users have additional management tools for reviewing submissions.
-
-All data is stored in **Supabase Postgres**, with business logic implemented through:
-- SQL functions
-- Database triggers
-- Supabase Edge Functions
-- Row-Level Security policies
-- Supabase auth templates
-
-Front-end components were generated within Lovable but organized in `src/` similar to a typical React project.
 
 --- 
 
