@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useWalletRelayClient } from '@bsv/wallet-relay/react';
-import { Utils } from '@bsv/sdk';
+import { Utils, createNonce } from '@bsv/sdk';
 import { useAuth } from '@/contexts/AuthContext';
+import { getDataFromWallet } from '@/utils/getDataFromWallet';
 
 const COMMONSOURCE_SERVER_KEY = import.meta.env.VITE_COMMONSOURCE_SERVER_KEY as string;
 const CERT_TYPE = (import.meta.env.VITE_CERT_TYPE as string) || 'CommonSource identity';
 const API_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:3001';
+const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY as string;
 
 export type MobileLoginStatus =
   | 'idle'
@@ -24,7 +26,7 @@ export function useMobileWalletLogin() {
     autoCreate: false,
   });
 
-  const { mobileWalletLogin } = useAuth();
+  const { walletLogin } = useAuth();
 
   // Start the flow: create a relay session and show the QR code
   const start = () => {
@@ -61,7 +63,15 @@ export function useMobileWalletLogin() {
           throw new Error('NO_CERTIFICATE');
         }
 
-        const success = await mobileWalletLogin(identityKey, certificates[0]);
+        const certificate = certificates[0];
+        const userData = await getDataFromWallet(wallet, certificate);
+
+        if (!userData) {
+          throw new Error('Unable to retrieve wallet profile data.');
+        }
+
+        const nonce = await createNonce(wallet as any, BACKEND_PUBLIC_KEY);
+        const success = await walletLogin(identityKey, certificate, userData, nonce);
         if (!success) throw new Error('Authentication failed. Please try again.');
 
         setLoginStatus('done');

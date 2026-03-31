@@ -23,7 +23,6 @@ import { readyProbe } from './routes/ready.js';
 // Route imports
 import authRoutes from './routes/auth.js';
 import walletAuthRoutes from './routes/walletAuthVerify.js';
-import mobileWalletLoginRoutes from './routes/mobileWalletLogin.js';
 import geonamesRoutes from './routes/geonames.js';
 import autoVerifySubmissionRoutes from './routes/autoVerifySubmission.js';
 import cropsRoutes from './routes/crops.js';
@@ -47,7 +46,6 @@ app.use(requestLogger);
 // --- Rate limiting ---
 app.use('/api', generalLimiter);
 app.use('/api/auth/wallet-login', authLimiter);
-app.use('/api/auth/mobile-wallet-login', authLimiter);
 app.use('/api/auth/refresh', authLimiter);
 app.use('/api/submissions/create', submissionLimiter);
 app.use('/api/geonames', geonamesLimiter);
@@ -71,7 +69,6 @@ new WalletRelayService({
 // --- Auth routes ---
 app.use('/api/auth', authRoutes);                              // refresh, logout, me
 app.use('/api/auth/wallet-login', walletAuthRoutes);           // POST desktop wallet certificate login
-app.use('/api/auth/mobile-wallet-login', mobileWalletLoginRoutes); // POST mobile QR wallet login
 
 // --- Public data routes ---
 app.use('/api/crops', cropsRoutes);
