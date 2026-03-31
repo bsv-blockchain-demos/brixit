@@ -52,6 +52,7 @@ interface AuthContextType {
   updateUsername: (newUsername: string) => Promise<boolean>;
   updateLocation: (location: LocationData) => Promise<boolean>;
   walletLogin: (identityKey: string, certificate: unknown, userData: unknown, nonce: string) => Promise<boolean>;
+  mobileWalletLogin: (identityKey: string, certificate: unknown) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -274,6 +275,57 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const mobileWalletLogin = async (
+    identityKey: string,
+    certificate: unknown,
+  ): Promise<boolean> => {
+    setAuthError(null);
+    try {
+      const data = await apiPost<{
+        success: boolean;
+        access_token: string;
+        user: { id: string; display_name: string | null; roles: string[] };
+        error?: string;
+      }>('/api/auth/mobile-wallet-login', {
+        identityKey,
+        certificateSerialNumber: (certificate as { serialNumber: string }).serialNumber,
+        certificate,
+      }, { skipAuth: true });
+
+      if (!data.success) {
+        setAuthError(data.error || 'Mobile wallet authentication failed');
+        return false;
+      }
+
+      setAccessToken(data.access_token);
+
+      setProfileLoading(true);
+      const profile = await fetchUserProfile();
+      if (profile) {
+        setUser(profile);
+        setIsAuthenticated(true);
+      } else {
+        setUser({
+          id: data.user?.id || '',
+          display_name: data.user?.display_name || null,
+          role: 'contributor',
+          email: null,
+          country: null,
+          state: null,
+          city: null,
+        });
+        setIsAuthenticated(true);
+      }
+      setProfileLoading(false);
+      return true;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unexpected error during mobile wallet login';
+      console.error('Mobile wallet login error:', message);
+      setAuthError(message);
+      return false;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -289,6 +341,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         updateUsername,
         updateLocation,
         walletLogin,
+        mobileWalletLogin,
       }}
     >
       {children}

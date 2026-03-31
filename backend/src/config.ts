@@ -36,8 +36,10 @@ if (!jwtSecret || jwtSecret === DEFAULT_JWT_PLACEHOLDER) {
   );
 }
 
+const port = parseInt(process.env.PORT || '3001', 10);
+
 export const config = {
-  port: parseInt(process.env.PORT || '3001', 10),
+  port,
   nodeEnv: process.env.NODE_ENV || 'development',
 
   // Auth
@@ -47,6 +49,9 @@ export const config = {
 
   // CORS — comma-separated list of allowed frontend origins
   corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173').split(',').map(s => s.trim()),
+
+  // Wallet relay — WebSocket URL used in QR codes (must be reachable by mobile)
+  relayUrl: process.env.RELAY_URL || `ws://localhost:${port}`,
 
   // BSV Wallet
   commonsourceServerKey: process.env.COMMONSOURCE_SERVER_KEY || '',

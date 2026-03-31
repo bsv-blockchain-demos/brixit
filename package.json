@@ -16,7 +16,8 @@
     "db:down": "docker compose -f backend/docker-compose.yml down"
   },
   "dependencies": {
-    "@bsv/sdk": "^1.10.3",
+    "@bsv/sdk": "^2.0.13",
+    "@bsv/wallet-relay": "file:../../qr-lib",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",

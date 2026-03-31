@@ -14,8 +14,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Wallet, Lock, TrendingUp, ExternalLink } from 'lucide-react';
+import { Wallet, Lock, TrendingUp, ExternalLink, Smartphone } from 'lucide-react';
 import { getDataFromWallet } from '@/utils/getDataFromWallet';
+import { useMobileWalletLogin } from '@/hooks/useMobileWalletLogin';
 
 const COMMONSOURCE_SERVER_KEY = import.meta.env.VITE_COMMONSOURCE_SERVER_KEY;
 const CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'CommonSource identity';
@@ -34,6 +35,9 @@ export default function WalletLogin() {
   const [showNoCertModal, setShowNoCertModal] = useState(false);
   const isFetchingRef = useRef(false); // prevents concurrent invocations (StrictMode + re-render races)
 
+  const { session, loginStatus, loginError, start: startMobileLogin, reset: resetMobileLogin } = useMobileWalletLogin();
+  const showMobileQR = loginStatus !== 'idle';
+
   // Check if we should auto-connect (from CommonSource app)
   const shouldAutoConnect = searchParams.get('from') === 'commonsource';
 
@@ -49,7 +53,8 @@ export default function WalletLogin() {
     setIsCheckingCertificates(false);
     isFetchingRef.current = false;
     resetWalletState();
-  }, [resetWalletState]);
+    resetMobileLogin();
+  }, [resetWalletState, resetMobileLogin]);
 
   const checkUserCertificates = useCallback(async () => {
     if (!userWallet || !userPubKey) return;
@@ -118,6 +123,80 @@ export default function WalletLogin() {
       checkUserCertificates();
     }
   }, [userWallet, userPubKey, hasStartedLogin, checkUserCertificates]);
+
+  // Navigate on successful mobile login
+  useEffect(() => {
+    if (loginStatus === 'done') navigate('/leaderboard');
+  }, [loginStatus, navigate]);
+
+  // Show "no certificate" modal if mobile wallet has no CommonSource cert
+  useEffect(() => {
+    if (loginStatus === 'error' && loginError === 'NO_CERTIFICATE') {
+      setShowNoCertModal(true);
+    }
+  }, [loginStatus, loginError]);
+
+  // Mobile QR — scanning (QR code displayed)
+  if (loginStatus === 'scanning' || loginStatus === 'authenticating') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-sm w-full text-center">
+          <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <span className="text-white font-bold text-xl">B</span>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {loginStatus === 'authenticating' ? 'Verifying mobile wallet…' : 'Scan with your mobile wallet'}
+          </h1>
+          <p className="text-gray-600 mb-6 text-sm">
+            {loginStatus === 'authenticating'
+              ? 'Retrieving your identity and certificates from the mobile wallet'
+              : 'Open BSV Browser on your phone, go to Connections → Scan QR Code'}
+          </p>
+          {session?.qrDataUrl && loginStatus === 'scanning' ? (
+            <div className="flex flex-col items-center gap-4">
+              <img
+                src={session.qrDataUrl}
+                alt="Scan to connect mobile wallet"
+                className="w-64 h-64 rounded-xl border border-gray-200 shadow-sm mx-auto"
+              />
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                session.status === 'connected' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {session.status === 'connected' ? 'Connected' : 'Waiting for scan…'}
+              </span>
+            </div>
+          ) : (
+            <div className="w-64 h-64 bg-gray-100 rounded-xl animate-pulse mx-auto" />
+          )}
+          {loginStatus === 'authenticating' && (
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mt-6" />
+          )}
+          <Button variant="outline" onClick={resetMobileLogin} className="mt-6">
+            Cancel
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Mobile QR — error state
+  if (loginStatus === 'error' && loginError && loginError !== 'NO_CERTIFICATE') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <Alert variant="destructive">
+            <AlertDescription>{loginError}</AlertDescription>
+          </Alert>
+          <Button onClick={startMobileLogin} className="mt-4 w-full bg-green-600 hover:bg-green-700">
+            Try Again
+          </Button>
+          <Button variant="outline" onClick={resetMobileLogin} className="mt-2 w-full">
+            Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Show error state if max retries exceeded
   if (maxRetriesExceeded) {
@@ -255,14 +334,29 @@ export default function WalletLogin() {
               </div>
             </div>
 
-            <div className="pt-4">
+            <div className="pt-4 flex flex-col gap-3">
               <Button
                 onClick={handleLoginClick}
                 disabled={isConnecting}
                 className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
               >
                 <Wallet className="w-5 h-5 mr-2" />
-                Login with CommonSource Wallet
+                Login with Desktop Wallet
+              </Button>
+
+              <div className="flex items-center gap-3">
+                <div className="flex-1 border-t border-gray-200" />
+                <span className="text-xs text-gray-400">or</span>
+                <div className="flex-1 border-t border-gray-200" />
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={startMobileLogin}
+                className="w-full text-base py-5"
+              >
+                <Smartphone className="w-5 h-5 mr-2" />
+                Connect via Mobile QR
               </Button>
             </div>
 
