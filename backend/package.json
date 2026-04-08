@@ -21,16 +21,18 @@
     "kill-port": "powershell -Command \"$p = Get-NetTCPConnection -LocalPort $env:PORT -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -First 1; if ($p) { Stop-Process -Id $p -Force; Write-Host 'Killed PID' $p } else { Write-Host 'Port is already free' }\""
   },
   "dependencies": {
+    "@bsv/auth-express-middleware": "^1.2.3",
     "@bsv/sdk": "^2.0.13",
+    "@bsv/wallet-helper": "^0.0.6",
     "@bsv/wallet-relay": "file:../../../qr-lib",
-    "qrcode": "^1.5.0",
-    "ws": "^8.0.0",
     "@prisma/client": "^6.4.1",
     "cors": "^2.8.5",
     "express": "^4.21.0",
     "express-rate-limit": "^8.2.1",
     "jose": "^5.9.0",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "qrcode": "^1.5.0",
+    "ws": "^8.0.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

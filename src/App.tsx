@@ -11,6 +11,7 @@ import DataBrowser from "./pages/DataBrowser";
 import DataEntry from "./pages/DataEntry";
 import YourData from "./pages/YourData";
 import WalletLogin from "./pages/WalletLogin";
+import CreateAccount from "./pages/CreateAccount";
 import WalletError from "./pages/WalletError";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -42,6 +43,7 @@ const RootContent = () => {
 
         {/* Public routes */}
         <Route path="/login" element={<WalletLogin />} />
+        <Route path="/create-account" element={<CreateAccount />} />
         <Route path="/wallet-error" element={<WalletError />} />
         <Route path="*" element={<NotFound />} />
 

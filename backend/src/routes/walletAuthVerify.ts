@@ -7,7 +7,7 @@
  *
  * Flow:
  *   1. Validate input (identityKey, certificate, userData)
- *   2. Verify certificate issuer matches COMMONSOURCE_SERVER_KEY
+ *   2. Verify certificate issuer matches backend identity key (Mycelia/Brixit cert)
  *   3. Verify certificate signature using @bsv/sdk
  *   4. Reverse-geocode lat/lng via GeoNames
  *   5. Check wallet_identities table for existing user
@@ -108,8 +108,9 @@ router.post('/', async (req, res) => {
       return;
     }
 
-    // 2. Verify certificate issuer
-    if (certificate.certifier !== config.commonsourceServerKey) {
+    // 2. Verify certificate issuer is this backend (Mycelia/Brixit cert)
+    const { publicKey: backendPublicKey } = await serverWallet.getPublicKey({ identityKey: true });
+    if (certificate.certifier !== backendPublicKey) {
       res.status(401).json({ success: false, error: 'Invalid certificate issuer' });
       return;
     }
@@ -136,8 +137,11 @@ router.post('/', async (req, res) => {
       return;
     }
 
-    // 4. Reverse-geocode lat/lng
-    const location = await reverseGeocode(userData.locationLat, userData.locationLng);
+    // 4. Reverse-geocode lat/lng (skip if not provided — Mycelia certs don't include location)
+    const hasLocation = userData.locationLat !== 0 || userData.locationLng !== 0;
+    const location = hasLocation
+      ? await reverseGeocode(userData.locationLat, userData.locationLng)
+      : { country: null, state: null, city: null };
 
     // 5. Check if wallet identity exists
     const existingIdentity = await prisma.walletIdentity.findUnique({

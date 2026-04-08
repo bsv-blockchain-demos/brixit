@@ -57,6 +57,9 @@ export const config = {
   commonsourceServerKey: process.env.COMMONSOURCE_SERVER_KEY || '',
   backendPrivateKey: process.env.SERVER_PRIVATE_KEY || '',
 
+  // Mycelia certificate
+  myceliaCertType: process.env.MYCELIA_CERT_TYPE || 'Brixit Identity',
+
   // Auto-verification
   autoVerifyUserId: process.env.AUTO_VERIFY_USER_ID || '',
 
