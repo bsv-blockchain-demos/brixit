@@ -4,8 +4,8 @@ import { Utils, createNonce } from '@bsv/sdk';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDataFromWallet } from '@/utils/getDataFromWallet';
 
-const COMMONSOURCE_SERVER_KEY = import.meta.env.VITE_COMMONSOURCE_SERVER_KEY as string;
-const CERT_TYPE = (import.meta.env.VITE_CERT_TYPE as string) || 'CommonSource identity';
+const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY as string;
+const MYCELIA_CERT_TYPE = (import.meta.env.VITE_MYCELIA_CERT_TYPE as string) || 'Brixit Identity';
 const API_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:3001';
 const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY as string;
 
@@ -54,8 +54,8 @@ export function useMobileWalletLogin() {
         const { publicKey: identityKey } = await wallet.getPublicKey({ identityKey: true });
 
         const { certificates } = await wallet.listCertificates({
-          certifiers: [COMMONSOURCE_SERVER_KEY],
-          types: [Utils.toBase64(Utils.toArray(CERT_TYPE))],
+          certifiers: [MYCELIA_CERTIFIER_KEY],
+          types: [Utils.toBase64(Utils.toArray(MYCELIA_CERT_TYPE, 'utf8'))],
           limit: 1,
         });
 

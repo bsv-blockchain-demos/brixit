@@ -24,7 +24,7 @@
     "@bsv/auth-express-middleware": "^1.2.3",
     "@bsv/sdk": "^2.0.13",
     "@bsv/wallet-helper": "^0.0.6",
-    "@bsv/wallet-relay": "file:../../../qr-lib",
+    "@bsv/wallet-relay": "github:kjartan221/wallet-relay-lib",
     "@prisma/client": "^6.4.1",
     "cors": "^2.8.5",
     "express": "^4.21.0",
