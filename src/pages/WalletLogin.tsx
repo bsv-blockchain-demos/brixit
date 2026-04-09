@@ -10,7 +10,7 @@ import { Wallet, Lock, TrendingUp, Smartphone } from 'lucide-react';
 import { getDataFromWallet } from '@/utils/getDataFromWallet';
 import { useMobileWalletLogin } from '@/hooks/useMobileWalletLogin';
 
-const MYCELIA_CERT_TYPE = import.meta.env.VITE_MYCELIA_CERT_TYPE || 'Brixit Identity';
+const MYCELIA_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
 const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 
@@ -30,8 +30,6 @@ export default function WalletLogin() {
 
   const { session, loginStatus, loginError, start: startMobileLogin, reset: resetMobileLogin } = useMobileWalletLogin();
   const showMobileQR = loginStatus !== 'idle';
-
-  const shouldAutoConnect = searchParams.get('from') === 'commonsource';
 
   const handleLoginClick = useCallback(() => {
     setHasStartedLogin(true);
@@ -101,17 +99,16 @@ export default function WalletLogin() {
     }
   }, [isAuthenticated, navigate]);
 
-  // Auto-connect if coming from wallet redirect or just created an account
+  // Auto-connect after account creation (wallet already initialised — skip to cert check)
   useEffect(() => {
-    if ((shouldAutoConnect || comingFromAccountCreation) && !hasStartedLogin) {
-      if (comingFromAccountCreation && userWallet && userPubKey) {
-        // Wallet already connected — skip initializeWallet, go straight to cert check
+    if (comingFromAccountCreation && !hasStartedLogin) {
+      if (userWallet && userPubKey) {
         setHasStartedLogin(true);
       } else {
         handleLoginClick();
       }
     }
-  }, [shouldAutoConnect, comingFromAccountCreation, hasStartedLogin, userWallet, userPubKey, handleLoginClick]);
+  }, [comingFromAccountCreation, hasStartedLogin, userWallet, userPubKey, handleLoginClick]);
 
   // Check certificates once wallet is connected
   useEffect(() => {

@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { API_BASE } from '@/lib/api';
 
-const MYCELIA_CERT_TYPE = import.meta.env.VITE_MYCELIA_CERT_TYPE || 'Brixit Identity';
+const MYCELIA_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
 const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 
 type Step = 'checking' | 'choice' | 'details' | 'acquiring';

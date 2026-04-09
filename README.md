@@ -104,7 +104,7 @@ cp backend/.env.example backend/.env
 | `VITE_API_URL` | No | Backend base URL (default: `http://localhost:3001`) |
 | `VITE_MAPBOX_TOKEN` | Yes | Mapbox public access token |
 | `VITE_SERVER_PUBLIC_KEY` | Yes | Backend wallet public key — must match `SERVER_PRIVATE_KEY` in backend; also the Mycelia certifier key |
-| `VITE_MYCELIA_CERT_TYPE` | No | Certificate type string (default: `Brixit Identity`) |
+| `VITE_CERT_TYPE` | No | Certificate type string (default: `Brixit Identity`) |
 
 ### Backend (`/backend/.env`)
 
