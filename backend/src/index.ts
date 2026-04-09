@@ -73,7 +73,7 @@ new WalletRelayService({
   server,
   wallet: serverWallet as unknown as WalletLike,
   relayUrl: config.relayUrl,
-  origin: config.corsOrigins[0],
+  origin: config.relayOrigin,
 });
 
 // --- Auth routes ---
@@ -112,8 +112,8 @@ app.use('/api/upload', uploadRoutes);
 app.use(errorHandler);
 
 // --- Start server ---
-server.listen(config.port, () => {
-  console.log(`\n🚀 Brixit backend running on http://localhost:${config.port}`);
+server.listen(config.port, '0.0.0.0', () => {
+  console.log(`\n🚀 Brixit backend running on http://0.0.0.0:${config.port}`);
   console.log(`   Environment: ${config.nodeEnv}`);
   console.log(`   Health check:     http://localhost:${config.port}/health`);
   console.log(`   Readiness check:  http://localhost:${config.port}/ready`);

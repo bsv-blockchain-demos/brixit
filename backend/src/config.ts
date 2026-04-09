@@ -50,8 +50,11 @@ export const config = {
   // CORS — comma-separated list of allowed frontend origins
   corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173').split(',').map(s => s.trim()),
 
-  // Wallet relay — WebSocket URL used in QR codes (must be reachable by mobile)
+  // Wallet relay — both must be reachable by the mobile device (use LAN IP in dev)
   relayUrl: process.env.RELAY_URL || `ws://localhost:${port}`,
+  // http(s):// URL of this backend server — embedded in QR codes so mobile can call /api/session/:id
+  // Must differ from CORS_ORIGINS (which is the frontend URL). Defaults to localhost for dev.
+  relayOrigin: process.env.ORIGIN || `http://localhost:${port}`,
 
   // BSV Wallet
   backendPrivateKey: process.env.SERVER_PRIVATE_KEY || '',

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { useWalletRelayClient } from '@bsv/wallet-relay/react';
+import { useWalletRelay } from '@/contexts/WalletRelayContext';
 import { Utils, createNonce } from '@bsv/sdk';
 import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/contexts/WalletContext';
 import { getDataFromWallet } from '@/utils/getDataFromWallet';
+import type { WalletClient } from '@bsv/sdk';
 
 const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY as string;
 const MYCELIA_CERT_TYPE = (import.meta.env.VITE_CERT_TYPE as string) || 'Brixit Identity';
-const API_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:3001';
 const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY as string;
 
 export type MobileLoginStatus =
@@ -21,12 +22,11 @@ export function useMobileWalletLogin() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const authRunningRef = useRef(false); // prevent double-fire (StrictMode)
 
-  const { session, error: relayError, createSession, wallet } = useWalletRelayClient({
-    apiUrl: API_URL,
-    autoCreate: false,
-  });
+  // Relay session lives in context above the router — survives navigation to /create-account
+  const { session, error: relayError, createSession, wallet } = useWalletRelay();
 
   const { walletLogin } = useAuth();
+  const { setRelayWallet } = useWallet();
 
   // Start the flow: create a relay session and show the QR code
   const start = () => {
@@ -52,6 +52,9 @@ export function useMobileWalletLogin() {
       setLoginStatus('authenticating');
       try {
         const { publicKey: identityKey } = await wallet.getPublicKey({ identityKey: true });
+
+        // Inject into WalletContext now so CreateAccount can use it if we redirect there
+        setRelayWallet(wallet as unknown as WalletClient, identityKey);
 
         const { certificates } = await wallet.listCertificates({
           certifiers: [MYCELIA_CERTIFIER_KEY],

@@ -20,6 +20,7 @@ import ProtectedRoute from "./components/misc/ProtectedRoute";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FilterProvider } from './contexts/FilterContext'
 import { CropThresholdProvider } from './contexts/CropThresholdContext';
+import { WalletRelayProvider } from './contexts/WalletRelayContext';
 
 
 const queryClient = new QueryClient();
@@ -114,15 +115,17 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <WalletProvider>
-          <AuthProvider>
-            <FilterProvider>
-              <CropThresholdProvider>
-                <RootContent />
-              </CropThresholdProvider>
-            </FilterProvider>
-          </AuthProvider>
-        </WalletProvider>
+        <WalletRelayProvider>
+          <WalletProvider>
+            <AuthProvider>
+              <FilterProvider>
+                <CropThresholdProvider>
+                  <RootContent />
+                </CropThresholdProvider>
+              </FilterProvider>
+            </AuthProvider>
+          </WalletProvider>
+        </WalletRelayProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

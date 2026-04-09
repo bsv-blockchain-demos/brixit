@@ -13,6 +13,8 @@ type WalletContextType = {
   retryCount: number;
   initializeWallet: () => Promise<void>;
   resetWalletState: () => void;
+  /** Inject a relay wallet (mobile QR flow) as the active wallet. */
+  setRelayWallet: (wallet: WalletClient, pubKey: string) => void;
 };
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -29,6 +31,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInitializingRef = useRef(false);
   const hasAutoInitialized = useRef(false);
+  const relaySourceRef = useRef(false); // true when userWallet was injected from relay
 
   const navigate = useNavigate();
 
@@ -86,6 +89,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [navigate]); // navigate is the only external dep; retry state tracked via refs
 
+  const setRelayWallet = useCallback((wallet: WalletClient, pubKey: string) => {
+    relaySourceRef.current = true;
+    setUserWallet(wallet);
+    setUserPubKey(pubKey);
+  }, []);
+
   const resetWalletState = useCallback(() => {
     retryCountRef.current = 0;
     maxRetriesExceededRef.current = false;
@@ -95,6 +104,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
+    }
+    if (relaySourceRef.current) {
+      relaySourceRef.current = false;
+      setUserWallet(null);
+      setUserPubKey(null);
     }
   }, []);
 
@@ -115,7 +129,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       maxRetriesExceeded,
       retryCount,
       initializeWallet,
-      resetWalletState
+      resetWalletState,
+      setRelayWallet
     }}>
       {children}
     </WalletContext.Provider>
