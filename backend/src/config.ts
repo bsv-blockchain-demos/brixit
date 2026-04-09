@@ -54,7 +54,6 @@ export const config = {
   relayUrl: process.env.RELAY_URL || `ws://localhost:${port}`,
 
   // BSV Wallet
-  commonsourceServerKey: process.env.COMMONSOURCE_SERVER_KEY || '',
   backendPrivateKey: process.env.SERVER_PRIVATE_KEY || '',
 
   // Mycelia certificate

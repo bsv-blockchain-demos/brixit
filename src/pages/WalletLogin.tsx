@@ -101,7 +101,7 @@ export default function WalletLogin() {
     }
   }, [isAuthenticated, navigate]);
 
-  // Auto-connect if coming from CommonSource app or just created an account
+  // Auto-connect if coming from wallet redirect or just created an account
   useEffect(() => {
     if ((shouldAutoConnect || comingFromAccountCreation) && !hasStartedLogin) {
       if (comingFromAccountCreation && userWallet && userPubKey) {
@@ -316,7 +316,7 @@ export default function WalletLogin() {
                 </div>
                 <h3 className="font-semibold mb-2">Secure Identity</h3>
                 <p className="text-sm text-gray-600">
-                  Login securely using your CommonSource wallet and certificate
+                  Login securely using your BSV wallet and Mycelia certificate
                 </p>
               </div>
               <div className="text-center p-4">
