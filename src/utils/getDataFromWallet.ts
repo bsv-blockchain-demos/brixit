@@ -5,7 +5,6 @@ export interface WalletProfileData {
   locationLng: number;
   locationLat: number;
   email?: string;
-  phoneNumber?: string;
 }
 
 
@@ -32,18 +31,17 @@ export async function getDataFromWallet(userWallet: any, certificate: any): Prom
     console.log('✅ Profile data retrieved from certificate');
 
     // Return only the fields BRIX needs
+    // Mycelia certs use `username`; fall back to `displayName` for legacy certs
+    const usernameRaw = decryptedFields.username || decryptedFields.displayName;
     const emailRaw = decryptedFields.email;
-    const phoneRaw = decryptedFields.phoneNumber;
 
     const email = typeof emailRaw === 'string' && emailRaw.trim().length > 0 ? emailRaw.trim() : undefined;
-    const phoneNumber = typeof phoneRaw === 'string' && phoneRaw.trim().length > 0 ? phoneRaw.trim() : undefined;
 
     const profileData: WalletProfileData = {
-      displayName: decryptedFields.displayName || 'User',
+      displayName: (typeof usernameRaw === 'string' && usernameRaw.trim()) || 'Anonymous',
       locationLng: Number(decryptedFields.lng) || 0,
       locationLat: Number(decryptedFields.lat) || 0,
       email,
-      phoneNumber,
     };
 
     return profileData;

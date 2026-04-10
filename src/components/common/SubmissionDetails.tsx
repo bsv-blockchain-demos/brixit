@@ -5,6 +5,7 @@ import { MapPin, Calendar, User, CheckCircle, AlertCircle, MessageSquare, Image 
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
 import { getBrixColor } from '../../lib/getBrixColor';
 import { getBrixQuality } from '../../lib/getBrixQuality';
+import { formatUsername } from '../../lib/formatUsername';
 import { BrixDataPoint } from '../../types';
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -99,7 +100,7 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
             <User className="w-5 h-5 text-gray-600" />
             <div>
               <p className="text-sm text-gray-600">Submitted By</p>
-              <p className="font-medium">{dataPoint.submittedBy}</p>
+              <p className="font-medium">{formatUsername(dataPoint.submittedBy)}</p>
             </div>
           </div>
           <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
@@ -118,7 +119,7 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
               <User className="w-5 h-5 text-gray-600" />
               <div>
                 <p className="text-sm text-gray-600">Verified By</p>
-                <p className="font-medium">{dataPoint.verifiedBy}</p>
+                <p className="font-medium">{formatUsername(dataPoint.verifiedBy)}</p>
               </div>
             </div>
           )}

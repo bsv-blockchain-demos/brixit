@@ -4,6 +4,7 @@ import { Button } from "../ui/button";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { useAuth } from "../../contexts/AuthContext";
+import { formatUsername } from "../../lib/formatUsername";
 import {
   Eye,
   Database,
@@ -33,7 +34,7 @@ const Header = () => {
 
   const getDisplayName = (): string => {
     if (!user?.display_name) return "";
-    return user.display_name.replace(/[<>]/g, "");
+    return formatUsername(user.display_name.replace(/[<>]/g, ""));
   };
 
   const getUserInitial = (): string => {

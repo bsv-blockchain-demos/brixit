@@ -20,7 +20,7 @@ Key variables:
 | `DATABASE_URL` | Prisma connection string (points to the Docker container) |
 | `JWT_SECRET` | Secret used to sign access tokens |
 | `REFRESH_TOKEN_SECRET` | Secret used to sign refresh tokens |
-| `COMMONSOURCE_SERVER_KEY` | BSV public key for wallet certificate verification |
+| `SERVER_PRIVATE_KEY` | Private key for the server wallet (certifier and nonce verification) |
 | `AUTO_VERIFY_USER_ID` | UUID of the system user (populated by `npm run create-superuser`) |
 
 ## First-time setup

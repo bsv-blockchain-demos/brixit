@@ -6,20 +6,12 @@ import { Utils, createNonce } from '@bsv/sdk';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Wallet, Lock, TrendingUp, ExternalLink } from 'lucide-react';
+import { Wallet, Lock, TrendingUp, Smartphone } from 'lucide-react';
 import { getDataFromWallet } from '@/utils/getDataFromWallet';
+import { useMobileWalletLogin } from '@/hooks/useMobileWalletLogin';
 
-const COMMONSOURCE_SERVER_KEY = import.meta.env.VITE_COMMONSOURCE_SERVER_KEY;
-const CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'CommonSource identity';
-const EXTERNAL_ONBOARDING_URL = import.meta.env.VITE_EXTERNAL_ONBOARDING_URL;
+const MYCELIA_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
+const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 
 export default function WalletLogin() {
@@ -31,11 +23,13 @@ export default function WalletLogin() {
   const [certificateError, setCertificateError] = useState<string | null>(null);
   const [isCheckingCertificates, setIsCheckingCertificates] = useState(false);
   const [hasStartedLogin, setHasStartedLogin] = useState(false);
-  const [showNoCertModal, setShowNoCertModal] = useState(false);
   const isFetchingRef = useRef(false); // prevents concurrent invocations (StrictMode + re-render races)
 
-  // Check if we should auto-connect (from CommonSource app)
-  const shouldAutoConnect = searchParams.get('from') === 'commonsource';
+  // autocert=1 means we just created an account — wallet is already connected, skip the button
+  const comingFromAccountCreation = searchParams.get('autocert') === '1';
+
+  const { session, loginStatus, loginError, start: startMobileLogin, reset: resetMobileLogin } = useMobileWalletLogin();
+  const showMobileQR = loginStatus !== 'idle';
 
   const handleLoginClick = useCallback(() => {
     setHasStartedLogin(true);
@@ -43,13 +37,13 @@ export default function WalletLogin() {
   }, [initializeWallet]);
 
   const handleResetLogin = useCallback(() => {
-    setShowNoCertModal(false);
     setHasStartedLogin(false);
     setCertificateError(null);
     setIsCheckingCertificates(false);
     isFetchingRef.current = false;
     resetWalletState();
-  }, [resetWalletState]);
+    resetMobileLogin();
+  }, [resetWalletState, resetMobileLogin]);
 
   const checkUserCertificates = useCallback(async () => {
     if (!userWallet || !userPubKey) return;
@@ -61,13 +55,13 @@ export default function WalletLogin() {
 
     try {
       const certificates = await userWallet.listCertificates({
-        certifiers: [COMMONSOURCE_SERVER_KEY],
-        types: [Utils.toBase64(Utils.toArray(CERT_TYPE))],
+        certifiers: [MYCELIA_CERTIFIER_KEY],
+        types: [Utils.toBase64(Utils.toArray(MYCELIA_CERT_TYPE, 'utf8'))],
         limit: 1,
       });
 
       if (certificates.certificates.length === 0) {
-        setShowNoCertModal(true);
+        navigate('/create-account');
         return;
       }
 
@@ -75,7 +69,7 @@ export default function WalletLogin() {
       const userData = await getDataFromWallet(userWallet, certificate);
 
       if (!userData) {
-        setCertificateError('Unable to retrieve wallet profile data. Please ensure your profile is set up in CommonSource.');
+        setCertificateError('Unable to retrieve wallet profile data. Please try again.');
         return;
       }
 
@@ -105,12 +99,16 @@ export default function WalletLogin() {
     }
   }, [isAuthenticated, navigate]);
 
-  // Auto-connect if coming from CommonSource app
+  // Auto-connect after account creation (wallet already initialised — skip to cert check)
   useEffect(() => {
-    if (shouldAutoConnect && !hasStartedLogin) {
-      handleLoginClick();
+    if (comingFromAccountCreation && !hasStartedLogin) {
+      if (userWallet && userPubKey) {
+        setHasStartedLogin(true);
+      } else {
+        handleLoginClick();
+      }
     }
-  }, [shouldAutoConnect, hasStartedLogin, handleLoginClick]);
+  }, [comingFromAccountCreation, hasStartedLogin, userWallet, userPubKey, handleLoginClick]);
 
   // Check certificates once wallet is connected
   useEffect(() => {
@@ -118,6 +116,80 @@ export default function WalletLogin() {
       checkUserCertificates();
     }
   }, [userWallet, userPubKey, hasStartedLogin, checkUserCertificates]);
+
+  // Navigate on successful mobile login
+  useEffect(() => {
+    if (loginStatus === 'done') navigate('/leaderboard');
+  }, [loginStatus, navigate]);
+
+  // Navigate to account creation if mobile wallet has no Mycelia cert
+  useEffect(() => {
+    if (loginStatus === 'error' && loginError === 'NO_CERTIFICATE') {
+      navigate('/create-account');
+    }
+  }, [loginStatus, loginError, navigate]);
+
+  // Mobile QR — scanning (QR code displayed)
+  if (loginStatus === 'scanning' || loginStatus === 'authenticating') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-sm w-full text-center">
+          <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <span className="text-white font-bold text-xl">B</span>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {loginStatus === 'authenticating' ? 'Verifying mobile wallet…' : 'Scan with your mobile wallet'}
+          </h1>
+          <p className="text-gray-600 mb-6 text-sm">
+            {loginStatus === 'authenticating'
+              ? 'Retrieving your identity and certificates from the mobile wallet'
+              : 'Open BSV Browser on your phone, go to Connections → Scan QR Code'}
+          </p>
+          {session?.qrDataUrl && loginStatus === 'scanning' ? (
+            <div className="flex flex-col items-center gap-4">
+              <img
+                src={session.qrDataUrl}
+                alt="Scan to connect mobile wallet"
+                className="w-64 h-64 rounded-xl border border-gray-200 shadow-sm mx-auto"
+              />
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                session.status === 'connected' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {session.status === 'connected' ? 'Connected' : 'Waiting for scan…'}
+              </span>
+            </div>
+          ) : (
+            <div className="w-64 h-64 bg-gray-100 rounded-xl animate-pulse mx-auto" />
+          )}
+          {loginStatus === 'authenticating' && (
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mt-6" />
+          )}
+          <Button variant="outline" onClick={resetMobileLogin} className="mt-6">
+            Cancel
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Mobile QR — error state
+  if (loginStatus === 'error' && loginError && loginError !== 'NO_CERTIFICATE') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <Alert variant="destructive">
+            <AlertDescription>{loginError}</AlertDescription>
+          </Alert>
+          <Button onClick={startMobileLogin} className="mt-4 w-full bg-green-600 hover:bg-green-700">
+            Try Again
+          </Button>
+          <Button variant="outline" onClick={resetMobileLogin} className="mt-2 w-full">
+            Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Show error state if max retries exceeded
   if (maxRetriesExceeded) {
@@ -194,7 +266,7 @@ export default function WalletLogin() {
             Verifying your certificate...
           </h1>
           <p className="text-gray-600 mb-8">
-            Checking your CommonSource identity
+            Checking your Brixit identity certificate
           </p>
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
         </div>
@@ -241,7 +313,7 @@ export default function WalletLogin() {
                 </div>
                 <h3 className="font-semibold mb-2">Secure Identity</h3>
                 <p className="text-sm text-gray-600">
-                  Login securely using your CommonSource wallet and certificate
+                  Login securely using your BSV wallet and Mycelia certificate
                 </p>
               </div>
               <div className="text-center p-4">
@@ -255,59 +327,49 @@ export default function WalletLogin() {
               </div>
             </div>
 
-            <div className="pt-4">
+            <div className="pt-4 flex flex-col gap-3">
               <Button
                 onClick={handleLoginClick}
                 disabled={isConnecting}
                 className="w-full bg-green-600 hover:bg-green-700 text-lg py-6"
               >
                 <Wallet className="w-5 h-5 mr-2" />
-                Login with CommonSource Wallet
+                Login with Desktop Wallet
+              </Button>
+
+              <div className="flex items-center gap-3">
+                <div className="flex-1 border-t border-gray-200" />
+                <span className="text-xs text-gray-400">or</span>
+                <div className="flex-1 border-t border-gray-200" />
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={startMobileLogin}
+                className="w-full text-base py-5"
+              >
+                <Smartphone className="w-5 h-5 mr-2" />
+                Connect via Mobile QR
               </Button>
             </div>
 
             <p className="text-center text-sm text-gray-600">
-              Don't have a CommonSource wallet?{' '}
-              <a
-                href={EXTERNAL_ONBOARDING_URL}
+              New to BRIX?{' '}
+              <button
+                type="button"
+                onClick={handleLoginClick}
                 className="text-green-600 hover:text-green-700 underline"
-                target="_blank"
-                rel="noopener noreferrer"
               >
-                Get started here
-              </a>
+                Connect your wallet to create an account
+              </button>
             </p>
           </CardContent>
         </Card>
 
         <p className="text-center text-xs text-gray-500">
-          Powered by CommonSource Network • Secured by BSV Blockchain
+          Secured by BSV Blockchain
         </p>
       </div>
-
-      <Dialog open={showNoCertModal} onOpenChange={(open) => { if (!open) handleResetLogin(); }}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Certificate Required</DialogTitle>
-            <DialogDescription className="pt-2">
-              We noticed you don't have a CommonSource certificate yet. A certificate is required to use BRIX.
-              You can get one by registering with CommonSource — clicking the link below will take you there.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
-            <Button variant="outline" onClick={handleResetLogin} className="sm:order-first">
-              Cancel
-            </Button>
-            <Button
-              className="bg-green-600 hover:bg-green-700"
-              onClick={() => { window.location.href = EXTERNAL_ONBOARDING_URL; }}
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Get a CommonSource Certificate
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

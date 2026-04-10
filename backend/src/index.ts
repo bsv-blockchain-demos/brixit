@@ -3,10 +3,14 @@
  *
  * Registers all middleware and routes, starts the server.
  */
+import http from 'http';
 import express from 'express';
 import path from 'path';
 import { config } from './config.js';
-import './serverWallet.js'; // initialise and validate SERVER_PRIVATE_KEY on startup
+import serverWallet from './serverWallet.js';
+import { WalletRelayService } from '@bsv/wallet-relay';
+import type { WalletLike } from '@bsv/wallet-relay';
+import { createAuthMiddleware } from '@bsv/auth-express-middleware';
 import { corsMiddleware } from './middleware/cors.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
@@ -20,6 +24,8 @@ import { readyProbe } from './routes/ready.js';
 // Route imports
 import authRoutes from './routes/auth.js';
 import walletAuthRoutes from './routes/walletAuthVerify.js';
+import emailOtpRoutes from './routes/emailOtp.js';
+import certifierRoutes from './routes/certifierSign.js';
 import geonamesRoutes from './routes/geonames.js';
 import autoVerifySubmissionRoutes from './routes/autoVerifySubmission.js';
 import cropsRoutes from './routes/crops.js';
@@ -33,16 +39,24 @@ import adminCrudRoutes from './routes/adminCrud.js';
 import uploadRoutes from './routes/upload.js';
 
 const app = express();
+const server = http.createServer(app);
 
 // --- Global middleware ---
 app.use(corsMiddleware);
 app.use(express.json({ limit: '10mb' }));
 app.use(requestLogger);
 
+// --- BSV auth middleware (handles /.well-known/auth handshake for wallet-to-server auth) ---
+// allowUnauthenticated: true so all existing routes are unaffected.
+// Enforcement (rejecting unauthenticated requests) happens inside the certifier routes.
+app.use(createAuthMiddleware({ wallet: serverWallet as any, allowUnauthenticated: true }));
+
 // --- Rate limiting ---
 app.use('/api', generalLimiter);
 app.use('/api/auth/wallet-login', authLimiter);
 app.use('/api/auth/refresh', authLimiter);
+app.use('/api/auth/send-otp', authLimiter);
+app.use('/api/auth/verify-otp', authLimiter);
 app.use('/api/submissions/create', submissionLimiter);
 app.use('/api/geonames', geonamesLimiter);
 
@@ -53,9 +67,22 @@ app.use('/uploads', express.static(path.resolve(config.uploadDir)));
 app.get('/health', healthProbe);
 app.get('/ready', readyProbe);
 
+// --- Wallet relay (QR pairing) — registers /api/session, /api/session/:id, /api/request/:id, /ws ---
+new WalletRelayService({
+  app,
+  server,
+  wallet: serverWallet as unknown as WalletLike,
+  relayUrl: config.relayUrl,
+  origin: config.relayOrigin,
+});
+
 // --- Auth routes ---
-app.use('/api/auth', authRoutes);                    // refresh, logout, me
-app.use('/api/auth/wallet-login', walletAuthRoutes); // POST wallet certificate login
+app.use('/api/auth', authRoutes);                              // refresh, logout, me
+app.use('/api/auth/wallet-login', walletAuthRoutes);           // POST desktop wallet certificate login
+app.use('/api/auth', emailOtpRoutes);                          // POST send-otp, verify-otp
+
+// --- Mycelia certificate issuer ---
+app.use('/api/certifier', certifierRoutes);                    // POST /:subject/signCertificate
 
 // --- Public data routes ---
 app.use('/api/crops', cropsRoutes);
@@ -85,13 +112,17 @@ app.use('/api/upload', uploadRoutes);
 app.use(errorHandler);
 
 // --- Start server ---
-app.listen(config.port, () => {
-  console.log(`\n🚀 Brixit backend running on http://localhost:${config.port}`);
+server.listen(config.port, '0.0.0.0', () => {
+  console.log(`\n🚀 Brixit backend running on http://0.0.0.0:${config.port}`);
   console.log(`   Environment: ${config.nodeEnv}`);
   console.log(`   Health check:     http://localhost:${config.port}/health`);
   console.log(`   Readiness check:  http://localhost:${config.port}/ready`);
   console.log(`\n📋 Registered routes:`);
   console.log(`   POST   /api/auth/wallet-login`);
+  console.log(`   GET    /api/session (wallet relay)`);
+  console.log(`   GET    /api/session/:id (wallet relay)`);
+  console.log(`   POST   /api/request/:id (wallet relay)`);
+  console.log(`   WS     /ws (wallet relay)`);
   console.log(`   POST   /api/auth/refresh`);
   console.log(`   POST   /api/auth/logout`);
   console.log(`   GET    /api/auth/me`);

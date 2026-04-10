@@ -11,6 +11,7 @@ import DataBrowser from "./pages/DataBrowser";
 import DataEntry from "./pages/DataEntry";
 import YourData from "./pages/YourData";
 import WalletLogin from "./pages/WalletLogin";
+import CreateAccount from "./pages/CreateAccount";
 import WalletError from "./pages/WalletError";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -19,6 +20,7 @@ import ProtectedRoute from "./components/misc/ProtectedRoute";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FilterProvider } from './contexts/FilterContext'
 import { CropThresholdProvider } from './contexts/CropThresholdContext';
+import { WalletRelayProvider } from './contexts/WalletRelayContext';
 
 
 const queryClient = new QueryClient();
@@ -42,6 +44,7 @@ const RootContent = () => {
 
         {/* Public routes */}
         <Route path="/login" element={<WalletLogin />} />
+        <Route path="/create-account" element={<CreateAccount />} />
         <Route path="/wallet-error" element={<WalletError />} />
         <Route path="*" element={<NotFound />} />
 
@@ -112,15 +115,17 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <WalletProvider>
-          <AuthProvider>
-            <FilterProvider>
-              <CropThresholdProvider>
-                <RootContent />
-              </CropThresholdProvider>
-            </FilterProvider>
-          </AuthProvider>
-        </WalletProvider>
+        <WalletRelayProvider>
+          <WalletProvider>
+            <AuthProvider>
+              <FilterProvider>
+                <CropThresholdProvider>
+                  <RootContent />
+                </CropThresholdProvider>
+              </FilterProvider>
+            </AuthProvider>
+          </WalletProvider>
+        </WalletRelayProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
