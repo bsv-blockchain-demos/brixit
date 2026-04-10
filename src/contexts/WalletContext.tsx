@@ -90,6 +90,18 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [navigate]); // navigate is the only external dep; retry state tracked via refs
 
   const setRelayWallet = useCallback((wallet: WalletClient, pubKey: string) => {
+    // Cancel any in-flight initializeWallet retry
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    retryCountRef.current = 0;
+    maxRetriesExceededRef.current = false;
+    isInitializingRef.current = false;
+    setRetryCount(0);
+    setMaxRetriesExceeded(false);
+    setIsConnecting(false);
+
     relaySourceRef.current = true;
     setUserWallet(wallet);
     setUserPubKey(pubKey);

@@ -56,7 +56,7 @@ export default function WalletLogin() {
     try {
       const certificates = await userWallet.listCertificates({
         certifiers: [MYCELIA_CERTIFIER_KEY],
-        types: [Utils.toBase64(Utils.toArray(MYCELIA_CERT_TYPE))],
+        types: [Utils.toBase64(Utils.toArray(MYCELIA_CERT_TYPE, 'utf8'))],
         limit: 1,
       });
 

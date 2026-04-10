@@ -29,7 +29,11 @@ import serverWallet from '../serverWallet.js';
 
 const router = Router();
 
+const ALLOWED_FIELDS = new Set(['username', 'email']);
+
 function validateFields(fields: Record<string, string>): string | null {
+  const extra = Object.keys(fields).filter(k => !ALLOWED_FIELDS.has(k));
+  if (extra.length > 0) return `unexpected fields: ${extra.join(', ')}`;
   if (!fields.username?.trim()) return 'username is required';
   if (fields.email !== undefined && !fields.email.includes('@')) return 'email must be a valid address';
   return null;

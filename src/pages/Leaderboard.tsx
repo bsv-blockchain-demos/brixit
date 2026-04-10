@@ -24,6 +24,7 @@ import {
 } from "../components/ui/card";
 import { useAuth } from "../contexts/AuthContext";
 import { locationService } from "../lib/locationServiceforRegister";
+import { formatUsername } from "../lib/formatUsername";
 
 const emptyLocation = {
   country: "",
@@ -420,7 +421,7 @@ const LeaderboardPage: React.FC = () => {
                           }`}
                         >
                           <div className="flex flex-col min-w-0">
-                            <div className="font-medium">{label}</div>
+                            <div className="font-medium">{labelKey === 'user' ? formatUsername(label) : label}</div>
                             {labelKey === "location" && (
                               <div className="text-xs text-gray-500">
                                 {(entry as any).city

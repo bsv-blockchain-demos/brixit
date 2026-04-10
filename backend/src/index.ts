@@ -119,7 +119,6 @@ server.listen(config.port, '0.0.0.0', () => {
   console.log(`   Readiness check:  http://localhost:${config.port}/ready`);
   console.log(`\n📋 Registered routes:`);
   console.log(`   POST   /api/auth/wallet-login`);
-  console.log(`   POST   /api/auth/mobile-wallet-login`);
   console.log(`   GET    /api/session (wallet relay)`);
   console.log(`   GET    /api/session/:id (wallet relay)`);
   console.log(`   POST   /api/request/:id (wallet relay)`);

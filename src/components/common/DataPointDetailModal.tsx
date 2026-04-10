@@ -32,6 +32,7 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import { apiPut, API_BASE } from '../../lib/api';
+import { formatUsername } from '../../lib/formatUsername';
 import { getBrixColor } from '../../lib/getBrixColor';
 import { getBrixQuality } from '../../lib/getBrixQuality';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
@@ -616,7 +617,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               {verified && (
                 <div className="mt-2 text-sm text-gray-500 flex items-center justify-end">
                   <User className="w-4 h-4 mr-1" />
-                  <span>Verified by: {verifiedBy || 'N/A'}</span>
+                  <span>Verified by: {verifiedBy ? formatUsername(verifiedBy) : 'N/A'}</span>
                 </div>
               )}
             </div>

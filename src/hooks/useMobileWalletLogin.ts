@@ -6,9 +6,14 @@ import { useWallet } from '@/contexts/WalletContext';
 import { getDataFromWallet } from '@/utils/getDataFromWallet';
 import type { WalletClient } from '@bsv/sdk';
 
-const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY as string;
+const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY as string | undefined;
 const MYCELIA_CERT_TYPE = (import.meta.env.VITE_CERT_TYPE as string) || 'Brixit Identity';
-const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY as string;
+const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY as string | undefined;
+
+function checkEnvVars(): string | null {
+  if (!MYCELIA_CERTIFIER_KEY) return 'VITE_SERVER_PUBLIC_KEY is not set';
+  return null;
+}
 
 export type MobileLoginStatus =
   | 'idle'
@@ -51,13 +56,16 @@ export function useMobileWalletLogin() {
     const authenticate = async () => {
       setLoginStatus('authenticating');
       try {
+        const envError = checkEnvVars();
+        if (envError) throw new Error(`Configuration error: ${envError}`);
+
         const { publicKey: identityKey } = await wallet.getPublicKey({ identityKey: true });
 
         // Inject into WalletContext now so CreateAccount can use it if we redirect there
         setRelayWallet(wallet as unknown as WalletClient, identityKey);
 
         const { certificates } = await wallet.listCertificates({
-          certifiers: [MYCELIA_CERTIFIER_KEY],
+          certifiers: [MYCELIA_CERTIFIER_KEY!],
           types: [Utils.toBase64(Utils.toArray(MYCELIA_CERT_TYPE, 'utf8'))],
           limit: 1,
         });
@@ -73,7 +81,7 @@ export function useMobileWalletLogin() {
           throw new Error('Unable to retrieve wallet profile data.');
         }
 
-        const nonce = await createNonce(wallet as any, BACKEND_PUBLIC_KEY);
+        const nonce = await createNonce(wallet as any, BACKEND_PUBLIC_KEY!);
         const success = await walletLogin(identityKey, certificate, userData, nonce);
         if (!success) throw new Error('Authentication failed. Please try again.');
 
