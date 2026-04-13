@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Wallet, Lock, TrendingUp, Smartphone, HelpCircle } from 'lucide-react';
 import { getDataFromWallet } from '@/utils/getDataFromWallet';
 import { useMobileWalletLogin } from '@/hooks/useMobileWalletLogin';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { AuthBackground } from '@/components/ui/AuthBackground';
 
 const MYCELIA_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
@@ -32,6 +33,7 @@ export default function WalletLogin() {
   const shouldStartMobileQR = searchParams.get('qr') === '1';
 
   const { session, loginStatus, loginError, start: startMobileLogin, reset: resetMobileLogin } = useMobileWalletLogin();
+  const isMobile = useIsMobile();
   const showMobileQR = loginStatus !== 'idle';
 
   const handleLoginClick = useCallback(() => {
@@ -153,45 +155,68 @@ export default function WalletLogin() {
     </AuthBackground>
   );
 
-  // Mobile QR — scanning (QR code displayed)
+  // Mobile QR — scanning (QR code displayed, desktop only)
   if (loginStatus === 'scanning' || loginStatus === 'authenticating') {
-    return pageShell(
-      <Card>
-        <CardHeader className="pb-2 text-center">
-          <CardTitle>
-            {loginStatus === 'authenticating' ? 'Verifying…' : 'Scan with your mobile wallet'}
-          </CardTitle>
-          <CardDescription>
-            {loginStatus === 'authenticating'
-              ? 'Retrieving your identity and certificates'
-              : 'Open the Mycelia app on your phone and scan this code'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center gap-4">
-          {session?.qrDataUrl && loginStatus === 'scanning' ? (
-            <>
-              <img
-                src={session.qrDataUrl}
-                alt="Scan to connect mobile wallet"
-                className="w-56 h-56 rounded-xl border border-gray-200 shadow-sm"
-              />
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                session.status === 'connected' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-              }`}>
-                {session.status === 'connected' ? 'Connected' : 'Waiting for scan…'}
-              </span>
-            </>
-          ) : (
-            <div className="w-56 h-56 bg-gray-100 rounded-xl animate-pulse" />
-          )}
-          {loginStatus === 'authenticating' && (
-            <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-green-600" />
-          )}
-          <Button variant="outline" onClick={resetMobileLogin} className="w-full mt-2">
-            Cancel
-          </Button>
-        </CardContent>
-      </Card>
+    return (
+      <AuthBackground>
+        <div className="w-full max-w-2xl">
+          <div className="text-center mb-4">
+            <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center mx-auto shadow-lg">
+              <span className="text-white font-bold text-2xl">B</span>
+            </div>
+          </div>
+          <div className="flex gap-4 items-stretch">
+            {/* QR card */}
+            <Card className="flex-1">
+              <CardHeader className="pb-2 text-center">
+                <CardTitle>
+                  {loginStatus === 'authenticating' ? 'Verifying…' : 'Scan with your mobile wallet'}
+                </CardTitle>
+                <CardDescription>
+                  {loginStatus === 'authenticating'
+                    ? 'Retrieving your identity and certificates'
+                    : 'Open the Mycelia app on your phone and scan this code'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center gap-4">
+                {session?.qrDataUrl && loginStatus === 'scanning' ? (
+                  <>
+                    <img
+                      src={session.qrDataUrl}
+                      alt="Scan to connect mobile wallet"
+                      className="w-56 h-56 rounded-xl border border-gray-200 shadow-sm"
+                    />
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      session.status === 'connected' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {session.status === 'connected' ? 'Connected' : 'Waiting for scan…'}
+                    </span>
+                  </>
+                ) : (
+                  <div className="w-56 h-56 bg-gray-100 rounded-xl animate-pulse" />
+                )}
+                {loginStatus === 'authenticating' && (
+                  <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-green-600" />
+                )}
+                <Button variant="outline" onClick={resetMobileLogin} className="w-full mt-2">
+                  Cancel
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Instructions card */}
+            <Card className="w-64 shrink-0 bg-green-50 border-green-200 self-start">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-green-800">How to connect</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-green-900">
+                <p>Scan the QR with your camera, or open the Mycelia app, go to the <strong>Connections</strong> tab and scan from there.</p>
+                <p>Once connected, any action requests will pop up on your mobile device.</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </AuthBackground>
     );
   }
 
@@ -366,17 +391,16 @@ export default function WalletLogin() {
                 <span className="text-xs font-normal opacity-80">Securely sign in with your device</span>
               </Button>
 
-              <p className="text-center text-xs text-gray-400">
-                or{' '}
-                <button
-                  type="button"
+              {!isMobile && (
+                <Button
+                  variant="outline"
                   onClick={startMobileLogin}
-                  className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 underline underline-offset-2"
+                  className="w-full flex items-center justify-center gap-2"
                 >
-                  <Smartphone className="w-3 h-3" />
-                  connect via mobile QR
-                </button>
-              </p>
+                  <Smartphone className="w-4 h-4" />
+                  Connect via mobile QR
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

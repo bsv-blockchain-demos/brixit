@@ -4,9 +4,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AuthBackground } from '@/components/ui/AuthBackground';
 import { Button } from '@/components/ui/button';
 import { Smartphone, HelpCircle } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function WalletError() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   return (
     <AuthBackground>
@@ -39,17 +41,19 @@ export default function WalletError() {
               How it works
             </button>
 
-            <p className="text-xs text-gray-400">
-              or{' '}
-              <button
-                type="button"
-                onClick={() => navigate('/login?qr=1')}
-                className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 underline underline-offset-2"
-              >
-                <Smartphone className="w-3 h-3" />
-                connect via mobile QR
-              </button>
-            </p>
+            {!isMobile && (
+              <p className="text-xs text-gray-400">
+                or{' '}
+                <button
+                  type="button"
+                  onClick={() => navigate('/login?qr=1')}
+                  className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 underline underline-offset-2"
+                >
+                  <Smartphone className="w-3 h-3" />
+                  connect via mobile QR
+                </button>
+              </p>
+            )}
           </CardContent>
         </Card>
 

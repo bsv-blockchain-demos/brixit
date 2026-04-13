@@ -18,9 +18,9 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/misc/ProtectedRoute";
-import { Skeleton } from "@/components/ui/skeleton";
 import { FilterProvider } from './contexts/FilterContext'
 import { CropThresholdProvider } from './contexts/CropThresholdContext';
+import { AuthBackground } from '@/components/ui/AuthBackground';
 import { WalletRelayProvider } from './contexts/WalletRelayContext';
 
 
@@ -31,10 +31,14 @@ const RootContent = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-xl">Loading application data...</p>
-        <Skeleton className="h-4 w-[250px]" />
-      </div>
+      <AuthBackground>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <span className="text-white font-bold text-3xl">B</span>
+          </div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600" />
+        </div>
+      </AuthBackground>
     );
   }
 
