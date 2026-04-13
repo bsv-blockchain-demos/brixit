@@ -72,14 +72,17 @@ router.post('/signCertificate', async (req: AuthRequest, res) => {
     }
 
     // 3. Verify client nonce for replay protection
+    let nonceValid: boolean;
     try {
-      const valid = await verifyNonce(clientNonce, serverWallet as any, subject);
-      if (!valid) {
-        res.status(400).json({ error: 'Invalid client nonce' });
-        return;
-      }
+      nonceValid = await verifyNonce(clientNonce, serverWallet as any, subject);
     } catch (nonceErr) {
       console.warn('[certifier] verifyNonce threw:', (nonceErr as Error).message);
+      res.status(400).json({ error: 'Invalid client nonce' });
+      return;
+    }
+    if (!nonceValid) {
+      res.status(400).json({ error: 'Invalid client nonce' });
+      return;
     }
 
     // 5. Create server nonce — wallet verifies via verifyNonce(serverNonce, userWallet, certifier)

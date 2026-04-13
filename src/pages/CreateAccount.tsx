@@ -15,6 +15,29 @@ const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 
 type Step = 'checking' | 'choice' | 'details' | 'acquiring';
 
+function friendlyAcquireError(err: any): string {
+  // Serialise the full error so we catch server response bodies the SDK may nest deeply
+  let raw = '';
+  try { raw = JSON.stringify(err); } catch { /* ignore circular refs */ }
+  const msg = (raw + ' ' + (err?.message ?? '') + ' ' + String(err)).toLowerCase();
+
+  if (
+    msg.includes('nonce') ||
+    msg.includes('hmac') ||
+    msg.includes('serial') ||
+    msg.includes('no certificate received from certifier')
+  ) {
+    return 'Your wallet could not be verified. This usually means your wallet app is out of date — please update it and try again.';
+  }
+  if (msg.includes('network') || msg.includes('fetch') || msg.includes('failed to fetch')) {
+    return 'Could not reach the server. Check your connection and try again.';
+  }
+  if (msg.includes('unauthori') || msg.includes('401')) {
+    return 'Authentication failed. Please go back to the login screen and try again.';
+  }
+  return 'Something went wrong while creating your account. Please try again.';
+}
+
 export default function CreateAccount() {
   const { userWallet, userPubKey } = useWallet();
   const navigate = useNavigate();
@@ -53,7 +76,7 @@ export default function CreateAccount() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  async function acquireCert(fields: Record<string, string>) {
+  async function acquireCert(fields: Record<string, string>, fallbackStep: Step = 'details') {
     if (!userWallet || !userPubKey) {
       setError('Wallet not connected. Please go back and try again.');
       return;
@@ -77,8 +100,8 @@ export default function CreateAccount() {
       navigate('/login?autocert=1');
     } catch (err: any) {
       console.error('Certificate acquisition failed:', err);
-      setError(err.message || 'Failed to acquire certificate. Please try again.');
-      setStep('details');
+      setError(friendlyAcquireError(err));
+      setStep(fallbackStep);
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +112,7 @@ export default function CreateAccount() {
       setError('Wallet not connected. Please go back and try again.');
       return;
     }
-    await acquireCert({ username: userPubKey });
+    await acquireCert({ username: userPubKey }, 'choice');
   }
 
   async function handleCreateNamed(e: React.FormEvent) {
