@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { API_BASE } from '@/lib/api';
+import { AuthBackground } from '@/components/ui/AuthBackground';
 
 const MYCELIA_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
 const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
@@ -99,7 +100,7 @@ export default function CreateAccount() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-gray-100 flex items-center justify-center p-4">
+    <AuthBackground>
       <div className="max-w-md w-full">
         <div className="text-center mb-6">
           <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
@@ -217,6 +218,6 @@ export default function CreateAccount() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </AuthBackground>
   );
 }

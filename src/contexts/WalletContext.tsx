@@ -2,8 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { WalletClient } from '@bsv/sdk';
 import { useNavigate } from 'react-router-dom';
 
-const MAX_RETRIES = 3;
-const RETRY_BASE_MS = 3000; // 3 s, 6 s, 12 s with exponential backoff
+const MAX_RETRIES = 1;
+const RETRY_BASE_MS = 1000; // 1 retry after 1 s — fast fail if wallet not present
 
 type WalletContextType = {
   userWallet: WalletClient | null;

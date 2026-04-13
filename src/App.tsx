@@ -13,6 +13,7 @@ import YourData from "./pages/YourData";
 import WalletLogin from "./pages/WalletLogin";
 import CreateAccount from "./pages/CreateAccount";
 import WalletError from "./pages/WalletError";
+import Help from "./pages/Help";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
@@ -46,6 +47,7 @@ const RootContent = () => {
         <Route path="/login" element={<WalletLogin />} />
         <Route path="/create-account" element={<CreateAccount />} />
         <Route path="/wallet-error" element={<WalletError />} />
+        <Route path="/help" element={<Help />} />
         <Route path="*" element={<NotFound />} />
 
         {/* Protected routes */}
