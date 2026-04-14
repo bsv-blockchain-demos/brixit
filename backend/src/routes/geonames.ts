@@ -44,8 +44,21 @@ router.get('/', async (req, res) => {
       return;
     }
 
+    // Validate endpoint — alphanumeric and underscores only, no path traversal
+    if (!/^[a-zA-Z0-9_]+$/.test(endpoint)) {
+      res.status(400).json({ error: 'Invalid endpoint' });
+      return;
+    }
+
     // Build GeoNames URL
     const geonamesUrl = new URL(`https://secure.geonames.org/${endpoint}`);
+
+    // Verify the URL still points to geonames.org after construction
+    if (geonamesUrl.origin !== 'https://secure.geonames.org') {
+      res.status(400).json({ error: 'Invalid endpoint' });
+      return;
+    }
+
     const search = new URLSearchParams(decodedParams);
     search.set('username', username);
     geonamesUrl.search = search.toString();
