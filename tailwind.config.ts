@@ -18,6 +18,13 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				display: ['Lora', 'Georgia', 'serif'],
+				body: ['DM Sans', 'system-ui', 'sans-serif'],
+			},
+			screens: {
+				desktop: '900px',
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -61,7 +68,19 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				'green-deep': 'var(--green-deep)',
+				'green-mid': 'var(--green-mid)',
+				'green-fresh': 'var(--green-fresh)',
+				'green-light': 'var(--green-light)',
+				'green-pale': 'var(--green-pale)',
+				'green-mist': 'var(--green-mist)',
+				cream: 'var(--cream)',
+				gold: 'var(--gold)',
+				'text-dark': 'var(--text-dark)',
+				'text-mid': 'var(--text-mid)',
+				'text-muted-green': 'var(--text-muted)',
+				'score-poor': 'var(--score-poor)',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

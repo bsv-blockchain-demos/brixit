@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRIX — Know Your Food</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /*
+   * BRIX — Mobile-first redesign v2
+   * ================================
+   * Strategy: one job per screen on mobile.
+   * Desktop gets the side-by-side luxury layout.
+   *
+   * MOBILE FLOW (single column, full-viewport screens):
+   *   Screen 1 — Hero: headline + single CTA
+   *   Screen 2 — What is a Brix score? (plain English + scale)
+   *   Screen 3 — Community scores (tap a card → bottom sheet detail)
+   *   Screen 4 — Mission / emotional hook
+   *   Screen 5 — Sign up (wallet explained last, in plain English)
+   *
+   * DESKTOP: side-by-side grid layout kicks in at 900px+
+   */
+
+  :root {
+    --green-deep:  #1a3a2a;
+    --green-mid:   #2d6a4f;
+    --green-fresh: #40916c;
+    --green-light: #74c69d;
+    --green-pale:  #d8f3dc;
+    --green-mist:  #f0faf2;
+    --cream:       #faf8f3;
+    --text-dark:   #1a2e1f;
+    --text-mid:    #3d5a47;
+    --text-muted:  #7a9b82;
+    --gold:        #c9a84c;
+    --r-sm: 10px;
+    --r-md: 18px;
+    --r-lg: 28px;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text-dark);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Shared typography ───────────────────────── */
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--green-fresh);
+    margin-bottom: 14px;
+  }
+  .eyebrow.light { color: var(--green-light); }
+
+  h1, h2, h3 { font-family: 'Lora', Georgia, serif; font-weight: 600; line-height: 1.18; }
+
+  /* ── Buttons ─────────────────────────────────── */
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 17px 24px;
+    border: none;
+    border-radius: var(--r-lg);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.15s, transform 0.12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--green-fresh); color: #fff; }
+  .btn-primary:hover { background: var(--green-mid); }
+  .btn-ghost-dark {
+    background: transparent;
+    color: rgba(255,255,255,0.65);
+    border: 1px solid rgba(255,255,255,0.22);
+  }
+  .btn-ghost-dark:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
+  .btn-outline {
+    background: transparent;
+    color: var(--text-mid);
+    border: 1px solid rgba(0,0,0,0.14);
+  }
+  .btn-outline:hover { background: var(--green-mist); }
+
+
+  /* ══════════════════════════════════════════════
+     SCREEN 1 — HERO
+     Mobile: full viewport, dark green, one headline,
+     two CTAs, no score cards (those are screen 3)
+     Desktop: two-column grid, score cards right
+     ══════════════════════════════════════════════ */
+
+  .hero {
+    background: var(--green-deep);
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 72px 28px 56px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 80% 20%, rgba(64,145,108,0.22) 0%, transparent 55%);
+    pointer-events: none;
+  }
+
+  .hero-inner { position: relative; z-index: 2; }
+
+  .hero h1 {
+    font-size: clamp(34px, 9vw, 52px);
+    color: #fff;
+    margin-bottom: 18px;
+  }
+  .hero h1 em { font-style: italic; color: var(--green-light); }
+
+  .hero-sub {
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.65;
+    color: rgba(255,255,255,0.65);
+    margin-bottom: 40px;
+    max-width: 400px;
+  }
+
+  .hero-ctas { display: flex; flex-direction: column; gap: 10px; }
+
+  .hero-nudge {
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  /* hero stat strip — 3 numbers, low visual weight */
+  .hero-stats {
+    display: flex;
+    gap: 0;
+    margin-top: 48px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 24px;
+  }
+  .hero-stat {
+    flex: 1;
+    text-align: center;
+  }
+  .hero-stat + .hero-stat {
+    border-left: 1px solid rgba(255,255,255,0.08);
+  }
+  .hero-stat-num {
+    font-family: 'Lora', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .hero-stat-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    margin-top: 2px;
+  }
+
+  /* Desktop hero override */
+  @media (min-width: 900px) {
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      padding: 80px;
+      min-height: 100vh;
+    }
+    .hero-inner { padding-right: 40px; }
+    .hero-cards { display: flex; flex-direction: column; gap: 14px; }
+    .hero-cards-mobile-hide { display: flex; }
+  }
+
+
+  /* ══════════════════════════════════════════════
+     DESKTOP HERO SCORE CARDS (hidden on mobile)
+     ══════════════════════════════════════════════ */
+
+  .hero-cards { display: none; } /* hidden on mobile */
+
+  .h-card {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: var(--r-md);
+    padding: 20px 22px;
+    backdrop-filter: blur(12px);
+  }
+  .h-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .h-card-farm { font-size: 11px; color: var(--green-light); }
+  .h-badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 20px;
+  }
+  .h-badge.ex { background: rgba(45,106,79,0.5); color: #74c69d; }
+  .h-badge.ok { background: rgba(201,168,76,0.25); color: #e9c46a; }
+  .h-card-product {
+    font-family: 'Lora', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 2px;
+  }
+  .h-card-loc { font-size: 11px; color: rgba(255,255,255,0.38); margin-bottom: 14px; }
+  .h-score-row { display: flex; align-items: center; gap: 12px; }
+  .h-score-num {
+    font-family: 'Lora', serif;
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1;
+    min-width: 52px;
+  }
+  .h-score-num.hi { color: #74c69d; }
+  .h-score-num.md { color: #e9c46a; }
+  .h-bar-wrap { flex: 1; }
+  .h-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 5px;
+  }
+  .h-bar-track {
+    height: 5px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .h-bar-fill { height: 100%; border-radius: 99px; }
+  .h-bar-fill.hi { background: linear-gradient(90deg,#40916c,#74c69d); width: 88%; }
+  .h-bar-fill.md { background: linear-gradient(90deg,#c9a84c,#e9c46a); width: 35%; }
+  .h-card-foot {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    display: flex;
+    justify-content: space-between;
+  }
+  .h-card-foot span { color: rgba(255,255,255,0.5); }
+  .h-stat-row {
+    display: flex;
+    gap: 28px;
+    margin-top: 8px;
+  }
+  .h-stat-num {
+    font-family: 'Lora', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .h-stat-label { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 1px; }
+
+
+  /* ══════════════════════════════════════════════
+     SCREEN 2 — WHAT IS BRIX?
+     Mobile: stacked, scale below text
+     Desktop: two columns
+     ══════════════════════════════════════════════ */
+
+  .explainer {
+    background: var(--cream);
+    padding: 72px 28px;
+  }
+
+  .explainer h2 {
+    font-size: clamp(26px, 7vw, 40px);
+    color: var(--green-deep);
+    margin-bottom: 16px;
+  }
+  .explainer h2 em { font-style: italic; color: var(--green-fresh); }
+
+  .explainer p {
+    font-size: 15px;
+    line-height: 1.72;
+    color: var(--text-mid);
+    margin-bottom: 12px;
+  }
+
+  /* Score scale */
+  .scale {
+    background: #fff;
+    border-radius: var(--r-md);
+    padding: 28px 24px;
+    border: 1px solid rgba(0,0,0,0.06);
+    margin-top: 36px;
+  }
+  .scale-title {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+  }
+  .scale-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .scale-row:last-child { margin-bottom: 0; }
+  .scale-num {
+    font-family: 'Lora', serif;
+    font-size: 26px;
+    font-weight: 600;
+    min-width: 48px;
+    line-height: 1;
+  }
+  .scale-num.hi { color: var(--green-mid); }
+  .scale-num.md { color: var(--gold); }
+  .scale-num.lo { color: #c0392b; }
+  .scale-info strong { font-size: 13px; font-weight: 500; display: block; color: var(--text-dark); margin-bottom: 2px; }
+  .scale-info span { font-size: 12px; color: var(--text-muted); line-height: 1.45; }
+  .scale-bar { height: 3px; border-radius: 99px; margin-top: 7px; }
+  .scale-bar.hi { background: var(--green-mid); width: 88%; }
+  .scale-bar.md { background: var(--gold); width: 50%; }
+  .scale-bar.lo { background: #c0392b; width: 22%; }
+
+  @media (min-width: 900px) {
+    .explainer {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+      padding: 100px 80px;
+    }
+    .scale { margin-top: 0; }
+  }
+
+
+  /* ══════════════════════════════════════════════
+     SCREEN 3 — COMMUNITY SCORES
+     Mobile: vertical card stack, tap → bottom sheet
+     Desktop: 3-column grid
+     ══════════════════════════════════════════════ */
+
+  .community {
+    background: var(--green-mist);
+    padding: 72px 28px;
+  }
+
+  .community-head {
+    margin-bottom: 32px;
+  }
+  .community-head h2 {
+    font-size: clamp(24px, 6vw, 36px);
+    color: var(--green-deep);
+    margin-bottom: 8px;
+  }
+  .community-head p {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  /* Score cards — tappable */
+  .feed { display: flex; flex-direction: column; gap: 12px; }
+
+  .feed-card {
+    background: #fff;
+    border-radius: var(--r-md);
+    padding: 18px 20px;
+    border: 1px solid rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: transform 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .feed-card:active { transform: scale(0.98); }
+
+  .feed-score-col { text-align: center; min-width: 52px; }
+  .feed-score-big {
+    font-family: 'Lora', serif;
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .feed-score-big.hi { color: var(--green-mid); }
+  .feed-score-big.md { color: var(--gold); }
+  .feed-score-big.lo { color: #c0392b; }
+  .feed-score-label { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+
+  .feed-divider {
+    width: 1px;
+    height: 44px;
+    background: rgba(0,0,0,0.07);
+    flex-shrink: 0;
+  }
+
+  .feed-info { flex: 1; min-width: 0; }
+  .feed-product {
+    font-family: 'Lora', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--green-deep);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .feed-farm { font-size: 12px; color: var(--text-muted); }
+
+  .feed-arrow {
+    color: var(--text-muted);
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  /* BOTTOM SHEET — shown when a card is tapped on mobile */
+  .sheet-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 100;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .sheet-overlay.open { display: flex; }
+
+  .sheet {
+    background: #fff;
+    border-radius: 24px 24px 0 0;
+    padding: 28px 24px 40px;
+    width: 100%;
+    max-width: 540px;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+
+  .sheet-handle {
+    width: 36px;
+    height: 4px;
+    background: rgba(0,0,0,0.12);
+    border-radius: 99px;
+    margin: 0 auto 24px;
+  }
+  .sheet-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+  }
+  .sheet-badge.ex { background: var(--green-pale); color: var(--green-mid); }
+  .sheet-badge.ok { background: #fef9ee; color: #a07c1e; }
+  .sheet-badge.lo { background: #fdecea; color: #c0392b; }
+
+  .sheet h3 {
+    font-size: 24px;
+    color: var(--green-deep);
+    margin-bottom: 3px;
+  }
+  .sheet-farm { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+
+  .sheet-score-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .sheet-score-num {
+    font-family: 'Lora', serif;
+    font-size: 52px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .sheet-score-num.hi { color: var(--green-mid); }
+  .sheet-score-num.md { color: var(--gold); }
+  .sheet-score-num.lo { color: #c0392b; }
+  .sheet-bar-wrap { flex: 1; }
+  .sheet-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .sheet-bar-track {
+    height: 7px;
+    background: rgba(0,0,0,0.07);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .sheet-bar-fill { height: 100%; border-radius: 99px; }
+
+  .sheet-quote {
+    font-size: 14px;
+    font-style: italic;
+    color: var(--text-mid);
+    line-height: 1.6;
+    border-left: 2px solid var(--green-pale);
+    padding-left: 14px;
+    margin-bottom: 20px;
+  }
+  .sheet-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+    display: flex;
+    gap: 16px;
+  }
+  .sheet-close {
+    width: 100%;
+    padding: 14px;
+    background: var(--green-mist);
+    border: none;
+    border-radius: var(--r-md);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--green-fresh);
+    cursor: pointer;
+  }
+
+  /* Desktop: 3-column grid, no bottom sheet */
+  @media (min-width: 900px) {
+    .community { padding: 100px 80px; }
+    .feed { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .feed-card {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      padding: 22px;
+    }
+    .feed-divider { display: none; }
+    .feed-arrow { display: none; }
+    .feed-score-col { text-align: left; margin-bottom: 14px; }
+    .feed-score-big { font-size: 44px; }
+    .feed-info { width: 100%; }
+    .feed-product { white-space: normal; font-size: 17px; margin-bottom: 4px; }
+    .feed-quote-desktop {
+      display: block;
+      font-size: 13px;
+      font-style: italic;
+      color: var(--text-mid);
+      line-height: 1.55;
+      border-left: 2px solid var(--green-pale);
+      padding-left: 12px;
+      margin-top: 14px;
+    }
+    .sheet-overlay { display: none !important; }
+  }
+
+  .feed-quote-desktop { display: none; } /* hidden on mobile */
+
+
+  /* ══════════════════════════════════════════════
+     SCREEN 4 — MISSION
+     Full bleed, dark green, emotional peak
+     ══════════════════════════════════════════════ */
+
+  .mission {
+    background: var(--green-deep);
+    padding: 80px 28px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .mission::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(64,145,108,0.18) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .mission-inner { position: relative; z-index: 2; }
+  .mission h2 {
+    font-size: clamp(26px, 7vw, 48px);
+    color: #fff;
+    margin-bottom: 16px;
+    max-width: 580px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .mission h2 em { font-style: italic; color: var(--green-light); }
+  .mission p {
+    font-size: 15px;
+    color: rgba(255,255,255,0.58);
+    line-height: 1.72;
+    max-width: 420px;
+    margin: 0 auto 36px;
+  }
+
+  @media (min-width: 900px) {
+    .mission { padding: 120px 80px; }
+  }
+
+
+  /* ══════════════════════════════════════════════
+     SCREEN 5 — SIGN UP
+     Wallet explained in plain English, warmly
+     ══════════════════════════════════════════════ */
+
+  .signup {
+    background: var(--cream);
+    padding: 72px 28px;
+  }
+  .signup h2 {
+    font-size: clamp(24px, 6.5vw, 36px);
+    color: var(--green-deep);
+    margin-bottom: 14px;
+  }
+  .signup > p {
+    font-size: 15px;
+    color: var(--text-mid);
+    line-height: 1.7;
+    margin-bottom: 28px;
+  }
+
+  /* Wallet benefits — icon + text rows */
+  .benefits { display: flex; flex-direction: column; gap: 10px; margin-bottom: 36px; }
+  .benefit {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: var(--green-mist);
+    border-radius: var(--r-sm);
+    padding: 14px;
+    border: 1px solid rgba(64,145,108,0.1);
+  }
+  .benefit-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--green-pale);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .benefit-text strong {
+    font-size: 13px;
+    font-weight: 500;
+    display: block;
+    color: var(--green-deep);
+    margin-bottom: 2px;
+  }
+  .benefit-text span { font-size: 12px; color: var(--text-muted); line-height: 1.45; }
+
+  /* Form box */
+  .signup-box {
+    background: #fff;
+    border-radius: var(--r-md);
+    padding: 28px 22px;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .signup-box h3 {
+    font-size: 20px;
+    color: var(--green-deep);
+    margin-bottom: 4px;
+  }
+  .signup-box-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 22px;
+  }
+  .form-stack { display: flex; flex-direction: column; gap: 10px; }
+  .form-divider {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .wallet-link {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 16px;
+  }
+  .wallet-link a { color: var(--green-fresh); text-decoration: none; }
+  .browse-link {
+    display: block;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    text-decoration: none;
+  }
+  .browse-link:hover { color: var(--green-fresh); }
+
+  @media (min-width: 900px) {
+    .signup {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: start;
+      padding: 100px 80px;
+    }
+    .signup > p { margin-bottom: 0; }
+    .benefits { margin-bottom: 0; }
+  }
+
+
+  /* ══════════════════════════════════════════════
+     FOOTER
+     ══════════════════════════════════════════════ */
+
+  footer {
+    background: var(--green-deep);
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    text-align: center;
+  }
+  .footer-brand {
+    font-family: 'Lora', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+  }
+  .footer-links a {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    text-decoration: none;
+  }
+  .footer-links a:hover { color: rgba(255,255,255,0.75); }
+  .footer-secure {
+    font-size: 11px;
+    color: rgba(255,255,255,0.25);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .footer-secure::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green-light);
+    display: inline-block;
+  }
+
+  @media (min-width: 900px) {
+    footer {
+      flex-direction: row;
+      justify-content: space-between;
+      padding: 32px 80px;
+    }
+  }
+
+  /* ── Page-load animation ─────────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .hero-inner > * {
+    animation: fadeUp 0.55s ease both;
+  }
+  .hero-inner > *:nth-child(1) { animation-delay: 0s; }
+  .hero-inner > *:nth-child(2) { animation-delay: 0.08s; }
+  .hero-inner > *:nth-child(3) { animation-delay: 0.16s; }
+  .hero-inner > *:nth-child(4) { animation-delay: 0.24s; }
+  .hero-inner > *:nth-child(5) { animation-delay: 0.32s; }
+</style>
+</head>
+<body>
+
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 1 — HERO
+     ══════════════════════════════════════════════ -->
+<section class="hero">
+
+  <div class="hero-inner">
+    <div class="eyebrow light">Real food. Real nutrition.</div>
+
+    <h1>Finally know if your food is <em>actually</em> nutritious.</h1>
+
+    <p class="hero-sub">
+      BRIX measures the nutrient density of fresh produce — so you can 
+      shop smarter, feed your family better, and share what you discover.
+    </p>
+
+    <div class="hero-ctas">
+      <a href="#signup" class="btn btn-primary">Start tracking my food →</a>
+      <a href="#community" class="btn btn-ghost-dark">Browse scores near me</a>
+      <p class="hero-nudge">Free · No credit card · Your data is yours</p>
+    </div>
+
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-num">14,280</div>
+        <div class="hero-stat-label">scores submitted</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">342</div>
+        <div class="hero-stat-label">farms tracked</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">38</div>
+        <div class="hero-stat-label">countries</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Desktop only: score cards on the right -->
+  <div class="hero-cards">
+    <div class="h-card">
+      <div class="h-card-top">
+        <span class="h-card-farm">Müller Farm · Zurich</span>
+        <span class="h-badge ex">Excellent</span>
+      </div>
+      <div class="h-card-product">Heirloom Carrots</div>
+      <div class="h-card-loc">Bürkliplatz Market · submitted 2h ago</div>
+      <div class="h-score-row">
+        <div class="h-score-num hi">18.4</div>
+        <div class="h-bar-wrap">
+          <div class="h-bar-labels"><span>Low</span><span>Excellent</span></div>
+          <div class="h-bar-track"><div class="h-bar-fill hi"></div></div>
+        </div>
+      </div>
+      <div class="h-card-foot">
+        <span>by <span>@anna_k</span></span>
+        <span>47 people found this helpful</span>
+      </div>
+    </div>
+
+    <div class="h-card" style="opacity:0.72; transform:scale(0.97);">
+      <div class="h-card-top">
+        <span class="h-card-farm">Coop · Bahnhofstrasse</span>
+        <span class="h-badge ok">Average</span>
+      </div>
+      <div class="h-card-product">Baby Spinach (packaged)</div>
+      <div class="h-card-loc">Zurich · submitted 1d ago</div>
+      <div class="h-score-row">
+        <div class="h-score-num md">7.1</div>
+        <div class="h-bar-wrap">
+          <div class="h-bar-labels"><span>Low</span><span>Excellent</span></div>
+          <div class="h-bar-track"><div class="h-bar-fill md"></div></div>
+        </div>
+      </div>
+      <div class="h-card-foot">
+        <span>by <span>@conscious.mom</span></span>
+        <span>12 people found this helpful</span>
+      </div>
+    </div>
+
+    <div class="h-stat-row">
+      <div class="hero-stat">
+        <div class="h-stat-num">14,280</div>
+        <div class="h-stat-label">scores submitted</div>
+      </div>
+      <div class="hero-stat">
+        <div class="h-stat-num">342</div>
+        <div class="h-stat-label">farms</div>
+      </div>
+      <div class="hero-stat">
+        <div class="h-stat-num">38</div>
+        <div class="h-stat-label">countries</div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 2 — WHAT IS BRIX?
+     ══════════════════════════════════════════════ -->
+<section class="explainer">
+  <div>
+    <div class="eyebrow">What is a Brix score?</div>
+    <h2>A number that tells you how <em>good</em> your food really is</h2>
+    <p>
+      The Brix scale measures the sugar and nutrient content of fresh produce. 
+      A high score means your food is packed with minerals and vitamins. 
+      A low score means it looks fine but doesn't deliver much.
+    </p>
+    <p>
+      Supermarket carrots often score 4–6. A carrot from a well-managed farm 
+      can score 18. Same vegetable. Very different nutrition. 
+      Now you can know before you buy.
+    </p>
+  </div>
+
+  <div class="scale">
+    <div class="scale-title">Score guide</div>
+    <div class="scale-row">
+      <div class="scale-num hi">16+</div>
+      <div class="scale-info">
+        <strong>Excellent nutrition</strong>
+        <span>Rich in minerals. The best you can buy.</span>
+        <div class="scale-bar hi"></div>
+      </div>
+    </div>
+    <div class="scale-row">
+      <div class="scale-num md">8–15</div>
+      <div class="scale-info">
+        <strong>Good — above average</strong>
+        <span>Better than most supermarket produce.</span>
+        <div class="scale-bar md"></div>
+      </div>
+    </div>
+    <div class="scale-row">
+      <div class="scale-num lo">1–7</div>
+      <div class="scale-info">
+        <strong>Poor — common in supermarkets</strong>
+        <span>Looks fine, but doesn't deliver much.</span>
+        <div class="scale-bar lo"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 3 — COMMUNITY SCORES
+     Mobile: tap card → bottom sheet detail
+     Desktop: 3-column grid with quote visible
+     ══════════════════════════════════════════════ -->
+<section class="community" id="community">
+
+  <div class="community-head">
+    <div class="eyebrow">Community</div>
+    <h2>What people are finding</h2>
+    <p>Tap any score to see the full details.</p>
+  </div>
+
+  <div class="feed">
+
+    <div class="feed-card" onclick="openSheet('tomato')">
+      <div class="feed-score-col">
+        <div class="feed-score-big hi">19.2</div>
+        <div class="feed-score-label">Excellent</div>
+      </div>
+      <div class="feed-divider"></div>
+      <div class="feed-info">
+        <div class="feed-product">Biodynamic Tomatoes</div>
+        <div class="feed-farm">Hopp Farm · Basel · Sandra K.</div>
+      </div>
+      <div class="feed-quote-desktop">"I couldn't believe the difference. These actually taste like tomatoes should."</div>
+      <div class="feed-arrow">›</div>
+    </div>
+
+    <div class="feed-card" onclick="openSheet('apple')">
+      <div class="feed-score-col">
+        <div class="feed-score-big md">9.0</div>
+        <div class="feed-score-label">Good</div>
+      </div>
+      <div class="feed-divider"></div>
+      <div class="feed-info">
+        <div class="feed-product">Organic Apples</div>
+        <div class="feed-farm">Migros Oerlikon · Marie R.</div>
+      </div>
+      <div class="feed-quote-desktop">"Better than standard shelf, but far behind the market ones."</div>
+      <div class="feed-arrow">›</div>
+    </div>
+
+    <div class="feed-card" onclick="openSheet('salad')">
+      <div class="feed-score-col">
+        <div class="feed-score-big lo">4.5</div>
+        <div class="feed-score-label">Poor</div>
+      </div>
+      <div class="feed-divider"></div>
+      <div class="feed-info">
+        <div class="feed-product">Baby Leaf Salad</div>
+        <div class="feed-farm">Coop Geneva · Céline L.</div>
+      </div>
+      <div class="feed-quote-desktop">"Really disappointing — I'll stick to the Saturday market from now on."</div>
+      <div class="feed-arrow">›</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Bottom sheet overlay (mobile detail view) -->
+<div class="sheet-overlay" id="sheet" onclick="closeSheet(event)">
+  <div class="sheet" id="sheet-content">
+    <div class="sheet-handle"></div>
+    <span class="sheet-badge" id="s-badge"></span>
+    <h3 id="s-product"></h3>
+    <div class="sheet-farm" id="s-farm"></div>
+    <div class="sheet-score-row">
+      <div class="sheet-score-num" id="s-num"></div>
+      <div class="sheet-bar-wrap">
+        <div class="sheet-bar-labels"><span>Low</span><span>Excellent</span></div>
+        <div class="sheet-bar-track">
+          <div class="sheet-bar-fill" id="s-bar" style="height:100%; border-radius:99px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-quote" id="s-quote"></div>
+    <div class="sheet-meta" id="s-meta"></div>
+    <button class="sheet-close" onclick="closeSheet()">Close</button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 4 — MISSION
+     ══════════════════════════════════════════════ -->
+<section class="mission">
+  <div class="mission-inner">
+    <div class="eyebrow light">Our mission</div>
+    <h2>Every score you submit helps <em>another family</em> eat better</h2>
+    <p>
+      Good food knowledge shouldn't be locked away. When you share a score, 
+      you're not just helping yourself — you're changing what your whole 
+      community reaches for.
+    </p>
+    <a href="#signup" class="btn btn-primary" style="max-width:320px; margin:0 auto;">
+      Join 8,400 conscious shoppers →
+    </a>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     SCREEN 5 — SIGN UP
+     ══════════════════════════════════════════════ -->
+<section class="signup" id="signup">
+
+  <div>
+    <div class="eyebrow">Get started</div>
+    <h2>Your account is yours alone — forever</h2>
+    <p>
+      BRIX uses a digital wallet so your account is truly private. 
+      No password a company can lose. No personal data sold to advertisers.
+      Think of it as a key that only you hold.
+    </p>
+
+    <div class="benefits">
+      <div class="benefit">
+        <div class="benefit-icon">🔑</div>
+        <div class="benefit-text">
+          <strong>No password to forget or lose</strong>
+          <span>Your identity lives on your device, not a company's server.</span>
+        </div>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon">🚫</div>
+        <div class="benefit-text">
+          <strong>Your data is never sold</strong>
+          <span>We can't sell what we don't hold. Your food choices stay private.</span>
+        </div>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon">📱</div>
+        <div class="benefit-text">
+          <strong>Works on phone or computer</strong>
+          <span>Scan a QR code on mobile, or connect your desktop wallet.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="signup-box">
+    <h3>Connect your wallet</h3>
+    <div class="signup-box-sub">Both options are free. Choose what's easiest.</div>
+    <div class="form-stack">
+      <a href="#" class="btn btn-primary">📱 Connect with my phone</a>
+      <div class="form-divider">or</div>
+      <a href="#" class="btn btn-outline">💻 Connect with desktop wallet</a>
+    </div>
+    <div class="wallet-link">
+      New to wallets? <a href="#">Friendly 2-minute guide →</a>
+    </div>
+    <a href="#community" class="browse-link">
+      Not ready? Browse scores without an account →
+    </a>
+  </div>
+
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     FOOTER
+     ══════════════════════════════════════════════ -->
+<footer>
+  <div class="footer-brand">BRIX</div>
+  <div class="footer-links">
+    <a href="#">About</a>
+    <a href="#">How it works</a>
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+  </div>
+  <div class="footer-secure">Secured by BSV Blockchain</div>
+</footer>
+
+
+<script>
+  /* ── Score data for bottom sheets ─────────────── */
+  const scores = {
+    tomato: {
+      badge: 'Excellent', badgeClass: 'ex',
+      product: 'Biodynamic Tomatoes',
+      farm: 'Hopp Farm · Basel · tested at farmers market',
+      score: '19.2', scoreClass: 'hi',
+      barColor: 'linear-gradient(90deg,#40916c,#74c69d)', barWidth: '92%',
+      quote: '"I couldn\'t believe the difference. These actually taste like tomatoes should."',
+      meta: ['Sandra K.', '3 hours ago', '28 helpful votes']
+    },
+    apple: {
+      badge: 'Good', badgeClass: 'ok',
+      product: 'Organic Apples',
+      farm: 'Migros · Zurich Oerlikon',
+      score: '9.0', scoreClass: 'md',
+      barColor: 'linear-gradient(90deg,#c9a84c,#e9c46a)', barWidth: '43%',
+      quote: '"Better than the standard shelf, but still far behind the market ones."',
+      meta: ['Marie R.', 'yesterday', '14 helpful votes']
+    },
+    salad: {
+      badge: 'Poor', badgeClass: 'lo',
+      product: 'Baby Leaf Salad',
+      farm: 'Coop · Geneva · pre-washed bag',
+      score: '4.5', scoreClass: 'lo',
+      barColor: '#c0392b', barWidth: '21%',
+      quote: '"Really disappointing — I\'ll stick to the Saturday market from now on."',
+      meta: ['Céline L.', '2 days ago', '19 helpful votes']
+    }
+  };
+
+  function openSheet(id) {
+    /* Only intercept on mobile */
+    if (window.innerWidth >= 900) return;
+    const d = scores[id];
+    document.getElementById('s-badge').textContent = d.badge;
+    document.getElementById('s-badge').className = 'sheet-badge ' + d.badgeClass;
+    document.getElementById('s-product').textContent = d.product;
+    document.getElementById('s-farm').textContent = d.farm;
+    document.getElementById('s-num').textContent = d.score;
+    document.getElementById('s-num').className = 'sheet-score-num ' + d.scoreClass;
+    document.getElementById('s-bar').style.background = d.barColor;
+    document.getElementById('s-bar').style.width = d.barWidth;
+    document.getElementById('s-quote').textContent = d.quote;
+    document.getElementById('s-meta').textContent = d.meta.join(' · ');
+    document.getElementById('sheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSheet(e) {
+    if (e && e.target !== document.getElementById('sheet') && !e.target.classList.contains('sheet-close')) return;
+    document.getElementById('sheet').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+</script>
+
+</body>
+</html>

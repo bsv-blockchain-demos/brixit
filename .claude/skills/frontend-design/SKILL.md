@@ -4,39 +4,77 @@ description: Create distinctive, production-grade frontend interfaces with high 
 license: Complete terms in LICENSE.txt
 ---
 
-This skill guides creation of distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.
+This skill guides creation of frontend interfaces for BRIXIT — a citizen science platform for food quality measurement. The aesthetic is **clean, professional, agricultural** — think premium farm-to-table brand, not a tech startup.
 
-The user provides frontend requirements: a component, page, application, or interface to build. They may include context about the purpose, audience, or technical constraints.
+## Design Identity
 
-## Design Thinking
+BRIXIT's visual language conveys trust, nature, and scientific credibility. Every interface should feel like it was designed by a premium organic food brand's in-house team — warm, grounded, and confident.
 
-Before coding, understand the context and commit to a BOLD aesthetic direction:
-- **Purpose**: What problem does this interface solve? Who uses it?
-- **Tone**: Pick an extreme: brutally minimal, maximalist chaos, retro-futuristic, organic/natural, luxury/refined, playful/toy-like, editorial/magazine, brutalist/raw, art deco/geometric, soft/pastel, industrial/utilitarian, etc. There are so many flavors to choose from. Use these for inspiration but design one that is true to the aesthetic direction.
-- **Constraints**: Technical requirements (framework, performance, accessibility).
-- **Differentiation**: What makes this UNFORGETTABLE? What's the one thing someone will remember?
+**Tone**: Refined and earthy. Not techy, not playful, not corporate. The design should feel like holding a well-made ceramic bowl — simple, warm, purposeful.
 
-**CRITICAL**: Choose a clear conceptual direction and execute it with precision. Bold maximalism and refined minimalism both work - the key is intentionality, not intensity.
+## Typography
 
-Then implement working code (HTML/CSS/JS, React, Vue, etc.) that is:
-- Production-grade and functional
-- Visually striking and memorable
-- Cohesive with a clear aesthetic point-of-view
-- Meticulously refined in every detail
+- **Lora** (serif) for display headings — gives agricultural/scientific gravitas
+- **DM Sans** for body text and UI — clean geometric sans that pairs well
+- Headings use `font-display` class (maps to Lora via CSS custom properties)
+- Body uses the default font stack (maps to DM Sans)
+- Never introduce other font families
 
-## Frontend Aesthetics Guidelines
+## Color System
 
-Focus on:
-- **Typography**: Choose fonts that are beautiful, unique, and interesting. Avoid generic fonts like Arial and Inter; opt instead for distinctive choices that elevate the frontend's aesthetics; unexpected, characterful font choices. Pair a distinctive display font with a refined body font.
-- **Color & Theme**: Commit to a cohesive aesthetic. Use CSS variables for consistency. Dominant colors with sharp accents outperform timid, evenly-distributed palettes.
-- **Motion**: Use animations for effects and micro-interactions. Prioritize CSS-only solutions for HTML. Use Motion library for React when available. Focus on high-impact moments: one well-orchestrated page load with staggered reveals (animation-delay) creates more delight than scattered micro-interactions. Use scroll-triggering and hover states that surprise.
-- **Spatial Composition**: Unexpected layouts. Asymmetry. Overlap. Diagonal flow. Grid-breaking elements. Generous negative space OR controlled density.
-- **Backgrounds & Visual Details**: Create atmosphere and depth rather than defaulting to solid colors. Add contextual effects and textures that match the overall aesthetic. Apply creative forms like gradient meshes, noise textures, geometric patterns, layered transparencies, dramatic shadows, decorative borders, custom cursors, and grain overlays.
+All colors flow through CSS custom properties in `src/index.css`. Never hard-code Tailwind color utilities.
 
-NEVER use generic AI-generated aesthetics like overused font families (Inter, Roboto, Arial, system fonts), cliched color schemes (particularly purple gradients on white backgrounds), predictable layouts and component patterns, and cookie-cutter design that lacks context-specific character.
+**The palette is a nature-green spectrum with gold accent:**
+- Dark end: `--green-deep` (#1a3a2a) — hero, mission, footer backgrounds
+- Mid greens: `--green-mid`, `--green-fresh` — buttons, links, accents
+- Light end: `--green-pale`, `--green-mist` — card borders, section backgrounds
+- Neutral: `--cream` (#faf8f3) — page background
+- Text: `--text-dark`, `--text-mid`, `--text-muted` — three-tier text hierarchy
+- Accent: `--gold` (#c9a84c) — used for "Good" score tier
 
-Interpret creatively and make unexpected choices that feel genuinely designed for the context. No design should be the same. Vary between light and dark themes, different fonts, different aesthetics. NEVER converge on common choices (Space Grotesk, for example) across generations.
+**On dark backgrounds**: Body text is `rgba(255,255,255,0.75)`. Emphasized words use `var(--green-light)` with italic. Never use green-light with opacity for body text — it's muddy.
 
-**IMPORTANT**: Match implementation complexity to the aesthetic vision. Maximalist designs need elaborate code with extensive animations and effects. Minimalist or refined designs need restraint, precision, and careful attention to spacing, typography, and subtle details. Elegance comes from executing the vision well.
+**On light backgrounds**: Use the `--text-dark` / `--text-mid` / `--text-muted` hierarchy. Eyebrow text is always `--green-fresh`.
 
-Remember: Claude is capable of extraordinary creative work. Don't hold back, show what can truly be created when thinking outside the box and committing fully to a distinctive vision.
+## Card Patterns
+
+Cards are a core UI element. Follow these established patterns:
+
+- **White cards with green-pale border**: Default for feature tiles, benefits, info cards. Use `bg-white border border-[var(--green-pale)] rounded-2xl shadow-sm`. Add `hover:shadow-md transition-shadow` for interactive cards.
+- **Icon badges**: Dark green (`--green-deep`) rounded squares (`rounded-xl`) with white icons inside. Not circles, not colored backgrounds matching the palette.
+- **Never use glass/translucent cards on dark backgrounds** — they kill readability. Use solid white with `shadow-lg` instead.
+
+## Layout Principles
+
+- **Left-aligned text by default**. Centered text only for hero CTAs and mission statements.
+- **Two-column grids** (`desktop:grid-cols-2`) for text + visual pairs.
+- **max-w-5xl** for content sections. Narrower (`max-w-2xl`) for centered mission/CTA blocks.
+- **Eyebrow pattern**: Uppercase, `tracking-[0.2em]`, `text-sm`, `font-medium`, `color: var(--green-fresh)`.
+- Alternate section backgrounds between `--cream` and `--green-mist`.
+- Dark sections use `radial-gradient(ellipse at ..., #244536 0%, var(--green-deep) 70%)`.
+
+## Motion
+
+- Use **framer-motion** (already installed). Prefer `fadeUp` and staggered reveal patterns.
+- Respect `prefers-reduced-motion` — disable animations entirely, don't just reduce them.
+- Keep it snappy: 150–300ms for micro-interactions, 300–500ms for page transitions.
+- One orchestrated entrance per section is better than scattered animations everywhere.
+
+## What to Avoid
+
+- **Generic AI aesthetics**: No purple gradients, no Inter/Roboto, no glass morphism, no gratuitous gradients.
+- **Over-designed complexity**: BRIXIT is warm and approachable. Don't add noise textures, grain overlays, or brutalist elements.
+- **Competing visual weight**: One hero element per section. Don't let cards, badges, and buttons all scream at once.
+- **Tech startup patterns**: No dark mode toggle on landing pages, no "powered by AI" badges, no floating chat widgets.
+
+## Score Visualization
+
+BRIX scores use a strict color convention across all displays:
+
+| Rating | Range | Color |
+|--------|-------|-------|
+| Excellent | 16+ | `--green-mid` |
+| Good | 8–15 | `--gold` |
+| Poor | 1–7 | `--score-poor` |
+
+Score numbers always use Lora bold (`font-display font-bold`). Always include `aria-label` with the score value and rating.

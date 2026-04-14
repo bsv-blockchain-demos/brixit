@@ -1,2 +1,2 @@
-// Shared breakpoint values — kept in sync with tailwind.config.ts (theme.extend uses defaults).
-export const MOBILE_BREAKPOINT = 768;
+// Shared breakpoint values — kept in sync with tailwind.config.ts (desktop: 900px).
+export const MOBILE_BREAKPOINT = 900;

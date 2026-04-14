@@ -6,15 +6,57 @@ import { Utils, createNonce } from '@bsv/sdk';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Wallet, Lock, TrendingUp, Smartphone, HelpCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Smartphone, ArrowRight, ShieldCheck, KeyRound, MonitorSmartphone } from 'lucide-react';
 import { getDataFromWallet } from '@/utils/getDataFromWallet';
 import { useMobileWalletLogin } from '@/hooks/useMobileWalletLogin';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { AuthBackground } from '@/components/ui/AuthBackground';
+import { motion, useReducedMotion } from 'framer-motion';
 
 const MYCELIA_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
 const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
+
+// ── Illustrative score card (hero decoration) ────────────────────
+function ScoreCard({ product, origin, score, rating }: { product: string; origin: string; score: number; rating: 'Excellent' | 'Good' | 'Poor' }) {
+  const color = rating === 'Excellent' ? 'var(--green-mid)' : rating === 'Good' ? 'var(--gold)' : 'var(--score-poor)';
+  return (
+    <div className="rounded-2xl p-5 shadow-lg" style={{ backgroundColor: 'white' }}>
+      <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>{origin}</p>
+      <p className="text-lg font-display font-semibold mt-0.5" style={{ color: 'var(--text-dark)' }}>{product}</p>
+      <div className="flex items-end gap-2 mt-3">
+        <span className="text-3xl font-display font-bold" style={{ color }} aria-label={`Brix score ${score}, rated ${rating}`}>{score}</span>
+        <span className="text-sm pb-1" style={{ color: 'var(--text-muted)' }}>BRIX</span>
+      </div>
+      <span className="inline-block mt-2 text-xs font-medium" style={{ color }}>{rating}</span>
+    </div>
+  );
+}
+
+// ── Stat column (hero strip) ─────────────────────────────────────
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="text-center border-l border-white/10 first:border-l-0 px-4">
+      <p className="font-display text-2xl desktop:text-3xl font-bold text-white">{value}</p>
+      <p className="text-xs mt-1" style={{ color: '#6b8a73' }}>{label}</p>
+    </div>
+  );
+}
+
+// ── Community feed card ──────────────────────────────────────────
+function FeedCard({ product, location, score, user, rating }: { product: string; location: string; score: number; user: string; rating: 'Excellent' | 'Good' | 'Poor' }) {
+  const color = rating === 'Excellent' ? 'var(--green-mid)' : rating === 'Good' ? 'var(--gold)' : 'var(--score-poor)';
+  return (
+    <Card className="overflow-hidden border" style={{ borderColor: 'var(--green-pale)' }}>
+      <CardContent className="p-5">
+        <p className="font-display font-bold text-4xl leading-none" style={{ color }} aria-label={`Brix score ${score}, rated ${rating}`}>{score}</p>
+        <p className="text-xs font-medium mt-1" style={{ color }}>{rating}</p>
+        <p className="font-semibold mt-4" style={{ color: 'var(--text-dark)' }}>{product}</p>
+        <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>{location} · {user}</p>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function WalletLogin() {
   const [searchParams] = useSearchParams();
@@ -25,34 +67,43 @@ export default function WalletLogin() {
   const [certificateError, setCertificateError] = useState<string | null>(null);
   const [isCheckingCertificates, setIsCheckingCertificates] = useState(false);
   const [hasStartedLogin, setHasStartedLogin] = useState(false);
-  const isFetchingRef = useRef(false); // prevents concurrent invocations (StrictMode + re-render races)
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const isFetchingRef = useRef(false);
 
-  // autocert=1 means we just created an account — wallet is already connected, skip the button
   const comingFromAccountCreation = searchParams.get('autocert') === '1';
-  // qr=1 means we arrived from the wallet error page — auto-start mobile QR
   const shouldStartMobileQR = searchParams.get('qr') === '1';
 
   const { session, loginStatus, loginError, start: startMobileLogin, reset: resetMobileLogin } = useMobileWalletLogin();
   const isMobile = useIsMobile();
   const showMobileQR = loginStatus !== 'idle';
+  const prefersReducedMotion = useReducedMotion();
+
+  // ── Auth handlers (unchanged) ──────────────────────────────────
 
   const handleLoginClick = useCallback(() => {
     setHasStartedLogin(true);
+    setAuthDialogOpen(true);
     initializeWallet();
   }, [initializeWallet]);
+
+  const handleMobileLoginClick = useCallback(() => {
+    setAuthDialogOpen(true);
+    startMobileLogin();
+  }, [startMobileLogin]);
 
   const handleResetLogin = useCallback(() => {
     setHasStartedLogin(false);
     setCertificateError(null);
     setIsCheckingCertificates(false);
     isFetchingRef.current = false;
+    setAuthDialogOpen(false);
     resetWalletState();
     resetMobileLogin();
   }, [resetWalletState, resetMobileLogin]);
 
   const checkUserCertificates = useCallback(async () => {
     if (!userWallet || !userPubKey) return;
-    if (isFetchingRef.current) return; // prevent double-fire (StrictMode / re-render races)
+    if (isFetchingRef.current) return;
 
     isFetchingRef.current = true;
     setIsCheckingCertificates(true);
@@ -79,7 +130,6 @@ export default function WalletLogin() {
       }
 
       const nonce = await createNonce(userWallet, BACKEND_PUBLIC_KEY);
-
       const success = await walletLogin(userPubKey, certificate, userData, nonce);
 
       if (success) {
@@ -87,7 +137,6 @@ export default function WalletLogin() {
       } else {
         setCertificateError('Authentication failed. Please try again.');
       }
-
     } catch (error: any) {
       console.error('Certificate check failed:', error);
       setCertificateError('Unable to check certificates. Please approve the request in your wallet.');
@@ -97,16 +146,17 @@ export default function WalletLogin() {
     }
   }, [userWallet, userPubKey, walletLogin, navigate]);
 
-  // Redirect if already authenticated
+  // ── Effects (unchanged) ────────────────────────────────────────
+
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/leaderboard');
     }
   }, [isAuthenticated, navigate]);
 
-  // Auto-connect after account creation (wallet already initialised — skip to cert check)
   useEffect(() => {
     if (comingFromAccountCreation && !hasStartedLogin) {
+      setAuthDialogOpen(true);
       if (userWallet && userPubKey) {
         setHasStartedLogin(true);
       } else {
@@ -115,300 +165,491 @@ export default function WalletLogin() {
     }
   }, [comingFromAccountCreation, hasStartedLogin, userWallet, userPubKey, handleLoginClick]);
 
-  // Check certificates once wallet is connected
   useEffect(() => {
     if (userWallet && userPubKey && hasStartedLogin) {
       checkUserCertificates();
     }
   }, [userWallet, userPubKey, hasStartedLogin, checkUserCertificates]);
 
-  // Auto-start mobile QR when arriving from the wallet error page
   useEffect(() => {
     if (shouldStartMobileQR && loginStatus === 'idle') {
       resetWalletState();
+      setAuthDialogOpen(true);
       startMobileLogin();
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Navigate on successful mobile login
   useEffect(() => {
     if (loginStatus === 'done') navigate('/leaderboard');
   }, [loginStatus, navigate]);
 
-  // Navigate to account creation if mobile wallet has no Mycelia cert
   useEffect(() => {
     if (loginStatus === 'error' && loginError === 'NO_CERTIFICATE') {
       navigate('/create-account');
     }
   }, [loginStatus, loginError, navigate]);
 
-  const pageShell = (children: React.ReactNode) => (
-    <AuthBackground>
-      <div className="max-w-sm w-full">
-        <div className="text-center mb-4">
-          <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center mx-auto shadow-lg">
-            <span className="text-white font-bold text-2xl">B</span>
+  // ── Auth dialog content ────────────────────────────────────────
+
+  const isQRScanning = loginStatus === 'scanning' || loginStatus === 'authenticating';
+  const isAuthActive = hasStartedLogin || showMobileQR;
+
+  function renderAuthState() {
+    // QR scanning / authenticating
+    if (isQRScanning) {
+      return (
+        <div className="space-y-4">
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              {loginStatus === 'authenticating' ? 'Verifying...' : 'Scan with your mobile wallet'}
+            </DialogTitle>
+            <DialogDescription>
+              {loginStatus === 'authenticating'
+                ? 'Retrieving your identity and certificates'
+                : 'Open the wallet app on your phone and scan this code'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4">
+            {session?.qrDataUrl && loginStatus === 'scanning' ? (
+              <>
+                <img
+                  src={session.qrDataUrl}
+                  alt="Scan to connect mobile wallet"
+                  className="w-56 h-56 rounded-xl border border-border shadow-sm"
+                />
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  session.status === 'connected' ? 'bg-secondary text-green-fresh' : 'bg-amber-50 text-amber-700'
+                }`}>
+                  {session.status === 'connected' ? 'Connected' : 'Waiting for scan...'}
+                </span>
+              </>
+            ) : (
+              <div className="w-56 h-56 bg-muted rounded-xl animate-pulse" />
+            )}
+            {loginStatus === 'authenticating' && (
+              <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-primary" />
+            )}
+            <Button variant="outline" onClick={handleResetLogin} className="w-full mt-2">
+              Cancel
+            </Button>
           </div>
         </div>
-        {children}
-      </div>
-    </AuthBackground>
-  );
+      );
+    }
 
-  // Mobile QR — scanning (QR code displayed, desktop only)
-  if (loginStatus === 'scanning' || loginStatus === 'authenticating') {
-    return (
-      <AuthBackground>
-        <div className="w-full max-w-2xl">
-          <div className="text-center mb-4">
-            <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center mx-auto shadow-lg">
-              <span className="text-white font-bold text-2xl">B</span>
-            </div>
-          </div>
-          <div className="flex gap-4 items-stretch">
-            {/* QR card */}
-            <Card className="flex-1">
-              <CardHeader className="pb-2 text-center">
-                <CardTitle>
-                  {loginStatus === 'authenticating' ? 'Verifying…' : 'Scan with your mobile wallet'}
-                </CardTitle>
-                <CardDescription>
-                  {loginStatus === 'authenticating'
-                    ? 'Retrieving your identity and certificates'
-                    : 'Open the Mycelia app on your phone and scan this code'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center gap-4">
-                {session?.qrDataUrl && loginStatus === 'scanning' ? (
-                  <>
-                    <img
-                      src={session.qrDataUrl}
-                      alt="Scan to connect mobile wallet"
-                      className="w-56 h-56 rounded-xl border border-gray-200 shadow-sm"
-                    />
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      session.status === 'connected' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {session.status === 'connected' ? 'Connected' : 'Waiting for scan…'}
-                    </span>
-                  </>
-                ) : (
-                  <div className="w-56 h-56 bg-gray-100 rounded-xl animate-pulse" />
-                )}
-                {loginStatus === 'authenticating' && (
-                  <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-green-600" />
-                )}
-                <Button variant="outline" onClick={resetMobileLogin} className="w-full mt-2">
-                  Cancel
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Instructions card */}
-            <Card className="w-64 shrink-0 bg-green-50 border-green-200 self-start">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-green-800">How to connect</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm text-green-900">
-                <p>Scan the QR with your camera, or open the Mycelia app, go to the <strong>Connections</strong> tab and scan from there.</p>
-                <p>Once connected, any action requests will pop up on your mobile device.</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </AuthBackground>
-    );
-  }
-
-  // Mobile QR — error state
-  if (loginStatus === 'error' && loginError && loginError !== 'NO_CERTIFICATE') {
-    return pageShell(
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Connection failed</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+    // Mobile QR error
+    if (loginStatus === 'error' && loginError && loginError !== 'NO_CERTIFICATE') {
+      return (
+        <div className="space-y-4">
+          <DialogHeader>
+            <DialogTitle className="font-display">Connection failed</DialogTitle>
+          </DialogHeader>
           <Alert variant="destructive">
             <AlertDescription>{loginError}</AlertDescription>
           </Alert>
-          <Button onClick={startMobileLogin} className="w-full bg-green-600 hover:bg-green-700">
-            Try Again
-          </Button>
-          <Button variant="outline" onClick={resetMobileLogin} className="w-full">
-            Back
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
+          <div className="flex flex-col gap-2">
+            <Button onClick={() => { resetMobileLogin(); startMobileLogin(); }} className="w-full">
+              Try Again
+            </Button>
+            <Button variant="outline" onClick={handleResetLogin} className="w-full">
+              Back
+            </Button>
+          </div>
+        </div>
+      );
+    }
 
-  // Show error state if max retries exceeded
-  if (maxRetriesExceeded) {
-    return pageShell(
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Couldn't connect to your wallet</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+    // Max retries exceeded
+    if (maxRetriesExceeded) {
+      return (
+        <div className="space-y-4">
+          <DialogHeader>
+            <DialogTitle className="font-display">Couldn't connect</DialogTitle>
+          </DialogHeader>
           <Alert variant="destructive">
             <AlertDescription>
-              Unable to connect to wallet. Please ensure your wallet is unlocked and try again.
+              Unable to connect to your wallet. Please ensure it's unlocked and try again.
             </AlertDescription>
           </Alert>
-          <Button onClick={() => window.location.reload()} className="w-full bg-green-600 hover:bg-green-700">
+          <Button onClick={() => window.location.reload()} className="w-full">
             Retry
           </Button>
-        </CardContent>
-      </Card>
-    );
-  }
+        </div>
+      );
+    }
 
-  // Show certificate error with retry
-  if (certificateError && hasStartedLogin) {
-    return pageShell(
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Certificate check failed</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+    // Certificate error
+    if (certificateError && hasStartedLogin) {
+      return (
+        <div className="space-y-4">
+          <DialogHeader>
+            <DialogTitle className="font-display">Verification failed</DialogTitle>
+          </DialogHeader>
           <Alert variant="destructive">
             <AlertDescription>{certificateError}</AlertDescription>
           </Alert>
           <Button
             onClick={checkUserCertificates}
             disabled={isCheckingCertificates}
-            className="w-full bg-green-600 hover:bg-green-700"
+            className="w-full"
           >
-            {isCheckingCertificates ? 'Checking…' : 'Try Again'}
+            {isCheckingCertificates ? 'Checking...' : 'Try Again'}
           </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Show connecting state
-  if (hasStartedLogin && isConnecting) {
-    return pageShell(
-      <Card>
-        <CardContent className="pt-6 pb-6 text-center space-y-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto" />
-          <p className="font-semibold text-gray-800">Connecting to your wallet…</p>
-          <p className="text-sm text-gray-500">Please approve the connection request</p>
-          {retryCount > 0 && (
-            <p className="text-xs text-gray-400">Retry attempt {retryCount}…</p>
-          )}
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Show checking certificates state
-  if (hasStartedLogin && isCheckingCertificates) {
-    return pageShell(
-      <Card>
-        <CardContent className="pt-6 pb-6 text-center space-y-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto" />
-          <p className="font-semibold text-gray-800">Verifying your certificate…</p>
-          <p className="text-sm text-gray-500">Checking your Brixit identity</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Default: Show welcome screen with login button (modal overlays it when needed)
-  return (
-    <AuthBackground>
-      <div className="max-w-4xl w-full">
-
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <span className="text-white font-bold text-3xl">B</span>
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Welcome to BRIX
-          </h1>
-          <p className="text-xl text-gray-600">
-            Track and share bionutrient scores from around the world
-          </p>
         </div>
+      );
+    }
 
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="relative flex items-center justify-center">
-              <CardTitle className="text-2xl">Join BRIX</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/help')}
-                className="absolute right-0 text-gray-400 hover:text-gray-600 flex items-center gap-1 text-xs"
+    // Connecting
+    if (hasStartedLogin && isConnecting) {
+      return (
+        <div className="text-center space-y-4 py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+          <div>
+            <p className="font-semibold text-foreground">Connecting to your wallet...</p>
+            <p className="text-sm text-muted-foreground mt-1">Please approve the connection request</p>
+            {retryCount > 0 && (
+              <p className="text-xs text-muted-foreground mt-2">Retry attempt {retryCount}...</p>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Checking certificates
+    if (hasStartedLogin && isCheckingCertificates) {
+      return (
+        <div className="text-center space-y-4 py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+          <div>
+            <p className="font-semibold text-foreground">Verifying your identity...</p>
+            <p className="text-sm text-muted-foreground mt-1">Checking your credentials</p>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  }
+
+  // ── Motion helpers ─────────────────────────────────────────────
+
+  const fadeUp = prefersReducedMotion
+    ? {}
+    : { initial: { opacity: 0, y: 24 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: '-60px' }, transition: { duration: 0.5 } };
+
+  const stagger = prefersReducedMotion
+    ? {}
+    : { initial: 'hidden', whileInView: 'visible', viewport: { once: true, margin: '-60px' }, variants: { hidden: {}, visible: { transition: { staggerChildren: 0.12 } } } };
+
+  const staggerChild = prefersReducedMotion
+    ? {}
+    : { variants: { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.45 } } } };
+
+  // ── Render ─────────────────────────────────────────────────────
+
+  return (
+    <>
+      <div className="min-h-screen overflow-x-hidden">
+
+        {/* ═══ Section 1: Hero ═══════════════════════════════════ */}
+        <section
+          className="relative flex items-center overflow-hidden"
+          style={{ background: `radial-gradient(ellipse at 30% 20%, #244536 0%, var(--green-deep) 70%)` }}
+        >
+          <div className="w-full max-w-6xl mx-auto px-5 py-20 desktop:py-28">
+            <div className="grid desktop:grid-cols-2 gap-12 desktop:gap-16 items-center">
+
+              {/* Left: copy */}
+              <motion.div {...fadeUp}>
+                <p className="uppercase tracking-[0.2em] text-sm font-medium mb-4" style={{ color: '#7a9b82' }}>
+                  Real food. Real nutrition.
+                </p>
+                <h1
+                  className="font-display font-bold text-white leading-[1.12] mb-6"
+                  style={{ fontSize: 'clamp(2.125rem, 9vw, 3.25rem)' }}
+                >
+                  Finally know if your food is{' '}
+                  <em className="italic" style={{ color: 'var(--green-light)' }}>actually</em>{' '}
+                  nutritious.
+                </h1>
+                <p className="text-base desktop:text-lg leading-relaxed mb-8 max-w-md" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                  BRIX measures the nutrient density of fresh produce — so you can shop smarter, feed your family better, and share what you discover.
+                </p>
+
+                <div className="flex flex-col gap-3 mb-6">
+                  <Button
+                    onClick={handleLoginClick}
+                    size="lg"
+                    className="bg-green-fresh hover:bg-green-mid text-white h-auto py-4 px-7 text-base font-medium gap-2 rounded-xl w-full max-w-md"
+                  >
+                    Start tracking my food
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="h-auto py-4 px-7 text-base rounded-xl w-full max-w-md border-white/20 bg-transparent text-white/70 hover:text-white hover:bg-white/5"
+                    onClick={() => document.getElementById('community')?.scrollIntoView({ behavior: 'smooth' })}
+                  >
+                    Browse scores near me
+                  </Button>
+                </div>
+
+                <p className="text-sm" style={{ color: '#6b8a73' }}>
+                  Free &middot; No credit card &middot; Your data is yours
+                </p>
+              </motion.div>
+
+              {/* Right: illustrative score cards (desktop only) */}
+              <motion.div
+                className="hidden desktop:flex flex-col gap-4"
+                {...(prefersReducedMotion ? {} : { initial: { opacity: 0, x: 40 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true }, transition: { duration: 0.6, delay: 0.2 } })}
               >
-                <HelpCircle className="w-4 h-4" />
-                How it works
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="text-center p-4">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <TrendingUp className="w-6 h-6 text-green-600" />
-                </div>
-                <h3 className="font-semibold mb-2">Track Brix Levels</h3>
-                <p className="text-sm text-gray-600">
-                  Submit and view bionutrient scores from farms and stores worldwide
-                </p>
-              </div>
-              <div className="text-center p-4">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Wallet className="w-6 h-6 text-green-600" />
-                </div>
-                <h3 className="font-semibold mb-2">Secure Identity</h3>
-                <p className="text-sm text-gray-600">
-                  Login securely using your BSV wallet and Mycelia certificate
-                </p>
-              </div>
-              <div className="text-center p-4">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Lock className="w-6 h-6 text-green-600" />
-                </div>
-                <h3 className="font-semibold mb-2">Privacy First</h3>
-                <p className="text-sm text-gray-600">
-                  Your data is protected by blockchain-based authentication
-                </p>
-              </div>
+                <ScoreCard product="Organic Carrots" origin="Green Valley Farm, OR" score={18.4} rating="Excellent" />
+                <ScoreCard product="Supermarket Tomatoes" origin="Generic Grocery, CA" score={5.2} rating="Poor" />
+              </motion.div>
             </div>
 
-            <div className="pt-4 flex flex-col gap-3">
+            {/* Stats strip */}
+            <motion.div
+              className="mt-16 desktop:mt-20 grid grid-cols-3 max-w-md desktop:max-w-xl mx-auto desktop:mx-0 border-t border-white/10 pt-8"
+              {...(prefersReducedMotion ? {} : { initial: { opacity: 0 }, whileInView: { opacity: 1 }, viewport: { once: true }, transition: { duration: 0.5, delay: 0.35 } })}
+            >
+              <Stat value="14,280+" label="scores submitted" />
+              <Stat value="342" label="farms tracked" />
+              <Stat value="38" label="countries" />
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ═══ Section 2: What is BRIX? ══════════════════════════ */}
+        <section className="py-20 desktop:py-28" style={{ backgroundColor: 'var(--cream)' }}>
+          <div className="max-w-5xl mx-auto px-5">
+            <div className="grid desktop:grid-cols-2 gap-12 desktop:gap-16 items-start">
+              {/* Left column — text */}
+              <div>
+                <motion.div className="mb-8" {...fadeUp}>
+                  <p className="uppercase tracking-[0.2em] text-sm font-medium mb-3" style={{ color: 'var(--green-fresh)' }}>
+                    What is a brix score?
+                  </p>
+                  <h2 className="font-display text-3xl desktop:text-4xl font-bold" style={{ color: 'var(--text-dark)' }}>
+                    A number that tells you how{' '}
+                    <em style={{ color: 'var(--green-fresh)' }}>good</em>{' '}
+                    your food really is
+                  </h2>
+                </motion.div>
+
+                <motion.div className="space-y-5" {...fadeUp}>
+                  <p className="text-lg leading-relaxed" style={{ color: 'var(--text-mid)' }}>
+                    The Brix scale measures the sugar and nutrient content of fresh produce. A high score means your food is packed with minerals and vitamins. A low score means it looks fine but doesn't deliver much.
+                  </p>
+                  <p className="text-lg leading-relaxed" style={{ color: 'var(--text-mid)' }}>
+                    Supermarket carrots often score 4–6. A carrot from a well-managed farm can score 18. Same vegetable. Very different nutrition. Now you can know before you buy.
+                  </p>
+                </motion.div>
+              </div>
+
+              {/* Right column — score guide card */}
+              <motion.div
+                className="rounded-2xl p-6 desktop:p-8 shadow-sm"
+                style={{ backgroundColor: 'white' }}
+                {...fadeUp}
+              >
+                <p className="uppercase tracking-[0.15em] text-xs font-medium mb-6" style={{ color: 'var(--text-muted)' }}>
+                  Score Guide
+                </p>
+
+                <div className="space-y-6">
+                  {/* Excellent */}
+                  <div className="flex items-start gap-5">
+                    <p className="text-3xl font-display font-bold shrink-0 w-16" style={{ color: 'var(--green-mid)' }}>16+</p>
+                    <div className="flex-1">
+                      <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>Excellent nutrition</p>
+                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Rich in minerals. The best you can buy.</p>
+                      <div className="h-0.5 w-12 mt-3 rounded-full" style={{ backgroundColor: 'var(--green-mid)' }} />
+                    </div>
+                  </div>
+
+                  {/* Good */}
+                  <div className="flex items-start gap-5">
+                    <p className="text-3xl font-display font-bold shrink-0 w-16" style={{ color: 'var(--gold)' }}>8–15</p>
+                    <div className="flex-1">
+                      <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>Good — above average</p>
+                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Better than most supermarket produce.</p>
+                      <div className="h-0.5 w-12 mt-3 rounded-full" style={{ backgroundColor: 'var(--gold)' }} />
+                    </div>
+                  </div>
+
+                  {/* Poor */}
+                  <div className="flex items-start gap-5">
+                    <p className="text-3xl font-display font-bold shrink-0 w-16" style={{ color: 'var(--score-poor)' }}>1–7</p>
+                    <div className="flex-1">
+                      <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>Poor — common in supermarkets</p>
+                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Looks fine, but doesn't deliver much.</p>
+                      <div className="h-0.5 w-12 mt-3 rounded-full" style={{ backgroundColor: 'var(--score-poor)' }} />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ Section 3: Community Scores ═══════════════════════ */}
+        <section id="community" className="py-20 desktop:py-28" style={{ backgroundColor: 'var(--green-mist)' }}>
+          <div className="max-w-5xl mx-auto px-5">
+            <motion.div className="mb-10" {...fadeUp}>
+              <p className="uppercase tracking-[0.2em] text-sm font-medium mb-3" style={{ color: 'var(--green-fresh)' }}>
+                Community
+              </p>
+              <h2 className="font-display text-3xl desktop:text-4xl font-bold" style={{ color: 'var(--text-dark)' }}>
+                What people are finding
+              </h2>
+              <p className="text-base mt-2" style={{ color: 'var(--text-muted)' }}>
+                Tap any score to see the full details.
+              </p>
+            </motion.div>
+
+            <motion.div {...stagger} className="grid desktop:grid-cols-3 gap-5">
+              <motion.div {...staggerChild}>
+                <FeedCard product="Biodynamic Tomatoes" location="Hopp Farm · Basel" score={19.2} user="Sandra K." rating="Excellent" />
+              </motion.div>
+              <motion.div {...staggerChild}>
+                <FeedCard product="Organic Apples" location="Migros Oerlikon" score={9.0} user="Marie R." rating="Good" />
+              </motion.div>
+              <motion.div {...staggerChild}>
+                <FeedCard product="Baby Leaf Salad" location="Coop Geneva" score={4.5} user="Céline L." rating="Poor" />
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ═══ Section 4: Mission ════════════════════════════════ */}
+        <section className="py-24 desktop:py-32" style={{ background: `radial-gradient(ellipse at 70% 80%, #244536 0%, var(--green-deep) 70%)` }}>
+          <div className="max-w-2xl mx-auto px-5 text-center">
+            <motion.div {...fadeUp}>
+              <p className="uppercase tracking-[0.2em] text-sm font-medium mb-5" style={{ color: 'var(--green-fresh)' }}>
+                Our Mission
+              </p>
+              <h2
+                className="font-display font-bold text-white leading-tight mb-6"
+                style={{ fontSize: 'clamp(2rem, 5vw, 3rem)' }}
+              >
+                Every score you submit helps{' '}
+                <em style={{ color: 'var(--green-light)' }}>another family</em>{' '}
+                eat better
+              </h2>
+              <p className="text-lg leading-relaxed mb-10" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                Good food knowledge shouldn't be locked away. When you share a score, you're not just helping yourself — you're changing what your whole community reaches for.
+              </p>
               <Button
                 onClick={handleLoginClick}
-                disabled={isConnecting}
-                className="w-full bg-green-600 hover:bg-green-700 h-auto py-4 flex flex-col items-center gap-1"
+                size="lg"
+                className="bg-green-fresh hover:bg-green-mid text-white h-auto py-4 px-10 text-base font-medium gap-2 rounded-xl"
               >
-                <span className="flex items-center gap-2 text-lg">
-                  <Wallet className="w-5 h-5" />
-                  Get Started
-                </span>
-                <span className="text-xs font-normal opacity-80">Securely sign in with your device</span>
+                Join 8,400 conscious shoppers
+                <ArrowRight className="w-4 h-4" />
               </Button>
+            </motion.div>
+          </div>
+        </section>
 
+        {/* ═══ Section 5: Sign Up ════════════════════════════════ */}
+        <section className="py-20 desktop:py-28" style={{ backgroundColor: 'var(--cream)' }}>
+          <div className="max-w-3xl mx-auto px-5">
+            <motion.div className="text-center mb-12" {...fadeUp}>
+              <h2 className="font-display text-3xl desktop:text-4xl font-bold mb-4" style={{ color: 'var(--text-dark)' }}>
+                Your account is yours alone — forever
+              </h2>
+              <p className="text-lg leading-relaxed" style={{ color: 'var(--text-mid)' }}>
+                Instead of a username and password, you get a private key that only you hold. Think of it like a digital fingerprint — it proves you're you without trusting anyone else with your data.
+              </p>
+            </motion.div>
+
+            <motion.div {...stagger} className="grid desktop:grid-cols-3 gap-6 mb-12">
+              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-white border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--green-pale)' }}>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--green-deep)' }}>
+                  <KeyRound className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>No password to forget</h3>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>Your wallet handles authentication. No emails, no resets, no breaches.</p>
+              </motion.div>
+              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-white border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--green-pale)' }}>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--green-deep)' }}>
+                  <ShieldCheck className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>Your data is never sold</h3>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>Scores are public, but your identity stays private unless you choose otherwise.</p>
+              </motion.div>
+              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-white border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--green-pale)' }}>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--green-deep)' }}>
+                  <MonitorSmartphone className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>Works on phone or computer</h3>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>Connect from any device. Your wallet travels with you.</p>
+              </motion.div>
+            </motion.div>
+
+            <motion.div className="flex flex-col items-center gap-3" {...fadeUp}>
               {!isMobile && (
                 <Button
-                  variant="outline"
-                  onClick={startMobileLogin}
-                  className="w-full flex items-center justify-center gap-2"
+                  onClick={handleLoginClick}
+                  size="lg"
+                  className="bg-green-fresh hover:bg-green-mid text-white h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
                 >
-                  <Smartphone className="w-4 h-4" />
-                  Connect via mobile QR
+                  Connect with desktop wallet
                 </Button>
               )}
-            </div>
-          </CardContent>
-        </Card>
+              <Button
+                onClick={handleMobileLoginClick}
+                variant="outline"
+                size="lg"
+                className="h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
+              >
+                <Smartphone className="w-4 h-4" />
+                Connect with my phone
+              </Button>
+              <button
+                onClick={() => navigate('/leaderboard')}
+                className="text-sm underline underline-offset-4 mt-2 hover:opacity-70 transition-opacity"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                Browse scores without an account
+              </button>
+            </motion.div>
+          </div>
+        </section>
 
-        <p className="text-center text-xs text-gray-500">
-          Secured by BSV Blockchain
-        </p>
+        {/* ═══ Section 6: Footer ═════════════════════════════════ */}
+        <footer className="py-5" style={{ backgroundColor: 'var(--green-deep)' }}>
+          <div className="max-w-5xl mx-auto px-5 flex flex-col desktop:flex-row items-center justify-between gap-4">
+            <span className="font-display font-bold text-white tracking-wide">BRIX</span>
+            <nav className="flex items-center gap-6 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              <span className="hover:text-white/80 cursor-pointer transition-colors">About</span>
+              <button onClick={() => navigate('/help')} className="hover:text-white/80 transition-colors">How it works</button>
+              <span className="hover:text-white/80 cursor-pointer transition-colors">Privacy</span>
+              <span className="hover:text-white/80 cursor-pointer transition-colors">Terms</span>
+              <span className="hover:text-white/80 cursor-pointer transition-colors">Contact</span>
+            </nav>
+            <p className="flex items-center gap-1.5 text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--green-fresh)' }} />
+              Secured by BSV Blockchain
+            </p>
+          </div>
+        </footer>
       </div>
-    </AuthBackground>
+
+      {/* ═══ Auth Dialog ═════════════════════════════════════════ */}
+      <Dialog
+        open={authDialogOpen && isAuthActive}
+        onOpenChange={(open) => {
+          if (!open) handleResetLogin();
+        }}
+      >
+        <DialogContent className={isQRScanning ? 'max-w-2xl' : 'max-w-md'}>
+          {renderAuthState()}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
