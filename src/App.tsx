@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { WalletProvider } from "./contexts/WalletContext";
@@ -14,6 +15,7 @@ import WalletLogin from "./pages/WalletLogin";
 import CreateAccount from "./pages/CreateAccount";
 import WalletError from "./pages/WalletError";
 import Help from "./pages/Help";
+import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
@@ -52,6 +54,7 @@ const RootContent = () => {
         <Route path="/create-account" element={<CreateAccount />} />
         <Route path="/wallet-error" element={<WalletError />} />
         <Route path="/help" element={<Help />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<NotFound />} />
 
         {/* Protected routes */}
@@ -117,10 +120,11 @@ const RootContent = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
         <WalletRelayProvider>
           <WalletProvider>
             <AuthProvider>
@@ -133,7 +137,8 @@ const App = () => (
           </WalletProvider>
         </WalletRelayProvider>
       </BrowserRouter>
-    </TooltipProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

@@ -20,6 +20,13 @@
     --text-muted: #7a9b82;
     --score-poor: #c0392b;
 
+    /* ── Badge tiers ─────────────────────────────────── */
+    --badge-gold-bg: #fef9ee;
+    --badge-gold-text: #a07c1e;
+    --badge-amber-bg: #fef3e2;
+    --badge-amber-text: #b8860b;
+    --badge-poor-bg: #fdecea;
+
     /* ── Typography ──────────────────────────────────── */
     --font-display: 'Lora', Georgia, serif;
     --font-body: 'DM Sans', system-ui, sans-serif;
@@ -41,7 +48,7 @@
     --secondary-foreground: 140 28% 14%;
 
     --muted: 136 60% 96%;           /* green-mist #f0faf2 */
-    --muted-foreground: 140 13% 54%; /* text-muted #7a9b82 */
+    --muted-foreground: 144 14% 38%; /* darker muted ~#536e5a */
 
     --accent: 136 60% 96%;
     --accent-foreground: 140 28% 14%;
@@ -66,23 +73,45 @@
   }
 
   .dark {
+    /* ── BRIXIT palette (dark overrides) ──────────── */
+    --green-deep: #1a3a2a;       /* keep for branded elements (logo, badges) */
+    --green-mid: #40916c;        /* slightly brighter for contrast */
+    --green-fresh: #52b788;      /* brighter links/buttons */
+    --green-light: #74c69d;      /* keep */
+    --green-pale: #243d30;       /* dark border / subtle bg */
+    --green-mist: #132a1e;       /* dark section bg */
+    --cream: #0f1f16;            /* dark page bg */
+    --gold: #d4b65c;             /* brighter gold */
+    --text-dark: #e2ede6;        /* light primary text */
+    --text-mid: #a5c4ad;         /* lighter secondary text */
+    --text-muted: #6b9b78;       /* labels/placeholders */
+    --score-poor: #e74c3c;       /* brighter red */
+
+    /* ── Badge tiers (dark) ──────────────────────── */
+    --badge-gold-bg: #332a0f;
+    --badge-gold-text: #d4b65c;
+    --badge-amber-bg: #33260a;
+    --badge-amber-text: #d4a830;
+    --badge-poor-bg: #331512;
+
+    /* ── shadcn semantic tokens ──────────────────── */
     --background: 150 30% 8%;
     --foreground: 136 60% 96%;
 
-    --card: 150 30% 10%;
+    --card: 150 28% 12%;
     --card-foreground: 136 60% 96%;
 
-    --popover: 150 30% 10%;
+    --popover: 150 28% 12%;
     --popover-foreground: 136 60% 96%;
 
-    --primary: 153 38% 41%;
+    --primary: 153 38% 45%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 150 20% 16%;
     --secondary-foreground: 136 60% 96%;
 
     --muted: 150 20% 16%;
-    --muted-foreground: 140 13% 54%;
+    --muted-foreground: 140 13% 60%;
 
     --accent: 150 20% 16%;
     --accent-foreground: 136 60% 96%;
@@ -90,18 +119,18 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 150 20% 18%;
-    --input: 150 20% 18%;
-    --ring: 153 38% 41%;
+    --border: 150 20% 20%;
+    --input: 150 20% 20%;
+    --ring: 153 38% 45%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 150 30% 8%;
+    --sidebar-foreground: 136 60% 96%;
+    --sidebar-primary: 153 38% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 150 20% 16%;
+    --sidebar-accent-foreground: 136 60% 96%;
+    --sidebar-border: 150 20% 20%;
+    --sidebar-ring: 153 38% 45%;
   }
 
   html {

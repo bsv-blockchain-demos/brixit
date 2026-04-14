@@ -386,8 +386,8 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md md:max-w-3xl flex flex-col items-center justify-center h-64">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
-          <p className="mt-4 text-gray-600">Loading data...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-green-fresh" />
+          <p className="mt-4 text-text-muted-green">Loading data...</p>
         </DialogContent>
       </Dialog>
     );
@@ -419,7 +419,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               variant="ghost"
               size="icon"
               onClick={() => setIsEditing(true)}
-              className="hover:bg-gray-100"
+              className="hover:bg-green-mist"
             >
               <Edit className="w-5 h-5" />
               <span className="sr-only">Edit</span>
@@ -433,21 +433,21 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
 
         <div className="max-h-[80vh] overflow-y-auto px-1">
           {(error || staticDataError) && (
-            <div className="flex items-center p-4 bg-red-100 text-red-800 rounded-lg">
+            <div className="flex items-center p-4 bg-destructive/10 text-destructive rounded-lg">
               <AlertCircle className="w-5 h-5 mr-3" />
               <p>{error || staticDataError}</p>
             </div>
           )}
 
           <div className="space-y-6">
-            <div className="bg-gray-50 rounded-lg p-6 text-center">
+            <div className="bg-green-mist rounded-lg p-6 text-center">
               <div className="flex items-center justify-center space-x-4 mb-4">
                 <div className={`${colorClass} w-16 h-16 rounded-full flex items-center justify-center`}>
                   <span className="text-white font-bold text-xl">{initialDataPoint.brixLevel}</span>
                 </div>
                 <div className="text-left">
-                  <p className="text-2xl font-bold text-gray-900">{initialDataPoint.brixLevel} BRIX</p>
-                  <p className="text-sm text-gray-600">Refractometer Reading</p>
+                  <p className="text-2xl font-bold text-text-dark">{initialDataPoint.brixLevel} BRIX</p>
+                  <p className="text-sm text-text-muted-green">Refractometer Reading</p>
                   <Badge className={`${colorClass} mt-1 text-white`}>
                     {qualityText} Quality
                   </Badge>
@@ -455,13 +455,13 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               </div>
             </div>
 
-            <div className="pt-4 border-t border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Submission Details</h3>
+            <div className="pt-4 border-t border-green-pale">
+              <h3 className="text-lg font-bold text-text-dark mb-4">Submission Details</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col space-y-2 p-4 bg-gray-50 rounded-lg">
-                  <Label className="text-sm text-gray-600 flex items-center space-x-2">
-                    <Droplets className="w-5 h-5 text-gray-600" />
+                <div className="flex flex-col space-y-2 p-4 bg-green-mist rounded-lg">
+                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                    <Droplets className="w-5 h-5 text-text-muted-green" />
                     <span>BRIX Level</span>
                   </Label>
                   {isEditing ? (
@@ -470,9 +470,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     <p className="font-medium">{initialDataPoint.brixLevel}</p>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2 p-4 bg-gray-50 rounded-lg">
-                  <Label className="text-sm text-gray-600 flex items-center space-x-2">
-                    <Package className="w-5 h-5 text-gray-600" />
+                <div className="flex flex-col space-y-2 p-4 bg-green-mist rounded-lg">
+                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                    <Package className="w-5 h-5 text-text-muted-green" />
                     <span>Crop Type</span>
                   </Label>
                   {isEditing ? (
@@ -488,9 +488,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     <p className="font-medium">{initialDataPoint.cropType}</p>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2 p-4 bg-gray-50 rounded-lg">
-                  <Label className="text-sm text-gray-600 flex items-center space-x-2">
-                    <Tag className="w-5 h-5 text-gray-600" />
+                <div className="flex flex-col space-y-2 p-4 bg-green-mist rounded-lg">
+                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                    <Tag className="w-5 h-5 text-text-muted-green" />
                     <span>Brand</span>
                   </Label>
                   {isEditing ? (
@@ -506,9 +506,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     <p className="font-medium">{initialDataPoint.brandName || 'N/A'}</p>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2 p-4 bg-gray-50 rounded-lg">
-                  <Label className="text-sm text-gray-600 flex items-center space-x-2">
-                    <Building className="w-5 h-5 text-gray-600" />
+                <div className="flex flex-col space-y-2 p-4 bg-green-mist rounded-lg">
+                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                    <Building className="w-5 h-5 text-text-muted-green" />
                     <span>Location (Store)</span>
                   </Label>
                   {isEditing ? (
@@ -524,9 +524,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     <p className="font-medium">{initialDataPoint.locationName || 'N/A'}</p>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2 p-4 bg-gray-50 rounded-lg">
-                  <Label className="text-sm text-gray-600 flex items-center space-x-2">
-                    <MapIcon className="w-5 h-5 text-gray-600" />
+                <div className="flex flex-col space-y-2 p-4 bg-green-mist rounded-lg">
+                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                    <MapIcon className="w-5 h-5 text-text-muted-green" />
                     <span>Place (Address)</span>
                   </Label>
                   {isEditing ? (
@@ -539,15 +539,15 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                   ) : (
                     <>
                       <p className="font-medium">{initialDataPoint.placeName}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-text-muted-green">
                         {initialDataPoint.latitude?.toFixed(4)}, {initialDataPoint.longitude?.toFixed(4)}
                       </p>
                     </>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2 p-4 bg-gray-50 rounded-lg">
-                  <Label className="text-sm text-gray-600 flex items-center space-x-2">
-                    <Calendar className="w-5 h-5 text-gray-600" />
+                <div className="flex flex-col space-y-2 p-4 bg-green-mist rounded-lg">
+                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                    <Calendar className="w-5 h-5 text-text-muted-green" />
                     <span>Assessment Date</span>
                   </Label>
                   {isEditing ? (
@@ -556,9 +556,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     <p className="font-medium">{new Date(initialDataPoint.submittedAt).toLocaleDateString()}</p>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2 p-4 bg-gray-50 rounded-lg">
-                  <Label className="text-sm text-gray-600 flex items-center space-x-2">
-                    <Calendar className="w-5 h-5 text-gray-600" />
+                <div className="flex flex-col space-y-2 p-4 bg-green-mist rounded-lg">
+                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                    <Calendar className="w-5 h-5 text-text-muted-green" />
                     <span>Purchase Date</span>
                   </Label>
                   {isEditing ? (
@@ -567,9 +567,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     <p className="font-medium">{initialDataPoint.purchaseDate || 'N/A'}</p>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2 p-4 bg-gray-50 rounded-lg">
-                  <Label className="text-sm text-gray-600 flex items-center space-x-2">
-                    <Tag className="w-5 h-5 text-gray-600" />
+                <div className="flex flex-col space-y-2 p-4 bg-green-mist rounded-lg">
+                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                    <Tag className="w-5 h-5 text-text-muted-green" />
                     <span>Variety</span>
                   </Label>
                   {isEditing ? (
@@ -580,22 +580,22 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-4 mt-4">
-                <h3 className="font-semibold text-gray-900 mb-2 flex items-center space-x-2">
-                  <FileText className="w-5 h-5 text-gray-600" />
+              <div className="bg-green-mist rounded-lg p-4 mt-4">
+                <h3 className="font-semibold text-text-dark mb-2 flex items-center space-x-2">
+                  <FileText className="w-5 h-5 text-text-muted-green" />
                   <span>Outlier Notes</span>
                 </h3>
                 {isEditing ? (
                   <Textarea value={outlierNotes} onChange={e => setOutlierNotes(e.target.value)} rows={4} />
                 ) : (
-                  <p className="text-gray-700">{initialDataPoint.outlier_notes || 'No notes for this submission.'}</p>
+                  <p className="text-text-mid">{initialDataPoint.outlier_notes || 'No notes for this submission.'}</p>
                 )}
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-4 mt-4 flex items-center justify-between">
+              <div className="bg-green-mist rounded-lg p-4 mt-4 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <CheckCircle className={`w-5 h-5 ${verified ? 'text-green-500' : 'text-gray-400'}`} />
-                  <Label htmlFor="verified-checkbox" className="text-sm font-semibold text-gray-700">
+                  <CheckCircle className={`w-5 h-5 ${verified ? 'text-green-fresh' : 'text-text-muted-green'}`} />
+                  <Label htmlFor="verified-checkbox" className="text-sm font-semibold text-text-mid">
                     Verified
                   </Label>
                 </div>
@@ -608,32 +608,32 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     className="w-4 h-4"
                   />
                 ) : (
-                  <Badge variant={verified ? 'default' : 'secondary'} className={`${verified ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400'}`}>
+                  <Badge variant={verified ? 'default' : 'secondary'} className={`${verified ? 'bg-green-fresh hover:bg-green-mid' : 'bg-text-muted-green'}`}>
                     {verified ? 'Yes' : 'No'}
                   </Badge>
                 )}
               </div>
 
               {verified && (
-                <div className="mt-2 text-sm text-gray-500 flex items-center justify-end">
+                <div className="mt-2 text-sm text-text-muted-green flex items-center justify-end">
                   <User className="w-4 h-4 mr-1" />
                   <span>Verified by: {verifiedBy ? formatUsername(verifiedBy) : 'N/A'}</span>
                 </div>
               )}
             </div>
 
-            <div className="pt-4 border-t border-gray-100">
-              <h3 className="flex items-center space-x-2 text-lg font-bold text-gray-900 mb-4">
-                <ImageIcon className="w-6 h-6 text-gray-600" />
+            <div className="pt-4 border-t border-green-pale">
+              <h3 className="flex items-center space-x-2 text-lg font-bold text-text-dark mb-4">
+                <ImageIcon className="w-6 h-6 text-text-muted-green" />
                 <span>Reference Images ({imageUrls.length})</span>
               </h3>
               {imagesLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                  <span className="ml-3 text-gray-600">Loading images...</span>
+                  <Loader2 className="w-8 h-8 animate-spin text-green-fresh" />
+                  <span className="ml-3 text-text-muted-green">Loading images...</span>
                 </div>
               ) : imageUrls.length === 0 ? (
-                <p className="text-gray-500 italic">No images added for this submission.</p>
+                <p className="text-text-muted-green italic">No images added for this submission.</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {imageUrls.map((url: string, index: number) => (
@@ -655,7 +655,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+        <div className="flex justify-between items-center pt-4 border-t border-green-pale">
           {isEditing ? (
             <>
               <Button onClick={handleSave} disabled={saving}>

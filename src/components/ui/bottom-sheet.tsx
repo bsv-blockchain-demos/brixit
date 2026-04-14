@@ -25,7 +25,7 @@ export function BottomSheet({
       <Sheet.Portal>
         <Sheet.Content
           className={cn(
-            "fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-2xl bg-white shadow-lg animate-in slide-in-from-bottom duration-300",
+            "fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-2xl bg-card shadow-lg animate-in slide-in-from-bottom duration-300",
             "h-[85vh] sm:max-w-md sm:mx-auto",
             className
           )}

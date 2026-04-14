@@ -555,10 +555,10 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     );
 
     return (
-      <div key={key} className="flex justify-between items-start py-3 border-b border-gray-100 last:border-b-0">
+      <div key={key} className="flex justify-between items-start py-3 border-b border-green-pale last:border-b-0">
         <div className="flex flex-col min-w-0 flex-1">
           <span className="font-semibold text-sm truncate">{safeStr(sub.cropLabel ?? sub.cropType ?? 'Unknown Crop')}</span>
-          <span className="text-xs text-gray-500 mt-1 truncate">
+          <span className="text-xs text-text-muted-green mt-1 truncate">
             {safeStr(sub.brandLabel ?? sub.brandName ?? 'Unknown Brand')} —{' '}
             {sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString() : '-'}
           </span>
@@ -587,7 +587,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           <Button variant="ghost" size="icon" onClick={() => setSelectedEntry(null)}>
             <ArrowLeft size={20} />
           </Button>
-          <h4 className="font-semibold text-base">
+          <h4 className="font-display font-semibold text-base">
             Submissions for {selectedEntry.label} ({filteredSubmissions.length})
           </h4>
         </div>
@@ -595,7 +595,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           {filteredSubmissions.length > 0 ? (
             filteredSubmissions.map((sub) => renderSubmissionItem(sub, sub.id))
           ) : (
-            <div className="text-center text-gray-500 py-8">No submissions found.</div>
+            <div className="text-center text-text-muted-green py-8">No submissions found.</div>
           )}
         </div>
       </div>
@@ -606,11 +606,11 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     if (!selectedPoint) {
       return (
         <div className="flex flex-col items-center justify-center h-full text-center p-6">
-          <MapPin className="w-16 h-16 text-gray-300 mb-4" />
-          <p className="text-xl font-semibold text-gray-700">Ready to Explore?</p>
-          <p className="text-sm text-gray-500 mt-2">
-            <span className="md:hidden">Tap on a marker to view detailed bionutrient rankings.</span>
-            <span className="hidden md:inline">Click on a marker to view detailed bionutrient rankings and data for that location.</span>
+          <MapPin className="w-16 h-16 text-green-light mb-4" />
+          <p className="text-xl font-display font-semibold text-text-dark">Ready to Explore?</p>
+          <p className="text-sm text-text-muted-green mt-2">
+            <span className="md:hidden">Tap on a marker to view scores and rankings.</span>
+            <span className="hidden md:inline">Click on a marker to view scores and rankings for that location.</span>
           </p>
         </div>
       );
@@ -648,7 +648,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                 <h4 className="font-semibold mb-3 text-base">Top Crops</h4>
                 <div className="space-y-2">
                   {placeCropRankings.length === 0 ? (
-                    <div className="text-sm text-gray-500 p-3 text-center">No crop data.</div>
+                    <div className="text-sm text-text-muted-green p-3 text-center">No crop data.</div>
                   ) : (
                     placeCropRankings.map((c) => {
                       const normalized = Number(c.average_normalized_score ?? 1.5);
@@ -657,7 +657,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                       return (
                         <div
                           key={label}
-                          className="p-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 rounded-lg flex justify-between items-center transition-colors"
+                          className="p-3 cursor-pointer hover:bg-green-mist active:bg-green-pale rounded-lg flex justify-between items-center transition-colors"
                           onClick={() =>
                             setSelectedEntry({
                               type: 'crop',
@@ -668,7 +668,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                         >
                           <div className="min-w-0 flex-1">
                             <div className="font-medium truncate">{label}</div>
-                            <div className="text-xs text-gray-500">Submissions: {c.submission_count ?? '-'}</div>
+                            <div className="text-xs text-text-muted-green">Submissions: {c.submission_count ?? '-'}</div>
                           </div>
                           <div
                             className={`w-14 h-7 rounded-full text-white flex items-center justify-center text-sm font-semibold ${rankColor.bgClass}`}
@@ -688,7 +688,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                 <h4 className="font-semibold mb-3 text-base">Top Brands</h4>
                 <div className="space-y-2">
                   {placeBrandRankings.length === 0 ? (
-                    <div className="text-sm text-gray-500 p-3 text-center">No brand data.</div>
+                    <div className="text-sm text-text-muted-green p-3 text-center">No brand data.</div>
                   ) : (
                     placeBrandRankings.map((b) => {
                       const normalized = Number(b.average_normalized_score ?? 1.5);
@@ -697,7 +697,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                       return (
                         <div
                           key={label}
-                          className="p-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 rounded-lg flex justify-between items-center transition-colors"
+                          className="p-3 cursor-pointer hover:bg-green-mist active:bg-green-pale rounded-lg flex justify-between items-center transition-colors"
                           onClick={() =>
                             setSelectedEntry({
                               type: 'brand',
@@ -708,7 +708,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                         >
                           <div className="min-w-0 flex-1">
                             <div className="font-medium truncate">{label}</div>
-                            <div className="text-xs text-gray-500">Submissions: {b.submission_count ?? '-'}</div>
+                            <div className="text-xs text-text-muted-green">Submissions: {b.submission_count ?? '-'}</div>
                           </div>
                           <div
                             className={`w-14 h-7 rounded-full text-white flex items-center justify-center text-sm font-semibold ${rankColor.bgClass}`}
@@ -740,7 +740,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       <div ref={mapContainer} className="flex-1 relative">
         {isMapLoaded && zoomLevel > 0 && zoomLevel < MIN_ZOOM_TO_QUERY && (
           <div className="absolute inset-0 z-10 flex items-start justify-center pointer-events-none">
-            <div className="mt-4 bg-white/90 backdrop-blur border border-gray-200 text-gray-800 px-4 py-2 rounded-md shadow-sm text-sm">
+            <div className="mt-4 bg-card/90 backdrop-blur border border-border text-foreground px-4 py-2 rounded-md shadow-sm text-sm">
               Zoom in to load submissions
             </div>
           </div>
@@ -748,14 +748,14 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       </div>
 
      {/* Desktop Right Panel (persistent, integrated into layout) */}
-      <div className="hidden md:flex md:w-96 flex-col border-l border-gray-200 bg-white shadow-inner">
+      <div className="hidden md:flex md:w-96 flex-col border-l border-border bg-card shadow-inner">
         <div className="p-4 flex-shrink-0 flex flex-row items-start justify-between border-b">
           <div className="min-w-0">
-            <h2 className="text-lg font-semibold truncate">
+            <h2 className="text-lg font-display font-semibold truncate">
               {locTitle || "Location details"}
             </h2>
             {selectedPoint && (
-              <p className="text-sm text-gray-500 mt-1 truncate">
+              <p className="text-sm text-text-muted-green mt-1 truncate">
                 {`${street ? `${street}, ` : ""}${city}${
                   city && state ? `, ${state}` : state ? `, ${state}` : ""
                 }`}
@@ -793,7 +793,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                   onClick={() => setMobileSheetOpen(true)}
                   variant="default"
                   size="sm"
-                  className="shadow-lg bg-blue-600 text-white hover:bg-blue-700"
+                  className="shadow-lg bg-primary text-primary-foreground hover:bg-green-mid"
                 >
                   Explore BRIX Data
                 </Button>

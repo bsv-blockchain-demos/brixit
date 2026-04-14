@@ -21,7 +21,7 @@ const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 function ScoreCard({ product, origin, score, rating }: { product: string; origin: string; score: number; rating: 'Excellent' | 'Good' | 'Poor' }) {
   const color = rating === 'Excellent' ? 'var(--green-mid)' : rating === 'Good' ? 'var(--gold)' : 'var(--score-poor)';
   return (
-    <div className="rounded-2xl p-5 shadow-lg" style={{ backgroundColor: 'white' }}>
+    <div className="rounded-2xl p-5 shadow-lg" style={{ backgroundColor: 'hsl(var(--card))' }}>
       <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>{origin}</p>
       <p className="text-lg font-display font-semibold mt-0.5" style={{ color: 'var(--text-dark)' }}>{product}</p>
       <div className="flex items-end gap-2 mt-3">
@@ -38,7 +38,7 @@ function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="text-center border-l border-white/10 first:border-l-0 px-4">
       <p className="font-display text-2xl desktop:text-3xl font-bold text-white">{value}</p>
-      <p className="text-xs mt-1" style={{ color: '#6b8a73' }}>{label}</p>
+      <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
     </div>
   );
 }
@@ -69,6 +69,7 @@ export default function WalletLogin() {
   const [hasStartedLogin, setHasStartedLogin] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const isFetchingRef = useRef(false);
+  const hasAttemptedRef = useRef(false);
 
   const comingFromAccountCreation = searchParams.get('autocert') === '1';
   const shouldStartMobileQR = searchParams.get('qr') === '1';
@@ -96,6 +97,7 @@ export default function WalletLogin() {
     setCertificateError(null);
     setIsCheckingCertificates(false);
     isFetchingRef.current = false;
+    hasAttemptedRef.current = false;
     setAuthDialogOpen(false);
     resetWalletState();
     resetMobileLogin();
@@ -130,16 +132,18 @@ export default function WalletLogin() {
       }
 
       const nonce = await createNonce(userWallet, BACKEND_PUBLIC_KEY);
-      const success = await walletLogin(userPubKey, certificate, userData, nonce);
+      const result = await walletLogin(userPubKey, certificate, userData, nonce);
 
-      if (success) {
+      if (result.success) {
         navigate('/leaderboard');
       } else {
-        setCertificateError('Authentication failed. Please try again.');
+        setCertificateError(result.error || 'Authentication failed. Please try again.');
       }
     } catch (error: any) {
       console.error('Certificate check failed:', error);
-      setCertificateError('Unable to check certificates. Please approve the request in your wallet.');
+      const msg = error?.message || String(error);
+      // Surface backend messages (e.g. rate-limit) instead of a generic fallback
+      setCertificateError(msg || 'Unable to check certificates. Please approve the request in your wallet.');
     } finally {
       setIsCheckingCertificates(false);
       isFetchingRef.current = false;
@@ -166,7 +170,8 @@ export default function WalletLogin() {
   }, [comingFromAccountCreation, hasStartedLogin, userWallet, userPubKey, handleLoginClick]);
 
   useEffect(() => {
-    if (userWallet && userPubKey && hasStartedLogin) {
+    if (userWallet && userPubKey && hasStartedLogin && !hasAttemptedRef.current) {
+      hasAttemptedRef.current = true;
       checkUserCertificates();
     }
   }, [userWallet, userPubKey, hasStartedLogin, checkUserCertificates]);
@@ -361,7 +366,7 @@ export default function WalletLogin() {
 
               {/* Left: copy */}
               <motion.div {...fadeUp}>
-                <p className="uppercase tracking-[0.2em] text-sm font-medium mb-4" style={{ color: '#7a9b82' }}>
+                <p className="uppercase tracking-[0.2em] text-sm font-medium mb-4" style={{ color: 'var(--text-muted)' }}>
                   Real food. Real nutrition.
                 </p>
                 <h1
@@ -395,7 +400,7 @@ export default function WalletLogin() {
                   </Button>
                 </div>
 
-                <p className="text-sm" style={{ color: '#6b8a73' }}>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                   Free &middot; No credit card &middot; Your data is yours
                 </p>
               </motion.div>
@@ -452,7 +457,7 @@ export default function WalletLogin() {
               {/* Right column — score guide card */}
               <motion.div
                 className="rounded-2xl p-6 desktop:p-8 shadow-sm"
-                style={{ backgroundColor: 'white' }}
+                style={{ backgroundColor: 'hsl(var(--card))' }}
                 {...fadeUp}
               >
                 <p className="uppercase tracking-[0.15em] text-xs font-medium mb-6" style={{ color: 'var(--text-muted)' }}>
@@ -567,21 +572,21 @@ export default function WalletLogin() {
             </motion.div>
 
             <motion.div {...stagger} className="grid desktop:grid-cols-3 gap-6 mb-12">
-              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-white border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--green-pale)' }}>
+              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--green-pale)' }}>
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--green-deep)' }}>
                   <KeyRound className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>No password to forget</h3>
                 <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>Your wallet handles authentication. No emails, no resets, no breaches.</p>
               </motion.div>
-              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-white border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--green-pale)' }}>
+              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--green-pale)' }}>
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--green-deep)' }}>
                   <ShieldCheck className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>Your data is never sold</h3>
                 <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>Scores are public, but your identity stays private unless you choose otherwise.</p>
               </motion.div>
-              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-white border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--green-pale)' }}>
+              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--green-pale)' }}>
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--green-deep)' }}>
                   <MonitorSmartphone className="w-5 h-5 text-white" />
                 </div>
@@ -591,24 +596,24 @@ export default function WalletLogin() {
             </motion.div>
 
             <motion.div className="flex flex-col items-center gap-3" {...fadeUp}>
+              <Button
+                onClick={handleLoginClick}
+                size="lg"
+                className="bg-green-fresh hover:bg-green-mid text-white h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
+              >
+                {isMobile ? 'Connect with mobile browser' : 'Connect with desktop wallet'}
+              </Button>
               {!isMobile && (
                 <Button
-                  onClick={handleLoginClick}
+                  onClick={handleMobileLoginClick}
+                  variant="outline"
                   size="lg"
-                  className="bg-green-fresh hover:bg-green-mid text-white h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
+                  className="h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
                 >
-                  Connect with desktop wallet
+                  <Smartphone className="w-4 h-4" />
+                  Connect with my phone
                 </Button>
               )}
-              <Button
-                onClick={handleMobileLoginClick}
-                variant="outline"
-                size="lg"
-                className="h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
-              >
-                <Smartphone className="w-4 h-4" />
-                Connect with my phone
-              </Button>
               <button
                 onClick={() => navigate('/leaderboard')}
                 className="text-sm underline underline-offset-4 mt-2 hover:opacity-70 transition-opacity"
@@ -622,19 +627,14 @@ export default function WalletLogin() {
 
         {/* ═══ Section 6: Footer ═════════════════════════════════ */}
         <footer className="py-5" style={{ backgroundColor: 'var(--green-deep)' }}>
-          <div className="max-w-5xl mx-auto px-5 flex flex-col desktop:flex-row items-center justify-between gap-4">
-            <span className="font-display font-bold text-white tracking-wide">BRIX</span>
-            <nav className="flex items-center gap-6 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          <div className="max-w-5xl mx-auto px-5 grid grid-cols-3 items-center">
+            <span className="font-display font-bold text-white tracking-wide text-sm">BRIX</span>
+            <nav className="flex items-center justify-center gap-6 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
               <span className="hover:text-white/80 cursor-pointer transition-colors">About</span>
               <button onClick={() => navigate('/help')} className="hover:text-white/80 transition-colors">How it works</button>
-              <span className="hover:text-white/80 cursor-pointer transition-colors">Privacy</span>
-              <span className="hover:text-white/80 cursor-pointer transition-colors">Terms</span>
-              <span className="hover:text-white/80 cursor-pointer transition-colors">Contact</span>
+              <button onClick={() => navigate('/contact')} className="hover:text-white/80 transition-colors">Contact</button>
             </nav>
-            <p className="flex items-center gap-1.5 text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
-              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--green-fresh)' }} />
-              Secured by BSV Blockchain
-            </p>
+            <div />
           </div>
         </footer>
       </div>

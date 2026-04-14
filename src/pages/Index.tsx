@@ -53,25 +53,25 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-cream flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* App Logo and Title */}
         <div className="flex justify-center items-center space-x-3 mb-8">
-          <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center shadow-lg">
+          <div className="w-12 h-12 bg-green-fresh rounded-xl flex items-center justify-center shadow-lg">
             <span className="text-white font-bold text-2xl">B</span>
           </div>
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">BRIX</h1>
-            <p className="text-sm text-gray-600">Bionutrient Refractometer App</p>
+            <h1 className="text-3xl font-bold text-text-dark">BRIX</h1>
+            <p className="text-sm text-text-mid">Bionutrient Refractometer App</p>
           </div>
         </div>
         
         <Card className="shadow-xl">
           <CardHeader>
-            <CardTitle className="text-center text-2xl font-bold text-gray-900">
+            <CardTitle className="text-center text-2xl font-bold text-text-dark">
               Sign in to continue
             </CardTitle>
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-sm text-text-mid">
               Access your BRIX measurement data and contribute to the community.
             </p>
           </CardHeader>
@@ -88,7 +88,7 @@ const Index = () => {
                 <Label htmlFor="email">Email address</Label>
                 <div className="mt-1 relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-gray-400" />
+                    <Mail className="h-5 w-5 text-text-muted" />
                   </div>
                   <Input
                     id="email"
@@ -108,7 +108,7 @@ const Index = () => {
                 <Label htmlFor="password">Password</Label>
                 <div className="mt-1 relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
+                    <Lock className="h-5 w-5 text-text-muted" />
                   </div>
                   <Input
                     id="password"
@@ -127,9 +127,9 @@ const Index = () => {
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400" />
+                      <EyeOff className="h-5 w-5 text-text-muted" />
                     ) : (
-                      <Eye className="h-5 w-5 text-gray-400" />
+                      <Eye className="h-5 w-5 text-text-muted" />
                     )}
                   </button>
                 </div>
@@ -138,18 +138,18 @@ const Index = () => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-green-600 hover:bg-green-700"
+                className="w-full bg-green-fresh hover:bg-green-mid"
               >
                 {isLoading ? 'Signing in...' : 'Sign in'}
               </Button>
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-text-mid">
                 Don't have an account?{' '}
-                <Link 
-                  to="/register" 
-                  className="font-medium text-green-600 hover:text-green-500"
+                <Link
+                  to="/register"
+                  className="font-medium text-green-fresh hover:text-green-mid"
                 >
                   Sign up
                 </Link>

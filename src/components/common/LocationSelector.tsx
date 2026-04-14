@@ -371,7 +371,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       {/* Country Selection (Combobox) */}
       <div>
         <Label htmlFor="country">
-          Country {required && <span className="text-red-500">*</span>}
+          Country {required && <span className="text-destructive">*</span>}
         </Label>
         <Popover open={countryPopoverOpen} onOpenChange={setCountryPopoverOpen}>
           <PopoverTrigger asChild>
@@ -446,7 +446,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       {value.countryCode && value.country !== ALL_COUNTRIES && (
         <div>
           <Label htmlFor="state">
-            State/Province {required && <span className="text-red-500">*</span>}
+            State/Province {required && <span className="text-destructive">*</span>}
           </Label>
           <Popover open={statePopoverOpen} onOpenChange={setStatePopoverOpen}>
             <PopoverTrigger asChild>
@@ -502,7 +502,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       {value.countryCode && value.state && value.country !== ALL_COUNTRIES && (
         <div>
           <Label htmlFor="city">
-            City {required && <span className="text-red-500">*</span>}
+            City {required && <span className="text-destructive">*</span>}
           </Label>
           <Popover open={cityPopoverOpen} onOpenChange={setCityPopoverOpen}>
             <PopoverTrigger asChild>
@@ -550,7 +550,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
                             <div className="flex flex-col">
                               <span>{city.name}</span>
                               {city.population && city.population > 0 && (
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-text-muted">
                                   Population: {city.population.toLocaleString()}
                                 </span>
                               )}

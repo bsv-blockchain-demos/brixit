@@ -27,32 +27,32 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
   return (
     <TableRow
       key={submission.id}
-      className="hover:bg-gray-100 transition-colors duration-200"
+      className="hover:bg-green-mist transition-colors duration-200"
       onClick={() => onOpenModal(submission)} // Make the whole row clickable
     >
       {/* Crop / Variety / Brand / Store Cell */}
       <TableCell className="py-3 px-4 break-words">
         <div>
-          <div className="font-semibold text-gray-900">{submission.cropType}</div>
+          <div className="font-semibold text-text-dark">{submission.cropType}</div>
 
           {submission.variety && (
-            <div className="text-xs text-gray-500">{submission.variety}</div>
+            <div className="text-xs text-text-muted-green">{submission.variety}</div>
           )}
 
           {submission.brandName && (
-            <div className="text-xs text-gray-800 mt-1">Brand: {submission.brandName}</div>
+            <div className="text-xs text-text-dark mt-1">Brand: {submission.brandName}</div>
           )}
 
           {submission.locationName && (
-            <div className="text-xs text-gray-700 flex items-center space-x-1 mt-1">
-              <MapPin className="w-3 h-3 text-gray-500" />
+            <div className="text-xs text-text-mid flex items-center space-x-1 mt-1">
+              <MapPin className="w-3 h-3 text-text-muted-green" />
               <span>{submission.locationName}</span>
             </div>
           )}
 
           {/* NEW: Visual indicator for owned submissions */}
           {isOwner && (
-            <Badge className="flex items-center space-x-1 px-2 py-1 rounded-md bg-blue-50 text-blue-700 font-medium text-xs mt-2">
+            <Badge className="flex items-center space-x-1 px-2 py-1 rounded-md bg-green-pale text-green-fresh font-medium text-xs mt-2">
               <User className="w-3 h-3" />
               <span>Your Submission</span>
             </Badge>
@@ -72,8 +72,8 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       {/* Location / Notes Cell */}
       <TableCell className="py-3 px-4 break-words">
         <div className="space-y-1">
-          <div className="flex items-center space-x-1 text-sm text-gray-700">
-            <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
+          <div className="flex items-center space-x-1 text-sm text-text-mid">
+            <MapPin className="w-4 h-4 text-text-muted-green flex-shrink-0" />
             <span className="font-medium">{submission.locationName}</span>
           </div>
           {/* Smart address display logic */}
@@ -86,7 +86,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
               (state && streetAddress.toLowerCase().includes(state.toLowerCase()))
             )) {
               return (
-                <div className="text-xs text-gray-600 ml-5 truncate" title={streetAddress}>
+                <div className="text-xs text-text-muted-green ml-5 truncate" title={streetAddress}>
                   {streetAddress}
                 </div>
               );
@@ -97,7 +97,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
             if (addressParts.length > 0) {
               const fullAddress = addressParts.join(', ');
               return (
-                <div className="text-xs text-gray-600 ml-5 truncate" title={fullAddress}>
+                <div className="text-xs text-text-muted-green ml-5 truncate" title={fullAddress}>
                   {fullAddress}
                 </div>
               );
@@ -107,8 +107,8 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
           })()}
         </div>
         {submission.outlier_notes && (
-          <div className="flex items-center space-x-1 text-xs text-gray-500 mt-2 line-clamp-2">
-            <MessageSquare className="w-3 h-3 flex-shrink-0 text-gray-400" />
+          <div className="flex items-center space-x-1 text-xs text-text-muted-green mt-2 line-clamp-2">
+            <MessageSquare className="w-3 h-3 flex-shrink-0 text-text-muted-green" />
             <span className="truncate">{submission.outlier_notes}</span>
           </div>
         )}
@@ -116,8 +116,8 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
 
       {/* Assessment Date Cell */}
       <TableCell className="py-3 px-4">
-        <div className="flex items-center space-x-1 text-sm text-gray-700">
-          <Calendar className="w-4 h-4 text-gray-500" />
+        <div className="flex items-center space-x-1 text-sm text-text-mid">
+          <Calendar className="w-4 h-4 text-text-muted-green" />
           <span>{new Date(submission.submittedAt).toLocaleDateString()}</span>
         </div>
       </TableCell>
@@ -166,7 +166,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
               variant="ghost"
               size="sm"
               onClick={() => onDelete(submission.id)}
-              className="text-red-600 hover:text-red-800"
+              className="text-destructive hover:text-destructive/80"
               aria-label="Delete submission"
             >
               <Trash2 className="w-5 h-5" />
@@ -175,7 +175,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
             // If the owner cannot delete (i.e., it's verified and they are not an admin)
             isOwner && submission.verified && (
               <span title="Verified submissions cannot be deleted by non-admins." className="cursor-not-allowed">
-                <Button variant="ghost" size="sm" className="text-gray-400 opacity-70 cursor-not-allowed" disabled>
+                <Button variant="ghost" size="sm" className="text-text-muted-green opacity-70 cursor-not-allowed" disabled>
                   <Lock className="w-5 h-5" />
                 </Button>
               </span>

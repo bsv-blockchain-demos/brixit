@@ -18,7 +18,8 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Check, ChevronDown, X
+  Check, ChevronDown, X,
+  Loader2,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useFormattedSubmissionsCountQuery, useFormattedSubmissionsPageQuery } from '../../hooks/useSubmissions';
@@ -395,26 +396,32 @@ const DataTable: React.FC = () => {
 
   if (submissionsPageQuery.isLoading || submissionsCountQuery.isLoading || isLoadingStaticData) {
     return (
-      <div className="text-center py-12 text-gray-600">Loading data...</div>
+      <div className="text-center py-12 text-text-dark flex items-center justify-center gap-2">
+        <Loader2 className="w-5 h-5 animate-spin text-green-fresh" />
+        Loading data...
+      </div>
     );
   }
 
   if (submissionsPageQuery.error || submissionsCountQuery.error) {
     return (
-      <div className="text-center py-12 text-red-600">Error: Failed to load data.</div>
+      <div className="text-center py-12 text-destructive">Error: Failed to load data.</div>
     );
   }
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-bold text-gray-900">All Submissions</h2>
+        <div>
+          <h2 className="text-2xl font-display font-bold text-text-dark">All Submissions</h2>
+          <p className="text-text-dark mt-1">Browse community measurements across crops and locations</p>
+        </div>
         <Button
           variant="outline"
           size="sm"
           onClick={handleRefresh}
           disabled={cooldownSeconds > 0}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 border-green-pale text-green-deep hover:bg-green-mist"
         >
           <RefreshCw className={`w-4 h-4 ${submissionsPageQuery.isFetching ? 'animate-spin' : ''}`} />
           {cooldownSeconds > 0 ? `Refresh (${cooldownSeconds}s)` : 'Refresh'}
@@ -422,19 +429,19 @@ const DataTable: React.FC = () => {
       </div>
 
       {fromLeaderboard && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+        <div className="mb-4 p-3 bg-green-mist border border-green-pale rounded-md">
           <div className="flex items-center justify-between">
-            <p className="text-blue-800 text-sm">
+            <p className="text-text-dark text-sm">
               Showing filtered results from leaderboard selection
             </p>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 setFromLeaderboard(false);
                 navigate('/leaderboard');
               }}
-              className="text-blue-600 hover:text-blue-800"
+              className="text-green-fresh hover:text-green-mid"
             >
               ← Back to Leaderboard
             </Button>
@@ -444,10 +451,10 @@ const DataTable: React.FC = () => {
 
       <div className="mb-6 flex flex-col md:flex-row gap-4 items-center">
         <div className="relative w-full md:w-1/3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted-green" />
           <Input
             placeholder="Search by crop, submitter, location, notes..."
-            className="pl-9 pr-3 py-2 rounded-md border"
+            className="pl-9 pr-3 py-2 rounded-md border border-green-pale focus-visible:ring-green-fresh/30"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -455,20 +462,20 @@ const DataTable: React.FC = () => {
         <Button
           variant="outline"
           onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center space-x-2"
+          className="flex items-center space-x-2 border-green-pale text-green-deep hover:bg-green-mist"
         >
           <Filter className="w-4 h-4" />
           <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
         </Button>
         {filterSummary !== 'No active filters' && (
-          <Button variant="ghost" onClick={clearFilters} className="text-red-600">
+          <Button variant="ghost" onClick={clearFilters} className="text-destructive">
             Clear Filters ({filterSummary.split(', ').filter(f => f !== 'None').length})
           </Button>
         )}
       </div>
 
       {showFilters && (
-        <Card className="mb-6">
+        <Card className="mb-6 rounded-2xl border border-green-pale shadow-sm">
           <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <Label className="text-sm font-medium mb-2 block">Crop Types</Label>
@@ -703,12 +710,12 @@ const DataTable: React.FC = () => {
       )}
 
       {filterSummary !== 'No active filters' && (
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-text-dark mb-4">
           Applying filters: <span className="font-semibold">{filterSummary}</span>
         </p>
       )}
 
-      <Card>
+      <Card className="rounded-2xl border border-green-pale shadow-sm overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
@@ -749,7 +756,7 @@ const DataTable: React.FC = () => {
               <TableBody>
                 {currentItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={6} className="text-center py-8 text-text-mid">
                       No data found for the current filters.
                     </TableCell>
                   </TableRow>
@@ -781,16 +788,18 @@ const DataTable: React.FC = () => {
           variant="outline"
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
+          className="border-green-pale hover:bg-green-mist"
         >
           <ChevronLeft className="w-4 h-4 mr-2" /> Previous
         </Button>
-        <span className="text-sm text-gray-700">
+        <span className="text-sm text-text-dark">
           Page {currentPage} of {totalPages}
         </span>
         <Button
           variant="outline"
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
+          className="border-green-pale hover:bg-green-mist"
         >
           Next <ChevronRight className="w-4 h-4 ml-2" />
         </Button>

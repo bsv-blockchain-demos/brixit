@@ -234,8 +234,7 @@ router.post('/', async (req, res) => {
     });
   } catch (err) {
     console.error('[wallet-auth-verify] Error:', err);
-    const message = err instanceof Error ? err.message : 'Unknown error occurred';
-    res.status(500).json({ success: false, error: message });
+    res.status(500).json({ success: false, error: 'Wallet authentication failed. Please try again.' });
   }
 });
 

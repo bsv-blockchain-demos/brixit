@@ -124,8 +124,7 @@ router.post('/signCertificate', async (req: AuthRequest, res) => {
     });
   } catch (err) {
     console.error('[certifier] Signing failed:', err);
-    const message = err instanceof Error ? err.message : 'Certificate signing failed';
-    res.status(500).json({ error: message });
+    res.status(500).json({ error: 'Certificate signing failed. Please try again.' });
   }
 });
 

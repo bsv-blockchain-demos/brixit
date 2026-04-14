@@ -17,7 +17,7 @@ router.get('/me', requireAuth as any, async (req: AuthenticatedRequest, res: Res
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user!.sub },
-      include: { roles: true },
+      include: { roles: true, walletIdentity: true },
     });
 
     if (!user) {
@@ -29,6 +29,7 @@ router.get('/me', requireAuth as any, async (req: AuthenticatedRequest, res: Res
       id: user.id,
       email: user.email,
       display_name: user.displayName,
+      identity_key: user.walletIdentity?.identityKey ?? null,
       country: user.country,
       state: user.state,
       city: user.city,

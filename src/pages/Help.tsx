@@ -47,11 +47,11 @@ export default function Help() {
 
         {/* Header */}
         <div className="text-center">
-          <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+          <div className="w-12 h-12 bg-green-fresh rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
             <span className="text-white font-bold text-2xl">B</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">How BRIX works</h1>
-          <p className="text-gray-500 text-sm mt-1">Everything you need to know to get started</p>
+          <h1 className="text-2xl font-bold text-text-dark">How BRIX works</h1>
+          <p className="text-text-mid text-sm mt-1">Everything you need to know to get started</p>
         </div>
 
         {/* Info sections */}
@@ -59,30 +59,30 @@ export default function Help() {
           <Card key={title}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
-                <Icon className="w-5 h-5 text-green-600 shrink-0" />
+                <Icon className="w-5 h-5 text-green-fresh shrink-0" />
                 {title}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 leading-relaxed">{body}</p>
+              <p className="text-sm text-text-mid leading-relaxed">{body}</p>
             </CardContent>
           </Card>
         ))}
 
         {/* Getting started */}
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-green-pale bg-green-mist">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base text-green-800">Getting started</CardTitle>
+            <CardTitle className="text-base text-green-mid">Getting started</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <ol className="text-sm text-green-900 space-y-2 list-none">
+            <ol className="text-sm text-text-dark space-y-2 list-none">
               {[
                 'Download the Mycelia app on your phone.',
                 'Create your identity inside Mycelia — it only takes a minute.',
                 'Open BRIX from within the Mycelia app and you will be signed in automatically.',
               ].map((step, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <span className="w-5 h-5 rounded-full bg-green-600 text-white text-xs flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="w-5 h-5 rounded-full bg-green-fresh text-white text-xs flex items-center justify-center shrink-0 mt-0.5">
                     {i + 1}
                   </span>
                   {step}
@@ -92,7 +92,7 @@ export default function Help() {
             <div className="pt-2">
               <a
                 href="#"
-                className="inline-flex items-center gap-2 text-sm font-medium text-green-700 hover:text-green-800 underline underline-offset-2"
+                className="inline-flex items-center gap-2 text-sm font-medium text-green-fresh hover:text-green-mid underline underline-offset-2"
               >
                 <Smartphone className="w-4 h-4" />
                 Download Mycelia — coming soon
@@ -102,7 +102,7 @@ export default function Help() {
         </Card>
 
         {/* On desktop */}
-        <p className="text-center text-xs text-gray-400 pb-4">
+        <p className="text-center text-xs text-text-muted pb-4">
           On a desktop? You can still sign in by choosing <em>connect via mobile QR</em> on the login screen and scanning the code with your Mycelia app.
         </p>
 

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Plus, Beaker, CheckCircle, MapPin, AlertCircle, Lock } from 'lucide-react';
+import { Plus, Beaker, CheckCircle, MapPin, AlertCircle, Lock, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { deleteSubmission } from '../lib/fetchSubmissions';
@@ -172,13 +172,13 @@ const YourData: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-cream">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Card>
             <CardContent className="text-center py-12">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Please Log In</h2>
-              <p className="text-gray-600 mb-6">
+              <h2 className="text-2xl font-bold text-text-dark mb-2">Please Log In</h2>
+              <p className="text-text-dark mb-6">
                 You need to be logged in to view your data submissions.
               </p>
               <Link to="/login">
@@ -194,10 +194,13 @@ const YourData: React.FC = () => {
   // Combined loading state check
   if (isLoading || isLoadingStaticData) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-cream">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-          <p className="text-gray-600">Loading your submissions...</p>
+          <div className="flex items-center justify-center gap-2">
+            <Loader2 className="w-5 h-5 text-green-fresh animate-spin" />
+            <p className="text-text-dark">Loading your submissions...</p>
+          </div>
         </main>
       </div>
     );
@@ -205,7 +208,7 @@ const YourData: React.FC = () => {
 
   if (isError) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-cream">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
           <p className="text-red-600">Error: Failed to load your submissions.</p>
@@ -215,23 +218,23 @@ const YourData: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cream">
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-display font-bold text-text-dark mb-2">
               Your Data
             </h1>
-            <p className="text-gray-600">
+            <p className="text-text-dark">
               Manage and track your BRIX measurement submissions
             </p>
           </div>
 
           {canSubmit ? (
             <Link to="/data-entry">
-              <Button className="flex items-center space-x-2 bg-green-600 hover:bg-green-700">
+              <Button className="flex items-center space-x-2 bg-green-fresh hover:bg-green-mid">
                 <Plus className="w-4 h-4" />
                 <span>Add New Measurement</span>
               </Button>
@@ -255,7 +258,7 @@ const YourData: React.FC = () => {
           </TabsList>
 
           <TabsContent value="submissions">
-            <Card>
+            <Card className="rounded-2xl border border-green-pale shadow-sm">
               <CardHeader>
                 <CardTitle>Submitted Measurements ({totalCount})</CardTitle>
               </CardHeader>
@@ -264,13 +267,13 @@ const YourData: React.FC = () => {
                   <div className="text-center py-12">
                     {canSubmit ? (
                       <>
-                        <Beaker className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No submissions yet</h3>
-                        <p className="text-gray-600 mb-6">
+                        <Beaker className="w-16 h-16 text-green-fresh mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-text-dark mb-2">No submissions yet</h3>
+                        <p className="text-text-mid mb-6">
                           Start contributing by submitting your first BRIX measurement!
                         </p>
                         <Link to="/data-entry">
-                          <Button className="bg-green-600 hover:bg-green-700">
+                          <Button className="bg-green-fresh hover:bg-green-mid">
                             <Plus className="w-4 h-4 mr-2" />
                             Submit First Measurement
                           </Button>
@@ -278,9 +281,9 @@ const YourData: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Submissions are disabled</h3>
-                        <p className="text-gray-600 mb-6">
+                        <AlertCircle className="w-16 h-16 text-text-muted-green mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-text-dark mb-2">Submissions are disabled</h3>
+                        <p className="text-text-mid mb-6">
                           Your account currently has observer access, so you can browse data but can’t submit measurements yet.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -328,16 +331,18 @@ const YourData: React.FC = () => {
                     <div className="mt-6 flex items-center justify-between">
                       <Button
                         variant="outline"
+                        className="border-green-pale hover:bg-green-mist"
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
                       >
                         Previous
                       </Button>
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm text-text-dark">
                         Page {currentPage} of {totalPages}
                       </span>
                       <Button
                         variant="outline"
+                        className="border-green-pale hover:bg-green-mist"
                         onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
                       >
@@ -352,41 +357,47 @@ const YourData: React.FC = () => {
 
           <TabsContent value="stats">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
+              <Card className="rounded-2xl border border-green-pale shadow-sm">
                 <CardContent className="p-6">
-                  <div className="flex items-center space-x-2">
-                    <Beaker className="w-8 h-8 text-blue-600" />
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-green-deep rounded-xl p-2">
+                      <Beaker className="w-5 h-5 text-white" />
+                    </div>
                     <div>
-                      <p className="text-2xl font-bold">{totalCount}</p>
-                      <p className="text-sm text-gray-600">Total Submissions</p>
+                      <p className="text-2xl font-display font-bold text-text-dark">{totalCount}</p>
+                      <p className="text-sm text-text-mid">Total Submissions</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="rounded-2xl border border-green-pale shadow-sm">
                 <CardContent className="p-6">
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-green-deep rounded-xl p-2">
+                      <CheckCircle className="w-5 h-5 text-white" />
+                    </div>
                     <div>
-                      <p className="text-2xl font-bold">
+                      <p className="text-2xl font-display font-bold text-text-dark">
                         {verifiedCount}
                       </p>
-                      <p className="text-sm text-gray-600">Verified Measurements</p>
+                      <p className="text-sm text-text-mid">Verified Measurements</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="rounded-2xl border border-green-pale shadow-sm">
                 <CardContent className="p-6">
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="w-8 h-8 text-purple-600" />
+                  <div className="flex items-center space-x-3">
+                    <div className="bg-green-deep rounded-xl p-2">
+                      <MapPin className="w-5 h-5 text-white" />
+                    </div>
                     <div>
-                      <p className="text-2xl font-bold">
+                      <p className="text-2xl font-display font-bold text-text-dark">
                         {uniqueCropTypesCount}
                       </p>
-                      <p className="text-sm text-gray-600">Unique Crop Types</p>
+                      <p className="text-sm text-text-mid">Unique Crop Types</p>
                     </div>
                   </div>
                 </CardContent>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import Header from '../components/Layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -25,7 +26,7 @@ import {
 import { useToast } from '../hooks/use-toast';
 import { apiPost, apiFetch } from '@/lib/api';
 import ComboBoxAddable from '../components/ui/combo-box-addable';
-import Combobox from '../components/ui/combo-box'; 
+import Combobox from '../components/ui/combo-box';
 import LocationSearch from '../components/common/LocationSearch';
 import { useStaticData } from '../hooks/useStaticData';
 import { Slider } from '../components/ui/slider';
@@ -56,10 +57,22 @@ const FIELD_LABELS: Record<string, string> = {
   images: 'Images',
 };
 
+/** Returns color + label for a BRIX score tier */
+const getBrixTierStyle = (value: number): { color: string; label: string } => {
+  if (value >= 16) return { color: 'var(--green-mid)', label: 'Excellent' };
+  if (value >= 8) return { color: 'var(--gold)', label: 'Good' };
+  return { color: 'var(--score-poor)', label: 'Poor' };
+};
+
 const DataEntry = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const prefersReducedMotion = useReducedMotion();
+
+  const fadeUp = prefersReducedMotion ? {} : { initial: { opacity: 0, y: 24 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5 } };
+  const stagger = prefersReducedMotion ? {} : { initial: 'hidden' as const, animate: 'visible' as const, variants: { hidden: {}, visible: { transition: { staggerChildren: 0.1 } } } };
+  const staggerChild = prefersReducedMotion ? {} : { variants: { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } } };
 
   const { crops, brands, locations, isLoading: staticDataLoading, error: staticDataError, refreshData } = useStaticData();
 
@@ -117,13 +130,13 @@ const DataEntry = () => {
 
   const handleBrixChange = (value: number | number[]) => {
     const brixValue = Array.isArray(value) ? value[0] : value;
-    
+
     if (typeof brixValue !== 'number' || isNaN(brixValue)) {
       handleInputChange('brixLevel', 0);
     } else {
       handleInputChange('brixLevel', Math.min(Math.max(brixValue, 0), 100));
     }
-    
+
     if (errors.brixLevel) {
       setErrors(prev => ({ ...prev, brixLevel: '' }));
     }
@@ -235,7 +248,7 @@ const DataEntry = () => {
 
     if (purchaseDate > today) newErrors.purchaseDate = 'Purchase date cannot be in the future';
     if (measurementDate > today) newErrors.measurementDate = 'Assessment date cannot be in the future';
-    
+
     if (purchaseDate > measurementDate) {
       newErrors.purchaseDate = 'Purchase date should be before or same as assessment date';
     }
@@ -265,13 +278,13 @@ const DataEntry = () => {
       });
       return;
     }
-    
+
     setIsLoading(true);
 
     try {
       // First, create any pending brands and stores in the database
       await createPendingEntries();
-      
+
       // Clear pending lists since we've now created them
       setPendingBrands([]);
       setPendingStores([]);
@@ -309,11 +322,11 @@ const DataEntry = () => {
       );
 
       const { verified, submission_id } = result;
-      
+
       if (!submission_id) {
         throw new Error('Submission ID was not returned by the server.');
       }
-      
+
       // Handle image uploads via Express backend
       if (formData.images.length > 0) {
         const uploadData = new FormData();
@@ -341,21 +354,21 @@ const DataEntry = () => {
           console.error('Image upload error:', uploadErr);
         }
       }
-      
+
       if (verified) {
-        toast({ 
-          title: 'Submission successful', 
-          description: 'Your BRIX reading was auto-verified. Thank you for contributing!', 
+        toast({
+          title: 'Submission successful',
+          description: 'Your BRIX reading was auto-verified. Thank you for contributing!',
           variant: 'default'
         });
       } else {
-        toast({ 
+        toast({
           title: 'Submission received',
-          description: 'Your BRIX reading will be reviewed by an admin shortly.', 
-          variant: 'default' 
+          description: 'Your BRIX reading will be reviewed by an admin shortly.',
+          variant: 'default'
         });
       }
-      
+
       navigate('/your-data');
     } catch (err: any) {
       console.error(err);
@@ -369,10 +382,10 @@ const DataEntry = () => {
 
   if (staticDataLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--cream)' }}>
         <div className="text-center p-6">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto" />
-          <p className="mt-4 text-gray-600">Loading form data...</p>
+          <Loader2 className="w-12 h-12 animate-spin mx-auto" style={{ color: 'var(--green-fresh)' }} />
+          <p className="mt-4" style={{ color: 'var(--text-mid)' }}>Loading form data...</p>
         </div>
       </div>
     );
@@ -389,290 +402,313 @@ const DataEntry = () => {
     ...pendingStores.map(name => ({ name, label: name }))
   ];
 
+  const brixTier = getBrixTierStyle(formData.brixLevel);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--cream)' }}>
       <Header />
       <main className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8 pb-24">
-        <div className="text-center mb-8 md:mb-12">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+        <motion.div className="text-center mb-8 md:mb-12" {...fadeUp}>
+          <p className="uppercase tracking-[0.2em] text-sm font-medium mb-2" style={{ color: 'var(--green-fresh)' }}>
+            New Entry
+          </p>
+          <h1 className="text-3xl sm:text-4xl font-display font-bold mb-2" style={{ color: 'var(--text-dark)' }}>
             Submit BRIX Measurement
           </h1>
-          <p className="text-md text-gray-600 max-w-2xl mx-auto">
+          <p className="text-md max-w-2xl mx-auto" style={{ color: 'var(--text-mid)' }}>
             Record your bionutrient density measurement from refractometer readings
           </p>
-        </div>
+        </motion.div>
 
-        <Card className="shadow-2xl border-0">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl border-b">
-            <CardTitle className="flex items-center space-x-3 text-xl">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Upload className="w-6 h-6 text-blue-600" />
-              </div>
-              <span>New Measurement Entry</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-6 md:p-8">
-            <form className="space-y-6 sm:space-y-8" autoComplete="off">
-              <div className="border-l-4 border-blue-500 pl-4 sm:pl-6">
-                <div className="flex items-center space-x-2 mb-6">
-                  <h3 className="text-xl font-bold text-gray-900">Required Information</h3>
-                  <div className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                    Required
-                  </div>
+        <motion.div {...fadeUp}>
+          <Card className="rounded-2xl border shadow-sm" style={{ borderColor: 'var(--green-pale)' }}>
+            <CardHeader className="rounded-t-2xl border-b" style={{ backgroundColor: 'var(--green-mist)', borderColor: 'var(--green-pale)' }}>
+              <CardTitle className="flex items-center space-x-3 text-xl font-display font-bold" style={{ color: 'var(--text-dark)' }}>
+                <div className="p-2 rounded-xl" style={{ backgroundColor: 'var(--green-deep)' }}>
+                  <Upload className="w-6 h-6 text-white" />
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-8">
-                  {/* Crop Type - Using regular Combobox (no add new) */}
-                  <div className="relative">
-                    <Label htmlFor="cropType" className="flex items-center mb-2 text-sm font-semibold text-gray-700">
-                      <Package className="inline w-4 h-4 mr-2" />
-                      Crop Type <span className="ml-1 text-red-600">*</span>
-                    </Label>
-                    <Combobox
-                      items={crops}
-                      value={formData.cropType}
-                      onSelect={(value) => handleInputChange('cropType', value)}
-                      placeholder="Select crop type"
-                    />
-                    {errors.cropType && <p className="text-red-600 text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.cropType}</p>}
-                  </div>
-
-                  {/* Brand/Farm Name */}
-                  <div className="relative">
-                    <Label
-                      htmlFor="brand"
-                      className="flex items-center mb-2 text-sm font-semibold text-gray-700"
-                    >
-                      <Building2 className="inline w-4 h-4 mr-2 text-blue-600" />
-                      Farm / Brand Name <span className="ml-1 text-red-600">*</span>
-                    </Label>
-                    <ComboBoxAddable
-                      items={allBrands}
-                      value={formData.brand}
-                      onSelect={(value) => handleInputChange('brand', value)}
-                      onAddNew={handleAddBrand}
-                      placeholder="Select or enter farm/brand name"
-                    />
-                    <p className="text-xs text-gray-500 flex items-center mt-2 bg-blue-50 px-2 py-1 rounded-md border border-blue-100">
-                      <Info className="w-3 h-3 mr-1 text-blue-500" />
-                      The name of the <b>farm</b> or <b>brand</b> that grew the produce.  
-                      <span className="ml-1 hidden sm:inline">
-                        Press <kbd className="px-1 border rounded">Enter</kbd> to select,  
-                        <kbd className="px-1 border rounded">Shift+Enter</kbd> (or tap <b>+</b> on mobile) to add new.
-                      </span>
-                    </p>
-                    {errors.brand && (
-                      <p className="text-red-600 text-sm mt-2 flex items-center">
-                        <X className="w-4 h-4 mr-1" />
-                        {errors.brand}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Point of Purchase */}
-                  <div className="relative">
-                    <Label
-                      htmlFor="store"
-                      className="flex items-center mb-2 text-sm font-semibold text-gray-700"
-                    >
-                      <Store className="inline w-4 h-4 mr-2 text-indigo-600" />
-                      Point of Purchase <span className="ml-1 text-red-600">*</span>
-                    </Label>
-                    <ComboBoxAddable
-                      items={allStores}
-                      value={formData.store}
-                      onSelect={(value) => handleInputChange('store', value)}
-                      onAddNew={handleAddStore}
-                      placeholder="Select or enter point of purchase"
-                    />
-                    <p className="text-xs text-gray-500 flex items-center mt-2 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-100">
-                      <Info className="w-3 h-3 mr-1 text-indigo-500" />
-                      Where you <b>purchased</b> the item — e.g., grocery store,  
-                      co-op, farmers market, or CSA pickup.
-                    </p>
-                    {errors.store && (
-                      <p className="text-red-600 text-sm mt-2 flex items-center">
-                        <X className="w-4 h-4 mr-1" />
-                        {errors.store}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* BRIX Level */}
-                  <div>
-                    <Label htmlFor="brixLevel" className="flex items-center mb-2 text-sm font-semibold text-gray-700">
-                      <Droplets className="inline w-4 h-4 mr-2" />
-                      BRIX Level <span className="ml-1 text-red-600">*</span>
-                    </Label>
-                    <div className="flex items-center space-x-4">
-                    <Input
-                      id="brixLevel"
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="100"
-                      inputMode="decimal"
-                      value={isNaN(formData.brixLevel) ? '' : formData.brixLevel}
-                      onChange={(e) => {
-                        const parsed = parseFloat(e.target.value);
-                        handleBrixChange(isNaN(parsed) ? 0 : parsed);
-                      }}
-                      className={`w-24 text-center border-2 rounded-xl px-2 py-2 text-gray-900 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-200 hover:border-gray-300 ${errors.brixLevel ? 'border-red-400 bg-red-50 focus:border-red-500' : 'border-gray-200 focus:border-blue-500 bg-white'}`}
-                    />
-                    <Slider
-                      value={[formData.brixLevel]}
-                      onValueChange={handleBrixChange}
-                      max={100}
-                      step={0.1}
-                      className="flex-1"
-                    />
+                <span>New Measurement Entry</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-5 sm:p-8 md:p-10">
+              <motion.form className="space-y-10 sm:space-y-12" autoComplete="off" {...stagger}>
+                <motion.div className="border-l-4 pl-5 sm:pl-8" style={{ borderColor: 'var(--green-fresh)' }} {...staggerChild}>
+                  <div className="flex items-center space-x-2 mb-8">
+                    <h3 className="text-xl font-display font-bold" style={{ color: 'var(--text-dark)' }}>Required Information</h3>
+                    <div className="px-3 py-1 text-sm font-medium rounded-full" style={{ backgroundColor: 'var(--green-pale)', color: 'var(--green-mid)' }}>
+                      Required
                     </div>
-                    {errors.brixLevel && <p className="text-red-600 text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.brixLevel}</p>}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-8">
-                  {/* Location - using the enhanced LocationSearch component */}
-                  <div className="relative">
-                    <Label htmlFor="location" className="flex items-center mb-2 text-sm font-semibold text-gray-700">
-                      <MapPin className="inline w-4 h-4 mr-2" />
-                      Sample Location <span className="ml-1 text-red-600">*</span>
-                    </Label>
-                    <LocationSearch
-                      value={formData.location}
-                      onChange={e => handleInputChange('location', e.target.value)}
-                      onLocationSelect={handleLocationSelect}
-                    />
-                    {errors.location && <p className="text-red-600 text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.location}</p>}
                   </div>
 
-                  {/* Purchase Date */}
-                  <div>
-                    <Label htmlFor="purchaseDate" className="flex items-center mb-2 text-sm font-semibold text-gray-700">
-                      <Calendar className="inline w-4 h-4 mr-2" />
-                      Purchase Date <span className="ml-1 text-red-600">*</span>
-                    </Label>
-                    <Input
-                      id="purchaseDate"
-                      type="date"
-                      value={formData.purchaseDate}
-                      onChange={e => handleInputChange('purchaseDate', e.target.value)}
-                      max={new Date().toISOString().split('T')[0]}
-                      className={`w-full border-2 rounded-xl px-4 py-3 text-gray-900 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-200 hover:border-gray-300 ${errors.purchaseDate ? 'border-red-400 bg-red-50 focus:border-red-500' : 'border-gray-200 focus:border-blue-500 bg-white'}`}
-                    />
-                    {errors.purchaseDate && <p className="text-red-600 text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.purchaseDate}</p>}
-                  </div>
-                </div>
-              </div>
-
-              {/* Optional Fields Section */}
-              <div className="border-l-4 border-gray-300 pl-4 sm:pl-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Additional Information</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-8">
-                  {/* Measurement Date */}
-                  <div>
-                    <Label htmlFor="measurementDate" className="flex items-center mb-2 text-sm font-semibold text-gray-700">
-                      <Clock className="inline w-4 h-4 mr-2" />
-                      Assessment Date
-                    </Label>
-                    <Input
-                      id="measurementDate"
-                      type="date"
-                      value={formData.measurementDate}
-                      onChange={e => handleInputChange('measurementDate', e.target.value)}
-                      max={new Date().toISOString().split('T')[0]}
-                      className={`w-full border-2 rounded-xl px-4 py-3 text-gray-900 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-200 hover:border-gray-300 ${errors.measurementDate ? 'border-red-400 bg-red-50 focus:border-red-500' : 'border-gray-200 focus:border-blue-500 bg-white'}`}
-                    />
-                    {errors.measurementDate && <p className="text-red-600 text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.measurementDate}</p>}
-                  </div>
-
-                  {/* Variety */}
-                  <div>
-                    <Label htmlFor="variety" className="flex items-center mb-2 text-sm font-semibold text-gray-700">
-                      <Package className="inline w-4 h-4 mr-2" />
-                      Variety
-                    </Label>
-                    <Input
-                      id="variety"
-                      type="text"
-                      placeholder="e.g., Roma, Heirloom"
-                      value={formData.variety}
-                      onChange={e => handleInputChange('variety', e.target.value)}
-                      className={`w-full border-2 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-200 hover:border-gray-300 ${errors.variety ? 'border-red-400 bg-red-50 focus:border-red-500' : 'border-gray-200 focus:border-blue-500 bg-white'}`}
-                    />
-                    {errors.variety && <p className="text-red-600 text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.variety}</p>}
-                  </div>
-                </div>
-
-                {/* Outlier Notes */}
-                <div className="mb-8">
-                  <Label htmlFor="outlierNotes" className="flex items-center mb-2 text-sm font-semibold text-gray-700">
-                    <FileText className="inline w-4 h-4 mr-2" />
-                    Notes/Observations
-                  </Label>
-                  <Textarea
-                    id="outlierNotes"
-                    placeholder="Describe any anomalies or interesting details about the sample."
-                    value={formData.outlierNotes}
-                    onChange={e => handleInputChange('outlierNotes', e.target.value)}
-                    rows={4}
-                    className={`w-full border-2 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-200 hover:border-gray-300 ${errors.outlierNotes ? 'border-red-400 bg-red-50 focus:border-red-500' : 'border-gray-200 focus:border-blue-500 bg-white'}`}
-                  />
-                  {errors.outlierNotes && <p className="text-red-600 text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.outlierNotes}</p>}
-                </div>
-              </div>
-
-              {/* Image Upload Section */}
-              <div className="border-l-4 border-gray-300 pl-4 sm:pl-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Optional: Add Images</h3>
-                <div className="flex flex-col space-y-4">
-                  <Label htmlFor="images" className="flex items-center text-sm font-semibold text-gray-700">
-                    <Camera className="inline w-4 h-4 mr-2" />
-                    Upload Photos (Max 3, up to 5MB each)
-                  </Label>
-                  <div className="flex flex-wrap items-center space-x-2 space-y-2">
-                    {formData.images.map((file, index) => (
-                      <div key={index} className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 group">
-                        <img src={URL.createObjectURL(file)} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                    {formData.images.length < 3 && (
-                      <Label htmlFor="image-upload" className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg text-gray-500 cursor-pointer hover:border-blue-500 transition-colors">
-                        <Camera className="w-6 h-6 mb-1" />
-                        <span className="text-xs text-center">Add Photo</span>
-                        <Input
-                          id="image-upload"
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          multiple
-                          onChange={handleImageUpload}
-                          className="sr-only"
-                        />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10 mb-8 sm:mb-10">
+                    {/* Crop Type - Using regular Combobox (no add new) */}
+                    <div className="relative">
+                      <Label htmlFor="cropType" className="flex items-center mb-2 text-sm font-semibold" style={{ color: 'var(--text-mid)' }}>
+                        <Package className="inline w-4 h-4 mr-2" />
+                        Crop Type <span className="ml-1 text-destructive">*</span>
                       </Label>
-                    )}
-                  </div>
-                  {errors.images && <p className="text-red-600 text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.images}</p>}
-                </div>
-              </div>
+                      <Combobox
+                        items={crops}
+                        value={formData.cropType}
+                        onSelect={(value) => handleInputChange('cropType', value)}
+                        placeholder="Select crop type"
+                      />
+                      {errors.cropType && <p className="text-destructive text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.cropType}</p>}
+                    </div>
 
-            </form>
-          </CardContent>
-        </Card>
+                    {/* Brand/Farm Name */}
+                    <div className="relative">
+                      <Label
+                        htmlFor="brand"
+                        className="flex items-center mb-2 text-sm font-semibold"
+                        style={{ color: 'var(--text-mid)' }}
+                      >
+                        <Building2 className="inline w-4 h-4 mr-2 text-green-fresh" />
+                        Farm / Brand Name <span className="ml-1 text-destructive">*</span>
+                      </Label>
+                      <ComboBoxAddable
+                        items={allBrands}
+                        value={formData.brand}
+                        onSelect={(value) => handleInputChange('brand', value)}
+                        onAddNew={handleAddBrand}
+                        placeholder="Select or enter farm/brand name"
+                      />
+                      <div className="flex gap-2 text-xs mt-3 px-3 py-2 rounded-lg border leading-relaxed" style={{ color: 'var(--text-muted)', backgroundColor: 'var(--green-mist)', borderColor: 'var(--green-pale)' }}>
+                        <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: 'var(--green-fresh)' }} />
+                        <span>
+                          The name of the <b>farm</b> or <b>brand</b> that grew the produce.{' '}
+                          <span className="hidden sm:inline">
+                            Press <kbd className="px-1 border rounded">Enter</kbd> to select,{' '}
+                            <kbd className="px-1 border rounded">Shift+Enter</kbd> (or tap <b>+</b> on mobile) to add new.
+                          </span>
+                        </span>
+                      </div>
+                      {errors.brand && (
+                        <p className="text-destructive text-sm mt-2 flex items-center">
+                          <X className="w-4 h-4 mr-1" />
+                          {errors.brand}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Point of Purchase */}
+                    <div className="relative">
+                      <Label
+                        htmlFor="store"
+                        className="flex items-center mb-2 text-sm font-semibold"
+                        style={{ color: 'var(--text-mid)' }}
+                      >
+                        <Store className="inline w-4 h-4 mr-2 text-green-fresh" />
+                        Point of Purchase <span className="ml-1 text-destructive">*</span>
+                      </Label>
+                      <ComboBoxAddable
+                        items={allStores}
+                        value={formData.store}
+                        onSelect={(value) => handleInputChange('store', value)}
+                        onAddNew={handleAddStore}
+                        placeholder="Select or enter point of purchase"
+                      />
+                      <div className="flex gap-2 text-xs mt-3 px-3 py-2 rounded-lg border leading-relaxed" style={{ color: 'var(--text-muted)', backgroundColor: 'var(--green-mist)', borderColor: 'var(--green-pale)' }}>
+                        <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: 'var(--green-fresh)' }} />
+                        <span>
+                          Where you <b>purchased</b> the item — e.g., grocery store,
+                          co-op, farmers market, or CSA pickup.
+                        </span>
+                      </div>
+                      {errors.store && (
+                        <p className="text-destructive text-sm mt-2 flex items-center">
+                          <X className="w-4 h-4 mr-1" />
+                          {errors.store}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* BRIX Level */}
+                    <div>
+                      <Label htmlFor="brixLevel" className="flex items-center mb-2 text-sm font-semibold" style={{ color: 'var(--text-mid)' }}>
+                        <Droplets className="inline w-4 h-4 mr-2" style={{ color: brixTier.color }} />
+                        BRIX Level <span className="ml-1 text-destructive">*</span>
+                      </Label>
+                      <div className="flex items-center space-x-4">
+                        <div className="flex flex-col items-center">
+                          <Input
+                            id="brixLevel"
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="100"
+                            inputMode="decimal"
+                            value={isNaN(formData.brixLevel) ? '' : formData.brixLevel}
+                            onChange={(e) => {
+                              const parsed = parseFloat(e.target.value);
+                              handleBrixChange(isNaN(parsed) ? 0 : parsed);
+                            }}
+                            className={`w-24 text-center border-2 rounded-xl px-2 py-2 font-display font-bold text-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-green-pale hover:border-green-light ${errors.brixLevel ? 'border-destructive bg-red-50 focus:border-destructive' : 'border-input focus:border-green-fresh bg-card'}`}
+                            style={{ color: brixTier.color }}
+                          />
+                          <span className="text-xs font-medium mt-1" style={{ color: brixTier.color }}>
+                            {brixTier.label}
+                          </span>
+                        </div>
+                        <Slider
+                          value={[formData.brixLevel]}
+                          onValueChange={handleBrixChange}
+                          max={100}
+                          step={0.1}
+                          className="flex-1"
+                        />
+                      </div>
+                      {errors.brixLevel && <p className="text-destructive text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.brixLevel}</p>}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10 mb-8 sm:mb-10">
+                    {/* Location - using the enhanced LocationSearch component */}
+                    <div className="relative">
+                      <Label htmlFor="location" className="flex items-center mb-2 text-sm font-semibold" style={{ color: 'var(--text-mid)' }}>
+                        <MapPin className="inline w-4 h-4 mr-2" />
+                        Sample Location <span className="ml-1 text-destructive">*</span>
+                      </Label>
+                      <LocationSearch
+                        value={formData.location}
+                        onChange={e => handleInputChange('location', e.target.value)}
+                        onLocationSelect={handleLocationSelect}
+                      />
+                      {errors.location && <p className="text-destructive text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.location}</p>}
+                    </div>
+
+                    {/* Purchase Date */}
+                    <div>
+                      <Label htmlFor="purchaseDate" className="flex items-center mb-2 text-sm font-semibold" style={{ color: 'var(--text-mid)' }}>
+                        <Calendar className="inline w-4 h-4 mr-2" />
+                        Purchase Date <span className="ml-1 text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="purchaseDate"
+                        type="date"
+                        value={formData.purchaseDate}
+                        onChange={e => handleInputChange('purchaseDate', e.target.value)}
+                        max={new Date().toISOString().split('T')[0]}
+                        className={`w-full border-2 rounded-xl px-4 py-3 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-green-pale hover:border-green-light ${errors.purchaseDate ? 'border-destructive bg-red-50 focus:border-destructive' : 'border-input focus:border-green-fresh bg-card'}`}
+                        style={{ color: 'var(--text-dark)' }}
+                      />
+                      {errors.purchaseDate && <p className="text-destructive text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.purchaseDate}</p>}
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Optional Fields Section */}
+                <motion.div className="border-l-4 pl-5 sm:pl-8" style={{ borderColor: 'var(--green-pale)' }} {...staggerChild}>
+                  <h3 className="text-xl font-display font-bold mb-8" style={{ color: 'var(--text-dark)' }}>Additional Information</h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10 mb-8 sm:mb-10">
+                    {/* Measurement Date */}
+                    <div>
+                      <Label htmlFor="measurementDate" className="flex items-center mb-2 text-sm font-semibold" style={{ color: 'var(--text-mid)' }}>
+                        <Clock className="inline w-4 h-4 mr-2" />
+                        Assessment Date
+                      </Label>
+                      <Input
+                        id="measurementDate"
+                        type="date"
+                        value={formData.measurementDate}
+                        onChange={e => handleInputChange('measurementDate', e.target.value)}
+                        max={new Date().toISOString().split('T')[0]}
+                        className={`w-full border-2 rounded-xl px-4 py-3 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-green-pale hover:border-green-light ${errors.measurementDate ? 'border-destructive bg-red-50 focus:border-destructive' : 'border-input focus:border-green-fresh bg-card'}`}
+                        style={{ color: 'var(--text-dark)' }}
+                      />
+                      {errors.measurementDate && <p className="text-destructive text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.measurementDate}</p>}
+                    </div>
+
+                    {/* Variety */}
+                    <div>
+                      <Label htmlFor="variety" className="flex items-center mb-2 text-sm font-semibold" style={{ color: 'var(--text-mid)' }}>
+                        <Package className="inline w-4 h-4 mr-2" />
+                        Variety
+                      </Label>
+                      <Input
+                        id="variety"
+                        type="text"
+                        placeholder="e.g., Roma, Heirloom"
+                        value={formData.variety}
+                        onChange={e => handleInputChange('variety', e.target.value)}
+                        className={`w-full border-2 rounded-xl px-4 py-3 placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-green-pale hover:border-green-light ${errors.variety ? 'border-destructive bg-red-50 focus:border-destructive' : 'border-input focus:border-green-fresh bg-card'}`}
+                        style={{ color: 'var(--text-dark)' }}
+                      />
+                      {errors.variety && <p className="text-destructive text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.variety}</p>}
+                    </div>
+                  </div>
+
+                  {/* Outlier Notes */}
+                  <div className="mb-8">
+                    <Label htmlFor="outlierNotes" className="flex items-center mb-2 text-sm font-semibold" style={{ color: 'var(--text-mid)' }}>
+                      <FileText className="inline w-4 h-4 mr-2" />
+                      Notes/Observations
+                    </Label>
+                    <Textarea
+                      id="outlierNotes"
+                      placeholder="Describe any anomalies or interesting details about the sample."
+                      value={formData.outlierNotes}
+                      onChange={e => handleInputChange('outlierNotes', e.target.value)}
+                      rows={4}
+                      className={`w-full border-2 rounded-xl px-4 py-3 placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-green-pale hover:border-green-light ${errors.outlierNotes ? 'border-destructive bg-red-50 focus:border-destructive' : 'border-input focus:border-green-fresh bg-card'}`}
+                      style={{ color: 'var(--text-dark)' }}
+                    />
+                    {errors.outlierNotes && <p className="text-destructive text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.outlierNotes}</p>}
+                  </div>
+                </motion.div>
+
+                {/* Image Upload Section */}
+                <motion.div className="border-l-4 pl-5 sm:pl-8" style={{ borderColor: 'var(--green-pale)' }} {...staggerChild}>
+                  <h3 className="text-xl font-display font-bold mb-8" style={{ color: 'var(--text-dark)' }}>Optional: Add Images</h3>
+                  <div className="flex flex-col space-y-4">
+                    <Label htmlFor="images" className="flex items-center text-sm font-semibold" style={{ color: 'var(--text-mid)' }}>
+                      <Camera className="inline w-4 h-4 mr-2" />
+                      Upload Photos (Max 3, up to 5MB each)
+                    </Label>
+                    <div className="flex flex-wrap items-center space-x-2 space-y-2">
+                      {formData.images.map((file, index) => (
+                        <div key={index} className="relative w-24 h-24 rounded-xl overflow-hidden border-2 group" style={{ borderColor: 'var(--green-pale)' }}>
+                          <img src={URL.createObjectURL(file)} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                      {formData.images.length < 3 && (
+                        <Label htmlFor="image-upload" className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed rounded-xl cursor-pointer hover:border-green-fresh transition-colors" style={{ borderColor: 'var(--green-pale)', color: 'var(--text-muted)' }}>
+                          <Camera className="w-6 h-6 mb-1" />
+                          <span className="text-xs text-center">Add Photo</span>
+                          <Input
+                            id="image-upload"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            multiple
+                            onChange={handleImageUpload}
+                            className="sr-only"
+                          />
+                        </Label>
+                      )}
+                    </div>
+                    {errors.images && <p className="text-destructive text-sm mt-2 flex items-center"><X className="w-4 h-4 mr-1" />{errors.images}</p>}
+                  </div>
+                </motion.div>
+
+              </motion.form>
+            </CardContent>
+          </Card>
+        </motion.div>
       </main>
       {/* Sticky footer submit button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4">
+      <div className="fixed bottom-0 left-0 right-0 border-t shadow-lg p-4" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--green-pale)' }}>
       <div className="max-w-5xl mx-auto flex justify-end">
         <Button
           onClick={(e) => handleSubmit(e)}
-          className="w-full sm:w-auto px-12 py-6 text-lg font-semibold"
+          className="w-full sm:w-auto px-12 py-6 text-lg font-semibold rounded-xl hover:text-white"
           disabled={isLoading}
         >
          {isLoading ? (

@@ -13,10 +13,10 @@
  */
 import rateLimit from 'express-rate-limit';
 
-/** 15 requests per 15 minutes — brute force protection for wallet login and token refresh */
+/** 50 requests per 15 minutes — brute force protection for wallet login and token refresh */
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: 50,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many login attempts. Please try again in 15 minutes.' },

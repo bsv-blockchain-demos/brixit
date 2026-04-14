@@ -13,7 +13,7 @@ import { AuthBackground } from '@/components/ui/AuthBackground';
 const MYCELIA_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
 const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 
-type Step = 'checking' | 'choice' | 'details' | 'acquiring';
+type Step = 'checking' | 'details' | 'acquiring';
 
 function friendlyAcquireError(err: any): string {
   // Serialise the full error so we catch server response bodies the SDK may nest deeply
@@ -62,10 +62,10 @@ export default function CreateAccount() {
       if (result.certificates.length > 0) {
         navigate('/login', { replace: true });
       } else {
-        setStep('choice');
+        setStep('details');
       }
     }).catch(() => {
-      if (!cancelled) setStep('choice');
+      if (!cancelled) setStep('details');
     });
 
     return () => { cancelled = true; };
@@ -107,14 +107,6 @@ export default function CreateAccount() {
     }
   }
 
-  async function handleAnonymous() {
-    if (!userPubKey) {
-      setError('Wallet not connected. Please go back and try again.');
-      return;
-    }
-    await acquireCert({ username: userPubKey }, 'choice');
-  }
-
   async function handleCreateNamed(e: React.FormEvent) {
     e.preventDefault();
     const fields: Record<string, string> = { username: username.trim() };
@@ -126,25 +118,19 @@ export default function CreateAccount() {
     <AuthBackground>
       <div className="max-w-md w-full">
         <div className="text-center mb-6">
-          <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+          <div className="w-12 h-12 bg-green-deep rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
             <span className="text-white font-bold text-2xl">B</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Create your BRIX account</h1>
+          <h1 className="text-2xl font-bold font-display text-text-dark">Create your BRIX account</h1>
         </div>
 
-        <Card>
+        <Card className="border border-green-pale">
           <CardHeader className="pb-3">
-            {step === 'checking' && <CardTitle>Checking your wallet…</CardTitle>}
-            {step === 'choice' && (
-              <>
-                <CardTitle>How would you like to join?</CardTitle>
-                <CardDescription>Choose named for a personalised account, or anonymous to get started right away.</CardDescription>
-              </>
-            )}
+            {step === 'checking' && <CardTitle className="font-display text-text-dark">Checking your wallet…</CardTitle>}
             {(step === 'details' || step === 'acquiring') && (
               <>
-                <CardTitle>Create your account</CardTitle>
-                <CardDescription>Choose a username and optionally add your email.</CardDescription>
+                <CardTitle className="font-display text-text-dark">Create your account</CardTitle>
+                <CardDescription className="text-text-mid">Choose a username and optionally add your email.</CardDescription>
               </>
             )}
           </CardHeader>
@@ -158,40 +144,14 @@ export default function CreateAccount() {
 
             {step === 'checking' && (
               <div className="flex justify-center py-6">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600" />
-              </div>
-            )}
-
-            {step === 'choice' && (
-              <div className="space-y-3">
-                <Button
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  onClick={() => setStep('details')}
-                >
-                  Create named account
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleAnonymous}
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Creating…' : 'Continue anonymously'}
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full"
-                  onClick={() => navigate('/login')}
-                >
-                  Back to login
-                </Button>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-fresh" />
               </div>
             )}
 
             {step === 'details' && (
               <form onSubmit={handleCreateNamed} className="space-y-4">
                 <div className="space-y-1">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username">Display Name</Label>
                   <Input
                     id="username"
                     type="text"
@@ -204,7 +164,7 @@ export default function CreateAccount() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="email">Email <span className="text-gray-400 font-normal">(optional)</span></Label>
+                  <Label htmlFor="email">Email <span className="text-text-muted-green font-normal">(optional)</span></Label>
                   <Input
                     id="email"
                     type="email"
@@ -215,7 +175,7 @@ export default function CreateAccount() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-green-600 hover:bg-green-700"
+                  className="w-full bg-green-fresh hover:bg-green-mid text-white"
                   disabled={isLoading || !username.trim()}
                 >
                   {isLoading ? 'Creating…' : 'Create account'}
@@ -224,7 +184,7 @@ export default function CreateAccount() {
                   type="button"
                   variant="ghost"
                   className="w-full"
-                  onClick={() => setStep('choice')}
+                  onClick={() => navigate('/login')}
                 >
                   Back
                 </Button>
@@ -233,9 +193,9 @@ export default function CreateAccount() {
 
             {step === 'acquiring' && (
               <div className="text-center py-6">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600 mx-auto mb-4" />
-                <p className="text-gray-600">Issuing your identity certificate…</p>
-                <p className="text-sm text-gray-500 mt-1">Please approve the request in your wallet.</p>
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-fresh mx-auto mb-4" />
+                <p className="text-text-mid">Issuing your identity certificate…</p>
+                <p className="text-sm text-text-muted-green mt-1">Please approve the request in your wallet.</p>
               </div>
             )}
           </CardContent>

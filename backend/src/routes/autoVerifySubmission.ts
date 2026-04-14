@@ -309,10 +309,8 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
     });
   } catch (err) {
     console.error('[auto-verify-submission] Error:', err);
-    const message = err instanceof Error ? err.message : 'Unknown error';
     res.status(500).json({
-      error: 'Submission processing failed',
-      details: message,
+      error: 'Submission processing failed. Please try again.',
     });
   }
 });

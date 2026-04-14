@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import Header from '../components/Layout/Header';
 import InteractiveMap from '../components/Map/InteractiveMap';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Locate } from 'lucide-react';
+import { Locate, MapPin, Loader2 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { getMapboxToken } from '../lib/getMapboxToken';
@@ -11,6 +13,7 @@ import { getMapboxToken } from '../lib/getMapboxToken';
 const MapView = () => {
   const { toast } = useToast();
   const { user, profileLoading } = useAuth();
+  const navigate = useNavigate();
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearMeTriggered, setNearMeTriggered] = useState(false);
@@ -67,45 +70,64 @@ const MapView = () => {
   };
 
   if (profileLoading) {
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header />
-      <main className="flex-1 flex items-center justify-center px-4">
-        <div className="text-center">
-          <p className="text-gray-600">Loading your profile...</p>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-if (!user?.city || !user?.state || !user?.country) {
-    // Guard in case ProtectedRoute didn’t catch it
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-cream flex flex-col">
         <Header />
         <main className="flex-1 flex items-center justify-center px-4">
           <div className="text-center">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-2">No Location Set</h2>
-            <p className="text-gray-600">
-              Please update your profile with a city, state, and country to explore the map.
-            </p>
+            <Loader2 className="w-8 h-8 text-green-fresh animate-spin mx-auto mb-3" />
+            <p className="text-text-muted-green">Loading your profile...</p>
           </div>
         </main>
       </div>
     );
   }
 
+  if (!user?.city || !user?.state || !user?.country) {
+    return (
+      <div className="min-h-screen bg-cream flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className="text-center max-w-md mx-auto">
+              <div className="w-20 h-20 rounded-2xl bg-green-deep flex items-center justify-center mx-auto mb-6">
+                <MapPin className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="font-display font-bold text-2xl text-text-dark mb-3">
+                Set Your Location
+              </h2>
+              <p className="text-text-mid mb-8">
+                Add your city to your profile to explore scores from
+                your community and discover nutritious produce nearby.
+              </p>
+              <Button
+                onClick={() => navigate('/profile')}
+                className="bg-primary text-primary-foreground hover:bg-green-mid px-6"
+              >
+                <MapPin className="w-4 h-4 mr-2" />
+                Update My Profile
+              </Button>
+            </div>
+          </motion.div>
+        </main>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cream">
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Brix Explorer</h1>
-            <p className="text-gray-600">
-              Explore bionutrient density measurements from refractometer readings worldwide
+            <h1 className="text-2xl font-display font-bold text-text-dark mb-2">Brix Explorer</h1>
+            <p className="text-text-mid">
+              See what your community is discovering near you
             </p>
           </div>
 
@@ -113,7 +135,7 @@ if (!user?.city || !user?.state || !user?.country) {
             <Button
               variant="outline"
               onClick={handleLocationSearch}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 border-green-pale text-green-fresh hover:bg-green-mist"
             >
               <Locate className="w-4 h-4" />
               <span>Near Me</span>
@@ -121,21 +143,17 @@ if (!user?.city || !user?.state || !user?.country) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1">
-          <div className="lg:col-span-4">
-            <Card>
-              <CardContent className="p-0">
-                <div className="h-[600px] w-full relative">
-                  <InteractiveMap
-                    userLocation={userLocation}
-                    nearMeTriggered={nearMeTriggered}
-                    onNearMeHandled={handleNearMeHandled}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        <Card className="rounded-2xl border border-green-pale overflow-hidden shadow-sm">
+          <CardContent className="p-0">
+            <div className="h-[calc(100vh-13rem)] w-full relative">
+              <InteractiveMap
+                userLocation={userLocation}
+                nearMeTriggered={nearMeTriggered}
+                onNearMeHandled={handleNearMeHandled}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );

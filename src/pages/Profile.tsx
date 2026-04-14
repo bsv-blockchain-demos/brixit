@@ -5,9 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
 import { Alert, AlertDescription } from '../components/ui/alert';
-import { Award, ArrowLeft } from 'lucide-react';
+import { Avatar, AvatarFallback } from '../components/ui/avatar';
+import { Copy, Check, ArrowLeft } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useToast } from '../hooks/use-toast';
 import LocationSelector from '../components/common/LocationSelector';
 import Header from '../components/Layout/Header';
@@ -23,15 +24,21 @@ interface LocationData {
 const calculateLevel = (points: number) => Math.floor(points / 100) + 1;
 const calculateProgress = (points: number) => points % 100;
 const getBadge = (submissions: number) => {
-  if (submissions >= 100) return '🌳 Expert';
-  if (submissions >= 10) return '🌿 Contributor';
-  if (submissions >= 1) return '🌱 Newcomer';
-  return '👀 Observer';
+  if (submissions >= 100) return { emoji: '🌳', label: 'Expert' };
+  if (submissions >= 10) return { emoji: '🌿', label: 'Contributor' };
+  if (submissions >= 1) return { emoji: '🌱', label: 'Newcomer' };
+  return { emoji: '👀', label: 'Observer' };
 };
 
 const Profile = () => {
   const { user, updateUsername, updateLocation, authError } = useAuth();
   const [displayName, setDisplayName] = useState(user?.display_name || '');
+  const [copied, setCopied] = useState(false);
+
+  const prefersReducedMotion = useReducedMotion();
+  const fadeUp = prefersReducedMotion ? {} : { initial: { opacity: 0, y: 24 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5 } };
+  const stagger = prefersReducedMotion ? {} : { initial: 'hidden', animate: 'visible', variants: { hidden: {}, visible: { transition: { staggerChildren: 0.1 } } } };
+  const staggerChild = prefersReducedMotion ? {} : { variants: { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } } };
 
   // Keep local displayName in sync when the profile finishes loading or changes
   useEffect(() => {
@@ -56,6 +63,13 @@ const Profile = () => {
   useEffect(() => {
     if (!user) navigate('/login');
   }, [user, navigate]);
+
+  const handleCopyKey = async () => {
+    if (!user?.identity_key) return;
+    await navigator.clipboard.writeText(user.identity_key);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,13 +110,18 @@ const Profile = () => {
 
   if (!user) return null;
 
+  const isHexKey = (user.display_name?.length ?? 0) > 20;
+  const badge = getBadge(user.submission_count ?? 0);
+  const level = calculateLevel(user.points ?? 0);
+  const progress = calculateProgress(user.points ?? 0);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <div className="py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto space-y-8">
+        <div className="max-w-3xl mx-auto space-y-6">
           {/* Back Button */}
-          <div className="flex items-center gap-4">
+          <motion.div {...fadeUp}>
             <Button
               variant="ghost"
               onClick={() => navigate(-1)}
@@ -111,142 +130,170 @@ const Profile = () => {
               <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
-          </div>
-          
-          {/* Header */}
-          <div className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="h-16 w-16 rounded-full bg-green-600 text-white flex items-center justify-center text-2xl font-bold">
-                {displayName?.[0]?.toUpperCase() || 'U'}
-              </div>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">{displayName}</h1>
-            {user.role && (
-              <span className="inline-flex items-center mt-2 px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                <Award className="h-4 w-4 mr-1" />
-                {user.role === 'admin' ? 'Administrator' : user.role}
-              </span>
-            )}
-          </div>
+          </motion.div>
 
-          {/* Gamified Points */}
-          <Card>
-            <CardContent className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
+          {/* Profile Hero Card */}
+          <motion.div {...fadeUp}>
+            <Card className="border border-green-pale rounded-2xl shadow-sm">
+              <CardContent className="p-6 space-y-5">
+                <div className="flex flex-col items-center text-center gap-3">
+                  <Avatar className="h-20 w-20">
+                    <AvatarFallback className="bg-green-deep text-white text-2xl font-bold">
+                      {displayName?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h1 className="font-display font-bold text-2xl text-text-dark">
+                      {isHexKey ? 'Set your display name' : displayName}
+                    </h1>
+                    {user.role && (
+                      <span className="inline-block mt-2 px-3 py-1 rounded-full text-sm font-medium bg-green-pale text-green-mid">
+                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Identity key */}
                 <div>
-                  <p className="text-sm text-gray-600">Level</p>
-                  <div className="text-2xl font-bold">
-                    {calculateLevel(user.points ?? 0)}
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted-green mb-1.5">Public Identity Key</p>
+                </div>
+                <div className="flex items-center gap-2 border border-green-pale rounded-lg px-3 py-2">
+                  <code className="flex-1 text-xs break-all font-mono text-text-mid">
+                    {user.identity_key}
+                  </code>
+                  <button
+                    onClick={handleCopyKey}
+                    className="shrink-0 p-1.5 rounded-md hover:bg-accent transition-colors"
+                    aria-label="Copy identity key"
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4 text-green-fresh" />
+                    ) : (
+                      <Copy className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Stats row */}
+                <div className="grid grid-cols-3 divide-x divide-green-pale">
+                  <div className="p-3 text-center">
+                    <div className="text-2xl font-bold font-display text-text-dark">{level}</div>
+                    <div className="text-xs text-text-muted-green">Level</div>
+                  </div>
+                  <div className="p-3 text-center">
+                    <div className="text-2xl">{badge.emoji}</div>
+                    <div className="text-xs text-text-muted-green">{badge.label}</div>
+                  </div>
+                  <div className="p-3 text-center">
+                    <div className="text-2xl font-bold font-display text-text-dark">{user.submission_count ?? 0}</div>
+                    <div className="text-xs text-text-muted-green">Submissions</div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Badge</p>
-                  <div className="text-xl">
-                    {getBadge(user.submission_count ?? 0)}
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Staggered cards */}
+          <motion.div className="space-y-6" {...stagger}>
+            {/* Display Name Card */}
+            <motion.div {...staggerChild}>
+              <Card className="border border-green-pale rounded-2xl shadow-sm">
+                <CardHeader>
+                  <CardTitle className="font-display text-text-dark">Display Name</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleUsernameSubmit} className="space-y-4">
+                    {formErrors.username && (
+                      <Alert variant="destructive">
+                        <AlertDescription>{formErrors.username}</AlertDescription>
+                      </Alert>
+                    )}
+                    <Input
+                      value={displayName}
+                      onChange={e => setDisplayName(e.target.value)}
+                      disabled={loading.username}
+                      placeholder="Choose a display name"
+                    />
+                    <Button
+                      type="submit"
+                      className="w-full bg-green-fresh hover:bg-green-mid text-white"
+                      disabled={loading.username || displayName === user.display_name}
+                    >
+                      {loading.username ? 'Saving...' : 'Update Name'}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Progress Card */}
+            <motion.div {...staggerChild}>
+              <Card className="border border-green-pale rounded-2xl shadow-sm">
+                <CardHeader>
+                  <CardTitle className="font-display font-semibold text-text-dark">Progress</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-text-mid">Level {level}</span>
+                    <span className="text-sm text-text-muted-green">{progress} / 100 pts</span>
                   </div>
-                </div>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 mb-1">
-                  {calculateProgress(user.points ?? 0)} / 100 points to next level
-                </p>
-                <div className="w-full bg-gray-200 h-3 rounded-full">
-                  <div
-                    className="h-3 bg-green-600 rounded-full"
-                    style={{
-                      width: `${calculateProgress(user.points ?? 0)}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                  <div className="w-full h-3 rounded-full" style={{ background: 'var(--green-pale)' }}>
+                    <div
+                      className="h-3 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${progress}%`,
+                        background: 'var(--green-fresh)',
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-          {/* Editable Name */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Display Name</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleUsernameSubmit} className="space-y-4">
-                {formErrors.username && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{formErrors.username}</AlertDescription>
-                  </Alert>
-                )}
-                <Input
-                  value={displayName}
-                  onChange={e => setDisplayName(e.target.value)}
-                  disabled={loading.username}
-                />
-                <Button
-                  type="submit"
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  disabled={loading.username || displayName === user.display_name}
-                >
-                  {loading.username ? 'Saving...' : 'Update Name'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+            {/* Location Card */}
+            <motion.div {...staggerChild}>
+              <Card className="border border-green-pale rounded-2xl shadow-sm">
+                <CardHeader>
+                  <CardTitle className="font-display text-text-dark">Location</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleLocationSubmit} className="space-y-4">
+                    <LocationSelector
+                      value={location}
+                      onChange={setLocation}
+                      disabled={loading.location}
+                    />
+                    {formErrors.location && (
+                      <p className="text-sm text-destructive">{formErrors.location}</p>
+                    )}
+                    <Button
+                      type="submit"
+                      className="w-full bg-green-fresh hover:bg-green-mid text-white"
+                      disabled={loading.location}
+                    >
+                      {loading.location ? 'Saving...' : 'Update Location'}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-          {/* Location */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Location</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleLocationSubmit} className="space-y-4">
-                <LocationSelector
-                  value={location}
-                  onChange={setLocation}
-                  disabled={loading.location}
-                />
-                {formErrors.location && (
-                  <p className="text-sm text-red-600">{formErrors.location}</p>
-                )}
-                <Button
-                  type="submit"
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  disabled={loading.location}
-                >
-                  {loading.location ? 'Saving...' : 'Update Location'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Account Info (Read-only) */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Info</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Email</Label>
-                <Input value={user.email || ''} disabled readOnly className="bg-gray-100" />
-              </div>
-              <div>
-                <Label>Password</Label>
-                <Input value="••••••••" disabled readOnly className="bg-gray-100" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Danger Zone */}
-          <Card className="border-red-200 bg-red-50">
-            <CardHeader>
-              <CardTitle className="text-red-600">Danger Zone</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 mb-3">
-                Account deletion is not available at this time.
-              </p>
-              <Button variant="destructive" disabled className="opacity-50 w-full">
-                Delete Account
-              </Button>
-            </CardContent>
-          </Card>
+            {/* Danger Zone */}
+            <motion.div {...staggerChild}>
+              <Card className="border-destructive/30 bg-destructive/5 rounded-2xl">
+                <CardContent className="p-6">
+                  <p className="text-sm font-medium text-destructive mb-1">Danger Zone</p>
+                  <p className="text-sm text-text-muted-green mb-3">
+                    Account deletion is not available at this time.
+                  </p>
+                  <Button variant="destructive" disabled className="opacity-50">
+                    Delete Account
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </div>

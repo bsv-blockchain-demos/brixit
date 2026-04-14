@@ -18,6 +18,7 @@ import {
 interface UserProfile {
   id: string;
   display_name: string | null;
+  identity_key?: string | null;
   role: string | null;
   points?: number | null;
   submission_count?: number | null;
@@ -51,7 +52,7 @@ interface AuthContextType {
   ) => Promise<boolean>;
   updateUsername: (newUsername: string) => Promise<boolean>;
   updateLocation: (location: LocationData) => Promise<boolean>;
-  walletLogin: (identityKey: string, certificate: unknown, userData: unknown, nonce: string) => Promise<boolean>;
+  walletLogin: (identityKey: string, certificate: unknown, userData: unknown, nonce: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -62,6 +63,7 @@ async function fetchUserProfile(): Promise<UserProfile | null> {
       id: string;
       email: string | null;
       display_name: string | null;
+      identity_key: string | null;
       country: string | null;
       state: string | null;
       city: string | null;
@@ -82,6 +84,7 @@ async function fetchUserProfile(): Promise<UserProfile | null> {
     return {
       id: data.id,
       display_name: data.display_name,
+      identity_key: data.identity_key,
       role: userRole,
       email: data.email,
       country: data.country,
@@ -220,7 +223,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     certificate: unknown,
     userData: unknown,
     nonce: string
-  ): Promise<boolean> => {
+  ): Promise<{ success: boolean; error?: string }> => {
     setAuthError(null);
 
     try {
@@ -238,8 +241,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }, { skipAuth: true });
 
       if (!data.success) {
-        setAuthError(data.error || "Wallet authentication failed");
-        return false;
+        const error = data.error || "Wallet authentication failed";
+        setAuthError(error);
+        return { success: false, error };
       }
 
       // Store access token in memory; refresh token is in the HttpOnly cookie set by the backend
@@ -265,12 +269,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       setProfileLoading(false);
 
-      return true;
+      return { success: true };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unexpected error during wallet login";
       console.error("Wallet login error:", message);
       setAuthError(message);
-      return false;
+      return { success: false, error: message };
     }
   };
 

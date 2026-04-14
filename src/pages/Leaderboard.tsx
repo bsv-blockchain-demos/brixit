@@ -12,10 +12,7 @@ import {
 } from "../lib/fetchLeaderboards";
 import { ALL_COUNTRIES } from "../lib/locationConstants";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  computeNormalizedScore,
-  rankColorFromNormalized,
-} from "../lib/getBrixColor";
+import { computeNormalizedScore } from "../lib/getBrixColor";
 import {
   Card,
   CardContent,
@@ -353,9 +350,9 @@ const LeaderboardPage: React.FC = () => {
     loadMoreType: 'location' | 'brand' | 'user',
     hasMore: boolean
   ) => (
-    <Card className="w-full shadow-md rounded-lg overflow-hidden">
+    <Card className="w-full border border-green-pale rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold text-center">{title}</CardTitle>
+        <CardTitle className="text-lg font-semibold font-display text-text-dark text-center">{title}</CardTitle>
         {labelKey === "user" && (
           <p className="text-sm text-muted-foreground text-center mt-1">
             Global rankings • All users
@@ -365,10 +362,10 @@ const LeaderboardPage: React.FC = () => {
       <CardContent className="px-0">
         <div className={isFirstLoad || isFetching ? 'opacity-50 pointer-events-none' : ''}>
             {data.length === 0 ? (
-              <div className="text-sm text-gray-500 p-3">No data available.</div>
+              <div className="flex flex-col items-center justify-center py-10 text-sm text-text-muted-green">No data available.</div>
             ) : (
               <div>
-                <div className="grid grid-cols-3 text-xs font-medium text-gray-500 border-b px-4 py-2 bg-gray-50">
+                <div className="grid grid-cols-3 text-xs font-medium text-text-muted-green uppercase tracking-wider border-b border-green-pale px-4 py-2 bg-green-mist">
                   <span className="text-left">
                     {labelKey === "location" ? "Store" : "Name"}
                   </span>
@@ -408,44 +405,49 @@ const LeaderboardPage: React.FC = () => {
 
                       const rank = entry.rank ?? idx + 1;
                       const isTie = rankCounts[rank] > 1;
-                      const { bgClass } = labelKey === "user"
-                        ? { bgClass: "bg-gray-700" }
-                        : rankColorFromNormalized(normalizedScore);
+                      const getBadgeClasses = () => {
+                        if (labelKey === "user") return "bg-muted text-muted-foreground";
+                        if (normalizedScore >= 16) return "bg-green-pale text-green-mid";
+                        if (normalizedScore >= 8) return "bg-[var(--badge-gold-bg)] text-[var(--badge-gold-text)]";
+                        if (normalizedScore >= 4) return "bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)]";
+                        return "bg-[var(--badge-poor-bg)] text-score-poor";
+                      };
+                      const badgeClasses = getBadgeClasses();
 
                       return (
                         <div
                           key={(entry as any)[`${labelKey}_id`] ?? label ?? idx}
                           onClick={() => handleNavigate(entry, labelKey as 'location' | 'brand' | 'user')}
-                          className={`grid grid-cols-3 items-center px-4 py-2 border-b last:border-0 odd:bg-white even:bg-gray-50 hover:bg-gray-100 text-sm ${
+                          className={`grid grid-cols-3 items-center px-4 py-2 border-b border-green-pale last:border-0 odd:bg-card even:bg-green-mist hover:bg-green-pale transition-colors text-sm ${
                             labelKey !== "user" ? "cursor-pointer" : ""
                           }`}
                         >
                           <div className="flex flex-col min-w-0">
-                            <div className="font-medium">{labelKey === 'user' ? formatUsername(label) : label}</div>
+                            <div className="font-medium text-text-dark">{labelKey === 'user' ? formatUsername(label) : label}</div>
                             {labelKey === "location" && (
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-text-muted-green">
                                 {(entry as any).city
                                   ? `${(entry as any).city}${(entry as any).state ? `, ${(entry as any).state}` : ""}`
                                   : ""}
                               </div>
                             )}
-                            <div className="mt-1 text-xs text-gray-500 italic">
+                            <div className="mt-1 text-xs text-text-muted-green">
                               {entry.submission_count ?? 0} submissions
                             </div>
                           </div>
 
-                          <div className="text-center text-gray-800 text-sm">
+                          <div className="text-center text-text-dark font-display font-bold text-sm">
                             {labelKey === "user"
                               ? entry.submission_count ?? 0
                               : Number(normalizedScore ?? 0).toFixed(2)}
                           </div>
 
                           <div className="flex flex-col items-center">
-                            <span className={`px-3 py-1 text-sm font-semibold rounded-full text-white ${bgClass}`}>
+                            <span className={`px-3 py-1 text-sm font-semibold rounded-full ${badgeClasses}`}>
                               {rank}
                             </span>
                             {isTie && (
-                              <span className="text-xs text-gray-500 mt-1">(tie)</span>
+                              <span className="text-xs text-text-muted-green mt-1">(tie)</span>
                             )}
                           </div>
                         </div>
@@ -455,11 +457,11 @@ const LeaderboardPage: React.FC = () => {
                 </div>
 
                 {hasMore && (
-                  <div className="p-3 border-t bg-white">
+                  <div className="p-3 border-t border-green-pale">
                     <button
                       onClick={() => loadMore(loadMoreType)}
                       disabled={loadingMore[loadMoreType]}
-                      className="w-full flex items-center justify-center gap-2 text-sm text-blue-600 hover:underline disabled:text-gray-400"
+                      className="w-full flex items-center justify-center gap-2 text-sm text-green-fresh hover:text-green-mid disabled:text-text-muted-green"
                     >
                       <span>{loadingMore[loadMoreType] ? 'Loading…' : 'Load more'}</span>
                       <ChevronDown className="h-4 w-4" />
@@ -476,7 +478,7 @@ const LeaderboardPage: React.FC = () => {
   // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-cream flex flex-col">
       {isFirstLoad && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
@@ -489,13 +491,14 @@ const LeaderboardPage: React.FC = () => {
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-6 lg:p-8">
         <div className="flex flex-col md:flex-row gap-6">
           {/* Filters sidebar */}
-          <aside className="w-full md:w-72 border-r md:pr-4">
-            <h2 className="text-lg font-semibold mb-4">Filters</h2>
+          <aside className="w-full md:w-72">
+            <div className="bg-card border border-green-pale rounded-2xl shadow-sm p-4">
+            <h2 className="text-lg font-semibold font-display text-text-dark mb-4">Filters</h2>
             <div className="space-y-4">
               <button
                 onClick={handleRefresh}
                 disabled={!canRefresh}
-                className={`text-sm ${canRefresh ? 'text-blue-600 hover:underline' : 'text-gray-400'} text-left`}
+                className={`text-sm ${canRefresh ? 'text-green-fresh hover:text-green-mid' : 'text-text-muted-green'} text-left`}
               >
                 Refresh Leaderboards
               </button>
@@ -506,11 +509,11 @@ const LeaderboardPage: React.FC = () => {
                 showAutoDetect={false}
               />
               <div>
-                <label className="block text-sm font-medium mb-2">Crop</label>
+                <label className="block text-sm font-medium text-text-dark mb-2">Crop</label>
                 <select
                   value={crop}
                   onChange={(e) => setCrop(e.target.value)}
-                  className="w-full rounded border px-2 py-2"
+                  className="w-full rounded-lg border border-green-pale bg-card text-text-dark px-2 py-2"
                 >
                   <option value="">All crops</option>
                   {allCrops.map((c) => (
@@ -531,7 +534,7 @@ const LeaderboardPage: React.FC = () => {
                     });
                     setCrop("");
                   }}
-                  className="text-sm text-blue-600 hover:underline text-left"
+                  className="text-sm text-green-fresh hover:text-green-mid text-left"
                 >
                   Reset to My Location
                 </button>
@@ -540,18 +543,19 @@ const LeaderboardPage: React.FC = () => {
                     setLocation({ ...emptyLocation, country: ALL_COUNTRIES });
                     setCrop("");
                   }}
-                  className="text-sm text-gray-600 hover:underline text-left"
+                  className="text-sm text-text-mid hover:text-text-dark text-left"
                 >
                   Clear Filters
                 </button>
               </div>
+            </div>
             </div>
           </aside>
 
           {/* Leaderboard grid */}
           <section className="flex-1">
             {dataScopeMessage && (
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800">
+              <div className="mb-4 p-3 bg-green-mist border border-green-pale rounded-lg text-sm text-text-mid">
                 {dataScopeMessage}
               </div>
             )}

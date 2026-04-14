@@ -14,19 +14,19 @@ export default function WalletError() {
     <AuthBackground>
       <div className="max-w-sm w-full text-center">
 
-        <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+        <div className="w-12 h-12 bg-green-fresh rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
           <span className="text-white font-bold text-2xl">B</span>
         </div>
-        <h1 className="text-xl font-bold text-gray-900 mb-4">Couldn't connect to your device</h1>
+        <h1 className="text-xl font-bold text-text-dark mb-4">Couldn't connect to your device</h1>
 
         <Card>
           <CardContent className="pt-5 space-y-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-text-mid">
               Make sure you open this app via the <strong>Mycelia</strong> app.
               Don't have it?{' '}
               <a
                 href="#"
-                className="text-green-600 hover:text-green-700 underline underline-offset-2"
+                className="text-green-fresh hover:text-green-mid underline underline-offset-2"
               >
                 Install here
               </a>
@@ -35,19 +35,19 @@ export default function WalletError() {
             <button
               type="button"
               onClick={() => navigate('/help')}
-              className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
+              className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-text-mid"
             >
               <HelpCircle className="w-3 h-3" />
               How it works
             </button>
 
             {!isMobile && (
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-text-muted">
                 or{' '}
                 <button
                   type="button"
                   onClick={() => navigate('/login?qr=1')}
-                  className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 underline underline-offset-2"
+                  className="inline-flex items-center gap-1 text-text-mid hover:text-text-dark underline underline-offset-2"
                 >
                   <Smartphone className="w-3 h-3" />
                   connect via mobile QR
