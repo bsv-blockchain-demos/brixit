@@ -8,9 +8,10 @@ export function sanitizeInput(input: unknown): string | null {
   if (!trimmed) return null;
   return (
     trimmed
-      .replace(/[\u0000-\u001F\u007F<>`"'\\]/g, '')
-      .replace(/[%]/g, '')
-      .replace(/(javascript|data|vbscript)\s*:/gi, '')
+      .replace(/[\u0000-\u001F\u007F]/g, '')   // control characters
+      .replace(/[<>`\\]/g, '')                  // HTML/shell injection vectors
+      .replace(/[%]/g, '')                      // SQL LIKE wildcard (not used but kept defensively)
+      .replace(/(javascript|data|vbscript)\s*:/gi, '')  // protocol injection
       .replace(/\s{2,}/g, ' ') || null
   );
 }

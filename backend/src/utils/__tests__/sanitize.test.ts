@@ -22,10 +22,13 @@ describe('sanitizeInput', () => {
   it('strips < and > (HTML injection)', () => {
     expect(sanitizeInput('<script>alert(1)</script>')).toBe('scriptalert(1)/script');
   });
-  it('strips double quotes', () => expect(sanitizeInput('"quoted"')).toBe('quoted'));
-  it('strips single quotes', () => expect(sanitizeInput("it's fine")).toBe('its fine'));
-  it('strips backticks', () => expect(sanitizeInput('back`tick')).toBe('backtick'));
-  it('strips backslash', () => expect(sanitizeInput('back\\slash')).toBe('backslash'));
+  it('strips < and > but preserves quotes in mixed input', () => {
+    expect(sanitizeInput('<b>O\'Brien\'s</b>')).toBe("O'Brien's");
+  });
+  it('preserves double quotes (legitimate in text, Prisma parameterises)', () => expect(sanitizeInput('"quoted"')).toBe('"quoted"'));
+  it("preserves single quotes (e.g. O'Brien's Farm)", () => expect(sanitizeInput("O'Brien's Farm")).toBe("O'Brien's Farm"));
+  it('strips backticks (shell injection vector)', () => expect(sanitizeInput('back`tick')).toBe('backtick'));
+  it('strips backslash (escape injection vector)', () => expect(sanitizeInput('back\\slash')).toBe('backslash'));
 
   it('strips SQL wildcard %', () => expect(sanitizeInput('100%')).toBe('100'));
   it('preserves underscores (used in crop/brand names like bell_pepper)', () => expect(sanitizeInput('col_name')).toBe('col_name'));
