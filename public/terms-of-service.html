@@ -19,51 +19,19 @@
       align-items: center;
       gap: 1rem;
     }
-    header a {
-      color: rgba(255,255,255,0.7);
-      text-decoration: none;
-      font-size: 0.875rem;
-    }
+    header a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.875rem; }
     header a:hover { color: #fff; }
-    header .brand {
-      color: #fff;
-      font-weight: 700;
-      font-size: 1.125rem;
-      letter-spacing: 0.05em;
-    }
+    header .brand { color: #fff; font-weight: 700; font-size: 1.125rem; letter-spacing: 0.05em; }
     header .sep { color: rgba(255,255,255,0.3); }
-    main {
-      max-width: 720px;
-      margin: 3rem auto;
-      padding: 0 1.5rem;
-    }
-    .label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: #40916c;
-      margin-bottom: 0.5rem;
-    }
-    h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #1a3a2a;
-      margin-bottom: 0.5rem;
-    }
-    .meta {
-      font-size: 0.875rem;
-      color: #7a9b82;
-      margin-bottom: 2.5rem;
-    }
-    h2 {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: #1a3a2a;
-      margin: 2rem 0 0.5rem;
-    }
+    main { max-width: 720px; margin: 3rem auto; padding: 0 1.5rem; }
+    .label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: #40916c; margin-bottom: 0.5rem; }
+    h1 { font-size: 2rem; font-weight: 700; color: #1a3a2a; margin-bottom: 0.5rem; }
+    .meta { font-size: 0.875rem; color: #7a9b82; margin-bottom: 2.5rem; }
+    h2 { font-size: 1.125rem; font-weight: 600; color: #1a3a2a; margin: 2rem 0 0.5rem; }
     p { margin-bottom: 1rem; color: #3d5a47; font-size: 0.9375rem; }
-    .placeholder-notice {
+    ul { padding-left: 1.25rem; margin-bottom: 1rem; }
+    ul li { color: #3d5a47; font-size: 0.9375rem; margin-bottom: 0.3rem; }
+    .notice {
       background: #d8f3dc;
       border-left: 3px solid #40916c;
       padding: 1rem 1.25rem;
@@ -72,14 +40,15 @@
       font-size: 0.875rem;
       color: #2d6a4f;
     }
-    footer {
-      text-align: center;
-      padding: 2rem;
-      font-size: 0.8125rem;
-      color: #7a9b82;
-      border-top: 1px solid #d8f3dc;
-      margin-top: 3rem;
+    .info-box {
+      background: #fff;
+      border: 1px solid #d8f3dc;
+      border-radius: 0.75rem;
+      padding: 1.25rem 1.5rem;
+      margin: 1rem 0;
     }
+    .info-box h3 { font-size: 0.9375rem; font-weight: 600; color: #1a3a2a; margin-bottom: 0.5rem; }
+    footer { text-align: center; padding: 2rem; font-size: 0.8125rem; color: #7a9b82; border-top: 1px solid #d8f3dc; margin-top: 3rem; }
     footer a { color: #40916c; text-decoration: none; }
     footer a:hover { text-decoration: underline; }
   </style>
@@ -91,46 +60,89 @@
     <a href="/login">Back to app</a>
   </header>
 
+  <div style="background:#b91c1c;color:#fff;text-align:center;padding:0.875rem 1.5rem;font-size:0.9375rem;font-weight:600;letter-spacing:0.01em;">
+    ⚠ PLACEHOLDER DOCUMENT — NOT LEGALLY EFFECTIVE — DO NOT RELY ON THESE TERMS ⚠
+  </div>
+
   <main>
     <p class="label">Legal</p>
     <h1>Terms of Service</h1>
-    <p class="meta">Last updated: placeholder — effective date TBD</p>
+    <p class="meta">Last updated: [DATE TBD] &mdash; pending full legal review before public launch</p>
 
-    <div class="placeholder-notice">
-      This is a placeholder document. Full terms of service will be published before the public launch of BRIX.
+    <div class="notice">
+      <strong>Draft document.</strong> These terms reflect how BRIX currently operates. A solicitor-reviewed version will be published before public launch. The obligations below are operative from the date you create an account.
     </div>
 
     <h2>1. Acceptance</h2>
-    <p>By creating a BRIX account or submitting data through this platform, you agree to these terms. If you do not agree, do not use the service.</p>
+    <p>By creating a BRIX account or submitting data through this platform, you agree to these terms and our <a href="/privacy-policy.html" style="color:#40916c">Privacy Policy</a>. If you do not agree, do not use the service. You must be at least 16 years old (or the minimum age required in your jurisdiction) to use BRIX.</p>
 
     <h2>2. The service</h2>
-    <p>BRIX is a citizen science platform for recording BRIX (sugar content / bionutrient) measurements of food produce. Submitted data is displayed publicly in aggregate form to help consumers and researchers understand food quality.</p>
+    <p>BRIX is a citizen science platform for recording BRIX score measurements of fresh produce. Submitted measurements are displayed publicly — on leaderboards, maps, and data views — to help consumers and researchers understand food quality. BRIX scores are community-contributed data and are provided for informational purposes only.</p>
 
-    <h2>3. Submissions</h2>
-    <p>You are responsible for the accuracy of measurements you submit. Deliberately falsified data is a violation of these terms. We reserve the right to remove submissions we believe to be inaccurate or submitted in bad faith.</p>
+    <h2>3. Wallet-based authentication — important disclosure</h2>
+    <p>BRIX uses a <strong>cryptographic wallet</strong> system for identity and authentication rather than email addresses and passwords. By using BRIX you acknowledge and agree to the following:</p>
 
-    <h2>4. Account and identity</h2>
-    <p>Your account is linked to a BSV wallet identity key. You are responsible for maintaining access to your wallet. We cannot recover accounts on your behalf if you lose access to your wallet.</p>
+    <div class="info-box">
+      <h3>What is a wallet?</h3>
+      <p style="margin-bottom:0.5rem">A wallet is software (such as the Mycelia app) that generates and stores a cryptographic key pair on your device. The private key never leaves your device. BRIX stores only the corresponding public key (your "identity key") to identify your account.</p>
+    </div>
 
-    <h2>5. Data licence</h2>
-    <p>By submitting a measurement, you grant BRIX a perpetual, royalty-free licence to display, aggregate, and publish that measurement as part of the platform's public dataset. Anonymised data may be retained after account deletion.</p>
+    <div class="info-box">
+      <h3>What is the BSV blockchain standard?</h3>
+      <p style="margin-bottom:0.5rem">BRIX's authentication system is based on the BSV (Bitcoin SV) blockchain cryptographic identity standard. This is an open standard for public-key cryptography. BRIX does not write your personal data to the blockchain; however, the identity key format is derived from this standard and your public key may appear in records associated with any on-chain interactions you independently make using the same wallet.</p>
+    </div>
+
+    <div class="info-box">
+      <h3>What is a certificate?</h3>
+      <p style="margin-bottom:0.5rem">When you create a BRIX account, we issue a cryptographic membership certificate into your wallet. This certificate confirms your membership status. It is stored on your device (not our servers) and is used by the BRIX app to confirm your identity at login. You can revoke it by removing it from your wallet or requesting account deletion.</p>
+    </div>
+
+    <ul>
+      <li>You are solely responsible for maintaining access to your wallet and private key.</li>
+      <li>BRIX cannot recover your account if you lose access to your wallet. There is no password reset.</li>
+      <li>If your wallet is compromised, you should contact us immediately to revoke your certificate.</li>
+      <li>Your identity key is a pseudonymous public identifier. It does not inherently reveal your real name unless you choose to provide a display name.</li>
+    </ul>
+
+    <h2>4. Third-party services</h2>
+    <p>BRIX relies on the following third-party services. By using BRIX you acknowledge that these services are independent of us and governed by their own terms:</p>
+    <ul>
+      <li><strong>Mycelia</strong> — the recommended wallet application for BRIX. Mycelia is developed and operated by a third party. Its own terms of service and privacy policy apply to your use of the Mycelia app. BRIX is not responsible for the availability, security, or conduct of Mycelia.</li>
+      <li><strong>BSV Association / BSV blockchain infrastructure</strong> — the cryptographic identity standard BRIX uses is based on BSV. BRIX does not control the BSV network or its associated infrastructure.</li>
+      <li><strong>GeoNames</strong> — a geographic database used to resolve location names. Location queries are proxied through BRIX servers.</li>
+    </ul>
+
+    <h2>5. Submissions and data licence</h2>
+    <p>You are responsible for the accuracy of measurements you submit. Deliberately falsified data is a violation of these terms and may result in account suspension or removal.</p>
+    <p>By submitting a measurement, you grant BRIX a perpetual, worldwide, royalty-free licence to display, aggregate, and publish that measurement as part of the platform's public dataset. This licence survives account deletion; however, following deletion your submissions will no longer be associated with your identity.</p>
 
     <h2>6. Prohibited conduct</h2>
-    <p>You may not use automated tools to submit fake measurements, attempt to compromise the security of the platform, or use the service for any unlawful purpose.</p>
+    <ul>
+      <li>Submitting fabricated or deliberately inaccurate measurements.</li>
+      <li>Using automated tools, bots, or scripts to submit data in bulk without prior agreement.</li>
+      <li>Attempting to compromise, reverse-engineer, or gain unauthorised access to the platform or other users' accounts.</li>
+      <li>Using the service in a way that violates applicable law.</li>
+    </ul>
 
-    <h2>7. Limitation of liability</h2>
-    <p>BRIX data is provided for informational purposes only. We make no guarantees about the accuracy of community-submitted measurements and are not liable for decisions made based on them.</p>
+    <h2>7. Disclaimer — data accuracy</h2>
+    <p>BRIX scores are community-submitted. We do not verify individual measurements. BRIX data is provided for informational and scientific purposes only. We make no warranties as to the accuracy or completeness of any measurement. Do not rely solely on BRIX data for health, dietary, or purchasing decisions.</p>
 
-    <h2>8. Changes to these terms</h2>
-    <p>We may update these terms at any time. Continued use of the service after an update constitutes acceptance of the revised terms.</p>
+    <h2>8. Limitation of liability</h2>
+    <p>To the fullest extent permitted by applicable law, BRIX and its operators are not liable for: loss of access to your wallet or account; inaccurate community submissions; decisions made based on BRIX data; or interruption of the service. Nothing in these terms limits liability for fraud, personal injury caused by negligence, or any liability that cannot be excluded by law.</p>
 
-    <h2>9. Contact</h2>
-    <p>For legal queries, contact: <strong>legal@brix.earth</strong> (placeholder — address TBD).</p>
+    <h2>9. Governing law and jurisdiction</h2>
+    <p>These terms are governed by the laws of <strong>[Jurisdiction TBD]</strong>. Disputes will be subject to the exclusive jurisdiction of the courts of <strong>[Jurisdiction TBD]</strong>. This will be confirmed before public launch.</p>
+
+    <h2>10. Changes to these terms</h2>
+    <p>We may update these terms. For material changes, we will provide at least 14 days' notice by email (if you have provided one) or by a prominent notice in the app before the changes take effect. Continued use after that date constitutes acceptance. If you do not agree to a change, you may close your account before it takes effect.</p>
+
+    <h2>11. Contact</h2>
+    <p>For legal queries: <strong>legal@brix.earth</strong> — address TBD before launch.</p>
   </main>
 
   <footer>
-    <a href="/privacy-policy.html">Privacy Policy</a> &nbsp;·&nbsp;
-    <a href="/delete-account.html">Delete My Account</a> &nbsp;·&nbsp;
+    <a href="/privacy-policy.html">Privacy Policy</a> &nbsp;&middot;&nbsp;
+    <a href="/delete-account.html">Delete My Account</a> &nbsp;&middot;&nbsp;
     <a href="/login">Back to BRIX</a>
   </footer>
 </body>

@@ -19,51 +19,19 @@
       align-items: center;
       gap: 1rem;
     }
-    header a {
-      color: rgba(255,255,255,0.7);
-      text-decoration: none;
-      font-size: 0.875rem;
-    }
+    header a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.875rem; }
     header a:hover { color: #fff; }
-    header .brand {
-      color: #fff;
-      font-weight: 700;
-      font-size: 1.125rem;
-      letter-spacing: 0.05em;
-    }
+    header .brand { color: #fff; font-weight: 700; font-size: 1.125rem; letter-spacing: 0.05em; }
     header .sep { color: rgba(255,255,255,0.3); }
-    main {
-      max-width: 720px;
-      margin: 3rem auto;
-      padding: 0 1.5rem;
-    }
-    .label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: #40916c;
-      margin-bottom: 0.5rem;
-    }
-    h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #1a3a2a;
-      margin-bottom: 0.5rem;
-    }
-    .meta {
-      font-size: 0.875rem;
-      color: #7a9b82;
-      margin-bottom: 2.5rem;
-    }
-    h2 {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: #1a3a2a;
-      margin: 2rem 0 0.5rem;
-    }
+    main { max-width: 720px; margin: 3rem auto; padding: 0 1.5rem; }
+    .label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: #40916c; margin-bottom: 0.5rem; }
+    h1 { font-size: 2rem; font-weight: 700; color: #1a3a2a; margin-bottom: 0.5rem; }
+    .meta { font-size: 0.875rem; color: #7a9b82; margin-bottom: 2.5rem; }
+    h2 { font-size: 1.125rem; font-weight: 600; color: #1a3a2a; margin: 2rem 0 0.5rem; }
     p { margin-bottom: 1rem; color: #3d5a47; font-size: 0.9375rem; }
-    .placeholder-notice {
+    ul { padding-left: 1.25rem; margin-bottom: 1rem; }
+    ul li { color: #3d5a47; font-size: 0.9375rem; margin-bottom: 0.3rem; }
+    .notice {
       background: #d8f3dc;
       border-left: 3px solid #40916c;
       padding: 1rem 1.25rem;
@@ -72,14 +40,15 @@
       font-size: 0.875rem;
       color: #2d6a4f;
     }
-    footer {
-      text-align: center;
-      padding: 2rem;
-      font-size: 0.8125rem;
-      color: #7a9b82;
-      border-top: 1px solid #d8f3dc;
-      margin-top: 3rem;
+    .rights-box {
+      background: #fff;
+      border: 1px solid #d8f3dc;
+      border-radius: 0.75rem;
+      padding: 1.25rem 1.5rem;
+      margin: 1rem 0;
     }
+    .rights-box h3 { font-size: 0.875rem; font-weight: 600; color: #1a3a2a; margin-bottom: 0.5rem; }
+    footer { text-align: center; padding: 2rem; font-size: 0.8125rem; color: #7a9b82; border-top: 1px solid #d8f3dc; margin-top: 3rem; }
     footer a { color: #40916c; text-decoration: none; }
     footer a:hover { text-decoration: underline; }
   </style>
@@ -91,37 +60,116 @@
     <a href="/login">Back to app</a>
   </header>
 
+  <div style="background:#b91c1c;color:#fff;text-align:center;padding:0.875rem 1.5rem;font-size:0.9375rem;font-weight:600;letter-spacing:0.01em;">
+    ⚠ PLACEHOLDER DOCUMENT — NOT LEGALLY EFFECTIVE — DO NOT RELY ON THIS POLICY ⚠
+  </div>
+
   <main>
     <p class="label">Legal</p>
     <h1>Privacy Policy</h1>
-    <p class="meta">Last updated: placeholder — effective date TBD</p>
+    <p class="meta">Last updated: [DATE TBD] &mdash; pending full legal review before public launch</p>
 
-    <div class="placeholder-notice">
-      This is a placeholder document. A full privacy policy will be published before the public launch of BRIX.
+    <div class="notice">
+      <strong>Draft document.</strong> This policy reflects how BRIX currently operates. A solicitor-reviewed version will be published before public launch. The commitments below are operative: we do not sell your data and we do not use it for advertising.
     </div>
 
-    <h2>1. Who we are</h2>
-    <p>BRIX is a citizen science platform for collecting and visualising BRIX (sugar content / bionutrient) data in agriculture. This policy explains how we collect, use, and protect your information.</p>
+    <h2>1. Who we are (data controller)</h2>
+    <p>BRIX is operated by <strong>[Legal entity name TBD]</strong> ("we", "us", "BRIX"). We are the data controller for personal data processed through this platform. Contact: <strong>privacy@brix.earth</strong> (address TBD).</p>
+    <p>If we appoint a Data Protection Officer prior to launch, their contact details will be added here.</p>
 
-    <h2>2. What data we collect</h2>
-    <p>When you create an account using a BSV wallet, we store your wallet identity key (a public key), an optional display name, and an optional email address. We also store BRIX measurement submissions you make, including the crop, brand, location, and score.</p>
+    <h2>2. How authentication works — what we do and do not store</h2>
+    <p>BRIX does not use passwords. Instead, authentication relies on a <strong>BSV blockchain wallet</strong> — software you install separately (we recommend the <strong>Mycelia</strong> app). Your wallet holds a cryptographic key pair; the private key never leaves your device and is never sent to or stored by BRIX.</p>
+    <p>When you create an account, we store your <strong>wallet identity key</strong> (your public key — a string of letters and numbers that identifies you but cannot be used to impersonate you), along with any optional display name and email address you choose to provide. We also issue a <strong>membership certificate</strong> that is stored inside your own wallet, not on our servers.</p>
+    <p>Because authentication uses public-key cryptography, we have no password to store, reset, or expose. If you lose access to your wallet, we cannot recover your account.</p>
 
-    <h2>3. How we use your data</h2>
-    <p>Your data is used to display leaderboards, aggregate bionutrient statistics, and attribute submissions to your account. We do not sell personal data. We do not use your data for advertising.</p>
+    <h2>3. What personal data we collect</h2>
+    <ul>
+      <li><strong>Identity key</strong> — your wallet's public key. Collected on account creation. Required to use the service.</li>
+      <li><strong>Display name</strong> — optional. Shown on leaderboards and submissions.</li>
+      <li><strong>Email address</strong> — optional. Used only for service communications if provided.</li>
+      <li><strong>Measurement submissions</strong> — crop, brand, location (country / region / city), BRIX score, and date. Displayed publicly in aggregate.</li>
+      <li><strong>Session data</strong> — a single HttpOnly authentication cookie that holds a short-lived session token. It is not used for tracking and expires when you log out.</li>
+      <li><strong>Location data (optional)</strong> — if you use the location selector, we make server-side requests to the GeoNames geographic data service to resolve place names. Your IP address may be visible to GeoNames for that request. See section 7.</li>
+    </ul>
+    <p>We do not collect device fingerprints, advertising identifiers, or behavioural tracking data.</p>
 
-    <h2>4. Data retention and deletion</h2>
-    <p>You may request deletion of your account and associated personal data at any time via the <a href="/delete-account.html" style="color:#40916c">Delete My Account</a> page. Anonymised measurement data may be retained for scientific purposes after account deletion.</p>
+    <h2>4. Legal basis for processing (GDPR)</h2>
+    <p>For users in the European Economic Area and UK, we rely on the following lawful bases under GDPR Article 6:</p>
+    <ul>
+      <li><strong>Contract performance (Art. 6(1)(b))</strong> — processing your identity key and submissions is necessary to provide the BRIX service you signed up for.</li>
+      <li><strong>Legitimate interests (Art. 6(1)(f))</strong> — processing anonymised measurement data for scientific aggregation and leaderboard display. Our legitimate interest is the public benefit of bionutrient transparency; this is not overridden by your interests given the data is scientific in nature.</li>
+      <li><strong>Consent (Art. 6(1)(a))</strong> — for optional personal data (display name, email) which you provide voluntarily and may withdraw at any time by requesting account deletion.</li>
+    </ul>
 
-    <h2>5. Cookies and tracking</h2>
-    <p>We use a single HttpOnly session cookie for authentication. We do not use third-party tracking cookies or analytics that share data with advertisers.</p>
+    <h2>5. How we use your data</h2>
+    <ul>
+      <li>Authenticate you when you log in.</li>
+      <li>Display your submissions on leaderboards and public data views.</li>
+      <li>Aggregate BRIX scores for scientific and community analysis.</li>
+      <li>Send service communications to your email address, if provided (no marketing without separate consent).</li>
+    </ul>
+    <p><strong>We do not sell personal data.</strong> We do not share personal data with advertisers. We do not use personal data for profiling or automated decision-making.</p>
 
-    <h2>6. Contact</h2>
-    <p>For privacy-related queries, contact us at: <strong>privacy@brix.earth</strong> (placeholder — address TBD).</p>
+    <h2>6. Public data and submissions</h2>
+    <p>BRIX scores and associated crop / location data you submit are displayed publicly. If you include a display name, it will appear alongside your submissions. Anonymous submissions (no display name) are attributed only to your identity key, which is a pseudonymous identifier.</p>
+
+    <h2>7. Third-party services</h2>
+    <ul>
+      <li><strong>Mycelia</strong> — a third-party wallet application developed independently of BRIX. Mycelia manages your identity key and certificate on your device. Its own privacy policy governs data it processes locally. We do not receive data from Mycelia beyond the identity key and certificate presented during login.</li>
+      <li><strong>BSV Blockchain</strong> — BRIX authentication relies on the BSV (Bitcoin SV) blockchain protocol for the cryptographic identity standard. Your public identity key is derived from this standard. Note that public keys, once used to interact with a blockchain-compatible system, may appear in blockchain transaction records maintained by third parties outside our control.</li>
+      <li><strong>GeoNames</strong> — a public geographic database used to resolve country, region, and city names in the location selector. Requests are proxied through our server. GeoNames' own terms apply to their data.</li>
+    </ul>
+
+    <h2>8. Data retention</h2>
+    <p>We retain your account data for as long as your account exists. If you request deletion, we will delete your identity key, display name, and email address within 30 days. Measurement submissions may be retained in anonymised form as part of the scientific dataset, without any link to your identity.</p>
+    <p>Note: Your public identity key is a public cryptographic key. Any prior on-chain interactions involving that key are outside our control and cannot be deleted by us or anyone else.</p>
+
+    <h2>9. Your rights</h2>
+
+    <div class="rights-box">
+      <h3>If you are in the EU / EEA / UK (GDPR)</h3>
+      <ul>
+        <li><strong>Access</strong> — request a copy of personal data we hold about you.</li>
+        <li><strong>Rectification</strong> — ask us to correct inaccurate data.</li>
+        <li><strong>Erasure</strong> — ask us to delete your personal data ("right to be forgotten"), subject to legal retention obligations.</li>
+        <li><strong>Portability</strong> — receive your personal data in a structured, machine-readable format.</li>
+        <li><strong>Restriction</strong> — ask us to pause processing while a dispute is resolved.</li>
+        <li><strong>Objection</strong> — object to processing based on legitimate interests.</li>
+        <li><strong>Supervisory authority</strong> — you have the right to lodge a complaint with your national data protection authority.</li>
+      </ul>
+    </div>
+
+    <div class="rights-box">
+      <h3>If you are in California (CCPA / CPRA)</h3>
+      <ul>
+        <li><strong>Right to know</strong> — request disclosure of personal information collected, used, or shared.</li>
+        <li><strong>Right to delete</strong> — request deletion of personal information we hold.</li>
+        <li><strong>Right to opt-out of sale</strong> — we do not sell personal information. No opt-out mechanism is required, but you may contact us to confirm.</li>
+        <li><strong>Right to non-discrimination</strong> — we will not discriminate against you for exercising these rights.</li>
+      </ul>
+    </div>
+
+    <p>To exercise any of these rights, contact <strong>privacy@brix.earth</strong> with the subject "Data Rights Request" and include your identity key or the email address associated with your account.</p>
+
+    <h2>10. International data transfers</h2>
+    <p>BRIX server infrastructure is currently hosted in <strong>[hosting region TBD]</strong>. If personal data is transferred outside the EEA, we will ensure appropriate safeguards are in place (such as Standard Contractual Clauses). This section will be updated with specifics before public launch.</p>
+
+    <h2>11. Cookies</h2>
+    <p>We set one cookie: a short-lived, HttpOnly, Secure session token used solely for authentication. We do not use advertising cookies, analytics cookies, or any third-party cookies. No consent banner is required for this cookie under the ePrivacy Directive as it is strictly necessary for the service.</p>
+
+    <h2>12. Children</h2>
+    <p>BRIX is not directed at children under 16 (or the applicable minimum age in your jurisdiction). We do not knowingly collect data from minors. If you believe a minor has submitted data, contact us and we will delete it promptly.</p>
+
+    <h2>13. Changes to this policy</h2>
+    <p>We will notify registered users by email (if provided) of any material changes to this policy before they take effect, and we will update the "last updated" date above.</p>
+
+    <h2>14. Contact</h2>
+    <p>Data controller contact: <strong>privacy@brix.earth</strong> — address TBD before launch.</p>
   </main>
 
   <footer>
-    <a href="/terms-of-service.html">Terms of Service</a> &nbsp;·&nbsp;
-    <a href="/delete-account.html">Delete My Account</a> &nbsp;·&nbsp;
+    <a href="/terms-of-service.html">Terms of Service</a> &nbsp;&middot;&nbsp;
+    <a href="/delete-account.html">Delete My Account</a> &nbsp;&middot;&nbsp;
     <a href="/login">Back to BRIX</a>
   </footer>
 </body>

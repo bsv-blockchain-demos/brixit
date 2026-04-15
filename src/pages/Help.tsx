@@ -1,30 +1,132 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Smartphone, KeyRound, ShieldCheck, Leaf } from 'lucide-react';
+import { ArrowLeft, Smartphone, KeyRound, ShieldCheck, Leaf, Fingerprint } from 'lucide-react';
 import { AuthBackground } from '@/components/ui/AuthBackground';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
-const sections = [
+const FAQ = [
   {
+    value: 'brix',
     icon: Leaf,
-    title: 'What is BRIX?',
-    body: `BRIX is a community app for tracking and sharing bionutrient scores — a measure of how nutritious food really is. Using a simple device called a refractometer, anyone can submit a reading from a farm, market, or store and see how it compares to others around the world.`,
+    question: 'What is BRIX?',
+    answer: (
+      <>
+        <p>
+          BRIX is a community app for tracking and sharing BRIX scores — a simple number that
+          reflects how your food was grown. Using a device called a refractometer, anyone can
+          measure produce from a farm, market, or store and compare it to readings from around
+          the world.
+        </p>
+        <p className="mt-3">
+          The BRIX score measures dissolved solids in fresh produce — primarily sugars — along
+          with small amounts of minerals, amino acids, and other compounds. Higher scores often
+          indicate a plant that was photosynthesizing well and functioning efficiently, conditions
+          commonly associated with better flavour and overall food quality.
+        </p>
+      </>
+    ),
   },
   {
+    value: 'wallet',
     icon: KeyRound,
-    title: 'What is a wallet?',
-    body: `In most apps you log in with an email and password. In BRIX, a wallet does that job instead — but much more securely. Think of it as a digital keychain that lives on your device. It holds your identity, and nobody (not even us) can access it without your approval. No passwords to forget, no accounts to hack.`,
+    question: 'What is a wallet?',
+    answer: (
+      <>
+        <p>
+          In most apps, your identity is stored on a company's server — which means if they
+          get hacked, your account is at risk. In BRIX, a wallet does that job instead.
+        </p>
+        <p className="mt-3">
+          Your wallet is software that lives on your device and holds a cryptographic key that
+          is unique to you. When you sign in, your wallet proves your identity to BRIX through
+          a cryptographic handshake rather than sending a password. Nobody — including us —
+          can access your identity without your direct approval.
+        </p>
+        <p className="mt-3">
+          Think of it as a digital keychain: it unlocks BRIX (and other compatible apps), but
+          the key never leaves your device.
+        </p>
+      </>
+    ),
   },
   {
+    value: 'identity-key',
+    icon: Fingerprint,
+    question: 'What is an identity key?',
+    answer: (
+      <>
+        <p>
+          Your identity key is a public cryptographic identifier — think of it as a permanent
+          username that is mathematically generated from your wallet rather than chosen by you.
+        </p>
+        <p className="mt-3">
+          When you submit a measurement or log in, your wallet uses this key to prove it's
+          really you — without sharing a password or personal information with our servers.
+          The key is public (anyone can see it), but only you can prove you own it, because
+          the matching private key never leaves your device.
+        </p>
+        <p className="mt-3">
+          You can see your identity key in the app — it's a long string of letters and
+          numbers. You don't need to memorise it; your wallet handles everything automatically.
+          It also means you can use the same identity across any other app that supports
+          this standard.
+        </p>
+      </>
+    ),
+  },
+  {
+    value: 'certificate',
     icon: ShieldCheck,
-    title: 'What is a certificate?',
-    body: `When you create a BRIX account, a small "membership card" called a certificate is stored in your wallet. It proves you are a real BRIX member without sharing personal data with us. It stays private — only you control it, and you can revoke it at any time.`,
+    question: 'What is a certificate?',
+    answer: (
+      <>
+        <p>
+          When you create a BRIX account, a small "membership card" called a certificate is
+          issued into your wallet. It proves you are a verified BRIX member without sharing
+          personal data with us.
+        </p>
+        <p className="mt-3">
+          The certificate is cryptographically signed by BRIX, so the app can confirm your
+          membership is genuine — but it contains only what you chose to share (an optional
+          display name and email). You control it: it stays in your wallet, and you can
+          revoke access at any time simply by removing it.
+        </p>
+        <p className="mt-3">
+          This is why BRIX does not ask for a password — your certificate, stored in your
+          wallet, is your proof of membership.
+        </p>
+      </>
+    ),
   },
   {
+    value: 'mycelia',
     icon: Smartphone,
-    title: 'What is the Mycelia app?',
-    body: `Mycelia is the wallet app we recommend for BRIX. It is designed for everyday people — no crypto knowledge needed. It manages your identity and certificate behind the scenes, so getting into BRIX is as simple as opening the app.`,
+    question: 'What is the Mycelia app?',
+    answer: (
+      <>
+        <p>
+          Mycelia is the wallet app we recommend for BRIX. It is designed for everyday
+          people — no blockchain or crypto knowledge needed. It manages your identity key
+          and certificates behind the scenes.
+        </p>
+        <p className="mt-3">
+          Once you have Mycelia set up, opening BRIX from within the app signs you in
+          automatically. On a desktop, you can scan a QR code with Mycelia to connect
+          without installing anything extra on your computer.
+        </p>
+        <p className="mt-3">
+          Mycelia also works with other compatible apps, so the identity and certificates
+          you build here carry across the wider ecosystem.
+        </p>
+      </>
+    ),
   },
 ];
 
@@ -54,20 +156,26 @@ export default function Help() {
           <p className="text-text-mid text-sm mt-1">Everything you need to know to get started</p>
         </div>
 
-        {/* Info sections */}
-        {sections.map(({ icon: Icon, title, body }) => (
-          <Card key={title}>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Icon className="w-5 h-5 text-green-fresh shrink-0" />
-                {title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-text-mid leading-relaxed">{body}</p>
-            </CardContent>
-          </Card>
-        ))}
+        {/* FAQ accordion */}
+        <Accordion type="multiple" defaultValue={['brix']} className="space-y-2">
+          {FAQ.map(({ value, icon: Icon, question, answer }) => (
+            <AccordionItem
+              key={value}
+              value={value}
+              className="border border-green-pale rounded-xl bg-card overflow-hidden px-4"
+            >
+              <AccordionTrigger className="hover:no-underline py-4 gap-3 text-left">
+                <span className="flex items-center gap-3">
+                  <Icon className="w-4 h-4 text-green-fresh shrink-0" />
+                  <span className="font-semibold text-sm text-text-dark">{question}</span>
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="text-sm text-text-mid leading-relaxed pb-4">
+                {answer}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
 
         {/* Getting started */}
         <Card className="border-green-pale bg-green-mist">
@@ -103,7 +211,7 @@ export default function Help() {
 
         {/* On desktop */}
         <p className="text-center text-xs text-text-muted pb-4">
-          On a desktop? You can still sign in by choosing <em>connect via mobile QR</em> on the login screen and scanning the code with your Mycelia app.
+          On a desktop? Choose <em>connect via mobile QR</em> on the login screen and scan the code with your Mycelia app.
         </p>
 
       </div>

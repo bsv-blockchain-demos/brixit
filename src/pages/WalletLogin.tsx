@@ -446,10 +446,10 @@ export default function WalletLogin() {
 
                 <motion.div className="space-y-5" {...fadeUp}>
                   <p className="text-lg leading-relaxed" style={{ color: 'var(--text-mid)' }}>
-                    The Brix scale measures the sugar and nutrient content of fresh produce. A high score means your food is packed with minerals and vitamins. A low score means it looks fine but doesn't deliver much.
+                    The BRIX score measures dissolved solids in fresh produce — primarily sugars — along with small amounts of minerals, amino acids, and other compounds. Higher scores often indicate a plant that was photosynthesizing well and functioning efficiently, conditions commonly associated with better flavour and overall food quality.
                   </p>
                   <p className="text-lg leading-relaxed" style={{ color: 'var(--text-mid)' }}>
-                    Supermarket carrots often score 4–6. A carrot from a well-managed farm can score 18. Same vegetable. Very different nutrition. Now you can know before you buy.
+                    Supermarket carrots often score 4–6. A carrot from a well-managed farm can score 18. Same vegetable. Very different quality. Now you can know before you buy.
                   </p>
                 </motion.div>
               </div>
@@ -469,8 +469,8 @@ export default function WalletLogin() {
                   <div className="flex items-start gap-5">
                     <p className="text-3xl font-display font-bold shrink-0 w-16" style={{ color: 'var(--green-mid)' }}>16+</p>
                     <div className="flex-1">
-                      <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>Excellent nutrition</p>
-                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Rich in minerals. The best you can buy.</p>
+                      <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>Excellent</p>
+                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Strong indicator of efficient growth and good food quality.</p>
                       <div className="h-0.5 w-12 mt-3 rounded-full" style={{ backgroundColor: 'var(--green-mid)' }} />
                     </div>
                   </div>
