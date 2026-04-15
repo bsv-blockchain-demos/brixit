@@ -193,11 +193,11 @@ export default function CreateAccount() {
                   </span>
                   <span className="text-sm text-text-mid leading-snug">
                     I have read and agree to the{' '}
-                    <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="text-green-fresh hover:text-green-mid underline underline-offset-2">
+                    <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-green-fresh hover:text-green-mid underline underline-offset-2">
                       Terms of Service
                     </a>
                     {' '}and{' '}
-                    <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="text-green-fresh hover:text-green-mid underline underline-offset-2">
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-green-fresh hover:text-green-mid underline underline-offset-2">
                       Privacy Policy
                     </a>
                   </span>
