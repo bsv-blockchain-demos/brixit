@@ -73,6 +73,7 @@ export default function CreateAccount() {
 
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -175,10 +176,36 @@ export default function CreateAccount() {
                     placeholder="you@example.com"
                   />
                 </div>
+                <label className="flex items-start gap-3 cursor-pointer select-none">
+                  <span
+                    className="relative mt-0.5 h-4 w-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                    style={{ borderColor: agreedToTerms ? 'var(--green-fresh)' : 'var(--input)' }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={agreedToTerms}
+                      onChange={e => setAgreedToTerms(e.target.checked)}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full m-0"
+                    />
+                    {agreedToTerms && (
+                      <span className="h-2.5 w-2.5 rounded-[2px]" style={{ backgroundColor: 'var(--green-fresh)' }} />
+                    )}
+                  </span>
+                  <span className="text-sm text-text-mid leading-snug">
+                    I have read and agree to the{' '}
+                    <a href="/terms-of-service.html" target="_blank" rel="noopener noreferrer" className="text-green-fresh hover:text-green-mid underline underline-offset-2">
+                      Terms of Service
+                    </a>
+                    {' '}and{' '}
+                    <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer" className="text-green-fresh hover:text-green-mid underline underline-offset-2">
+                      Privacy Policy
+                    </a>
+                  </span>
+                </label>
                 <Button
                   type="submit"
                   className="w-full bg-green-fresh hover:bg-green-mid text-white"
-                  disabled={isLoading}
+                  disabled={isLoading || !agreedToTerms}
                 >
                   {isLoading ? 'Creating…' : username.trim() ? 'Create Account' : 'Create Anonymous Account'}
                 </Button>
