@@ -42,17 +42,15 @@ export default function WalletError() {
             </button>
 
             {!isMobile && (
-              <p className="text-xs text-text-muted">
-                or{' '}
-                <button
-                  type="button"
-                  onClick={() => navigate('/login?qr=1')}
-                  className="inline-flex items-center gap-1 text-text-mid hover:text-text-dark underline underline-offset-2"
-                >
-                  <Smartphone className="w-3 h-3" />
-                  connect via mobile QR
-                </button>
-              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/login?qr=1')}
+                className="w-full gap-2 bg-card"
+              >
+                <Smartphone className="w-4 h-4" />
+                Connect with my phone
+              </Button>
             )}
           </CardContent>
         </Card>

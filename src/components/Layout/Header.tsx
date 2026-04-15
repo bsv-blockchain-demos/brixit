@@ -27,6 +27,7 @@ import {
   Moon,
   Copy,
   Check,
+  Trash2,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -231,6 +232,12 @@ const Header = () => {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <a href="/delete-account.html" className="text-destructive focus:text-destructive cursor-pointer">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Account
+                    </a>
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={handleLogout}
                     className="text-destructive focus:text-destructive cursor-pointer"
@@ -238,6 +245,12 @@ const Header = () => {
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-1.5 flex items-center gap-3">
+                    <a href="/privacy-policy.html" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacy</a>
+                    <span className="text-muted-foreground/40 text-xs">·</span>
+                    <a href="/terms-of-service.html" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Terms</a>
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (

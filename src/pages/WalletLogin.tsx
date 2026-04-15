@@ -510,9 +510,6 @@ export default function WalletLogin() {
               <h2 className="font-display text-3xl desktop:text-4xl font-bold" style={{ color: 'var(--text-dark)' }}>
                 What people are finding
               </h2>
-              <p className="text-base mt-2" style={{ color: 'var(--text-muted)' }}>
-                Tap any score to see the full details.
-              </p>
             </motion.div>
 
             <motion.div {...stagger} className="grid desktop:grid-cols-3 gap-5">
@@ -634,7 +631,10 @@ export default function WalletLogin() {
               <button onClick={() => navigate('/help')} className="hover:text-white/80 transition-colors">How it works</button>
               <button onClick={() => navigate('/contact')} className="hover:text-white/80 transition-colors">Contact</button>
             </nav>
-            <div />
+            <nav className="flex items-center justify-end gap-4 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <a href="/privacy-policy.html" className="hover:text-white/70 transition-colors">Privacy</a>
+              <a href="/terms-of-service.html" className="hover:text-white/70 transition-colors">Terms</a>
+            </nav>
           </div>
         </footer>
       </div>
