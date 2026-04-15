@@ -5,18 +5,18 @@ type ColorMode = 'bg' | 'hex';
 
 const colorMap = {
   bg: {
-    poor: 'bg-red-500',
-    average: 'bg-orange-500', 
-    good: 'bg-yellow-500',
-    excellent: 'bg-green-500',
+    poor: 'bg-score-poor',
+    average: 'bg-gold',
+    good: 'bg-gold',
+    excellent: 'bg-green-mid',
     fallback: 'bg-gray-300',
   },
   hex: {
-    poor: '#ef4444',
-    average: '#f97316',
-    good: '#eab308', 
-    excellent: '#22c55e',
-    fallback: '#d1d5db', // Tailwind gray-300
+    poor: '#c0392b',
+    average: '#c9a84c',
+    good: '#c9a84c',
+    excellent: '#2d6a4f',
+    fallback: '#d1d5db',
   },
 };
 

@@ -18,10 +18,16 @@ interface ComboboxProps {
   placeholder: string;
 }
 
+function capitalizeWords(str: string): string {
+  return str.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 const Combobox: React.FC<ComboboxProps> = ({ items, value, onSelect, placeholder }) => {
   const [open, setOpen] = useState(false);
   const safeItems = Array.isArray(items) ? items : [];
   const selectedItem = safeItems.find((item) => item.name === value);
+
+  const displayText = (item: Item) => capitalizeWords(item.label || item.name);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -32,7 +38,7 @@ const Combobox: React.FC<ComboboxProps> = ({ items, value, onSelect, placeholder
           aria-expanded={open}
           className="w-full justify-between"
         >
-          {selectedItem ? (selectedItem.label || selectedItem.name) : placeholder}
+          {selectedItem ? displayText(selectedItem) : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -57,7 +63,7 @@ const Combobox: React.FC<ComboboxProps> = ({ items, value, onSelect, placeholder
                       value === item.name ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {item.label || item.name}
+                  {displayText(item)}
                 </CommandItem>
               ))}
             </CommandGroup>

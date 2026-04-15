@@ -133,7 +133,7 @@ export function getFilterSummary(filters: MapFilter, isAdmin: boolean): string {
   if (isAdmin && filters.verifiedOnly !== DEFAULT_MAP_FILTERS.verifiedOnly) {
     activeFilters.push(`verified: ${filters.verifiedOnly ? 'only' : 'any'}`);
   } else if (!isAdmin && DEFAULT_MAP_FILTERS.verifiedOnly) {
-    activeFilters.push('verified only'); // This means it's always applied for non-admins
+    activeFilters.push('Verified only'); // This means it's always applied for non-admins
   }
   
   if (filters.cropTypes.length > 0) {

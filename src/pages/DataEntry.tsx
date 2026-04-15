@@ -23,6 +23,7 @@ import {
   Info,
   Building2
 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../hooks/use-toast';
 import { apiPost, apiFetch } from '@/lib/api';
 import ComboBoxAddable from '../components/ui/combo-box-addable';
@@ -68,6 +69,7 @@ const DataEntry = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const prefersReducedMotion = useReducedMotion();
 
   const fadeUp = prefersReducedMotion ? {} : { initial: { opacity: 0, y: 24 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5 } };
@@ -369,6 +371,8 @@ const DataEntry = () => {
         });
       }
 
+      queryClient.invalidateQueries({ queryKey: ['staticData'] });
+      queryClient.invalidateQueries({ queryKey: ['submissions', 'mine'] });
       navigate('/your-data');
     } catch (err: any) {
       console.error(err);
@@ -704,7 +708,7 @@ const DataEntry = () => {
         </motion.div>
       </main>
       {/* Sticky footer submit button */}
-      <div className="fixed bottom-0 left-0 right-0 border-t shadow-lg p-4" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--green-pale)' }}>
+      <div className="fixed bottom-0 left-0 right-0 border-t shadow-lg p-4" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--green-pale)', paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 1rem))' }}>
       <div className="max-w-5xl mx-auto flex justify-end">
         <Button
           onClick={(e) => handleSubmit(e)}

@@ -122,7 +122,7 @@ const Header = () => {
         <Link to="/data-entry">
           <Button
             variant={isActive("/data-entry") ? "default" : "ghost"}
-            className="flex items-center space-x-2 w-full justify-start bg-green-fresh hover:bg-green-mid text-white"
+            className="flex items-center space-x-2 w-full justify-start bg-green-fresh hover:bg-green-mid text-white hover:text-white"
           >
             <Plus className="w-4 h-4" />
             <span>Submit</span>

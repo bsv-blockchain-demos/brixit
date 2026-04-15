@@ -12,6 +12,7 @@ import { fetchMySubmissionsPage } from '../lib/fetchSubmissions';
 import { useMySubmissionsCountQuery, useMySubmissionsCropIdsQuery, useMySubmissionsPageQuery } from '../hooks/useSubmissions';
 
 import SubmissionTableRow from '../components/common/SubmissionTableRow';
+import MobileSubmissionCard from '../components/common/MobileSubmissionCard';
 import { BrixDataPoint } from '../types';
 import { useToast } from '../hooks/use-toast';
 import DataPointDetailModal from '../components/common/DataPointDetailModal';
@@ -126,6 +127,8 @@ const YourData: React.FC = () => {
   // New state for the modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDataPoint, setSelectedDataPoint] = useState<BrixDataPoint | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [openInEditMode, setOpenInEditMode] = useState(false);
 
   const isLoading =
     submissionsPageQuery.isLoading ||
@@ -151,6 +154,13 @@ const YourData: React.FC = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedDataPoint(null);
+    setOpenInEditMode(false);
+  };
+
+  const handleEditSubmission = (submission: BrixDataPoint) => {
+    setSelectedDataPoint(submission);
+    setOpenInEditMode(true);
+    setIsModalOpen(true);
   };
 
   // Handler for deletion, now that it's in the modal
@@ -222,7 +232,7 @@ const YourData: React.FC = () => {
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-display font-bold text-text-dark mb-2">
               Your Data
@@ -284,7 +294,7 @@ const YourData: React.FC = () => {
                         <AlertCircle className="w-16 h-16 text-text-muted-green mx-auto mb-4" />
                         <h3 className="text-lg font-semibold text-text-dark mb-2">Submissions are disabled</h3>
                         <p className="text-text-mid mb-6">
-                          Your account currently has observer access, so you can browse data but can’t submit measurements yet.
+                          Your account currently has observer access, so you can browse data but can't submit measurements yet.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                           <Button variant="outline" onClick={handleAttemptSubmit}>
@@ -298,35 +308,57 @@ const YourData: React.FC = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <Table style={{ tableLayout: 'fixed', minWidth: '100%' }}>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[28%]">Crop / Details</TableHead>
-                          <TableHead className="w-[10%] text-center">BRIX</TableHead>
-                          <TableHead className="w-[20%]">Location / Notes</TableHead>
-                          <TableHead className="w-[17%]">Assessment Date</TableHead>
-                          <TableHead className="w-[15%] text-center">Verified?</TableHead>
-                          <TableHead className="w-[10%] text-center">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {currentItems.map((submission) => {
-                          const isOwner = user?.id === submission.userId;
-                          const canDeleteByOwner = (isOwner && !submission.verified);
-                          return (
-                            <SubmissionTableRow
-                              key={submission.id}
-                              submission={submission}
-                              onDelete={() => handleDelete(submission.id)} // Pass handler for direct delete
-                              onOpenModal={() => handleOpenModal(submission)} // Pass new open modal handler
-                              isOwner={isOwner}
-                              canDeleteByOwner={canDeleteByOwner}
-                            />
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+                  <div>
+                    {/* Desktop table */}
+                    <div className="hidden desktop:block overflow-x-auto">
+                      <Table style={{ tableLayout: 'fixed', minWidth: '100%' }}>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[28%]">Crop / Details</TableHead>
+                            <TableHead className="w-[10%] text-center">BRIX</TableHead>
+                            <TableHead className="w-[20%]">Location / Notes</TableHead>
+                            <TableHead className="w-[17%]">Assessment Date</TableHead>
+                            <TableHead className="w-[15%] text-center">Verified?</TableHead>
+                            <TableHead className="w-[10%] text-center">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {currentItems.map((submission) => {
+                            const isOwner = user?.id === submission.userId;
+                            const canDeleteByOwner = (isOwner && !submission.verified);
+                            return (
+                              <SubmissionTableRow
+                                key={submission.id}
+                                submission={submission}
+                                onDelete={() => handleDelete(submission.id)}
+                                onOpenModal={() => handleOpenModal(submission)}
+                                onEdit={() => handleEditSubmission(submission)}
+                                isOwner={isOwner}
+                                canDeleteByOwner={canDeleteByOwner}
+                              />
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Mobile card list */}
+                    <div className="desktop:hidden space-y-3">
+                      {currentItems.map((submission) => {
+                        const isOwner = user?.id === submission.userId;
+                        const canAct = isOwner && !submission.verified;
+                        return (
+                          <MobileSubmissionCard
+                            key={submission.id}
+                            submission={submission}
+                            isOwner={isOwner}
+                            onOpenModal={() => handleOpenModal(submission)}
+                            onEdit={canAct ? () => handleEditSubmission(submission) : undefined}
+                            onDelete={canAct ? () => setDeleteTargetId(submission.id) : undefined}
+                          />
+                        );
+                      })}
+                    </div>
 
                     <div className="mt-6 flex items-center justify-between">
                       <Button
@@ -414,6 +446,7 @@ const YourData: React.FC = () => {
           onDeleteSuccess={(id) => {
             handleDelete(id);
           }}
+          initialEditMode={openInEditMode}
         />
 
         <AlertDialog open={isSubmitInfoOpen} onOpenChange={setIsSubmitInfoOpen}>
@@ -421,7 +454,7 @@ const YourData: React.FC = () => {
             <AlertDialogHeader>
               <AlertDialogTitle>Submissions are disabled for your account</AlertDialogTitle>
               <AlertDialogDescription>
-                Your current role is observer, so you can view and manage existing entries but you can’t submit new measurements yet.
+                Your current role is observer, so you can view and manage existing entries but you can't submit new measurements yet.
                 Ask an admin to upgrade your role to contributor.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -434,6 +467,31 @@ const YourData: React.FC = () => {
                 }}
               >
                 Go to Leaderboard
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={deleteTargetId !== null} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this submission?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  if (deleteTargetId) {
+                    handleDelete(deleteTargetId);
+                  }
+                  setDeleteTargetId(null);
+                }}
+              >
+                Delete
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -12,9 +12,10 @@ interface SubmissionTableRowProps {
   isOwner: boolean; // Indicates if the current user is the owner (passed from parent)
   canDeleteByOwner: boolean; // Indicates if owner can delete (based on RLS and verified status, passed from parent)
   onOpenModal: (submission: BrixDataPoint) => void;
+  onEdit?: () => void;
 }
 
-const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onDelete, isOwner, canDeleteByOwner, onOpenModal }) => {
+const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onDelete, isOwner, canDeleteByOwner, onOpenModal, onEdit }) => {
   // Use the useBrixColorFromContext to get the background color class
   const brixColorClass = useBrixColorFromContext(
     submission.cropType?.toLowerCase().trim() || '',
@@ -27,7 +28,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
   return (
     <TableRow
       key={submission.id}
-      className="hover:bg-green-mist transition-colors duration-200"
+      className="transition-colors duration-200"
       onClick={() => onOpenModal(submission)} // Make the whole row clickable
     >
       {/* Crop / Variety / Brand / Store Cell */}
@@ -149,12 +150,12 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
             <Eye className="w-5 h-5" />
             </Button>
 
-          {canEdit && (
+          {canEdit && onEdit && (
             <Button
               variant="ghost"
               size="sm"
               aria-label="Edit submission"
-              onClick={() => (window.location.href = `/data-point/edit/${submission.id}`)}
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
             >
               <Edit className="w-5 h-5" />
             </Button>

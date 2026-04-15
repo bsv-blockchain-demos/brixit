@@ -81,6 +81,10 @@ export default {
 				'text-mid': 'var(--text-mid)',
 				'text-muted-green': 'var(--text-muted)',
 				'score-poor': 'var(--score-poor)',
+				'table-header': 'var(--table-header)',
+				'table-stripe': 'var(--table-stripe)',
+				'badge-neutral-bg': 'var(--badge-neutral-bg)',
+				'badge-neutral-text': 'var(--badge-neutral-text)',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

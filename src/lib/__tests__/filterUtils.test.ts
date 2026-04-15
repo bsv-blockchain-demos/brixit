@@ -305,7 +305,7 @@ describe('getFilterSummary', () => {
 
   it('always includes "verified only" note for non-admin users', () => {
     // Non-admin always has verified-only enforced, so it always appears
-    expect(getFilterSummary(baseFilters(), false)).toContain('verified only');
+    expect(getFilterSummary(baseFilters(), false)).toContain('Verified only');
   });
 
   it('reports the verified filter when admin sets it to false', () => {

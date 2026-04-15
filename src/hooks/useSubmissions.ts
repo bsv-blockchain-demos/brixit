@@ -100,7 +100,7 @@ export function useMySubmissionsQuery(userId?: string) {
       return fetchMySubmissions(userId);
     },
     enabled: !!userId,
-    staleTime: ONE_HOUR_MS,
+    staleTime: 5 * 60 * 1000,
     gcTime: 2 * ONE_HOUR_MS,
     refetchOnWindowFocus: false,
     retry: 1,
@@ -115,7 +115,7 @@ export function useMySubmissionsPageQuery(query?: MySubmissionsPageQuery) {
       return fetchMySubmissionsPage(query);
     },
     enabled: !!query?.userId,
-    staleTime: ONE_HOUR_MS,
+    staleTime: 5 * 60 * 1000,
     gcTime: 2 * ONE_HOUR_MS,
     refetchOnWindowFocus: false,
     retry: 1,
@@ -130,7 +130,7 @@ export function useMySubmissionsCountQuery(query?: MySubmissionsCountQuery) {
       return fetchMySubmissionsCount(query);
     },
     enabled: !!query?.userId,
-    staleTime: ONE_HOUR_MS,
+    staleTime: 5 * 60 * 1000,
     gcTime: 2 * ONE_HOUR_MS,
     refetchOnWindowFocus: false,
     retry: 1,
@@ -145,7 +145,7 @@ export function useMySubmissionsCropIdsQuery(userId?: string) {
       return fetchMySubmissionsCropIds(userId);
     },
     enabled: !!userId,
-    staleTime: ONE_HOUR_MS,
+    staleTime: 5 * 60 * 1000,
     gcTime: 2 * ONE_HOUR_MS,
     refetchOnWindowFocus: false,
     retry: 1,

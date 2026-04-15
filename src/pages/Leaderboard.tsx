@@ -365,7 +365,7 @@ const LeaderboardPage: React.FC = () => {
               <div className="flex flex-col items-center justify-center py-10 text-sm text-text-muted-green">No data available.</div>
             ) : (
               <div>
-                <div className="grid grid-cols-3 text-xs font-medium text-text-muted-green uppercase tracking-wider border-b border-green-pale px-4 py-2 bg-green-mist">
+                <div className="grid grid-cols-3 text-xs font-medium text-text-muted-green uppercase tracking-wider border-b border-green-pale px-4 py-2 bg-table-header">
                   <span className="text-left">
                     {labelKey === "location" ? "Store" : "Name"}
                   </span>
@@ -406,11 +406,11 @@ const LeaderboardPage: React.FC = () => {
                       const rank = entry.rank ?? idx + 1;
                       const isTie = rankCounts[rank] > 1;
                       const getBadgeClasses = () => {
-                        if (labelKey === "user") return "bg-muted text-muted-foreground";
+                        if (labelKey === "user") return "bg-badge-neutral-bg text-badge-neutral-text";
                         if (normalizedScore >= 16) return "bg-green-pale text-green-mid";
                         if (normalizedScore >= 8) return "bg-[var(--badge-gold-bg)] text-[var(--badge-gold-text)]";
                         if (normalizedScore >= 4) return "bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)]";
-                        return "bg-[var(--badge-poor-bg)] text-score-poor";
+                        return "bg-badge-neutral-bg text-badge-neutral-text";
                       };
                       const badgeClasses = getBadgeClasses();
 
@@ -418,7 +418,7 @@ const LeaderboardPage: React.FC = () => {
                         <div
                           key={(entry as any)[`${labelKey}_id`] ?? label ?? idx}
                           onClick={() => handleNavigate(entry, labelKey as 'location' | 'brand' | 'user')}
-                          className={`grid grid-cols-3 items-center px-4 py-2 border-b border-green-pale last:border-0 odd:bg-card even:bg-green-mist hover:bg-green-pale transition-colors text-sm ${
+                          className={`grid grid-cols-3 items-center px-4 py-2 border-b border-green-pale last:border-0 odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors text-sm ${
                             labelKey !== "user" ? "cursor-pointer" : ""
                           }`}
                         >
@@ -559,7 +559,7 @@ const LeaderboardPage: React.FC = () => {
                 {dataScopeMessage}
               </div>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               {renderLeaderboardCard("Top Locations", locationData, "location", 'location', locationHasMore)}
               {renderLeaderboardCard("Top Brands", brandData, "brand", 'brand', brandHasMore)}
               {renderLeaderboardCard("Most Submissions", userData, "user", 'user', userHasMore)}

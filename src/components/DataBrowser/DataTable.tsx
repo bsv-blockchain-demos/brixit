@@ -29,6 +29,7 @@ import { fetchFormattedSubmissionsPage, type PublicFormattedSubmissionsQuery } f
 import { parseURLSearchParams, mergeFiltersWithDefaults } from '../../lib/urlFilterUtils';
 
 import SubmissionTableRow from '../common/SubmissionTableRow';
+import MobileSubmissionCard from '../common/MobileSubmissionCard';
 import { useAuth } from '../../contexts/AuthContext';
 import { Command, CommandInput, CommandItem, CommandList, CommandEmpty } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -717,7 +718,8 @@ const DataTable: React.FC = () => {
 
       <Card className="rounded-2xl border border-green-pale shadow-sm overflow-hidden">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Desktop table */}
+          <div className="hidden desktop:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -779,6 +781,22 @@ const DataTable: React.FC = () => {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Mobile card list */}
+          <div className="desktop:hidden space-y-3 p-4">
+            {currentItems.length === 0 ? (
+              <p className="text-center py-8 text-text-mid">No data found for the current filters.</p>
+            ) : (
+              currentItems.map((submission) => (
+                <MobileSubmissionCard
+                  key={submission.id}
+                  submission={submission}
+                  isOwner={user?.id === submission.userId}
+                  onOpenModal={() => handleOpenModal(submission)}
+                />
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

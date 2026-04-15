@@ -27,6 +27,14 @@
     --badge-amber-text: #b8860b;
     --badge-poor-bg: #fdecea;
 
+    /* ── Table surfaces ──────────────────────────────── */
+    --table-header: #f5f5f4;
+    --table-stripe: #fafaf9;
+
+    /* ── Neutral badge (ranks without score color) ──── */
+    --badge-neutral-bg: #f5f5f4;
+    --badge-neutral-text: #78716c;
+
     /* ── Typography ──────────────────────────────────── */
     --font-display: 'Lora', Georgia, serif;
     --font-body: 'DM Sans', system-ui, sans-serif;
@@ -93,6 +101,12 @@
     --badge-amber-bg: #33260a;
     --badge-amber-text: #d4a830;
     --badge-poor-bg: #331512;
+
+    /* ── Table surfaces (dark) ─────────────────────── */
+    --table-header: #292524;
+    --table-stripe: #1c1917;
+    --badge-neutral-bg: #292524;
+    --badge-neutral-text: #a8a29e;
 
     /* ── shadcn semantic tokens ──────────────────── */
     --background: 150 30% 8%;
