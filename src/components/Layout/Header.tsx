@@ -233,7 +233,7 @@ const Header = () => {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <a href="/delete-account" className="text-destructive focus:text-destructive cursor-pointer">
+                    <a href="/delete-account.html" className="text-destructive focus:text-destructive cursor-pointer">
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete Account
                     </a>
@@ -247,9 +247,9 @@ const Header = () => {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <div className="px-2 py-1.5 flex items-center gap-3">
-                    <a href="/privacy" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacy</a>
+                    <a href="/privacy.html" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacy</a>
                     <span className="text-muted-foreground/40 text-xs">·</span>
-                    <a href="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Terms</a>
+                    <a href="/terms.html" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Terms</a>
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
