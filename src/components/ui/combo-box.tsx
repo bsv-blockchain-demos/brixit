@@ -53,11 +53,9 @@ const Combobox: React.FC<ComboboxProps> = ({ items, value, onSelect, placeholder
               {safeItems.map((item) => (
                 <CommandItem
                   key={item.id || item.name}
-                  value={item.name}
-                  onSelect={(currentValue) => {
-                    const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, '');
-                    const original = safeItems.find(i => normalize(i.name) === normalize(currentValue));
-                    onSelect(original ? original.name : currentValue);
+                  value={item.label || item.name}
+                  onSelect={() => {
+                    onSelect(item.name);
                     setOpen(false);
                   }}
                 >

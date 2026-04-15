@@ -9,7 +9,7 @@ export function sanitizeInput(input: unknown): string | null {
   return (
     trimmed
       .replace(/[\u0000-\u001F\u007F<>`"'\\]/g, '')
-      .replace(/[%_]/g, '')
+      .replace(/[%]/g, '')
       .replace(/(javascript|data|vbscript)\s*:/gi, '')
       .replace(/\s{2,}/g, ' ') || null
   );

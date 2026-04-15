@@ -28,7 +28,7 @@ describe('sanitizeInput', () => {
   it('strips backslash', () => expect(sanitizeInput('back\\slash')).toBe('backslash'));
 
   it('strips SQL wildcard %', () => expect(sanitizeInput('100%')).toBe('100'));
-  it('strips SQL wildcard _', () => expect(sanitizeInput('col_name')).toBe('colname'));
+  it('preserves underscores (used in crop/brand names like bell_pepper)', () => expect(sanitizeInput('col_name')).toBe('col_name'));
 
   it('strips javascript: protocol (lowercase)', () => {
     expect(sanitizeInput('javascript:alert(1)')).toBe('alert(1)');
