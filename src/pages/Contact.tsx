@@ -9,7 +9,7 @@ const channels = [
   {
     icon: Mail,
     title: 'Email',
-    body: 'For general questions, partnership inquiries, or support requests, reach us at hello@brix.community. We aim to respond within two business days.',
+    body: 'For general questions, partnership inquiries, or support requests, reach us at hello@brix.earth. We aim to respond within two business days.',
   },
   {
     icon: MessageSquare,

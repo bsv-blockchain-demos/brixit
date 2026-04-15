@@ -53,7 +53,7 @@ const RootContent = () => {
         <Route path="/login" element={<WalletLogin />} />
         <Route path="/create-account" element={<CreateAccount />} />
         <Route path="/wallet-error" element={<WalletError />} />
-        <Route path="/help" element={<Help />} />
+        <Route path="/faq" element={<Help />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<NotFound />} />
 

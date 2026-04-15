@@ -23,17 +23,17 @@ test.describe('Login page', () => {
     await expect(page.getByRole('button', { name: /connect with my phone/i })).not.toBeVisible();
   });
 
-  test('how it works navigates to help page', async ({ page }) => {
+  test('FAQ navigates to faq page', async ({ page }) => {
     await page.goto('/login');
-    // "How it works" is a footer button
-    await page.getByRole('button', { name: /how it works/i }).click();
-    await expect(page).toHaveURL(/\/help/);
+    // "FAQ" is a footer button
+    await page.getByRole('button', { name: /faq/i }).click();
+    await expect(page).toHaveURL(/\/faq/);
   });
 });
 
-test.describe('Help page', () => {
+test.describe('FAQ page', () => {
   test('renders all info sections', async ({ page }) => {
-    await page.goto('/help');
+    await page.goto('/faq');
     await expect(page.getByText(/what is brix/i)).toBeVisible();
     await expect(page.getByText(/what is a wallet/i)).toBeVisible();
     await expect(page.getByText(/what is a certificate/i)).toBeVisible();
@@ -43,8 +43,8 @@ test.describe('Help page', () => {
   test('back button returns to login', async ({ page }) => {
     // Navigate from /login so history is set correctly
     await page.goto('/login');
-    await page.getByRole('button', { name: /how it works/i }).click();
-    await expect(page).toHaveURL(/\/help/);
+    await page.getByRole('button', { name: /faq/i }).click();
+    await expect(page).toHaveURL(/\/faq/);
     await page.getByRole('button', { name: /back/i }).click();
     await expect(page).toHaveURL(/\/login/);
   });

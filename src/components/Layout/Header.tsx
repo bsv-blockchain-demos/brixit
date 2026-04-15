@@ -247,9 +247,9 @@ const Header = () => {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <div className="px-2 py-1.5 flex items-center gap-3">
-                    <a href="/privacy-policy.html" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacy</a>
+                    <a href="/privacy.html" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacy</a>
                     <span className="text-muted-foreground/40 text-xs">·</span>
-                    <a href="/terms-of-service.html" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Terms</a>
+                    <a href="/terms.html" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Terms</a>
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>

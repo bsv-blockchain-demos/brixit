@@ -34,11 +34,11 @@ export default function WalletError() {
 
             <button
               type="button"
-              onClick={() => navigate('/help')}
+              onClick={() => navigate('/faq')}
               className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-text-mid"
             >
               <HelpCircle className="w-3 h-3" />
-              How it works
+              FAQ
             </button>
 
             {!isMobile && (

@@ -428,7 +428,7 @@ export default function WalletLogin() {
         </section>
 
         {/* ═══ Section 2: What is BRIX? ══════════════════════════ */}
-        <section className="py-20 desktop:py-28" style={{ backgroundColor: 'var(--cream)' }}>
+        <section id="about" className="py-20 desktop:py-28" style={{ backgroundColor: 'var(--cream)' }}>
           <div className="max-w-5xl mx-auto px-5">
             <div className="grid desktop:grid-cols-2 gap-12 desktop:gap-16 items-start">
               {/* Left column — text */}
@@ -627,13 +627,13 @@ export default function WalletLogin() {
           <div className="max-w-5xl mx-auto px-5 grid grid-cols-3 items-center">
             <span className="font-display font-bold text-white tracking-wide text-sm">BRIX</span>
             <nav className="flex items-center justify-center gap-6 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
-              <span className="hover:text-white/80 cursor-pointer transition-colors">About</span>
-              <button onClick={() => navigate('/help')} className="hover:text-white/80 transition-colors">How it works</button>
+              <button onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white/80 transition-colors">About</button>
+              <button onClick={() => navigate('/faq')} className="hover:text-white/80 transition-colors">FAQ</button>
               <button onClick={() => navigate('/contact')} className="hover:text-white/80 transition-colors">Contact</button>
             </nav>
             <nav className="flex items-center justify-end gap-4 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-              <a href="/privacy-policy.html" className="hover:text-white/70 transition-colors">Privacy</a>
-              <a href="/terms-of-service.html" className="hover:text-white/70 transition-colors">Terms</a>
+              <a href="/privacy.html" className="hover:text-white/70 transition-colors">Privacy</a>
+              <a href="/terms.html" className="hover:text-white/70 transition-colors">Terms</a>
             </nav>
           </div>
         </footer>
