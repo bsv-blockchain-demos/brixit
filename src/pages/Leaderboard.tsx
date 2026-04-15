@@ -488,7 +488,7 @@ const LeaderboardPage: React.FC = () => {
         </div>
       )}
       <Header />
-      <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-6 lg:p-8">
+      <main className="flex-1 max-w-7xl mx-auto w-full p-4 pb-20 md:p-6 lg:p-8">
         <div className="flex flex-col md:flex-row gap-6">
           {/* Filters sidebar */}
           <aside className="w-full md:w-72">
@@ -518,7 +518,7 @@ const LeaderboardPage: React.FC = () => {
                   <option value="">All crops</option>
                   {allCrops.map((c) => (
                     <option key={c.id} value={c.name}>
-                      {c.label || c.name}
+                      {(c.label || c.name).replace(/\b\w/g, ch => ch.toUpperCase())}
                     </option>
                   ))}
                 </select>

@@ -144,7 +144,7 @@ export default function CreateAccount() {
 
             {step === 'checking' && (
               <div className="flex justify-center py-6">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-fresh" />
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-mid" />
               </div>
             )}
 
@@ -193,7 +193,7 @@ export default function CreateAccount() {
 
             {step === 'acquiring' && (
               <div className="text-center py-6">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-fresh mx-auto mb-4" />
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-mid mx-auto mb-4" />
                 <p className="text-text-mid">Issuing your identity certificate…</p>
                 <p className="text-sm text-text-muted-green mt-1">Please approve the request in your wallet.</p>
               </div>

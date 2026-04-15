@@ -33,7 +33,7 @@ export default function Help() {
 
   return (
     <AuthBackground>
-      <div className="w-full max-w-xl mx-auto space-y-6 py-8 self-start">
+      <div className="w-full max-w-xl mx-auto space-y-6 py-8 pb-20 self-start">
 
         {/* Back */}
         <Button

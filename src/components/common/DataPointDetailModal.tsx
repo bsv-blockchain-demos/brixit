@@ -8,8 +8,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from '../ui/dialog';
-import { Badge } from '../ui/badge';
 import {
+  ArrowLeft,
   Calendar,
   User,
   CheckCircle,
@@ -62,6 +62,16 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
 
   // Use the shared static data hook and destructure the new 'locations' property
   const { crops, brands, locations, isLoading: staticDataLoading, error: staticDataError } = useStaticData();
+
+  // Resolve display label from static data, falling back to title-cased name
+  const getDisplayLabel = (items: { name: string; label?: string }[], name: string | undefined) => {
+    if (!name) return 'N/A';
+    const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, '');
+    const match = items.find(i => normalize(i.name) === normalize(name));
+    if (match?.label) return match.label;
+    if (match) return match.name;
+    return name.replace(/\b\w/g, c => c.toUpperCase());
+  };
 
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -160,7 +170,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
       const urls = Array.isArray(initialDataPoint.images)
         ? initialDataPoint.images
             .filter((imagePath): imagePath is string => typeof imagePath === 'string' && imagePath.length > 0)
-            .map((imagePath) => `${API_BASE}/uploads/${imagePath}`)
+            .map((imagePath) => `${API_BASE}${imagePath}`)
         : [];
 
       setImageUrls(urls);
@@ -388,7 +398,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md md:max-w-3xl rounded-2xl flex flex-col items-center justify-center h-64">
-          <Loader2 className="w-12 h-12 animate-spin text-green-fresh" />
+          <Loader2 className="w-12 h-12 animate-spin text-green-mid" />
           <p className="mt-4 text-text-muted-green">Loading data...</p>
         </DialogContent>
       </Dialog>
@@ -411,7 +421,8 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   const scoreStyle = (() => {
     switch (qualityText) {
       case 'Excellent': return { color: 'var(--green-mid)' };
-      case 'Good':      return { color: 'var(--gold)' };
+      case 'Good':
+      case 'Average':   return { color: 'var(--gold)' };
       case 'Poor':      return { color: 'var(--score-poor)' };
       default:          return { color: 'var(--text-muted)' };
     }
@@ -420,10 +431,20 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md md:max-w-3xl rounded-2xl">
-        <DialogHeader>
+        <DialogHeader className="pr-8">
         <DialogTitle className="flex items-center justify-between text-2xl font-bold font-display">
-          <span>{isEditing ? 'Edit Submission' : `Details for ${initialDataPoint.cropType}`}</span>
-          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="shrink-0 hover:bg-green-mist -ml-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="sr-only">Back</span>
+            </Button>
+            <span>{isEditing ? 'Edit Submission' : `Details for ${getDisplayLabel(crops, initialDataPoint.cropType)}`}</span>
+          </div>
           {!isEditing && canEdit && (
             <Button
               variant="ghost"
@@ -484,7 +505,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
-                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                  <Label className="text-sm text-text-dark flex items-center space-x-2">
                     <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
                       <Droplets className="w-3.5 h-3.5 text-white" />
                     </span>
@@ -497,7 +518,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                   )}
                 </div>
                 <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
-                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                  <Label className="text-sm text-text-dark flex items-center space-x-2">
                     <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
                       <Package className="w-3.5 h-3.5 text-white" />
                     </span>
@@ -513,11 +534,11 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                       />
                     </div>
                   ) : (
-                    <p className="font-medium">{initialDataPoint.cropType}</p>
+                    <p className="font-medium">{getDisplayLabel(crops, initialDataPoint.cropType)}</p>
                   )}
                 </div>
                 <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
-                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                  <Label className="text-sm text-text-dark flex items-center space-x-2">
                     <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
                       <Tag className="w-3.5 h-3.5 text-white" />
                     </span>
@@ -533,11 +554,11 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                       />
                     </div>
                   ) : (
-                    <p className="font-medium">{initialDataPoint.brandName || 'N/A'}</p>
+                    <p className="font-medium">{getDisplayLabel(brands, initialDataPoint.brandName)}</p>
                   )}
                 </div>
                 <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
-                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                  <Label className="text-sm text-text-dark flex items-center space-x-2">
                     <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
                       <Building className="w-3.5 h-3.5 text-white" />
                     </span>
@@ -553,11 +574,11 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                       />
                     </div>
                   ) : (
-                    <p className="font-medium">{initialDataPoint.locationName || 'N/A'}</p>
+                    <p className="font-medium">{getDisplayLabel(locations, initialDataPoint.locationName)}</p>
                   )}
                 </div>
                 <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
-                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                  <Label className="text-sm text-text-dark flex items-center space-x-2">
                     <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
                       <MapIcon className="w-3.5 h-3.5 text-white" />
                     </span>
@@ -572,7 +593,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     />
                   ) : (
                     <>
-                      <p className="font-medium">{initialDataPoint.placeName}</p>
+                      <p className="font-medium">{getDisplayLabel([], initialDataPoint.placeName)}</p>
                       <p className="text-xs text-text-muted-green">
                         {initialDataPoint.latitude?.toFixed(4)}, {initialDataPoint.longitude?.toFixed(4)}
                       </p>
@@ -580,7 +601,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                   )}
                 </div>
                 <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
-                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                  <Label className="text-sm text-text-dark flex items-center space-x-2">
                     <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
                       <Calendar className="w-3.5 h-3.5 text-white" />
                     </span>
@@ -593,7 +614,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                   )}
                 </div>
                 <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
-                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                  <Label className="text-sm text-text-dark flex items-center space-x-2">
                     <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
                       <Calendar className="w-3.5 h-3.5 text-white" />
                     </span>
@@ -602,11 +623,11 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                   {isEditing ? (
                     <Input type="date" value={purchaseDate} onChange={e => setPurchaseDate(e.target.value)} />
                   ) : (
-                    <p className="font-medium">{initialDataPoint.purchaseDate || 'N/A'}</p>
+                    <p className="font-medium">{initialDataPoint.purchaseDate ? new Date(initialDataPoint.purchaseDate).toLocaleDateString() : 'N/A'}</p>
                   )}
                 </div>
                 <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
-                  <Label className="text-sm text-text-muted-green flex items-center space-x-2">
+                  <Label className="text-sm text-text-dark flex items-center space-x-2">
                     <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
                       <Tag className="w-3.5 h-3.5 text-white" />
                     </span>
@@ -621,22 +642,22 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               </div>
 
               <div className="rounded-2xl border shadow-sm p-4 mt-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
-                <h3 className="font-semibold font-display text-text-dark mb-2 flex items-center space-x-2">
+                <Label className="text-sm text-text-dark mb-2 flex items-center space-x-2">
                   <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
                     <FileText className="w-3.5 h-3.5 text-white" />
                   </span>
                   <span>Outlier Notes</span>
-                </h3>
+                </Label>
                 {isEditing ? (
                   <Textarea value={outlierNotes} onChange={e => setOutlierNotes(e.target.value)} rows={4} />
                 ) : (
-                  <p className="text-text-mid">{initialDataPoint.outlier_notes || 'No notes for this submission.'}</p>
+                  <p className="font-medium">{initialDataPoint.outlier_notes || 'No notes for this submission.'}</p>
                 )}
               </div>
 
               <div className="rounded-2xl border shadow-sm p-4 mt-4 flex items-center justify-between" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
                 <div className="flex items-center space-x-2">
-                  <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: verified ? 'var(--green-fresh)' : 'var(--green-deep)' }}>
+                  <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
                     <CheckCircle className="w-3.5 h-3.5 text-white" />
                   </span>
                   <Label htmlFor="verified-checkbox" className="text-sm font-semibold text-text-mid">
@@ -652,9 +673,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     className="w-4 h-4"
                   />
                 ) : (
-                  <Badge variant={verified ? 'default' : 'secondary'} className={`${verified ? 'bg-green-fresh hover:bg-green-mid' : 'bg-text-muted-green'}`}>
+                  <span className="text-sm font-medium" style={{ color: 'var(--text-dark)' }}>
                     {verified ? 'Yes' : 'No'}
-                  </Badge>
+                  </span>
                 )}
               </div>
 
@@ -675,7 +696,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               </h3>
               {imagesLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-8 h-8 animate-spin text-green-fresh" />
+                  <Loader2 className="w-8 h-8 animate-spin text-green-mid" />
                   <span className="ml-3 text-text-muted-green">Loading images...</span>
                 </div>
               ) : imageUrls.length === 0 ? (

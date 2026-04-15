@@ -13,9 +13,10 @@ interface SubmissionTableRowProps {
   canDeleteByOwner: boolean; // Indicates if owner can delete (based on RLS and verified status, passed from parent)
   onOpenModal: (submission: BrixDataPoint) => void;
   onEdit?: () => void;
+  showOwnerBadge?: boolean;
 }
 
-const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onDelete, isOwner, canDeleteByOwner, onOpenModal, onEdit }) => {
+const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onDelete, isOwner, canDeleteByOwner, onOpenModal, onEdit, showOwnerBadge = true }) => {
   // Use the useBrixColorFromContext to get the background color class
   const brixColorClass = useBrixColorFromContext(
     submission.cropType?.toLowerCase().trim() || '',
@@ -28,32 +29,15 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
   return (
     <TableRow
       key={submission.id}
-      className="transition-colors duration-200"
+      className="border-green-pale odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors cursor-pointer"
       onClick={() => onOpenModal(submission)} // Make the whole row clickable
     >
-      {/* Crop / Variety / Brand / Store Cell */}
-      <TableCell className="py-3 px-4 break-words">
+      {/* Cell 1 — Crop */}
+      <TableCell className="py-3 px-4">
         <div>
-          <div className="font-semibold text-text-dark">{submission.cropType}</div>
-
-          {submission.variety && (
-            <div className="text-xs text-text-muted-green">{submission.variety}</div>
-          )}
-
-          {submission.brandName && (
-            <div className="text-xs text-text-dark mt-1">Brand: {submission.brandName}</div>
-          )}
-
-          {submission.locationName && (
-            <div className="text-xs text-text-mid flex items-center space-x-1 mt-1">
-              <MapPin className="w-3 h-3 text-text-muted-green" />
-              <span>{submission.locationName}</span>
-            </div>
-          )}
-
-          {/* NEW: Visual indicator for owned submissions */}
-          {isOwner && (
-            <Badge className="flex items-center space-x-1 px-2 py-1 rounded-md bg-green-pale text-green-fresh font-medium text-xs mt-2">
+          <span className="text-sm text-text-mid">{submission.cropType}</span>
+          {showOwnerBadge && isOwner && (
+            <Badge className="flex items-center space-x-1 px-2 py-0.5 rounded-md bg-green-pale text-green-fresh font-medium text-xs mt-1 w-fit">
               <User className="w-3 h-3" />
               <span>Your Submission</span>
             </Badge>
@@ -61,7 +45,55 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
         </div>
       </TableCell>
 
-      {/* BRIX Level Cell - uses dynamic color from useBrixColorFromContext */}
+      {/* Cell 2 — Variety */}
+      <TableCell className="py-3 px-4 max-w-[120px] truncate text-sm text-text-mid">
+        {submission.variety || <span className="text-text-muted-green">--</span>}
+      </TableCell>
+
+      {/* Cell 3 — Brand */}
+      <TableCell className="py-3 px-4 max-w-[120px] truncate text-sm text-text-mid">
+        {submission.brandName || <span className="text-text-muted-green">--</span>}
+      </TableCell>
+
+      {/* Cell 4 — Location */}
+      <TableCell className="py-3 px-4 max-w-[180px]">
+        {submission.locationName ? (
+          <div>
+            <div className="flex items-center space-x-1 text-sm text-text-mid">
+              <MapPin className="w-3.5 h-3.5 text-text-muted-green flex-shrink-0" />
+              <span className="font-medium truncate">{submission.locationName}</span>
+            </div>
+            {/* Smart address sub-line */}
+            {(() => {
+              const { streetAddress, city, state, country } = submission;
+              if (streetAddress && (
+                (city && streetAddress.toLowerCase().includes(city.toLowerCase())) ||
+                (state && streetAddress.toLowerCase().includes(state.toLowerCase()))
+              )) {
+                return (
+                  <div className="text-xs text-text-muted-green ml-5 truncate" title={streetAddress}>
+                    {streetAddress}
+                  </div>
+                );
+              }
+              const addressParts = [streetAddress, city, state, country].filter(Boolean);
+              if (addressParts.length > 0) {
+                const fullAddress = addressParts.join(', ');
+                return (
+                  <div className="text-xs text-text-muted-green ml-5 truncate" title={fullAddress}>
+                    {fullAddress}
+                  </div>
+                );
+              }
+              return null;
+            })()}
+          </div>
+        ) : (
+          <span className="text-text-muted-green">--</span>
+        )}
+      </TableCell>
+
+      {/* Cell 5 — BRIX */}
       <TableCell className="text-center py-3 px-4">
         <Badge
           className={`${brixColorClass} text-white px-3 py-1 rounded-xl font-bold text-base shadow-sm`}
@@ -70,75 +102,42 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
         </Badge>
       </TableCell>
 
-      {/* Location / Notes Cell */}
-      <TableCell className="py-3 px-4 break-words">
-        <div className="space-y-1">
-          <div className="flex items-center space-x-1 text-sm text-text-mid">
-            <MapPin className="w-4 h-4 text-text-muted-green flex-shrink-0" />
-            <span className="font-medium">{submission.locationName}</span>
+      {/* Cell 6 — Notes */}
+      <TableCell className="py-3 px-4 max-w-[150px]">
+        {submission.outlier_notes ? (
+          <div className="flex items-start space-x-1 text-sm text-text-mid line-clamp-2">
+            <MessageSquare className="w-3 h-3 flex-shrink-0 text-text-muted-green mt-0.5" />
+            <span>{submission.outlier_notes}</span>
           </div>
-          {/* Smart address display logic */}
-          {(() => {
-            const { streetAddress, city, state, country } = submission;
-            
-            // If street address exists and already contains city/state info, use it as-is
-            if (streetAddress && (
-              (city && streetAddress.toLowerCase().includes(city.toLowerCase())) ||
-              (state && streetAddress.toLowerCase().includes(state.toLowerCase()))
-            )) {
-              return (
-                <div className="text-xs text-text-muted-green ml-5 truncate" title={streetAddress}>
-                  {streetAddress}
-                </div>
-              );
-            }
-            
-            // Otherwise, build address from components
-            const addressParts = [streetAddress, city, state, country].filter(Boolean);
-            if (addressParts.length > 0) {
-              const fullAddress = addressParts.join(', ');
-              return (
-                <div className="text-xs text-text-muted-green ml-5 truncate" title={fullAddress}>
-                  {fullAddress}
-                </div>
-              );
-            }
-            
-            return null;
-          })()}
-        </div>
-        {submission.outlier_notes && (
-          <div className="flex items-center space-x-1 text-xs text-text-muted-green mt-2 line-clamp-2">
-            <MessageSquare className="w-3 h-3 flex-shrink-0 text-text-muted-green" />
-            <span className="truncate">{submission.outlier_notes}</span>
-          </div>
+        ) : (
+          <span className="text-text-muted-green text-sm">--</span>
         )}
       </TableCell>
 
-      {/* Assessment Date Cell */}
-      <TableCell className="py-3 px-4">
+      {/* Cell 7 — Date */}
+      <TableCell className="py-3 px-4 whitespace-nowrap">
         <div className="flex items-center space-x-1 text-sm text-text-mid">
-          <Calendar className="w-4 h-4 text-text-muted-green" />
+          <Calendar className="w-3.5 h-3.5 text-text-muted-green" />
           <span>{new Date(submission.submittedAt).toLocaleDateString()}</span>
         </div>
       </TableCell>
 
-      {/* Verified Status Cell - uses distinct, softer colors */}
+      {/* Cell 8 — Verified? */}
       <TableCell className="text-center py-3 px-4">
         {submission.verified ? (
-          <Badge className="flex items-center space-x-1 px-3 py-1 rounded-full bg-green-100 text-green-700 font-semibold text-sm shadow-sm">
+          <Badge className="flex items-center space-x-1 px-3 py-1 rounded-full bg-muted text-text-mid font-medium text-sm shadow-sm">
             <CheckCircle className="w-4 h-4" />
             <span>Verified</span>
           </Badge>
         ) : (
-          <Badge className="flex items-center space-x-1 px-3 py-1 rounded-full bg-orange-100 text-orange-700 font-semibold text-sm shadow-sm">
+          <Badge className="flex items-center space-x-1 px-3 py-1 rounded-full bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)] font-semibold text-sm shadow-sm">
             <Clock className="w-4 h-4" />
             <span>Pending</span>
           </Badge>
         )}
       </TableCell>
 
-      {/* Actions Cell */}
+      {/* Cell 9 — Actions */}
       <TableCell className="text-center py-3 px-4">
         <div className="flex justify-center items-center space-x-1">
           <Button
@@ -148,7 +147,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
             onClick={() => onOpenModal(submission)}
           >
             <Eye className="w-5 h-5" />
-            </Button>
+          </Button>
 
           {canEdit && onEdit && (
             <Button
@@ -161,7 +160,6 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
             </Button>
           )}
 
-          {/* Delete Button / Locked Indicator */}
           {canDeleteByOwner ? (
             <Button
               variant="ghost"
@@ -173,7 +171,6 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
               <Trash2 className="w-5 h-5" />
             </Button>
           ) : (
-            // If the owner cannot delete (i.e., it's verified and they are not an admin)
             isOwner && submission.verified && (
               <span title="Verified submissions cannot be deleted by non-admins." className="cursor-not-allowed">
                 <Button variant="ghost" size="sm" className="text-text-muted-green opacity-70 cursor-not-allowed" disabled>

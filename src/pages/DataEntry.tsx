@@ -388,7 +388,7 @@ const DataEntry = () => {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--cream)' }}>
         <div className="text-center p-6">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto" style={{ color: 'var(--green-fresh)' }} />
+          <Loader2 className="w-12 h-12 animate-spin mx-auto" style={{ color: 'var(--green-mid)' }} />
           <p className="mt-4" style={{ color: 'var(--text-mid)' }}>Loading form data...</p>
         </div>
       </div>
@@ -708,7 +708,7 @@ const DataEntry = () => {
         </motion.div>
       </main>
       {/* Sticky footer submit button */}
-      <div className="fixed bottom-0 left-0 right-0 border-t shadow-lg p-4" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--green-pale)', paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 1rem))' }}>
+      <div className="fixed bottom-0 left-0 right-0 border-t shadow-lg p-4" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--green-pale)', paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 1.5rem))' }}>
       <div className="max-w-5xl mx-auto flex justify-end">
         <Button
           onClick={(e) => handleSubmit(e)}

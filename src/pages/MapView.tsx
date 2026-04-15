@@ -75,7 +75,7 @@ const MapView = () => {
         <Header />
         <main className="flex-1 flex items-center justify-center px-4">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 text-green-fresh animate-spin mx-auto mb-3" />
+            <Loader2 className="w-8 h-8 text-green-mid animate-spin mx-auto mb-3" />
             <p className="text-text-muted-green">Loading your profile...</p>
           </div>
         </main>
@@ -122,7 +122,7 @@ const MapView = () => {
     <div className="min-h-screen bg-cream">
       <Header />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div>
             <h1 className="text-2xl font-display font-bold text-text-dark mb-2">Brix Explorer</h1>

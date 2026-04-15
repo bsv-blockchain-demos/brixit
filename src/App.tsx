@@ -38,7 +38,7 @@ const RootContent = () => {
           <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg">
             <span className="text-white font-bold text-3xl">B</span>
           </div>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-mid" />
         </div>
       </AuthBackground>
     );

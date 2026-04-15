@@ -25,7 +25,9 @@ function capitalizeWords(str: string): string {
 const Combobox: React.FC<ComboboxProps> = ({ items, value, onSelect, placeholder }) => {
   const [open, setOpen] = useState(false);
   const safeItems = Array.isArray(items) ? items : [];
-  const selectedItem = safeItems.find((item) => item.name === value);
+  const selectedItem = safeItems.find(
+    (item) => item.name.toLowerCase() === value.toLowerCase()
+  );
 
   const displayText = (item: Item) => capitalizeWords(item.label || item.name);
 
@@ -53,7 +55,9 @@ const Combobox: React.FC<ComboboxProps> = ({ items, value, onSelect, placeholder
                   key={item.id || item.name}
                   value={item.name}
                   onSelect={(currentValue) => {
-                    onSelect(currentValue);
+                    const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, '');
+                    const original = safeItems.find(i => normalize(i.name) === normalize(currentValue));
+                    onSelect(original ? original.name : currentValue);
                     setOpen(false);
                   }}
                 >

@@ -49,7 +49,7 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
         }
 
         // Images are served from the Express backend's static uploads directory
-        const publicUrl = `${API_BASE}/uploads/${imagePath}`;
+        const publicUrl = `${API_BASE}${imagePath}`;
         urls.push(publicUrl);
       }
 
@@ -169,7 +169,7 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
             </h3>
             {imagesLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                <Loader2 className="w-8 h-8 animate-spin text-green-mid" />
                 <span className="ml-3 text-gray-600">Loading images...</span>
               </div>
             ) : imageUrls.length === 0 ? (

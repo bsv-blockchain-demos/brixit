@@ -398,7 +398,7 @@ const DataTable: React.FC = () => {
   if (submissionsPageQuery.isLoading || submissionsCountQuery.isLoading || isLoadingStaticData) {
     return (
       <div className="text-center py-12 text-text-dark flex items-center justify-center gap-2">
-        <Loader2 className="w-5 h-5 animate-spin text-green-fresh" />
+        <Loader2 className="w-5 h-5 animate-spin text-green-mid" />
         Loading data...
       </div>
     );
@@ -722,43 +722,48 @@ const DataTable: React.FC = () => {
           <div className="hidden desktop:block overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="border-green-pale">
                   <TableHead
-                    className="cursor-pointer"
+                    className="text-xs text-text-muted-green uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('cropType')}
                   >
-                    Crop / Variety / Brand / Location
-                    {sortBy === 'cropType' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    Crop {sortBy === 'cropType' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </TableHead>
+                  <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">
+                    Variety
+                  </TableHead>
+                  <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">
+                    Brand
                   </TableHead>
                   <TableHead
-                    className="text-center cursor-pointer"
-                    onClick={() => handleSort('brixLevel')}
-                  >
-                    BRIX
-                    {sortBy === 'brixLevel' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </TableHead>
-                  <TableHead
-                    className="cursor-pointer"
+                    className="text-xs text-text-muted-green uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('locationName')}
                   >
-                    Place / Notes
-                    {sortBy === 'locationName' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    Location {sortBy === 'locationName' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
                   <TableHead
-                    className="whitespace-nowrap cursor-pointer"
+                    className="text-xs text-text-muted-green uppercase tracking-wider text-center cursor-pointer"
+                    onClick={() => handleSort('brixLevel')}
+                  >
+                    BRIX {sortBy === 'brixLevel' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </TableHead>
+                  <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">
+                    Notes
+                  </TableHead>
+                  <TableHead
+                    className="text-xs text-text-muted-green uppercase tracking-wider whitespace-nowrap cursor-pointer"
                     onClick={() => handleSort('submittedAt')}
                   >
-                    Assessment Date
-                    {sortBy === 'submittedAt' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    Date {sortBy === 'submittedAt' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
-                  <TableHead className="text-center">Verified?</TableHead>
-                  <TableHead className="text-center">Actions</TableHead>
+                  <TableHead className="text-xs text-text-muted-green uppercase tracking-wider text-center">Verified?</TableHead>
+                  <TableHead className="text-xs text-text-muted-green uppercase tracking-wider text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {currentItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-text-mid">
+                    <TableCell colSpan={9} className="text-center py-8 text-text-mid">
                       No data found for the current filters.
                     </TableCell>
                   </TableRow>

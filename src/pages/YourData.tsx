@@ -184,7 +184,7 @@ const YourData: React.FC = () => {
     return (
       <div className="min-h-screen bg-cream">
         <Header />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
           <Card>
             <CardContent className="text-center py-12">
               <h2 className="text-2xl font-bold text-text-dark mb-2">Please Log In</h2>
@@ -206,9 +206,9 @@ const YourData: React.FC = () => {
     return (
       <div className="min-h-screen bg-cream">
         <Header />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 text-center">
           <div className="flex items-center justify-center gap-2">
-            <Loader2 className="w-5 h-5 text-green-fresh animate-spin" />
+            <Loader2 className="w-5 h-5 text-green-mid animate-spin" />
             <p className="text-text-dark">Loading your submissions...</p>
           </div>
         </main>
@@ -220,7 +220,7 @@ const YourData: React.FC = () => {
     return (
       <div className="min-h-screen bg-cream">
         <Header />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 text-center">
           <p className="text-red-600">Error: Failed to load your submissions.</p>
         </main>
       </div>
@@ -231,7 +231,7 @@ const YourData: React.FC = () => {
     <div className="min-h-screen bg-cream">
       <Header />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-display font-bold text-text-dark mb-2">
@@ -311,15 +311,18 @@ const YourData: React.FC = () => {
                   <div>
                     {/* Desktop table */}
                     <div className="hidden desktop:block overflow-x-auto">
-                      <Table style={{ tableLayout: 'fixed', minWidth: '100%' }}>
+                      <Table>
                         <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[28%]">Crop / Details</TableHead>
-                            <TableHead className="w-[10%] text-center">BRIX</TableHead>
-                            <TableHead className="w-[20%]">Location / Notes</TableHead>
-                            <TableHead className="w-[17%]">Assessment Date</TableHead>
-                            <TableHead className="w-[15%] text-center">Verified?</TableHead>
-                            <TableHead className="w-[10%] text-center">Actions</TableHead>
+                          <TableRow className="border-green-pale">
+                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">Crop</TableHead>
+                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">Variety</TableHead>
+                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">Brand</TableHead>
+                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">Location</TableHead>
+                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider text-center">BRIX</TableHead>
+                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">Notes</TableHead>
+                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">Date</TableHead>
+                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider text-center">Verified?</TableHead>
+                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider text-center">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -335,6 +338,7 @@ const YourData: React.FC = () => {
                                 onEdit={() => handleEditSubmission(submission)}
                                 isOwner={isOwner}
                                 canDeleteByOwner={canDeleteByOwner}
+                                showOwnerBadge={false}
                               />
                             );
                           })}
