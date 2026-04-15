@@ -64,13 +64,13 @@ test.describe('Wallet error page', () => {
 
   test('shows mobile QR option on desktop', async ({ page }) => {
     await page.goto('/wallet-error');
-    await expect(page.getByText(/connect via mobile qr/i)).toBeVisible();
+    await expect(page.getByText(/connect with my phone/i)).toBeVisible();
   });
 
   test('hides mobile QR option on mobile viewport', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/wallet-error');
-    await expect(page.getByText(/connect via mobile qr/i)).not.toBeVisible();
+    await expect(page.getByText(/connect with my phone/i)).not.toBeVisible();
   });
 });
 
