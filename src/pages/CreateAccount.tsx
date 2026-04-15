@@ -109,7 +109,10 @@ export default function CreateAccount() {
 
   async function handleCreateNamed(e: React.FormEvent) {
     e.preventDefault();
-    const fields: Record<string, string> = { username: username.trim() };
+    // Empty username → anonymous: use the wallet identity key as the account identifier
+    const fields: Record<string, string> = {
+      username: username.trim() || userPubKey || '',
+    };
     if (email.trim()) fields.email = email.trim();
     await acquireCert(fields);
   }
@@ -130,7 +133,7 @@ export default function CreateAccount() {
             {(step === 'details' || step === 'acquiring') && (
               <>
                 <CardTitle className="font-display text-text-dark">Create your account</CardTitle>
-                <CardDescription className="text-text-mid">Choose a username and optionally add your email.</CardDescription>
+                <CardDescription className="text-text-mid">Add a display name and email, or skip both to join anonymously.</CardDescription>
               </>
             )}
           </CardHeader>
@@ -151,7 +154,7 @@ export default function CreateAccount() {
             {step === 'details' && (
               <form onSubmit={handleCreateNamed} className="space-y-4">
                 <div className="space-y-1">
-                  <Label htmlFor="username">Display Name</Label>
+                  <Label htmlFor="username">Display Name <span className="text-text-muted-green font-normal">(optional)</span></Label>
                   <Input
                     id="username"
                     type="text"
@@ -159,7 +162,6 @@ export default function CreateAccount() {
                     onChange={e => setUsername(e.target.value)}
                     placeholder="Your display name"
                     maxLength={50}
-                    required
                     autoFocus
                   />
                 </div>
@@ -176,9 +178,9 @@ export default function CreateAccount() {
                 <Button
                   type="submit"
                   className="w-full bg-green-fresh hover:bg-green-mid text-white"
-                  disabled={isLoading || !username.trim()}
+                  disabled={isLoading}
                 >
-                  {isLoading ? 'Creating…' : 'Create account'}
+                  {isLoading ? 'Creating…' : username.trim() ? 'Create Account' : 'Create Anonymous Account'}
                 </Button>
                 <Button
                   type="button"
