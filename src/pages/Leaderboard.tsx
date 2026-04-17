@@ -12,7 +12,7 @@ import {
 } from "../lib/fetchLeaderboards";
 import { ALL_COUNTRIES } from "../lib/locationConstants";
 import { useQueryClient } from "@tanstack/react-query";
-import { computeNormalizedScore } from "../lib/getBrixColor";
+import { computeNormalizedScore, toDisplayScore } from "../lib/getBrixColor";
 import {
   Card,
   CardContent,
@@ -407,9 +407,9 @@ const LeaderboardPage: React.FC = () => {
                       const isTie = rankCounts[rank] > 1;
                       const getBadgeClasses = () => {
                         if (labelKey === "user") return "bg-badge-neutral-bg text-badge-neutral-text";
-                        if (normalizedScore >= 16) return "bg-green-pale text-green-mid";
-                        if (normalizedScore >= 8) return "bg-[var(--badge-gold-bg)] text-[var(--badge-gold-text)]";
-                        if (normalizedScore >= 4) return "bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)]";
+                        if (normalizedScore >= 1.75) return "bg-green-pale text-green-mid";
+                        if (normalizedScore >= 1.5) return "bg-[var(--badge-gold-bg)] text-[var(--badge-gold-text)]";
+                        if (normalizedScore >= 1.25) return "bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)]";
                         return "bg-badge-neutral-bg text-badge-neutral-text";
                       };
                       const badgeClasses = getBadgeClasses();
@@ -439,7 +439,7 @@ const LeaderboardPage: React.FC = () => {
                           <div className="text-center text-text-dark font-display font-bold text-sm">
                             {labelKey === "user"
                               ? entry.submission_count ?? 0
-                              : Number(normalizedScore ?? 0).toFixed(2)}
+                              : `${toDisplayScore(normalizedScore ?? 1)}%`}
                           </div>
 
                           <div className="flex flex-col items-center">

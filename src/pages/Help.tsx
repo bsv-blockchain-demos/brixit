@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Smartphone, KeyRound, ShieldCheck, Leaf, Fingerprint } from 'lucide-react';
 import { AuthBackground } from '@/components/ui/AuthBackground';
 import { Button } from '@/components/ui/button';
@@ -19,16 +19,23 @@ const FAQ = [
     answer: (
       <>
         <p>
-          BRIX is a community app for tracking and sharing BRIX scores — a simple number that
-          reflects how your food was grown. Using a device called a refractometer, anyone can
-          measure produce from a farm, market, or store and compare it to readings from around
-          the world.
+          A fresh carrot from a well-managed farm and one from an industrial supermarket
+          shelf look identical — but they may taste completely different and reflect very
+          different growing conditions. Until now, there was no simple way for ordinary
+          people to measure this difference. BRIX gives you that number.
         </p>
         <p className="mt-3">
-          The BRIX score measures dissolved solids in fresh produce — primarily sugars — along
-          with small amounts of minerals, amino acids, and other compounds. Higher scores often
-          indicate a plant that was photosynthesizing well and functioning efficiently, conditions
-          commonly associated with better flavour and overall food quality.
+          BRIX is a community app for tracking and sharing BRIX scores — a simple number
+          that reflects how your food was grown. Using a device called a refractometer,
+          anyone can measure produce from a farm, market, or store and compare it to
+          readings from around the world.
+        </p>
+        <p className="mt-3">
+          The BRIX score measures dissolved solids in fresh produce — primarily sugars —
+          along with small amounts of minerals, amino acids, and other compounds. Higher
+          scores often indicate a plant that was photosynthesizing well and functioning
+          efficiently, conditions commonly associated with better flavour and overall food
+          quality.
         </p>
       </>
     ),
@@ -36,22 +43,24 @@ const FAQ = [
   {
     value: 'wallet',
     icon: KeyRound,
-    question: 'What is a wallet?',
+    question: 'Why do we use a wallet instead of a password?',
     answer: (
       <>
         <p>
-          In most apps, your identity is stored on a company's server — which means if they
-          get hacked, your account is at risk. In BRIX, a wallet does that job instead.
+          When you create an account with an email and password, that password is stored
+          on a company's server. If that server gets breached — and major services are
+          breached every year — your credentials are exposed. We didn't want to build yet
+          another database of passwords that could be leaked, sold, or misused.
         </p>
         <p className="mt-3">
-          Your wallet is software that lives on your device and holds a cryptographic key that
-          is unique to you. When you sign in, your wallet proves your identity to BRIX through
-          a cryptographic handshake rather than sending a password. Nobody — including us —
-          can access your identity without your direct approval.
+          Instead, your identity lives only on your own device inside a wallet — software
+          that holds a cryptographic key unique to you. When you sign in, your wallet
+          proves your identity through a cryptographic handshake rather than sending a
+          password. Nobody, including us, can access your account without your approval.
         </p>
         <p className="mt-3">
-          Think of it as a digital keychain: it unlocks BRIX (and other compatible apps), but
-          the key never leaves your device.
+          Think of it as a digital keychain: it unlocks BRIX (and other compatible apps),
+          but the key never leaves your device and there is no password for anyone to steal.
         </p>
       </>
     ),
@@ -59,22 +68,24 @@ const FAQ = [
   {
     value: 'identity-key',
     icon: Fingerprint,
-    question: 'What is an identity key?',
+    question: 'What is an identity key and why do we need one?',
     answer: (
       <>
         <p>
-          Your identity key is a public cryptographic identifier — think of it as a permanent
-          username that is mathematically generated from your wallet rather than chosen by you.
+          To keep submissions trustworthy, BRIX needs to know that different measurements
+          come from the same person — to prevent spam and duplicate accounts. But we don't
+          need to know <em>who</em> that person is, just that they're consistent. An
+          identity key solves this: it lets you prove continuity of identity without
+          revealing personal information.
         </p>
         <p className="mt-3">
-          When you submit a measurement or log in, your wallet uses this key to prove it's
-          really you — without sharing a password or personal information with our servers.
-          The key is public (anyone can see it), but only you can prove you own it, because
-          the matching private key never leaves your device.
+          Your identity key is a public cryptographic identifier — a permanent username
+          mathematically generated from your wallet. Your submissions are linked to your
+          key, not your name. The key is public (anyone can see it), but only you can
+          prove you own it, because the matching private key never leaves your device.
         </p>
         <p className="mt-3">
-          You can see your identity key in the app — it's a long string of letters and
-          numbers. You don't need to memorise it; your wallet handles everything automatically.
+          You don't need to memorise it — your wallet handles everything automatically.
           It also means you can use the same identity across any other app that supports
           this standard.
         </p>
@@ -84,23 +95,26 @@ const FAQ = [
   {
     value: 'certificate',
     icon: ShieldCheck,
-    question: 'What is a certificate?',
+    question: 'What is a certificate and why does BRIX use one?',
     answer: (
       <>
         <p>
-          When you create a BRIX account, a small "membership card" called a certificate is
-          issued into your wallet. It proves you are a verified BRIX member without sharing
-          personal data with us.
+          Knowing that an identity key exists isn't enough — BRIX also needs to confirm
+          it belongs to a genuine, verified member rather than a bot or spammer. The
+          traditional approach is to maintain a list of approved users in a database on
+          our servers — but that's another database to protect, and another breach waiting
+          to happen. A certificate solves this without us holding anything.
         </p>
         <p className="mt-3">
-          The certificate is cryptographically signed by BRIX, so the app can confirm your
-          membership is genuine — but it contains only what you chose to share (an optional
-          display name and email). You control it: it stays in your wallet, and you can
-          revoke access at any time simply by removing it.
+          When you create a BRIX account, we issue a cryptographic membership certificate
+          directly into your wallet. It's cryptographically signed by BRIX, so the app
+          can verify your membership is genuine without looking anything up on our servers.
+          It contains only what you chose to share — an optional display name and email.
         </p>
         <p className="mt-3">
-          This is why BRIX does not ask for a password — your certificate, stored in your
-          wallet, is your proof of membership.
+          You control it entirely: it stays in your wallet, and you can revoke access at
+          any time by removing it. This is why BRIX has no password — your certificate
+          is your proof of membership.
         </p>
       </>
     ),
@@ -112,14 +126,18 @@ const FAQ = [
     answer: (
       <>
         <p>
-          Mycelia is the wallet app we recommend for BRIX. It is designed for everyday
-          people — no blockchain or crypto knowledge needed. It manages your identity key
-          and certificates behind the scenes.
+          Managing cryptographic keys safely is genuinely difficult. Done badly it creates
+          security holes; done well, it requires software that most people don't know how
+          to set up. We wanted people to use BRIX without becoming cryptography experts —
+          so we chose to build on Mycelia, an existing wallet app that handles all the
+          complexity for you.
         </p>
         <p className="mt-3">
-          Once you have Mycelia set up, opening BRIX from within the app signs you in
-          automatically. On a desktop, you can scan a QR code with Mycelia to connect
-          without installing anything extra on your computer.
+          Mycelia is designed for everyday people — no blockchain or crypto knowledge
+          needed. It manages your identity key and certificates behind the scenes. Once
+          set up, opening BRIX from within the app signs you in automatically. On a
+          desktop, you can scan a QR code with Mycelia to connect without installing
+          anything extra on your computer.
         </p>
         <p className="mt-3">
           Mycelia also works with other compatible apps, so the identity and certificates
@@ -132,6 +150,17 @@ const FAQ = [
 
 export default function Help() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const hashSection = location.hash.replace('#', '');
+  const validHash = FAQ.some(f => f.value === hashSection) ? hashSection : null;
+  const defaultOpen = validHash ? [validHash] : ['brix'];
+
+  useEffect(() => {
+    if (!validHash) return;
+    const el = document.getElementById(validHash);
+    if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+  }, [validHash]);
 
   return (
     <AuthBackground>
@@ -157,11 +186,12 @@ export default function Help() {
         </div>
 
         {/* FAQ accordion */}
-        <Accordion type="multiple" defaultValue={['brix']} className="space-y-2">
+        <Accordion type="multiple" defaultValue={defaultOpen} className="space-y-2">
           {FAQ.map(({ value, icon: Icon, question, answer }) => (
             <AccordionItem
               key={value}
               value={value}
+              id={value}
               className="border border-green-pale rounded-xl bg-card overflow-hidden px-4"
             >
               <AccordionTrigger className="hover:no-underline py-4 gap-3 text-left">

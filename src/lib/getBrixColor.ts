@@ -129,6 +129,13 @@ export function rankColorFromNormalized(
 
 
 /**
+ * Convert a 1–2 normalized score to the 0–100 display scale.
+ */
+export function toDisplayScore(normalizedScore: number): number {
+  return Math.round((normalizedScore - 1) * 100);
+}
+
+/**
  * Compute normalized score for a reading given thresholds
  * This is exactly the same math you used on the map:
  *  score = (brix - poor) / (excellent - poor) + 1

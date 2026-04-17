@@ -564,7 +564,7 @@ export default function WalletLogin() {
                 Your account is yours alone — forever
               </h2>
               <p className="text-lg leading-relaxed" style={{ color: 'var(--text-mid)' }}>
-                Instead of a username and password, you get a private key that only you hold. Think of it like a digital fingerprint — it proves you're you without trusting anyone else with your data.
+                Most apps store your password on their servers — which can be hacked, leaked, or sold. BRIX works differently: your identity lives only on your own device as a private key. There is no password on our servers for anyone to steal.
               </p>
             </motion.div>
 
@@ -593,6 +593,16 @@ export default function WalletLogin() {
             </motion.div>
 
             <motion.div className="flex flex-col items-center gap-3" {...fadeUp}>
+              <button
+                onClick={() => navigate('/faq')}
+                className="flex items-center gap-1.5 text-sm font-medium mb-1 transition-colors"
+                style={{ color: 'var(--green-fresh)' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--green-mid)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--green-fresh)')}
+              >
+                Why do we use this instead of a password?
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
               <Button
                 onClick={handleLoginClick}
                 size="lg"
@@ -611,13 +621,24 @@ export default function WalletLogin() {
                   Connect with my phone
                 </Button>
               )}
-              <button
-                onClick={() => navigate('/leaderboard')}
-                className="text-sm underline underline-offset-4 mt-2 hover:opacity-70 transition-opacity"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                Browse scores without an account
-              </button>
+              <p className="text-sm text-center mt-2" style={{ color: 'var(--text-muted)' }}>
+                Don't have one yet? We recommend the{' '}
+                <button
+                  onClick={() => navigate('/faq#mycelia')}
+                  className="font-semibold underline underline-offset-2 transition-colors"
+                  style={{ color: 'var(--text-mid)' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--green-fresh)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-mid)')}
+                >Mycelia app</button>
+                {' '}— it's made to work together with BRIX and handles all the complexity for you.{' '}
+                <a
+                  href="#"
+                  className="underline underline-offset-2 transition-opacity hover:opacity-70"
+                  style={{ color: 'var(--green-fresh)' }}
+                >
+                  Install here
+                </a>
+              </p>
             </motion.div>
           </div>
         </section>

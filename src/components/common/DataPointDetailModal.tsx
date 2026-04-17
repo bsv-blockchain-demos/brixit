@@ -496,6 +496,11 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                   >
                     {qualityText} Quality
                   </span>
+                  {cropThresholds?.poor != null && cropThresholds?.excellent != null && (
+                    <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                      Crop range: {cropThresholds.poor}–{cropThresholds.excellent} BRIX
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

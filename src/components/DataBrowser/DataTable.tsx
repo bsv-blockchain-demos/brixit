@@ -745,7 +745,7 @@ const DataTable: React.FC = () => {
                     className="text-xs text-text-muted-green uppercase tracking-wider text-center cursor-pointer"
                     onClick={() => handleSort('brixLevel')}
                   >
-                    BRIX {sortBy === 'brixLevel' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    Score {sortBy === 'brixLevel' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
                   <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">
                     Notes

@@ -22,7 +22,11 @@ export default function WalletError() {
         <Card>
           <CardContent className="pt-5 space-y-4">
             <p className="text-sm text-text-mid">
-              Make sure you open this app via the <strong>Mycelia</strong> app.
+              Make sure you open this app via the{' '}
+              <button
+                onClick={() => navigate('/faq#mycelia')}
+                className="font-semibold underline underline-offset-2 text-text-mid hover:text-green-fresh transition-colors"
+              >Mycelia</button>{' '}app.
               Don't have it?{' '}
               <a
                 href="#"
