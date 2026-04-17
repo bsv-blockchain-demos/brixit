@@ -439,7 +439,7 @@ const LeaderboardPage: React.FC = () => {
                           <div className="text-center text-text-dark font-display font-bold text-sm">
                             {labelKey === "user"
                               ? entry.submission_count ?? 0
-                              : `${toDisplayScore(normalizedScore ?? 1)}%`}
+                              : toDisplayScore(normalizedScore ?? 1)}
                           </div>
 
                           <div className="flex flex-col items-center">

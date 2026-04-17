@@ -82,7 +82,7 @@ const MobileSubmissionCard: React.FC<{
           <Badge
             className={`${brixColorClass} text-white px-3 py-1 rounded-xl font-bold text-base shadow-sm`}
           >
-            {displayScore}%
+            {displayScore}
           </Badge>
         </div>
       </div>

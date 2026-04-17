@@ -131,8 +131,9 @@ export function rankColorFromNormalized(
 /**
  * Convert a 1–2 normalized score to the 0–100 display scale.
  */
-export function toDisplayScore(normalizedScore: number): number {
-  return Math.round((normalizedScore - 1) * 100);
+export function toDisplayScore(normalizedScore: number): string {
+  const pct = Math.round((normalizedScore - 1) * 100);
+  return pct > 100 ? '100%+' : `${pct}%`;
 }
 
 /**
