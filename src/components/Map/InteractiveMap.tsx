@@ -9,12 +9,14 @@ import { applyFilters } from '../../lib/filterUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { MapPin, X, ArrowLeft } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { getMapboxToken } from '@/lib/getMapboxToken';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
-import { getBrixColor, computeNormalizedScore, rankColorFromNormalized } from '../../lib/getBrixColor';
+import { getBrixColor, computeNormalizedScore, rankColorFromNormalized, toDisplayScore } from '../../lib/getBrixColor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
+import LocationSearch from '../common/LocationSearch';
 
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -49,6 +51,8 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   onNearMeHandled,
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { highlightedPoint } = (location.state || {}) as any;
   const { filters, isAdmin } = useFilters();
@@ -77,11 +81,13 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [groupBy, setGroupBy] = useState<'none' | 'crop' | 'brand'>('crop');
+  const [searchValue, setSearchValue] = useState('');
   const [minBrix, setMinBrix] = useState<number>(0);
   const [maxBrix, setMaxBrix] = useState<number>(1);
   const [isLoading, setIsLoading] = useState(false);
 
   const zoomLevel = viewportQuery?.zoom ?? 0;
+
 
   const submissionsQuery = useFormattedSubmissionsBoundsQuery(
     viewportQuery
@@ -266,7 +272,12 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   // initialize Mapbox map
   useEffect(() => {
-    if (!mapContainer.current || mapRef.current || !userLocation) return;
+    if (!mapContainer.current || mapRef.current) return;
+
+    const initialCenter: [number, number] = userLocation
+      ? [userLocation.lng, userLocation.lat]
+      : [0, 20];
+    const initialZoom = userLocation ? 10 : 2;
 
     let mounted = true;
     (async function init() {
@@ -279,8 +290,8 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       const map = new mapboxgl.Map({
         container: mapContainer.current!,
         style: 'mapbox://styles/mapbox/satellite-v9',
-        center: [userLocation.lng, userLocation.lat],
-        zoom: 10,
+        center: initialCenter,
+        zoom: initialZoom,
       });
       mapRef.current = map;
       map.on('load', () => {
@@ -298,7 +309,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         setIsMapLoaded(false);
       }
     };
-  }, [userLocation]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update viewport query on moveend/zoomend (debounced)
   useEffect(() => {
@@ -539,23 +550,22 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   }, [selectedPoint, filters, queryClient]);
 
   // Render helpers (kept your original markup and logic)
-  const renderSubmissionItem = (sub: BrixDataPoint, key: string) => {
+  const renderSubmissionItem = (sub: BrixDataPoint, key: string, navigable = false) => {
     const cropKey = (sub.cropType ?? sub.cropLabel ?? (sub as any).crop_name ?? 'unknown').toString();
     const thresholds = cache?.[cropKey];
     const brixVal = sub.brixLevel ?? (sub as any).brix_value;
-    const pillClass = getBrixColor(
-      typeof brixVal === 'number' ? brixVal : null,
-      thresholds ?? {
-        poor: minBrix,
-        average: (minBrix + maxBrix) / 2,
-        good: maxBrix * 0.8,
-        excellent: maxBrix,
-      },
-      'bg'
-    );
+    const normalized = typeof brixVal === 'number'
+      ? computeNormalizedScore(brixVal, thresholds ?? null, minBrix, maxBrix)
+      : 1.5;
+    const rankColor = rankColorFromNormalized(normalized);
+    const canNavigate = navigable && !!user && !!sub.id;
 
     return (
-      <div key={key} className="flex justify-between items-start py-3 border-b border-green-pale last:border-b-0">
+      <div
+        key={key}
+        className={`flex justify-between items-start py-3 border-b border-green-pale last:border-b-0 ${canNavigate ? 'cursor-pointer hover:bg-green-mist rounded-lg px-2 -mx-2 transition-colors' : ''}`}
+        onClick={canNavigate ? () => navigate('/data', { state: { highlightedSubmissionId: sub.id } }) : undefined}
+      >
         <div className="flex flex-col min-w-0 flex-1">
           <span className="font-semibold text-sm truncate">{safeStr(sub.cropLabel ?? sub.cropType ?? 'Unknown Crop')}</span>
           <span className="text-xs text-text-muted-green mt-1 truncate">
@@ -564,9 +574,9 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           </span>
         </div>
         <div
-          className={`flex-shrink-0 min-w-[48px] px-3 py-1 text-center font-bold text-sm text-white rounded-full ${pillClass}`}
+          className={`flex-shrink-0 min-w-[52px] px-3 py-1 text-center font-bold text-sm text-white rounded-full ${rankColor.bgClass}`}
         >
-          {typeof brixVal === 'number' ? brixVal : '—'}
+          {typeof brixVal === 'number' ? toDisplayScore(normalized) : '—'}
         </div>
       </div>
     );
@@ -593,7 +603,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         </div>
         <div className="overflow-y-auto space-y-0">
           {filteredSubmissions.length > 0 ? (
-            filteredSubmissions.map((sub) => renderSubmissionItem(sub, sub.id))
+            filteredSubmissions.map((sub) => renderSubmissionItem(sub, sub.id, true))
           ) : (
             <div className="text-center text-text-muted-green py-8">No submissions found.</div>
           )}
@@ -638,7 +648,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                   All Submissions ({placeSubmissions.length})
                 </h4>
                 <div className="space-y-0">
-                  {placeSubmissions.map((sub) => renderSubmissionItem(sub, sub.id))}
+                  {placeSubmissions.map((sub) => renderSubmissionItem(sub, sub.id, true))}
                 </div>
               </div>
             </TabsContent>
@@ -673,7 +683,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                           <div
                             className={`w-14 h-7 rounded-full text-white flex items-center justify-center text-sm font-semibold ${rankColor.bgClass}`}
                           >
-                            {normalized.toFixed(1)}
+                            {toDisplayScore(normalized)}
                           </div>
                         </div>
                       );
@@ -713,7 +723,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                           <div
                             className={`w-14 h-7 rounded-full text-white flex items-center justify-center text-sm font-semibold ${rankColor.bgClass}`}
                           >
-                            {normalized.toFixed(1)}
+                            {toDisplayScore(normalized)}
                           </div>
                         </div>
                       );
@@ -738,9 +748,28 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)] w-full">
       {/* Map container must be non-zero height for Mapbox to render correctly */}
       <div ref={mapContainer} className="flex-1 relative">
+        {/* Location search overlay */}
+        <div className="absolute top-3 left-3 z-10 w-64 sm:w-80 shadow-lg rounded-xl overflow-visible">
+          <LocationSearch
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            onLocationSelect={(loc) => {
+              if (mapRef.current && loc.latitude && loc.longitude) {
+                mapRef.current.flyTo({
+                  center: [loc.longitude, loc.latitude],
+                  zoom: 10,
+                  duration: 1200,
+                });
+              }
+              setSearchValue('');
+            }}
+            placeholder="Search any location..."
+          />
+        </div>
+
         {isMapLoaded && zoomLevel > 0 && zoomLevel < MIN_ZOOM_TO_QUERY && (
           <div className="absolute inset-0 z-10 flex items-start justify-center pointer-events-none">
-            <div className="mt-4 bg-card/90 backdrop-blur border border-border text-foreground px-4 py-2 rounded-md shadow-sm text-sm">
+            <div className="mt-16 bg-card/90 backdrop-blur border border-border text-foreground px-4 py-2 rounded-md shadow-sm text-sm">
               Zoom in to load submissions
             </div>
           </div>

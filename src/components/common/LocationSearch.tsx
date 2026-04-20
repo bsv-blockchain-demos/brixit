@@ -29,6 +29,7 @@ interface LocationSearchProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onLocationSelect: (location: DetailedLocationInfo) => void;
   isLoading?: boolean;
+  placeholder?: string;
 }
 
 const generateUUID = () => {
@@ -42,7 +43,8 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   value,
   onChange,
   onLocationSelect,
-  isLoading = false
+  isLoading = false,
+  placeholder = 'Enter an address or store name',
 }) => {
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -258,7 +260,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
           type="text"
           value={value}
           onChange={handleInputChange}
-          placeholder="Enter an address or store name"
+          placeholder={placeholder}
           className="pl-10"
         />
         {(isLoading || isSearching) && (

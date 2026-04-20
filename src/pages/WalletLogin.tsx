@@ -308,6 +308,7 @@ export default function WalletLogin() {
     if (hasStartedLogin && isConnecting) {
       return (
         <div className="text-center space-y-4 py-4">
+          <DialogTitle className="sr-only">Connecting to your wallet</DialogTitle>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
           <div>
             <p className="font-semibold text-foreground">Connecting to your wallet...</p>
@@ -324,6 +325,7 @@ export default function WalletLogin() {
     if (hasStartedLogin && isCheckingCertificates) {
       return (
         <div className="text-center space-y-4 py-4">
+          <DialogTitle className="sr-only">Verifying your identity</DialogTitle>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
           <div>
             <p className="font-semibold text-foreground">Verifying your identity...</p>
@@ -394,7 +396,7 @@ export default function WalletLogin() {
                     variant="outline"
                     size="lg"
                     className="h-auto py-4 px-7 text-base rounded-xl w-full max-w-md border-white/20 bg-transparent text-white/70 hover:text-white hover:bg-white/5"
-                    onClick={() => document.getElementById('community')?.scrollIntoView({ behavior: 'smooth' })}
+                    onClick={() => navigate('/map')}
                   >
                     Browse scores near me
                   </Button>

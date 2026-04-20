@@ -4,7 +4,7 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { BrixDataPoint } from '../../types';
 import { MapPin, Calendar, CheckCircle, Edit, Trash2, Eye, MessageSquare, Clock, Lock, User } from 'lucide-react';
-import { useBrixColorFromContext, computeNormalizedScore, toDisplayScore } from '../../lib/getBrixColor';
+import { computeNormalizedScore, toDisplayScore, rankColorFromNormalized } from '../../lib/getBrixColor';
 
 interface SubmissionTableRowProps {
   submission: BrixDataPoint;
@@ -17,15 +17,12 @@ interface SubmissionTableRowProps {
 }
 
 const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onDelete, isOwner, canDeleteByOwner, onOpenModal, onEdit, showOwnerBadge = true }) => {
-  const brixColorClass = useBrixColorFromContext(
-    submission.cropType?.toLowerCase().trim() || '',
-    submission.brixLevel
-  );
-
   const cropThresholds = (submission.poorBrix != null && submission.excellentBrix != null)
     ? { poor: submission.poorBrix, average: submission.averageBrix ?? 0, good: submission.goodBrix ?? 0, excellent: submission.excellentBrix }
     : undefined;
-  const displayScore = toDisplayScore(computeNormalizedScore(submission.brixLevel, cropThresholds));
+  const normalized = computeNormalizedScore(submission.brixLevel, cropThresholds);
+  const brixColorClass = rankColorFromNormalized(normalized).bgClass;
+  const displayScore = toDisplayScore(normalized);
 
   // Determine if the edit button should be visible (only owner can edit)
   const canEdit = isOwner;

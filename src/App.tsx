@@ -66,14 +66,7 @@ const RootContent = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/map"
-          element={
-            <ProtectedRoute>
-              <MapView />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/map" element={<MapView />} />
         <Route
           path="/data"
           element={

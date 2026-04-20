@@ -1,7 +1,7 @@
 // src/components/DataBrowser/DataTable.tsx
 
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { BrixDataPoint, MapFilter } from '../../types';
 
 import { Card, CardContent } from '../ui/card';
@@ -22,7 +22,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useFormattedSubmissionsCountQuery, useFormattedSubmissionsPageQuery } from '../../hooks/useSubmissions';
+import { useFormattedSubmissionsCountQuery, useFormattedSubmissionsPageQuery, useFormattedSubmissionByIdQuery } from '../../hooks/useSubmissions';
 import { useFilters, DEFAULT_MAP_FILTERS } from '../../contexts/FilterContext';
 import { getFilterSummary } from '../../lib/filterUtils';
 import { fetchFormattedSubmissionsPage, type PublicFormattedSubmissionsQuery } from '../../lib/fetchSubmissions';
@@ -123,6 +123,8 @@ const DataTable: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const highlightedSubmissionId = (location.state as any)?.highlightedSubmissionId as string | undefined;
   const [urlFiltersApplied, setUrlFiltersApplied] = useState(false);
 
   // Corrected destructuring: useStaticData hook returns 'locations' not 'stores'.
@@ -259,6 +261,21 @@ const DataTable: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDataPoint, setSelectedDataPoint] = useState<BrixDataPoint | null>(null);
   const [fromLeaderboard, setFromLeaderboard] = useState(false);
+
+  // Fetch and open modal for submission navigated here from map
+  const highlightedQuery = useFormattedSubmissionByIdQuery(highlightedSubmissionId, {
+    enabled: !!highlightedSubmissionId,
+  });
+  const highlightedOpenedRef = useRef(false);
+  useEffect(() => {
+    if (highlightedQuery.data && !highlightedOpenedRef.current) {
+      highlightedOpenedRef.current = true;
+      setSelectedDataPoint(highlightedQuery.data);
+      setIsModalOpen(true);
+      // Clear state so navigating back and forward doesn't re-open
+      window.history.replaceState({}, '');
+    }
+  }, [highlightedQuery.data]);
 
   // Apply URL filters on component mount
   useEffect(() => {

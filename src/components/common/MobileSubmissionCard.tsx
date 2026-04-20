@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrixDataPoint } from '../../types';
-import { useBrixColorFromContext, computeNormalizedScore, toDisplayScore } from '../../lib/getBrixColor';
+import { computeNormalizedScore, toDisplayScore, rankColorFromNormalized } from '../../lib/getBrixColor';
 import { CheckCircle, Clock, MapPin, User, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import {
@@ -18,14 +18,12 @@ const MobileSubmissionCard: React.FC<{
   onEdit?: () => void;
   onDelete?: () => void;
 }> = ({ submission, isOwner, onOpenModal, onEdit, onDelete }) => {
-  const brixColorClass = useBrixColorFromContext(
-    submission.cropType?.toLowerCase().trim() || '',
-    submission.brixLevel
-  );
   const cropThresholds = (submission.poorBrix != null && submission.excellentBrix != null)
     ? { poor: submission.poorBrix, average: submission.averageBrix ?? 0, good: submission.goodBrix ?? 0, excellent: submission.excellentBrix }
     : undefined;
-  const displayScore = toDisplayScore(computeNormalizedScore(submission.brixLevel, cropThresholds));
+  const normalized = computeNormalizedScore(submission.brixLevel, cropThresholds);
+  const brixColorClass = rankColorFromNormalized(normalized).bgClass;
+  const displayScore = toDisplayScore(normalized);
   const hasActions = !!(onEdit || onDelete);
 
   return (

@@ -1,19 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import Header from '../components/Layout/Header';
 import InteractiveMap from '../components/Map/InteractiveMap';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Locate, MapPin, Loader2 } from 'lucide-react';
+import { Locate } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { getMapboxToken } from '../lib/getMapboxToken';
 
 const MapView = () => {
   const { toast } = useToast();
-  const { user, profileLoading } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearMeTriggered, setNearMeTriggered] = useState(false);
@@ -50,16 +47,36 @@ const MapView = () => {
   }, [user]);
 
   const handleLocationSearch = () => {
-    if (userLocation) {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setNearMeTriggered(true);
+          toast({ title: 'Location found', description: 'Zooming to your current location.' });
+        },
+        () => {
+          // Geolocation denied — fall back to profile location
+          if (userLocation) {
+            setNearMeTriggered(true);
+            toast({ title: 'Location found', description: 'Zooming to your saved profile location.' });
+          } else {
+            toast({
+              title: 'Location unavailable',
+              description: user
+                ? 'Allow location access or add a city to your profile.'
+                : 'Allow location access to use this feature.',
+              variant: 'destructive',
+            });
+          }
+        }
+      );
+    } else if (userLocation) {
       setNearMeTriggered(true);
-      toast({
-        title: 'Location found',
-        description: 'Zooming to your saved profile location on the map.',
-      });
+      toast({ title: 'Location found', description: 'Zooming to your saved profile location.' });
     } else {
       toast({
-        title: 'No location set',
-        description: 'Please update your profile with a location to use this feature.',
+        title: 'Location unavailable',
+        description: 'Your browser does not support geolocation.',
         variant: 'destructive',
       });
     }
@@ -68,55 +85,6 @@ const MapView = () => {
   const handleNearMeHandled = () => {
     setNearMeTriggered(false);
   };
-
-  if (profileLoading) {
-    return (
-      <div className="min-h-screen bg-cream flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center px-4">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 text-green-mid animate-spin mx-auto mb-3" />
-            <p className="text-text-muted-green">Loading your profile...</p>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (!user?.city || !user?.state || !user?.country) {
-    return (
-      <div className="min-h-screen bg-cream flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <div className="text-center max-w-md mx-auto">
-              <div className="w-20 h-20 rounded-2xl bg-green-deep flex items-center justify-center mx-auto mb-6">
-                <MapPin className="w-10 h-10 text-white" />
-              </div>
-              <h2 className="font-display font-bold text-2xl text-text-dark mb-3">
-                Set Your Location
-              </h2>
-              <p className="text-text-mid mb-8">
-                Add your city to your profile to explore scores from
-                your community and discover nutritious produce nearby.
-              </p>
-              <Button
-                onClick={() => navigate('/profile')}
-                className="bg-primary text-primary-foreground hover:bg-green-mid px-6"
-              >
-                <MapPin className="w-4 h-4 mr-2" />
-                Update My Profile
-              </Button>
-            </div>
-          </motion.div>
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-cream">
