@@ -9,25 +9,38 @@ test.describe('Data entry form', () => {
   });
 
   test('renders the submission form', async ({ authedPage }) => {
-    await expect(authedPage.getByText('Submit BRIX Measurement')).toBeVisible();
-    // Use label element to avoid matching the combobox placeholder text
-    await expect(authedPage.locator('label').filter({ hasText: /crop type/i })).toBeVisible();
-    await expect(authedPage.locator('label').filter({ hasText: /farm \/ brand name/i })).toBeVisible();
+    await expect(authedPage.getByRole('heading', { name: /submit brix reading/i })).toBeVisible();
+    await expect(authedPage.getByText('Where did you shop?')).toBeVisible();
+    await expect(authedPage.getByText('What did you measure?')).toBeVisible();
   });
 
-  test('shows validation error when submitting without crop', async ({ authedPage }) => {
-    await authedPage.getByRole('button', { name: /submit measurement/i }).click();
-    await expect(authedPage.getByText(/please select crop type/i)).toBeVisible();
+  test('renders required section labels', async ({ authedPage }) => {
+    await expect(authedPage.locator('label').filter({ hasText: /farm \/ brand name/i })).toBeVisible();
+    await expect(authedPage.locator('label').filter({ hasText: /location/i })).toBeVisible();
+    await expect(authedPage.getByText('Purchase Type')).toBeVisible();
+  });
+
+  test('renders POS type pills', async ({ authedPage }) => {
+    await expect(authedPage.getByRole('button', { name: 'Supermarket' })).toBeVisible();
+    await expect(authedPage.getByRole('button', { name: 'Farmers Market' })).toBeVisible();
+    await expect(authedPage.getByRole('button', { name: 'Farm Direct' })).toBeVisible();
+    await expect(authedPage.getByRole('button', { name: 'Online' })).toBeVisible();
+    await expect(authedPage.getByRole('button', { name: 'Other' })).toBeVisible();
+  });
+
+  test('selecting a POS pill clears its validation error', async ({ authedPage }) => {
+    await authedPage.getByRole('button', { name: /submit reading/i }).click();
+    await expect(authedPage.getByText(/please select a purchase type/i)).toBeVisible();
+    await authedPage.getByRole('button', { name: 'Supermarket' }).click();
+    await expect(authedPage.getByText(/please select a purchase type/i)).not.toBeVisible();
   });
 
   test('crop combobox trigger shows placeholder', async ({ authedPage }) => {
-    // Filter by text content since accessible name computation doesn't match placeholder
     await expect(authedPage.getByRole('combobox').filter({ hasText: /select crop type/i })).toBeVisible();
   });
 
   test('crop combobox displays human-readable labels', async ({ authedPage }) => {
     await authedPage.getByRole('combobox').filter({ hasText: /select crop type/i }).click();
-    // Should show label, not raw db name
     await expect(authedPage.getByRole('option', { name: 'Bell Peppers' })).toBeVisible();
     await expect(authedPage.getByText('bell_pepper', { exact: true })).not.toBeVisible();
   });
@@ -36,5 +49,28 @@ test.describe('Data entry form', () => {
     await authedPage.getByRole('combobox').filter({ hasText: /select crop type/i }).click();
     await authedPage.getByRole('option', { name: 'Bell Peppers' }).click();
     await expect(authedPage.getByRole('combobox').filter({ hasText: /bell peppers/i })).toBeVisible();
+  });
+
+  test('Add another crop button adds a second reading', async ({ authedPage }) => {
+    // Remove buttons are hidden when only one reading exists
+    await expect(authedPage.getByRole('button', { name: /remove reading/i })).not.toBeVisible();
+    await authedPage.getByRole('button', { name: /add another crop/i }).click();
+    // Both readings now show a remove button
+    await expect(authedPage.getByRole('button', { name: /remove reading/i })).toHaveCount(2);
+  });
+
+  test('submit button shows plural count with multiple readings', async ({ authedPage }) => {
+    await authedPage.getByRole('button', { name: /add another crop/i }).click();
+    await expect(authedPage.getByRole('button', { name: /submit 2 readings/i })).toBeVisible();
+  });
+
+  test('shows global validation error when no crop is selected', async ({ authedPage }) => {
+    await authedPage.getByRole('button', { name: /submit reading/i }).click();
+    await expect(authedPage.getByText(/please fill in at least one crop reading/i)).toBeVisible();
+  });
+
+  test('shows validation error for missing brand when submitting', async ({ authedPage }) => {
+    await authedPage.getByRole('button', { name: /submit reading/i }).click();
+    await expect(authedPage.getByText(/please select a farm or brand/i)).toBeVisible();
   });
 });

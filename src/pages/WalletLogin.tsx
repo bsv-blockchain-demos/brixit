@@ -653,8 +653,8 @@ export default function WalletLogin() {
               <button onClick={() => navigate('/contact')} className="hover:text-white/80 transition-colors">Contact</button>
             </nav>
             <nav className="flex items-center justify-end gap-4 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
-              <a href="/privacy.html" className="hover:text-white/70 transition-colors">Privacy</a>
-              <a href="/terms.html" className="hover:text-white/70 transition-colors">Terms</a>
+              <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors">Privacy</a>
+              <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors">Terms</a>
             </nav>
           </div>
         </footer>

@@ -3,9 +3,9 @@ import type { Page } from '@playwright/test';
 // ── Shared mock data ─────────────────────────────────────────────────────────
 
 export const MOCK_CROPS = [
-  { id: 'crop-1', name: 'bell_pepper', label: 'Bell Peppers' },
-  { id: 'crop-2', name: 'tomato',      label: 'Tomato' },
-  { id: 'crop-3', name: 'apple',       label: 'Apple' },
+  { id: 'crop-1', name: 'bell_pepper', label: 'Bell Peppers', poorBrix: 4,  averageBrix: 6,  goodBrix: 8,  excellentBrix: 10 },
+  { id: 'crop-2', name: 'tomato',      label: 'Tomato',       poorBrix: 4,  averageBrix: 6,  goodBrix: 8,  excellentBrix: 12 },
+  { id: 'crop-3', name: 'apple',       label: 'Apple',        poorBrix: 6,  averageBrix: 10, goodBrix: 14, excellentBrix: 18 },
 ];
 
 export const MOCK_BRANDS = [

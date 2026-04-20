@@ -64,7 +64,7 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
     <Card>
       <CardHeader>
         <CardTitle className="text-2xl flex items-center space-x-3">
-          <span>{dataPoint.cropType}</span>
+          <span>{dataPoint.cropLabel ?? dataPoint.cropType}</span>
           {dataPoint.verified && (
             <CheckCircle className="w-6 h-6 text-green-600" aria-label="Verified" />
           )}

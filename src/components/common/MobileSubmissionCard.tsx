@@ -38,7 +38,7 @@ const MobileSubmissionCard: React.FC<{
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-text-dark truncate capitalize">{submission.cropType}</p>
+          <p className="font-semibold text-text-dark truncate">{submission.cropLabel ?? submission.cropType}</p>
           {submission.variety && (
             <p className="text-xs text-text-muted-green">{submission.variety}</p>
           )}
