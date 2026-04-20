@@ -41,13 +41,16 @@ Derived from UX handoff research. Nature/agriculture green palette with gold acc
 
 ## Score Visualization
 
-Domain-specific color convention used across all BRIX score displays:
+Scores are **crop-relative**, not absolute. Each crop has its own poor/excellent thresholds stored in the DB. The raw BRIX value is normalized to a 0–100%+ scale via `computeNormalizedScore` in `src/lib/getBrixColor.ts`, then colored via `rankColorFromNormalized`. Never compare raw BRIX values across different crops.
 
-| Rating | Range | Color token |
-|--------|-------|-------------|
-| Excellent | 16+ | `--green-mid` (`#2d6a4f`) |
-| Good | 8–15 | `--gold` (`#c9a84c`) |
-| Poor | 1–7 | `--score-poor` (`#c0392b`) |
+| Rating | Normalized range | Display | Color token |
+|--------|-----------------|---------|-------------|
+| Excellent | ≥ 1.75 | 75%+ | `--green-mid` (`#2d6a4f`) |
+| Good | 1.50–1.74 | 50–74% | `--green-fresh` (`#40916c`) |
+| Average | 1.25–1.49 | 25–49% | `--gold` (`#c9a84c`) |
+| Poor | < 1.25 | 0–24% | `--score-poor` (`#c0392b`) |
+
+Use `rankColorFromNormalized(n)` for color and `toDisplayScore(n)` for the displayed %. Do **not** use `getBrixColor` or `getBrixQuality` for user-facing score badges — those compare raw BRIX against absolute thresholds and will diverge from the % display.
 
 ## Mobile-First Strategy
 

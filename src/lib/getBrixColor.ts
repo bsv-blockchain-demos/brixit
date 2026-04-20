@@ -7,14 +7,14 @@ const colorMap = {
   bg: {
     poor: 'bg-score-poor',
     average: 'bg-gold',
-    good: 'bg-gold',
+    good: 'bg-green-fresh',
     excellent: 'bg-green-mid',
     fallback: 'bg-gray-300',
   },
   hex: {
     poor: '#c0392b',
     average: '#c9a84c',
-    good: '#c9a84c',
+    good: '#40916c',
     excellent: '#2d6a4f',
     fallback: '#d1d5db',
   },

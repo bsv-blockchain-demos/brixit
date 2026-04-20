@@ -18,15 +18,15 @@ const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 
 // ── Illustrative score card (hero decoration) ────────────────────
-function ScoreCard({ product, origin, score, rating }: { product: string; origin: string; score: number; rating: 'Excellent' | 'Good' | 'Poor' }) {
+function ScoreCard({ product, origin, score, pct, rating }: { product: string; origin: string; score: number; pct: string; rating: 'Excellent' | 'Good' | 'Poor' }) {
   const color = rating === 'Excellent' ? 'var(--green-mid)' : rating === 'Good' ? 'var(--gold)' : 'var(--score-poor)';
   return (
     <div className="rounded-2xl p-5 shadow-lg" style={{ backgroundColor: 'hsl(var(--card))' }}>
       <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>{origin}</p>
       <p className="text-lg font-display font-semibold mt-0.5" style={{ color: 'var(--text-dark)' }}>{product}</p>
       <div className="flex items-end gap-2 mt-3">
-        <span className="text-3xl font-display font-bold" style={{ color }} aria-label={`Brix score ${score}, rated ${rating}`}>{score}</span>
-        <span className="text-sm pb-1" style={{ color: 'var(--text-muted)' }}>BRIX</span>
+        <span className="text-3xl font-display font-bold" style={{ color }} aria-label={`Score ${pct}, rated ${rating}`}>{pct}</span>
+        <span className="text-sm pb-1" style={{ color: 'var(--text-muted)' }}>{score} BRIX</span>
       </div>
       <span className="inline-block mt-2 text-xs font-medium" style={{ color }}>{rating}</span>
     </div>
@@ -44,15 +44,15 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 // ── Community feed card ──────────────────────────────────────────
-function FeedCard({ product, location, score, user, rating }: { product: string; location: string; score: number; user: string; rating: 'Excellent' | 'Good' | 'Poor' }) {
+function FeedCard({ product, location, pct, score, user, rating }: { product: string; location: string; pct: string; score: number; user: string; rating: 'Excellent' | 'Good' | 'Poor' }) {
   const color = rating === 'Excellent' ? 'var(--green-mid)' : rating === 'Good' ? 'var(--gold)' : 'var(--score-poor)';
   return (
     <Card className="overflow-hidden border" style={{ borderColor: 'var(--green-pale)' }}>
       <CardContent className="p-5">
-        <p className="font-display font-bold text-4xl leading-none" style={{ color }} aria-label={`Brix score ${score}, rated ${rating}`}>{score}</p>
+        <p className="font-display font-bold text-4xl leading-none" style={{ color }} aria-label={`Score ${pct}, rated ${rating}`}>{pct}</p>
         <p className="text-xs font-medium mt-1" style={{ color }}>{rating}</p>
         <p className="font-semibold mt-4" style={{ color: 'var(--text-dark)' }}>{product}</p>
-        <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>{location} · {user}</p>
+        <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>{location} · {user} · {score} BRIX</p>
       </CardContent>
     </Card>
   );
@@ -412,8 +412,8 @@ export default function WalletLogin() {
                 className="hidden desktop:flex flex-col gap-4"
                 {...(prefersReducedMotion ? {} : { initial: { opacity: 0, x: 40 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true }, transition: { duration: 0.6, delay: 0.2 } })}
               >
-                <ScoreCard product="Organic Carrots" origin="Green Valley Farm, OR" score={18.4} rating="Excellent" />
-                <ScoreCard product="Supermarket Tomatoes" origin="Generic Grocery, CA" score={5.2} rating="Poor" />
+                <ScoreCard product="Organic Carrots" origin="Green Valley Farm, OR" score={18.4} pct="92%" rating="Excellent" />
+                <ScoreCard product="Supermarket Tomatoes" origin="Generic Grocery, CA" score={5.2} pct="21%" rating="Poor" />
               </motion.div>
             </div>
 
@@ -462,37 +462,50 @@ export default function WalletLogin() {
                 style={{ backgroundColor: 'hsl(var(--card))' }}
                 {...fadeUp}
               >
-                <p className="uppercase tracking-[0.15em] text-xs font-medium mb-6" style={{ color: 'var(--text-muted)' }}>
+                <p className="uppercase tracking-[0.15em] text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>
                   Score Guide
                 </p>
+                <p className="text-xs mb-6" style={{ color: 'var(--text-muted)' }}>
+                  Scores are relative to each crop's expected range — apples and bananas are judged by different standards.
+                </p>
 
-                <div className="space-y-6">
+                <div className="space-y-5">
                   {/* Excellent */}
                   <div className="flex items-start gap-5">
-                    <p className="text-3xl font-display font-bold shrink-0 w-16" style={{ color: 'var(--green-mid)' }}>16+</p>
+                    <p className="text-3xl font-display font-bold shrink-0 w-16" style={{ color: 'var(--green-mid)' }}>75%+</p>
                     <div className="flex-1">
                       <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>Excellent</p>
-                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Strong indicator of efficient growth and good food quality.</p>
+                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Well above the expected range for this crop.</p>
                       <div className="h-0.5 w-12 mt-3 rounded-full" style={{ backgroundColor: 'var(--green-mid)' }} />
                     </div>
                   </div>
 
                   {/* Good */}
                   <div className="flex items-start gap-5">
-                    <p className="text-3xl font-display font-bold shrink-0 w-16" style={{ color: 'var(--gold)' }}>8–15</p>
+                    <p className="text-3xl font-display font-bold shrink-0 w-16" style={{ color: 'var(--green-fresh)' }}>50%</p>
                     <div className="flex-1">
-                      <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>Good — above average</p>
-                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Better than most supermarket produce.</p>
+                      <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>Good</p>
+                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Above the crop average. Better than most commercial produce.</p>
+                      <div className="h-0.5 w-12 mt-3 rounded-full" style={{ backgroundColor: 'var(--green-fresh)' }} />
+                    </div>
+                  </div>
+
+                  {/* Average */}
+                  <div className="flex items-start gap-5">
+                    <p className="text-3xl font-display font-bold shrink-0 w-16" style={{ color: 'var(--gold)' }}>25%</p>
+                    <div className="flex-1">
+                      <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>Average</p>
+                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Near the crop average. Typical of commercial growing.</p>
                       <div className="h-0.5 w-12 mt-3 rounded-full" style={{ backgroundColor: 'var(--gold)' }} />
                     </div>
                   </div>
 
                   {/* Poor */}
                   <div className="flex items-start gap-5">
-                    <p className="text-3xl font-display font-bold shrink-0 w-16" style={{ color: 'var(--score-poor)' }}>1–7</p>
+                    <p className="text-3xl font-display font-bold shrink-0 w-16" style={{ color: 'var(--score-poor)' }}>&lt;25%</p>
                     <div className="flex-1">
-                      <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>Poor — common in supermarkets</p>
-                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Looks fine, but doesn't deliver much.</p>
+                      <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>Poor</p>
+                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Below the expected range. Low nutrient density for this crop.</p>
                       <div className="h-0.5 w-12 mt-3 rounded-full" style={{ backgroundColor: 'var(--score-poor)' }} />
                     </div>
                   </div>
@@ -516,13 +529,13 @@ export default function WalletLogin() {
 
             <motion.div {...stagger} className="grid desktop:grid-cols-3 gap-5">
               <motion.div {...staggerChild}>
-                <FeedCard product="Biodynamic Tomatoes" location="Hopp Farm · Basel" score={19.2} user="Sandra K." rating="Excellent" />
+                <FeedCard product="Biodynamic Tomatoes" location="Hopp Farm · Basel" score={19.2} pct="88%" user="Sandra K." rating="Excellent" />
               </motion.div>
               <motion.div {...staggerChild}>
-                <FeedCard product="Organic Apples" location="Migros Oerlikon" score={9.0} user="Marie R." rating="Good" />
+                <FeedCard product="Organic Apples" location="Migros Oerlikon" score={9.0} pct="54%" user="Marie R." rating="Good" />
               </motion.div>
               <motion.div {...staggerChild}>
-                <FeedCard product="Baby Leaf Salad" location="Coop Geneva" score={4.5} user="Céline L." rating="Poor" />
+                <FeedCard product="Baby Leaf Salad" location="Coop Geneva" score={4.5} pct="19%" user="Céline L." rating="Poor" />
               </motion.div>
             </motion.div>
           </div>
