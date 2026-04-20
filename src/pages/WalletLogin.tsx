@@ -469,46 +469,22 @@ export default function WalletLogin() {
                   Scores are relative to each crop's expected range — apples and bananas are judged by different standards.
                 </p>
 
-                <div className="space-y-5">
-                  {/* Excellent */}
-                  <div className="flex items-start gap-5">
-                    <p className="text-3xl font-display font-bold shrink-0 w-16" style={{ color: 'var(--green-mid)' }}>75%+</p>
-                    <div className="flex-1">
-                      <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>Excellent</p>
-                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Well above the expected range for this crop.</p>
-                      <div className="h-0.5 w-12 mt-3 rounded-full" style={{ backgroundColor: 'var(--green-mid)' }} />
+                <div className="space-y-6">
+                  {[
+                    { tier: 'Excellent', label: '75%+', color: 'var(--green-mid)',   desc: 'Well above the expected range for this crop.' },
+                    { tier: 'Good',      label: '50%+', color: 'var(--green-fresh)', desc: 'Above the crop average. Better than most commercial produce.' },
+                    { tier: 'Average',   label: '25%+', color: 'var(--gold)',         desc: 'Near the crop average. Typical of commercial growing.' },
+                    { tier: 'Poor',      label: '<25%',  color: 'var(--score-poor)',  desc: 'Below the expected range. Low nutrient density for this crop.' },
+                  ].map(({ tier, label, color, desc }) => (
+                    <div key={tier} className="flex items-start gap-5">
+                      <p className="text-3xl font-display font-bold shrink-0 w-16 tabular-nums" style={{ color }}>{label}</p>
+                      <div className="flex-1">
+                        <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>{tier}</p>
+                        <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>{desc}</p>
+                        <div className="h-0.5 w-12 mt-3 rounded-full" style={{ backgroundColor: color }} />
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Good */}
-                  <div className="flex items-start gap-5">
-                    <p className="text-3xl font-display font-bold shrink-0 w-16" style={{ color: 'var(--green-fresh)' }}>50%</p>
-                    <div className="flex-1">
-                      <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>Good</p>
-                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Above the crop average. Better than most commercial produce.</p>
-                      <div className="h-0.5 w-12 mt-3 rounded-full" style={{ backgroundColor: 'var(--green-fresh)' }} />
-                    </div>
-                  </div>
-
-                  {/* Average */}
-                  <div className="flex items-start gap-5">
-                    <p className="text-3xl font-display font-bold shrink-0 w-16" style={{ color: 'var(--gold)' }}>25%</p>
-                    <div className="flex-1">
-                      <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>Average</p>
-                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Near the crop average. Typical of commercial growing.</p>
-                      <div className="h-0.5 w-12 mt-3 rounded-full" style={{ backgroundColor: 'var(--gold)' }} />
-                    </div>
-                  </div>
-
-                  {/* Poor */}
-                  <div className="flex items-start gap-5">
-                    <p className="text-3xl font-display font-bold shrink-0 w-16" style={{ color: 'var(--score-poor)' }}>&lt;25%</p>
-                    <div className="flex-1">
-                      <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>Poor</p>
-                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>Below the expected range. Low nutrient density for this crop.</p>
-                      <div className="h-0.5 w-12 mt-3 rounded-full" style={{ backgroundColor: 'var(--score-poor)' }} />
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </motion.div>
             </div>
