@@ -3,6 +3,8 @@
  *
  * Endpoints:
  *   GET  /api/admin/users                        → List all users with roles
+ *   GET  /api/admin/users/:id                    → User detail + recent submissions
+ *   GET  /api/admin/submissions                  → All submissions (search/filter)
  *   GET  /api/admin/submissions/unverified        → List unverified submissions
  *   POST /api/admin/roles/grant                   → Grant role to user
  *   POST /api/admin/roles/revoke                  → Revoke role from user
@@ -62,6 +64,124 @@ router.get('/users', async (req: AuthenticatedRequest, res: Response) => {
   } catch (err) {
     console.error('[admin/users] Error:', err);
     res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// GET /api/admin/users/:id
+router.get('/users/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        roles: true,
+        submissions: {
+          include: {
+            crop: { select: { name: true, label: true, poorBrix: true, excellentBrix: true } },
+            brand: { select: { name: true, label: true } },
+            place: { select: { label: true, city: true, state: true } },
+          },
+          orderBy: { assessmentDate: 'desc' },
+          take: 50,
+        },
+      },
+    });
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    res.json({
+      id: user.id,
+      display_name: (user as any).displayName,
+      country: (user as any).country,
+      state: (user as any).state,
+      city: (user as any).city,
+      points: (user as any).points,
+      submission_count: (user as any).submissionCount,
+      created_at: (user as any).createdAt,
+      roles: (user as any).roles.map((r: any) => r.role),
+      submissions: (user as any).submissions.map((s: any) => ({
+        id: s.id,
+        assessment_date: s.assessmentDate,
+        brix_value: Number(s.brixValue),
+        verified: s.verified,
+        crop_name: s.crop?.name ?? null,
+        crop_label: s.crop?.label ?? null,
+        poor_brix: s.crop?.poorBrix ? Number(s.crop.poorBrix) : null,
+        excellent_brix: s.crop?.excellentBrix ? Number(s.crop.excellentBrix) : null,
+        brand_name: s.brand?.name ?? null,
+        brand_label: s.brand?.label ?? null,
+        place_label: s.place?.label ?? null,
+        place_city: s.place?.city ?? null,
+        place_state: s.place?.state ?? null,
+      })),
+    });
+  } catch (err) {
+    console.error('[admin/users/:id] Error:', err);
+    res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+// GET /api/admin/submissions?search=&limit=20&offset=0&verified=true|false
+router.get('/submissions', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const limit = Math.max(1, Math.min(Number(req.query.limit) || 20, 100));
+    const offset = Math.max(0, Number(req.query.offset) || 0);
+    const search = (req.query.search as string | undefined)?.trim() || undefined;
+    const verifiedParam = req.query.verified as string | undefined;
+    const verifiedFilter = verifiedParam === 'true' ? true : verifiedParam === 'false' ? false : undefined;
+
+    const where: any = {};
+    if (verifiedFilter !== undefined) where.verified = verifiedFilter;
+    if (search) {
+      where.OR = [
+        { crop: { name: { contains: search, mode: 'insensitive' } } },
+        { crop: { label: { contains: search, mode: 'insensitive' } } },
+        { place: { label: { contains: search, mode: 'insensitive' } } },
+        { brand: { name: { contains: search, mode: 'insensitive' } } },
+        { user: { displayName: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    const [submissions, total] = await Promise.all([
+      prisma.submission.findMany({
+        where,
+        include: {
+          crop: { select: { name: true, label: true } },
+          brand: { select: { name: true, label: true } },
+          place: { select: { label: true, city: true, state: true } },
+          user: { select: { id: true, displayName: true } },
+        },
+        orderBy: { assessmentDate: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.submission.count({ where }),
+    ]);
+
+    const data = submissions.map((s: any) => ({
+      id: s.id,
+      assessment_date: s.assessmentDate,
+      brix_value: Number(s.brixValue),
+      verified: s.verified,
+      crop_name: s.crop?.name ?? null,
+      crop_label: s.crop?.label ?? null,
+      brand_name: s.brand?.name ?? null,
+      brand_label: s.brand?.label ?? null,
+      place_label: s.place?.label ?? null,
+      place_city: s.place?.city ?? null,
+      place_state: s.place?.state ?? null,
+      user_display_name: s.user?.displayName ?? null,
+      user_id: s.user?.id ?? null,
+    }));
+
+    res.json({ data, total });
+  } catch (err) {
+    console.error('[admin/submissions] Error:', err);
+    res.status(500).json({ error: 'Failed to fetch submissions' });
   }
 });
 

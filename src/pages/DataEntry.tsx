@@ -72,7 +72,7 @@ const mkReading = (): CropReading => ({
   brixLevel: 12,
 });
 
-// ─── ReadingCard (accordion) ─────────────────────────────────────────────────
+// ReadingCard (accordion)
 
 const ReadingCard: React.FC<{
   reading: CropReading;
@@ -222,7 +222,7 @@ const ReadingCard: React.FC<{
   );
 };
 
-// ─── DataEntry ───────────────────────────────────────────────────────────────
+// DataEntry
 
 const DataEntry = () => {
   const { user } = useAuth();

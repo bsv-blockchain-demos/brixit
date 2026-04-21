@@ -20,6 +20,11 @@
     --text-muted: #7a9b82;
     --score-poor: #c0392b;
 
+    /* ── UI action tokens (separate from score palette) ─ */
+    --action-primary: var(--green-fresh);
+    --action-primary-hover: var(--green-mid);
+    --action-danger: var(--score-poor);
+
     /* ── Badge tiers ─────────────────────────────────── */
     --badge-gold-bg: #fef9ee;
     --badge-gold-text: #a07c1e;
@@ -94,6 +99,11 @@
     --text-mid: #a5c4ad;         /* lighter secondary text */
     --text-muted: #6b9b78;       /* labels/placeholders */
     --score-poor: #e74c3c;       /* brighter red */
+
+    /* ── UI action tokens ────────────────────────── */
+    --action-primary: var(--green-fresh);
+    --action-primary-hover: var(--green-mid);
+    --action-danger: var(--score-poor);
 
     /* ── Badge tiers (dark) ──────────────────────── */
     --badge-gold-bg: #332a0f;

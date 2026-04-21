@@ -10,10 +10,10 @@ import {
   fetchAllUsers,
   upgradeToContributor,
   upgradeToAdmin,
-  downgradeToContributor,
   downgradeToUser,
   type UserWithRoles,
 } from '@/lib/adminApi';
+import AdminUserDetail from './AdminUserDetail';
 
 const PAGE_SIZE = 20;
 const QUERY_KEY = 'admin-users';
@@ -26,6 +26,7 @@ export default function AdminUserManagement() {
   const [search, setSearch] = useState('');
   const [committedSearch, setCommittedSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: [QUERY_KEY, committedSearch, page],
@@ -75,6 +76,10 @@ export default function AdminUserManagement() {
     return 'user';
   };
 
+  if (selectedUserId) {
+    return <AdminUserDetail userId={selectedUserId} onBack={() => setSelectedUserId(null)} />;
+  }
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case 'admin': return 'default' as const;
@@ -123,12 +128,16 @@ export default function AdminUserManagement() {
             const isSelf = u.id === currentUser?.id;
 
             return (
-              <div key={u.id} className="border rounded p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div
+                key={u.id}
+                className="border rounded p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 cursor-pointer hover:bg-muted/40 transition-colors"
+                onClick={() => setSelectedUserId(u.id)}
+              >
                 <div className="text-sm flex-1">
                   <div className="font-medium text-base mb-1 flex items-center gap-2">
                     {u.display_name ?? u.id}
                     {isSelf && (
-                      <Badge className="bg-green-500 hover:bg-green-500 text-white text-xs px-1.5 py-0">
+                      <Badge className="bg-action-primary hover:bg-action-primary text-white text-xs px-1.5 py-0">
                         You
                       </Badge>
                     )}
@@ -136,11 +145,14 @@ export default function AdminUserManagement() {
                   <div className="text-muted-foreground flex items-center gap-2">
                     <span>Current role:</span>
                     <Badge variant={getRoleBadgeVariant(currentRole)}>{currentRole}</Badge>
+                    {u.submission_count != null && (
+                      <span className="text-xs">{u.submission_count} submissions</span>
+                    )}
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                   {currentRole === 'user' && (
-                    <Button size="sm" variant="outline"
+                    <Button size="sm"
                       onClick={() => handleRoleAction(() => upgradeToContributor(u.id), 'User upgraded to contributor')}
                     >
                       Make Contributor
@@ -148,24 +160,20 @@ export default function AdminUserManagement() {
                   )}
                   {currentRole === 'contributor' && (
                     <>
-                      <Button size="sm" variant="outline"
+                      <Button size="sm"
                         onClick={() => handleRoleAction(() => upgradeToAdmin(u.id), 'User upgraded to admin')}
                       >
                         Upgrade to Admin
                       </Button>
-                      <Button size="sm" variant="secondary"
+                      <Button size="sm" variant="outline"
                         onClick={() => handleRoleAction(() => downgradeToUser(u.id), 'User downgraded to user')}
                       >
                         Downgrade to User
                       </Button>
                     </>
                   )}
-                  {currentRole === 'admin' && (
-                    <Button size="sm" variant="secondary"
-                      onClick={() => handleRoleAction(() => downgradeToContributor(u.id), 'Admin downgraded to contributor')}
-                    >
-                      Downgrade to Contributor
-                    </Button>
+                  {currentRole === 'admin' && !isSelf && (
+                    <span className="text-xs text-muted-foreground italic">Admin — manage via DB</span>
                   )}
                 </div>
               </div>

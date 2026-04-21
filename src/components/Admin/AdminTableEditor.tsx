@@ -43,7 +43,7 @@ import { Search, Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-
 import { useToast } from '@/hooks/use-toast';
 import type { PaginatedResult } from '@/lib/adminApi';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// Types
 
 export interface FieldDef {
   key: string;
@@ -72,7 +72,7 @@ interface Props {
   deleteFn: (id: string) => Promise<any>;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// Component
 
 const PAGE_SIZE = 25;
 const emptyForm = (fields: FieldDef[]) => Object.fromEntries(fields.map(f => [f.key, '']));

@@ -33,7 +33,7 @@ const emptyLocation = {
 
 const PAGE_SIZE = 20;
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// Component
 
 const LeaderboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -79,7 +79,7 @@ const LeaderboardPage: React.FC = () => {
   const canRefresh = Date.now() - lastRefreshAt >= 15_000;
   const [refreshNonce, setRefreshNonce] = useState(0);
 
-  // ─── Init location codes from GeoNames ──────────────────────────────────────
+  // Init location codes from GeoNames
 
   useEffect(() => {
     if (!user?.country) {
@@ -134,7 +134,7 @@ const LeaderboardPage: React.FC = () => {
     return () => { mounted = false; };
   }, [user]);
 
-  // ─── Load crop types ─────────────────────────────────────────────────────────
+  // Load crop types
 
   useEffect(() => {
     fetchCropTypes()
@@ -142,7 +142,7 @@ const LeaderboardPage: React.FC = () => {
       .catch(() => {});
   }, []);
 
-  // ─── Fetch leaderboards ──────────────────────────────────────────────────────
+  // Fetch leaderboards
 
   useEffect(() => {
     if (isInitializing) return;
@@ -255,7 +255,7 @@ const LeaderboardPage: React.FC = () => {
     return () => { mounted = false; };
   }, [location, crop, isInitializing, refreshNonce]);
 
-  // ─── Handlers ────────────────────────────────────────────────────────────────
+  // Handlers
 
   const handleRefresh = () => {
     if (!canRefresh) return;
@@ -341,7 +341,7 @@ const LeaderboardPage: React.FC = () => {
     navigate(`/data?${params}`);
   };
 
-  // ─── Render card ─────────────────────────────────────────────────────────────
+  // Render card
 
   const renderLeaderboardCard = (
     title: string,
@@ -475,7 +475,7 @@ const LeaderboardPage: React.FC = () => {
     </Card>
   );
 
-  // ─── Render ──────────────────────────────────────────────────────────────────
+  // Render
 
   return (
     <div className="min-h-screen bg-cream flex flex-col">

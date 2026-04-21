@@ -99,9 +99,9 @@ export default function AdminOverview() {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Pending Review</CardTitle>
             {stats?.pendingVerifications ? (
-              <AlertCircle className="w-4 h-4 text-yellow-500" />
+              <AlertCircle className="w-4 h-4 text-gold" />
             ) : (
-              <CheckCircle className="w-4 h-4 text-green-500" />
+              <CheckCircle className="w-4 h-4 text-action-primary" />
             )}
           </CardHeader>
           <CardContent>

@@ -34,7 +34,12 @@ export default function AdminLocations() {
   ];
 
   return (
-    <AdminTableEditor
+    <>
+      <p className="text-sm text-score-poor mb-4">
+        Location chains are no longer assigned during submission — new submissions only record a geographic place.
+        Existing location records are kept for reference but will not appear on any new data.
+      </p>
+      <AdminTableEditor
       title="Locations"
       queryKey="admin-locations"
       columns={COLUMNS}
@@ -44,5 +49,6 @@ export default function AdminLocations() {
       updateFn={updateAdminLocation}
       deleteFn={deleteAdminLocation}
     />
+    </>
   );
 }

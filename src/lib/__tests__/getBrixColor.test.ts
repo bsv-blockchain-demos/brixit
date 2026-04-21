@@ -34,56 +34,56 @@ describe('getBrixColor', () => {
   });
 
   describe('ascending scale — bg mode (default)', () => {
-    it('returns green for value at the excellent threshold', () => {
-      expect(getBrixColor(16, asc)).toBe('bg-green-500');
+    it('returns excellent color for value at the excellent threshold', () => {
+      expect(getBrixColor(16, asc)).toBe('bg-green-mid');
     });
-    it('returns green for value above excellent', () => {
-      expect(getBrixColor(20, asc)).toBe('bg-green-500');
+    it('returns excellent color for value above excellent', () => {
+      expect(getBrixColor(20, asc)).toBe('bg-green-mid');
     });
-    it('returns yellow for value at the good threshold', () => {
-      expect(getBrixColor(12, asc)).toBe('bg-yellow-500');
+    it('returns good color for value at the good threshold', () => {
+      expect(getBrixColor(12, asc)).toBe('bg-green-fresh');
     });
-    it('returns yellow for value between good and excellent', () => {
-      expect(getBrixColor(14, asc)).toBe('bg-yellow-500');
+    it('returns good color for value between good and excellent', () => {
+      expect(getBrixColor(14, asc)).toBe('bg-green-fresh');
     });
-    it('returns orange for value at the average threshold', () => {
-      expect(getBrixColor(8, asc)).toBe('bg-orange-500');
+    it('returns average color for value at the average threshold', () => {
+      expect(getBrixColor(8, asc)).toBe('bg-gold');
     });
-    it('returns orange for value between average and good', () => {
-      expect(getBrixColor(10, asc)).toBe('bg-orange-500');
+    it('returns average color for value between average and good', () => {
+      expect(getBrixColor(10, asc)).toBe('bg-gold');
     });
-    it('returns red for value below average', () => {
-      expect(getBrixColor(5, asc)).toBe('bg-red-500');
+    it('returns poor color for value below average', () => {
+      expect(getBrixColor(5, asc)).toBe('bg-score-poor');
     });
   });
 
   describe('ascending scale — hex mode', () => {
-    it('returns green hex for excellent', () => {
-      expect(getBrixColor(20, asc, 'hex')).toBe('#22c55e');
+    it('returns excellent hex for excellent', () => {
+      expect(getBrixColor(20, asc, 'hex')).toBe('#2d6a4f');
     });
-    it('returns yellow hex for good', () => {
-      expect(getBrixColor(14, asc, 'hex')).toBe('#eab308');
+    it('returns good hex for good', () => {
+      expect(getBrixColor(14, asc, 'hex')).toBe('#40916c');
     });
-    it('returns orange hex for average', () => {
-      expect(getBrixColor(10, asc, 'hex')).toBe('#f97316');
+    it('returns average hex for average', () => {
+      expect(getBrixColor(10, asc, 'hex')).toBe('#c9a84c');
     });
-    it('returns red hex for poor', () => {
-      expect(getBrixColor(1, asc, 'hex')).toBe('#ef4444');
+    it('returns poor hex for poor', () => {
+      expect(getBrixColor(1, asc, 'hex')).toBe('#c0392b');
     });
   });
 
   describe('descending scale — bg mode', () => {
-    it('returns green for value at or below excellent threshold', () => {
-      expect(getBrixColor(8, desc)).toBe('bg-green-500');
+    it('returns excellent color for value at or below excellent threshold', () => {
+      expect(getBrixColor(8, desc)).toBe('bg-green-mid');
     });
-    it('returns yellow for value at the good threshold', () => {
-      expect(getBrixColor(12, desc)).toBe('bg-yellow-500');
+    it('returns good color for value at the good threshold', () => {
+      expect(getBrixColor(12, desc)).toBe('bg-green-fresh');
     });
-    it('returns orange for value at the average threshold', () => {
-      expect(getBrixColor(16, desc)).toBe('bg-orange-500');
+    it('returns average color for value at the average threshold', () => {
+      expect(getBrixColor(16, desc)).toBe('bg-gold');
     });
-    it('returns red for value above average threshold', () => {
-      expect(getBrixColor(22, desc)).toBe('bg-red-500');
+    it('returns poor color for value above average threshold', () => {
+      expect(getBrixColor(22, desc)).toBe('bg-score-poor');
     });
   });
 });
@@ -138,41 +138,41 @@ describe('computeNormalizedScore', () => {
 describe('rankColorFromNormalized', () => {
   it('returns excellent colors for value >= 1.75', () => {
     const { bgClass, hex } = rankColorFromNormalized(1.75);
-    expect(bgClass).toBe('bg-green-500');
-    expect(hex).toBe('#22c55e');
+    expect(bgClass).toBe('bg-green-mid');
+    expect(hex).toBe('#2d6a4f');
   });
 
   it('returns excellent colors for value above 1.75', () => {
-    expect(rankColorFromNormalized(2.0).bgClass).toBe('bg-green-500');
+    expect(rankColorFromNormalized(2.0).bgClass).toBe('bg-green-mid');
   });
 
   it('returns good colors for 1.5 <= value < 1.75', () => {
     const { bgClass, hex } = rankColorFromNormalized(1.5);
-    expect(bgClass).toBe('bg-yellow-500');
-    expect(hex).toBe('#eab308');
+    expect(bgClass).toBe('bg-green-fresh');
+    expect(hex).toBe('#40916c');
   });
 
   it('returns good colors mid-range', () => {
-    expect(rankColorFromNormalized(1.6).bgClass).toBe('bg-yellow-500');
+    expect(rankColorFromNormalized(1.6).bgClass).toBe('bg-green-fresh');
   });
 
   it('returns average colors for 1.25 <= value < 1.5', () => {
     const { bgClass, hex } = rankColorFromNormalized(1.25);
-    expect(bgClass).toBe('bg-orange-500');
-    expect(hex).toBe('#f97316');
+    expect(bgClass).toBe('bg-gold');
+    expect(hex).toBe('#c9a84c');
   });
 
   it('returns average colors mid-range', () => {
-    expect(rankColorFromNormalized(1.4).bgClass).toBe('bg-orange-500');
+    expect(rankColorFromNormalized(1.4).bgClass).toBe('bg-gold');
   });
 
   it('returns poor colors for value < 1.25', () => {
     const { bgClass, hex } = rankColorFromNormalized(1.0);
-    expect(bgClass).toBe('bg-red-500');
-    expect(hex).toBe('#ef4444');
+    expect(bgClass).toBe('bg-score-poor');
+    expect(hex).toBe('#c0392b');
   });
 
   it('returns poor colors just below 1.25', () => {
-    expect(rankColorFromNormalized(1.24).bgClass).toBe('bg-red-500');
+    expect(rankColorFromNormalized(1.24).bgClass).toBe('bg-score-poor');
   });
 });

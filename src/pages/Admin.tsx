@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 export default function Admin() {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -41,7 +43,7 @@ export default function Admin() {
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         </div>
 
-        <Tabs defaultValue="overview" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="flex flex-wrap gap-1 h-auto mb-2">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="submissions">Submissions</TabsTrigger>
