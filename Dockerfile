@@ -1,4 +1,4 @@
-FROM node:22-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -15,9 +15,9 @@ ENV VITE_SERVER_PUBLIC_KEY=$VITE_SERVER_PUBLIC_KEY
 ENV VITE_CERT_TYPE=$VITE_CERT_TYPE
 RUN npm run build
 
-FROM node:22-alpine
+FROM node:24-alpine
 RUN npm install -g serve@latest
 WORKDIR /app
 COPY --from=build /app/dist .
 EXPOSE 3000
-CMD ["serve", "-s", "--no-clean-urls", ".", "-l", "3000"]
+CMD ["serve", "-s", ".", "-l", "3000"]
