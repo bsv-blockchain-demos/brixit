@@ -35,7 +35,6 @@ function makePoint(overrides: Partial<BrixDataPoint> = {}): BrixDataPoint {
     goodBrix: 12,
     excellentBrix: 16,
     purchaseDate: null,
-    locationId: 'loc-1',
     cropId: 'crop-1',
     placeId: 'place-1',
     brandId: 'brand-1',

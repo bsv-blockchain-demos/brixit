@@ -136,11 +136,37 @@ export function toDisplayScore(normalizedScore: number): string {
   return pct > 100 ? '100%+' : `${pct}%`;
 }
 
+export type BrixScore = {
+  normalized: number;
+  display: string;
+  bgClass: string;
+  hex: string;
+  quality: 'Excellent' | 'Good' | 'Average' | 'Poor';
+};
+
 /**
- * Compute normalized score for a reading given thresholds
- * This is exactly the same math you used on the map:
- *  score = (brix - poor) / (excellent - poor) + 1
- * If thresholds invalid, returns fallbackNormalized (e.g. using global min/max)
+ * Default entry point for scoring a BRIX reading.
+ * Returns everything needed for display — destructure only what you need.
+ */
+export function scoreBrix(
+  brix: number,
+  thresholds?: BrixThresholds | null,
+  fallbackMin?: number,
+  fallbackMax?: number
+): BrixScore {
+  const normalized = computeNormalizedScore(brix, thresholds, fallbackMin, fallbackMax);
+  const { bgClass, hex } = rankColorFromNormalized(normalized);
+  const display = toDisplayScore(normalized);
+  const quality: BrixScore['quality'] =
+    normalized >= 1.75 ? 'Excellent' :
+    normalized >= 1.5  ? 'Good' :
+    normalized >= 1.25 ? 'Average' : 'Poor';
+  return { normalized, display, bgClass, hex, quality };
+}
+
+/**
+ * Escape hatch for when you only need the raw 1–2 normalized number (e.g. computing averages).
+ * Use scoreBrix() for anything display-related.
  */
 export function computeNormalizedScore(
   brix: number,

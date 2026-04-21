@@ -33,7 +33,7 @@ import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import { apiPut, API_BASE } from '../../lib/api';
 import { formatUsername } from '../../lib/formatUsername';
-import { computeNormalizedScore } from '../../lib/getBrixColor';
+import { scoreBrix } from '../../lib/getBrixColor';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
 import Combobox from '../ui/combo-box';
 import LocationSearch from './LocationSearch';
@@ -416,11 +416,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
     excellent: initialDataPoint.excellentBrix,
   }) : undefined;
 
-  const normalizedScore = computeNormalizedScore(initialDataPoint.brixLevel, cropThresholds);
-  const qualityText = normalizedScore >= 1.75 ? 'Excellent'
-    : normalizedScore >= 1.5  ? 'Good'
-    : normalizedScore >= 1.25 ? 'Average'
-    : 'Poor';
+  const { quality: qualityText } = scoreBrix(initialDataPoint.brixLevel, cropThresholds);
 
   const scoreStyle = (() => {
     switch (qualityText) {

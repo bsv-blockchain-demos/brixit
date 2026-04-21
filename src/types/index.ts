@@ -29,7 +29,6 @@ export interface BrixDataPoint {
   name_normalized?: string;
   purchaseDate: string | null;
 
-  locationId: string;
   cropId: string;
   placeId: string;
   brandId: string;

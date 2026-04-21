@@ -26,7 +26,6 @@ const router = Router();
 const FULL_SUBMISSION_INCLUDE = {
   crop: { select: { id: true, name: true, label: true, poorBrix: true, averageBrix: true, goodBrix: true, excellentBrix: true, category: true } },
   brand: { select: { id: true, name: true, label: true } },
-  location: { select: { id: true, name: true, label: true } },
   place: { select: { id: true, label: true, latitude: true, longitude: true, streetAddress: true, city: true, state: true, country: true } },
   user: { select: { id: true, displayName: true } },
   verifier: { select: { id: true, displayName: true } },
@@ -54,9 +53,6 @@ function formatFullSubmission(s: any) {
     brand_id: s.brand?.id ?? null,
     brand_name: s.brand?.name ?? null,
     brand_label: s.brand?.label ?? null,
-    location_id: s.location?.id ?? null,
-    location_name: s.location?.name ?? null,
-    location_label: s.location?.label ?? null,
     place_id: s.place?.id ?? null,
     place_label: s.place?.label ?? null,
     latitude: s.place?.latitude ?? null,
@@ -119,8 +115,6 @@ router.get('/', async (req: Request, res: Response) => {
         { brand: { name: { contains: s, mode: 'insensitive' } } },
         { brand: { label: { contains: s, mode: 'insensitive' } } },
         { place: { label: { contains: s, mode: 'insensitive' } } },
-        { location: { name: { contains: s, mode: 'insensitive' } } },
-        { location: { label: { contains: s, mode: 'insensitive' } } },
         { outlierNotes: { contains: s, mode: 'insensitive' } },
       ];
     }
@@ -138,7 +132,6 @@ router.get('/', async (req: Request, res: Response) => {
       include: {
         crop: { select: { id: true, name: true, label: true, poorBrix: true, averageBrix: true, goodBrix: true, excellentBrix: true, category: true } },
         brand: { select: { id: true, name: true, label: true } },
-        location: { select: { id: true, name: true, label: true } },
         place: { select: { id: true, label: true, latitude: true, longitude: true, streetAddress: true, city: true, state: true, country: true } },
       },
       orderBy: orderByMap[sortBy] || { assessmentDate: 'desc' },
@@ -167,9 +160,6 @@ router.get('/', async (req: Request, res: Response) => {
       brand_id: s.brand?.id ?? null,
       brand_name: s.brand?.name ?? null,
       brand_label: s.brand?.label ?? null,
-      location_id: s.location?.id ?? null,
-      location_name: s.location?.name ?? null,
-      location_label: s.location?.label ?? null,
       place_id: s.place?.id ?? null,
       place_label: s.place?.label ?? null,
       latitude: s.place?.latitude ?? null,
@@ -248,7 +238,6 @@ router.get('/bounds', async (req: Request, res: Response) => {
       include: {
         crop: { select: { id: true, name: true, label: true, poorBrix: true, averageBrix: true, goodBrix: true, excellentBrix: true, category: true } },
         brand: { select: { id: true, name: true, label: true } },
-        location: { select: { id: true, name: true, label: true } },
         place: { select: { id: true, label: true, latitude: true, longitude: true, streetAddress: true, city: true, state: true, country: true } },
       },
       orderBy: { assessmentDate: sortOrder },
@@ -272,9 +261,6 @@ router.get('/bounds', async (req: Request, res: Response) => {
       brand_id: s.brand?.id ?? null,
       brand_name: s.brand?.name ?? null,
       brand_label: s.brand?.label ?? null,
-      location_id: s.location?.id ?? null,
-      location_name: s.location?.name ?? null,
-      location_label: s.location?.label ?? null,
       place_id: s.place?.id ?? null,
       place_label: s.place?.label ?? null,
       latitude: s.place?.latitude ?? null,

@@ -13,7 +13,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getMapboxToken } from '@/lib/getMapboxToken';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
-import { getBrixColor, computeNormalizedScore, rankColorFromNormalized, toDisplayScore } from '../../lib/getBrixColor';
+import { getBrixColor, computeNormalizedScore, rankColorFromNormalized, toDisplayScore, scoreBrix } from '../../lib/getBrixColor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import LocationSearch from '../common/LocationSearch';
@@ -397,7 +397,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     for (const point of filteredData) {
       const lat = point.latitude ?? (point as any).lat;
       const lon = point.longitude ?? (point as any).lng;
-      const locName = point.locationName ?? (point as any).location_name ?? (point as any).place_label ?? null;
+      const locName = point.locationName || point.placeName || null;
       if (!lat || !lon || !locName) continue;
       if (!storeGroups[locName]) storeGroups[locName] = [];
       storeGroups[locName].push(point);
@@ -554,10 +554,9 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     const cropKey = (sub.cropType ?? sub.cropLabel ?? (sub as any).crop_name ?? 'unknown').toString();
     const thresholds = cache?.[cropKey];
     const brixVal = sub.brixLevel ?? (sub as any).brix_value;
-    const normalized = typeof brixVal === 'number'
-      ? computeNormalizedScore(brixVal, thresholds ?? null, minBrix, maxBrix)
-      : 1.5;
-    const rankColor = rankColorFromNormalized(normalized);
+    const score = typeof brixVal === 'number'
+      ? scoreBrix(brixVal, thresholds ?? null, minBrix, maxBrix)
+      : null;
     const canNavigate = navigable && !!user && !!sub.id;
 
     return (
@@ -574,9 +573,9 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           </span>
         </div>
         <div
-          className={`flex-shrink-0 min-w-[52px] px-3 py-1 text-center font-bold text-sm text-white rounded-full ${rankColor.bgClass}`}
+          className={`flex-shrink-0 min-w-[52px] px-3 py-1 text-center font-bold text-sm text-white rounded-full ${score?.bgClass ?? 'bg-gray-300'}`}
         >
-          {typeof brixVal === 'number' ? toDisplayScore(normalized) : '—'}
+          {score ? score.display : '—'}
         </div>
       </div>
     );
@@ -661,8 +660,8 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                     <div className="text-sm text-text-muted-green p-3 text-center">No crop data.</div>
                   ) : (
                     placeCropRankings.map((c) => {
-                      const normalized = Number(c.average_normalized_score ?? 1.5);
-                      const rankColor = rankColorFromNormalized(normalized);
+                      const n = Number(c.average_normalized_score ?? 1.5);
+                      const { bgClass } = rankColorFromNormalized(n);
                       const label = c.label ?? 'Unknown';
                       return (
                         <div
@@ -681,9 +680,9 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                             <div className="text-xs text-text-muted-green">Submissions: {c.submission_count ?? '-'}</div>
                           </div>
                           <div
-                            className={`w-14 h-7 rounded-full text-white flex items-center justify-center text-sm font-semibold ${rankColor.bgClass}`}
+                            className={`w-14 h-7 rounded-full text-white flex items-center justify-center text-sm font-semibold ${bgClass}`}
                           >
-                            {toDisplayScore(normalized)}
+                            {toDisplayScore(n)}
                           </div>
                         </div>
                       );
@@ -701,8 +700,8 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                     <div className="text-sm text-text-muted-green p-3 text-center">No brand data.</div>
                   ) : (
                     placeBrandRankings.map((b) => {
-                      const normalized = Number(b.average_normalized_score ?? 1.5);
-                      const rankColor = rankColorFromNormalized(normalized);
+                      const n = Number(b.average_normalized_score ?? 1.5);
+                      const { bgClass } = rankColorFromNormalized(n);
                       const label = b.label ?? 'Unknown';
                       return (
                         <div
@@ -721,9 +720,9 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                             <div className="text-xs text-text-muted-green">Submissions: {b.submission_count ?? '-'}</div>
                           </div>
                           <div
-                            className={`w-14 h-7 rounded-full text-white flex items-center justify-center text-sm font-semibold ${rankColor.bgClass}`}
+                            className={`w-14 h-7 rounded-full text-white flex items-center justify-center text-sm font-semibold ${bgClass}`}
                           >
-                            {toDisplayScore(normalized)}
+                            {toDisplayScore(n)}
                           </div>
                         </div>
                       );

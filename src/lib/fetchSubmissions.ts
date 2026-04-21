@@ -23,9 +23,6 @@ interface ApiSubmissionRow {
   brand_id: string | null;
   brand_name: string | null;
   brand_label: string | null;
-  location_id: string | null;
-  location_name: string | null;
-  location_label: string | null;
   place_id: string | null;
   place_label: string | null;
   latitude: number | null;
@@ -52,7 +49,7 @@ function formatApiRow(r: ApiSubmissionRow): BrixDataPoint {
     latitude: r.latitude ?? null,
     longitude: r.longitude ?? null,
     placeName: r.place_label ?? '',
-    locationName: r.location_label ?? r.location_name ?? '',
+    locationName: r.place_label ?? '',
     streetAddress: r.street_address ?? '',
     city: r.city ?? '',
     state: r.state ?? '',
@@ -70,7 +67,6 @@ function formatApiRow(r: ApiSubmissionRow): BrixDataPoint {
     goodBrix: r.good_brix ?? null,
     excellentBrix: r.excellent_brix ?? null,
     name_normalized: r.crop_label ?? r.crop_name ?? 'Unknown',
-    locationId: r.location_id ?? '',
     cropId: r.crop_id ?? '',
     placeId: r.place_id ?? '',
     brandId: r.brand_id ?? '',
