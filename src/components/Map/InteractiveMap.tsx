@@ -9,7 +9,8 @@ import { applyFilters } from '../../lib/filterUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { MapPin, X, ArrowLeft } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import DataPointDetailModal from '../common/DataPointDetailModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { getMapboxToken } from '@/lib/getMapboxToken';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
@@ -51,7 +52,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   onNearMeHandled,
 }) => {
   const location = useLocation();
-  const navigate = useNavigate();
+  const [modalSubmission, setModalSubmission] = useState<BrixDataPoint | null>(null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { highlightedPoint } = (location.state || {}) as any;
@@ -563,7 +564,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       <div
         key={key}
         className={`flex justify-between items-start py-3 border-b border-green-pale last:border-b-0 ${canNavigate ? 'cursor-pointer hover:bg-green-mist rounded-lg px-2 -mx-2 transition-colors' : ''}`}
-        onClick={canNavigate ? () => navigate('/data', { state: { highlightedSubmissionId: sub.id } }) : undefined}
+        onClick={canNavigate ? () => setModalSubmission(sub) : undefined}
       >
         <div className="flex flex-col min-w-0 flex-1">
           <span className="font-semibold text-sm truncate">{safeStr(sub.cropLabel ?? sub.cropType ?? 'Unknown Crop')}</span>
@@ -829,6 +830,12 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
             )}
           </>
         )}
+
+      <DataPointDetailModal
+        dataPoint={modalSubmission}
+        isOpen={!!modalSubmission}
+        onClose={() => setModalSubmission(null)}
+      />
     </div>
   );
 };

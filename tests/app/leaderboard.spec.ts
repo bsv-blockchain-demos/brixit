@@ -36,7 +36,7 @@ test.describe('Leaderboard', () => {
     await expect(authedPage.getByText('Loading leaderboards...')).not.toBeVisible({ timeout: 5000 });
     // Mock user has submission_count: 5
     await expect(authedPage.getByText('Test Contributor')).toBeVisible();
-    await expect(authedPage.getByText('5')).toBeVisible();
+    await expect(authedPage.getByText('5 submissions', { exact: true })).toBeVisible();
   });
 
   test('unauthenticated user is redirected to login', async ({ page }) => {

@@ -15,8 +15,8 @@ test.describe('Data entry form', () => {
   });
 
   test('renders required section labels', async ({ authedPage }) => {
-    await expect(authedPage.locator('label').filter({ hasText: /farm \/ brand name/i })).toBeVisible();
     await expect(authedPage.locator('label').filter({ hasText: /location/i })).toBeVisible();
+    await expect(authedPage.locator('label').filter({ hasText: /farm \/ brand name/i })).toBeVisible();
     await expect(authedPage.getByText('Purchase Type')).toBeVisible();
   });
 
@@ -25,7 +25,7 @@ test.describe('Data entry form', () => {
     await expect(authedPage.getByRole('button', { name: 'Farmers Market' })).toBeVisible();
     await expect(authedPage.getByRole('button', { name: 'Farm Direct' })).toBeVisible();
     await expect(authedPage.getByRole('button', { name: 'Online' })).toBeVisible();
-    await expect(authedPage.getByRole('button', { name: 'Other' })).toBeVisible();
+    await expect(authedPage.getByRole('button', { name: 'Other', exact: true })).toBeVisible();
   });
 
   test('selecting a POS pill clears its validation error', async ({ authedPage }) => {
@@ -53,10 +53,10 @@ test.describe('Data entry form', () => {
 
   test('Add another crop button adds a second reading', async ({ authedPage }) => {
     // Remove buttons are hidden when only one reading exists
-    await expect(authedPage.getByRole('button', { name: /remove reading/i })).not.toBeVisible();
+    await expect(authedPage.getByRole('button', { name: 'Remove reading', exact: true })).not.toBeVisible();
     await authedPage.getByRole('button', { name: /add another crop/i }).click();
     // Both readings now show a remove button
-    await expect(authedPage.getByRole('button', { name: /remove reading/i })).toHaveCount(2);
+    await expect(authedPage.getByRole('button', { name: 'Remove reading', exact: true })).toHaveCount(2);
   });
 
   test('submit button shows plural count with multiple readings', async ({ authedPage }) => {

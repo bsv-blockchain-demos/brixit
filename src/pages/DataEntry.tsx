@@ -32,6 +32,8 @@ import Combobox from '../components/ui/combo-box';
 import LocationSearch from '../components/common/LocationSearch';
 import { useStaticData } from '../hooks/useStaticData';
 import { Slider } from '../components/ui/slider';
+import { useCropThresholds } from '../contexts/CropThresholdContext';
+import { scoreBrix } from '../lib/getBrixColor';
 
 interface DetailedLocationInfo {
   name: string;
@@ -60,10 +62,11 @@ const POS_OPTIONS = [
   { value: 'Other', label: 'Other' },
 ];
 
-const getBrixTierStyle = (value: number): { color: string; label: string } => {
-  if (value >= 16) return { color: 'var(--green-mid)', label: 'Excellent' };
-  if (value >= 8) return { color: 'var(--gold)', label: 'Good' };
-  return { color: 'var(--score-poor)', label: 'Poor' };
+const QUALITY_COLOR: Record<string, string> = {
+  Excellent: 'var(--green-mid)',
+  Good: 'var(--green-fresh)',
+  Average: 'var(--gold)',
+  Poor: 'var(--score-poor)',
 };
 
 const mkReading = (): CropReading => ({
@@ -86,7 +89,11 @@ const ReadingCard: React.FC<{
   onToggle: (id: string) => void;
 }> = ({ reading, index, crops, errors, showRemove, isOpen, onChange, onRemove, onToggle }) => {
   const prefersReducedMotion = useReducedMotion();
-  const tier = getBrixTierStyle(reading.brixLevel);
+  const { cache } = useCropThresholds();
+  const thresholds = reading.cropType ? (cache[reading.cropType] ?? null) : null;
+  const score = scoreBrix(reading.brixLevel, thresholds);
+  const tierColor = QUALITY_COLOR[score.quality] ?? 'var(--score-poor)';
+  const tierLabel = score.quality;
   const cropLabel = crops.find(c => c.name === reading.cropType)?.label || reading.cropType;
   const hasError = !!(errors[`reading_${reading.id}_cropType`] || errors[`reading_${reading.id}_brixLevel`]);
 
@@ -114,8 +121,8 @@ const ReadingCard: React.FC<{
             {cropLabel || 'New reading'}
           </span>
           {!isOpen && reading.cropType && (
-            <span className="hidden sm:flex items-center gap-1.5 ml-1 text-xs" style={{ color: tier.color }}>
-              · {reading.brixLevel} BRIX · {tier.label}
+            <span className="hidden sm:flex items-center gap-1.5 ml-1 text-xs" style={{ color: tierColor }}>
+              · {reading.brixLevel} BRIX · {tierLabel}
             </span>
           )}
           {!isOpen && hasError && (
@@ -179,7 +186,7 @@ const ReadingCard: React.FC<{
                   className="flex items-center gap-1 mb-2 text-xs font-semibold"
                   style={{ color: 'var(--text-mid)' }}
                 >
-                  <Droplets className="w-3.5 h-3.5" style={{ color: tier.color }} />
+                  <Droplets className="w-3.5 h-3.5" style={{ color: tierColor }} />
                   BRIX Reading <span className="text-destructive ml-0.5">*</span>
                 </Label>
                 <div className="flex items-center gap-4">
@@ -196,9 +203,9 @@ const ReadingCard: React.FC<{
                         onChange(reading.id, 'brixLevel', isNaN(parsed) ? 0 : Math.min(Math.max(parsed, 0), 100));
                       }}
                       className="w-20 text-center border-2 rounded-xl px-2 py-2 font-display font-bold text-lg transition-all border-input focus:border-green-fresh bg-card focus:outline-none"
-                      style={{ color: tier.color }}
+                      style={{ color: tierColor }}
                     />
-                    <span className="text-xs font-medium mt-1" style={{ color: tier.color }}>{tier.label}</span>
+                    <span className="text-xs font-medium mt-1" style={{ color: tierColor }}>{tierLabel}</span>
                   </div>
                   <Slider
                     value={[reading.brixLevel]}
@@ -539,6 +546,27 @@ const DataEntry = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      {/* Location */}
+                      <div>
+                        <Label
+                          className="flex items-center gap-2 mb-2 text-sm font-semibold"
+                          style={{ color: 'var(--text-mid)' }}
+                        >
+                          <MapPin className="w-4 h-4" />
+                          Location <span className="text-destructive">*</span>
+                        </Label>
+                        <LocationSearch
+                          value={session.location}
+                          onChange={e => setSessionField('location', e.target.value)}
+                          onLocationSelect={handleLocationSelect}
+                        />
+                        {errors.location && (
+                          <p className="text-destructive text-sm mt-2 flex items-center gap-1">
+                            <X className="w-4 h-4" />{errors.location}
+                          </p>
+                        )}
+                      </div>
+
                       {/* Brand / Farm */}
                       <div>
                         <Label
@@ -558,27 +586,6 @@ const DataEntry = () => {
                         {errors.brand && (
                           <p className="text-destructive text-sm mt-2 flex items-center gap-1">
                             <X className="w-4 h-4" />{errors.brand}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Location */}
-                      <div>
-                        <Label
-                          className="flex items-center gap-2 mb-2 text-sm font-semibold"
-                          style={{ color: 'var(--text-mid)' }}
-                        >
-                          <MapPin className="w-4 h-4" />
-                          Location <span className="text-destructive">*</span>
-                        </Label>
-                        <LocationSearch
-                          value={session.location}
-                          onChange={e => setSessionField('location', e.target.value)}
-                          onLocationSelect={handleLocationSelect}
-                        />
-                        {errors.location && (
-                          <p className="text-destructive text-sm mt-2 flex items-center gap-1">
-                            <X className="w-4 h-4" />{errors.location}
                           </p>
                         )}
                       </div>

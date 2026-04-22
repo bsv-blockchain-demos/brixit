@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Header from '../components/Layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Plus, Beaker, CheckCircle, MapPin, AlertCircle, Lock, Loader2 } from 'lucide-react';
+import { Plus, Beaker, CheckCircle, MapPin, AlertCircle, Lock, Loader2, RefreshCw } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { deleteSubmission } from '../lib/fetchSubmissions';
@@ -130,6 +130,26 @@ const YourData: React.FC = () => {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [openInEditMode, setOpenInEditMode] = useState(false);
 
+  const REFRESH_COOLDOWN_S = 15;
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const handleRefresh = useCallback(() => {
+    if (cooldownSeconds > 0) return;
+    queryClient.invalidateQueries({ queryKey: ['submissions', 'mine'] });
+    setCooldownSeconds(REFRESH_COOLDOWN_S);
+    cooldownRef.current = setInterval(() => {
+      setCooldownSeconds((s) => {
+        if (s <= 1) {
+          clearInterval(cooldownRef.current!);
+          cooldownRef.current = null;
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  }, [cooldownSeconds, queryClient]);
+
   const isLoading =
     submissionsPageQuery.isLoading ||
     submissionsCountQuery.isLoading ||
@@ -242,23 +262,35 @@ const YourData: React.FC = () => {
             </p>
           </div>
 
-          {canSubmit ? (
-            <Link to="/data-entry">
-              <Button className="flex items-center space-x-2 bg-green-fresh hover:bg-green-mid">
-                <Plus className="w-4 h-4" />
-                <span>Add New Measurement</span>
-              </Button>
-            </Link>
-          ) : (
+          <div className="flex items-center gap-2">
             <Button
-              variant="outline"
-              className="flex items-center space-x-2"
-              onClick={handleAttemptSubmit}
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={cooldownSeconds > 0 || submissionsPageQuery.isFetching}
+              className="flex items-center gap-2 text-sm"
             >
-              <Lock className="w-4 h-4" />
-              <span>Submissions Disabled</span>
+              <RefreshCw className={`w-4 h-4 ${submissionsPageQuery.isFetching ? 'animate-spin' : ''}`} />
+              {cooldownSeconds > 0 ? `Refresh (${cooldownSeconds}s)` : 'Refresh'}
             </Button>
-          )}
+            {canSubmit ? (
+              <Link to="/data-entry">
+                <Button className="flex items-center space-x-2 bg-green-fresh hover:bg-green-mid">
+                  <Plus className="w-4 h-4" />
+                  <span>Add New Measurement</span>
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                variant="outline"
+                className="flex items-center space-x-2"
+                onClick={handleAttemptSubmit}
+              >
+                <Lock className="w-4 h-4" />
+                <span>Submissions Disabled</span>
+              </Button>
+            )}
+          </div>
         </div>
 
         <Tabs defaultValue="submissions" className="space-y-6">
