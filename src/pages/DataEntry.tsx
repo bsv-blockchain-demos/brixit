@@ -89,8 +89,8 @@ const ReadingCard: React.FC<{
   onToggle: (id: string) => void;
 }> = ({ reading, index, crops, errors, showRemove, isOpen, onChange, onRemove, onToggle }) => {
   const prefersReducedMotion = useReducedMotion();
-  const { cache } = useCropThresholds();
-  const thresholds = reading.cropType ? (cache[reading.cropType] ?? null) : null;
+  const { getThresholds } = useCropThresholds();
+  const thresholds = reading.cropType ? getThresholds(reading.cropType) : null;
   const score = scoreBrix(reading.brixLevel, thresholds);
   const tierColor = QUALITY_COLOR[score.quality] ?? 'var(--score-poor)';
   const tierLabel = score.quality;

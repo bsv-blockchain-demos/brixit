@@ -98,16 +98,13 @@ export function useBrixColorFromContext(
   brixLevel: number,
   mode: 'bg' | 'hex' = 'bg'
 ): string {
-  const { cache, loading } = useCropThresholds();
-  
+  const { getThresholds, loading } = useCropThresholds();
+
   if (loading) {
     return mode === 'bg' ? 'bg-gray-300' : '#d1d5db';
   }
 
-  const normalizedCropName = cropName.toLowerCase().trim();
-  const thresholds = cache?.[normalizedCropName];
-
-  return getBrixColor(brixLevel, thresholds, mode);
+  return getBrixColor(brixLevel, getThresholds(cropName), mode);
 }
 
 // Map normalized score (1..2 scale) to hex color and tailwind background class

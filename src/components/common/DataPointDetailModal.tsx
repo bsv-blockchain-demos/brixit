@@ -58,7 +58,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
 }) => {
   const { isAdmin, user } = useAuth();
   const { toast } = useToast();
-  const { cache: thresholdsCache } = useCropThresholds();
+  const { getThresholds } = useCropThresholds();
 
   // Use the shared static data hook and destructure the new 'locations' property
   const { crops, brands, locations, isLoading: staticDataLoading, error: staticDataError } = useStaticData();
@@ -409,12 +409,14 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   const canEdit = isAdmin || (isOwner && !initialDataPoint.verified);
   const canDelete = isAdmin || (isOwner && !initialDataPoint.verified);
 
-  const cropThresholds = initialDataPoint.cropType ? (thresholdsCache[initialDataPoint.cropType] || {
-    poor: initialDataPoint.poorBrix,
-    average: initialDataPoint.averageBrix,
-    good: initialDataPoint.goodBrix,
-    excellent: initialDataPoint.excellentBrix,
-  }) : undefined;
+  const cropThresholds = initialDataPoint.cropType
+    ? (getThresholds(initialDataPoint.cropType) ?? {
+        poor: initialDataPoint.poorBrix ?? 0,
+        average: initialDataPoint.averageBrix ?? 0,
+        good: initialDataPoint.goodBrix ?? 0,
+        excellent: initialDataPoint.excellentBrix ?? 0,
+      })
+    : undefined;
 
   const { quality: qualityText } = scoreBrix(initialDataPoint.brixLevel, cropThresholds);
 

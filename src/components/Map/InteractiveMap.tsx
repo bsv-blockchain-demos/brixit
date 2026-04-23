@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { BrixDataPoint } from '../../types';
+import { BrixDataPoint, BrixThresholds } from '../../types';
 import { useFormattedSubmissionByIdQuery, useFormattedSubmissionsBoundsQuery } from '../../hooks/useSubmissions';
 import { useFilters } from '../../contexts/FilterContext';
 import { applyFilters } from '../../lib/filterUtils';
@@ -55,7 +55,7 @@ const tierColorExpr = (scoreExpr: any): any => [
 
 function buildSubmissionsGeoJSON(
   data: BrixDataPoint[],
-  cache: Record<string, any>,
+  getThresholds: (name: string) => BrixThresholds | null,
   minBrix: number,
   maxBrix: number,
 ): any {
@@ -64,11 +64,11 @@ function buildSubmissionsGeoJSON(
     const lat = point.latitude ?? (point as any).lat;
     const lng = point.longitude ?? (point as any).lng;
     if (lat == null || lng == null) continue;
-    const cropKey = (point.cropType ?? point.cropLabel ?? (point as any).crop_name ?? 'unknown').toString().toLowerCase().trim();
+    const cropKey = (point.cropType ?? point.cropLabel ?? (point as any).crop_name ?? 'unknown').toString();
     const thresholds =
       (typeof point.poorBrix === 'number' && typeof point.excellentBrix === 'number')
         ? { poor: point.poorBrix, average: point.averageBrix ?? 0, good: point.goodBrix ?? 0, excellent: point.excellentBrix }
-        : cache?.[cropKey] ?? null;
+        : getThresholds(cropKey);
     const brixVal = point.brixLevel ?? (point as any).brix_value;
     const normalizedScore =
       typeof brixVal === 'number' && !isNaN(brixVal)
@@ -151,7 +151,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [cropLeaderboard, setCropLeaderboard] = useState<any[]>([]);
   const [brandLeaderboard, setBrandLeaderboard] = useState<any[]>([]);
 
-  const { cache, loading: thresholdsLoading } = useCropThresholds();
+  const { getThresholds, loading: thresholdsLoading } = useCropThresholds();
 
   const [mobileSheetOpen, setMobileSheetOpen] = useState<boolean>(true);
   const isMobile = useIsMobile();
@@ -229,7 +229,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       const thresholds =
         (typeof sub.poorBrix === 'number' && typeof sub.excellentBrix === 'number')
           ? { poor: sub.poorBrix, average: sub.averageBrix ?? 0, good: sub.goodBrix ?? 0, excellent: sub.excellentBrix }
-          : cache?.[cropKey.toLowerCase().trim()] ?? null;
+          : getThresholds(cropKey);
       const brixVal = sub.brixLevel ?? (sub as any).brix_value;
       const g = groups.get(cropKey) || { total: 0, count: 0 };
       if (typeof brixVal === 'number' && !isNaN(brixVal)) {
@@ -245,7 +245,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         average_normalized_score: g.count ? g.total / g.count : 1.5,
       }))
       .sort((a, b) => b.average_normalized_score - a.average_normalized_score);
-  }, [placeSubmissions, cache, minBrix, maxBrix]);
+  }, [placeSubmissions, getThresholds, minBrix, maxBrix]);
 
   const placeBrandRankings: LocalRankEntry[] = useMemo(() => {
     const groups = new Map<string, { total: number; count: number }>();
@@ -255,7 +255,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       const thresholds =
         (typeof sub.poorBrix === 'number' && typeof sub.excellentBrix === 'number')
           ? { poor: sub.poorBrix, average: sub.averageBrix ?? 0, good: sub.goodBrix ?? 0, excellent: sub.excellentBrix }
-          : cache?.[cropKey.toLowerCase().trim()] ?? null;
+          : getThresholds(cropKey);
       const brixVal = sub.brixLevel ?? (sub as any).brix_value;
       const g = groups.get(brandKey) || { total: 0, count: 0 };
       if (typeof brixVal === 'number' && !isNaN(brixVal)) {
@@ -271,7 +271,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         average_normalized_score: g.count ? g.total / g.count : 1.5,
       }))
       .sort((a, b) => b.average_normalized_score - a.average_normalized_score);
-  }, [placeSubmissions, cache, minBrix, maxBrix]);
+  }, [placeSubmissions, getThresholds, minBrix, maxBrix]);
 
   // Min/max Brix from loaded data (fallback scoring range)
   useEffect(() => {
@@ -512,8 +512,8 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   useEffect(() => {
     if (!isMapLoaded || !mapRef.current) return;
     const source = mapRef.current.getSource('submissions') as mapboxgl.GeoJSONSource | undefined;
-    source?.setData(buildSubmissionsGeoJSON(filteredData, cache, minBrix, maxBrix));
-  }, [filteredData, cache, minBrix, maxBrix, isMapLoaded]);
+    source?.setData(buildSubmissionsGeoJSON(filteredData, getThresholds, minBrix, maxBrix));
+  }, [filteredData, getThresholds, minBrix, maxBrix, isMapLoaded]);
 
   // Update viewport query on move/zoom (debounced)
   useEffect(() => {
@@ -615,11 +615,11 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   // Render helpers
 
   const renderSubmissionItem = (sub: BrixDataPoint, key: string, navigable = false) => {
-    const cropKey = (sub.cropType ?? sub.cropLabel ?? (sub as any).crop_name ?? 'unknown').toString().toLowerCase().trim();
+    const cropKey = (sub.cropType ?? sub.cropLabel ?? (sub as any).crop_name ?? 'unknown').toString();
     const thresholds =
       (typeof sub.poorBrix === 'number' && typeof sub.excellentBrix === 'number')
         ? { poor: sub.poorBrix, average: sub.averageBrix ?? 0, good: sub.goodBrix ?? 0, excellent: sub.excellentBrix }
-        : cache?.[cropKey] ?? null;
+        : getThresholds(cropKey);
     const brixVal = sub.brixLevel ?? (sub as any).brix_value;
     const score = typeof brixVal === 'number' ? scoreBrix(brixVal, thresholds ?? null, minBrix, maxBrix) : null;
     const canNavigate = navigable && !!user && !!sub.id;

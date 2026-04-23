@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { apiGet } from '../lib/api';
 import { BrixThresholds } from '../lib/getBrixQuality';
 
@@ -6,6 +6,7 @@ type CropThresholdCache = Record<string, BrixThresholds>;
 
 type CropThresholdContextType = {
   cache: CropThresholdCache;
+  getThresholds: (name: string) => BrixThresholds | null;
   loading: boolean;
   reloadCache: () => Promise<void>;
 };
@@ -69,8 +70,12 @@ export const CropThresholdProvider: React.FC<CropThresholdProviderProps> = ({ ch
     reloadCache();
   }, []);
 
+  const getThresholds = useCallback((name: string): BrixThresholds | null => {
+    return cache[name.toLowerCase().trim()] ?? null;
+  }, [cache]);
+
   return (
-    <CropThresholdContext.Provider value={{ cache, loading, reloadCache }}>
+    <CropThresholdContext.Provider value={{ cache, getThresholds, loading, reloadCache }}>
       {children}
     </CropThresholdContext.Provider>
   );

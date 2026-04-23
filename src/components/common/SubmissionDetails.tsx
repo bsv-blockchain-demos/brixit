@@ -15,13 +15,15 @@ interface SubmissionDetailsProps {
 }
 
 const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showImages = true }) => {
-  const { cache: thresholdsCache } = useCropThresholds();
-  const cropThresholds = dataPoint.cropType ? (thresholdsCache[dataPoint.cropType] || {
-    poor: dataPoint.poorBrix,
-    average: dataPoint.averageBrix,
-    good: dataPoint.goodBrix,
-    excellent: dataPoint.excellentBrix,
-  }) : undefined;
+  const { getThresholds } = useCropThresholds();
+  const cropThresholds = dataPoint.cropType
+    ? (getThresholds(dataPoint.cropType) ?? {
+        poor: dataPoint.poorBrix ?? 0,
+        average: dataPoint.averageBrix ?? 0,
+        good: dataPoint.goodBrix ?? 0,
+        excellent: dataPoint.excellentBrix ?? 0,
+      })
+    : undefined;
 
   const colorClass = getBrixColor(dataPoint.brixLevel, cropThresholds, 'bg');
   const qualityText = getBrixQuality(dataPoint.brixLevel, cropThresholds);
