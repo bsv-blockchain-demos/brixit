@@ -288,23 +288,31 @@ router.post('/submissions/:id/verify', async (req: AuthenticatedRequest, res: Re
     const verify = req.body.verify !== false; // default true
     const adminUserId = req.user!.sub;
 
-    const submission = await prisma.submission.findUnique({ where: { id: submissionId } });
-    if (!submission) {
-      res.status(404).json({ success: false, error: 'Submission not found' });
-      return;
-    }
+    await prisma.$transaction(async (tx) => {
+      const submission = await tx.submission.findUnique({
+        where: { id: submissionId },
+      });
+      if (!submission) {
+        throw Object.assign(new Error('Submission not found'), { statusCode: 404 });
+      }
 
-    await prisma.submission.update({
-      where: { id: submissionId },
-      data: {
-        verified: verify,
-        verifiedBy: verify ? adminUserId : null,
-        verifiedAt: verify ? new Date() : null,
-      },
+      await tx.submission.update({
+        where: { id: submissionId },
+        data: {
+          verified: verify,
+          verifiedBy: verify ? adminUserId : null,
+          verifiedAt: verify ? new Date() : null,
+        },
+      });
+
     });
 
     res.json({ success: true, message: verify ? 'Submission verified' : 'Submission unverified' });
-  } catch (err) {
+  } catch (err: any) {
+    if (err?.statusCode === 404) {
+      res.status(404).json({ success: false, error: 'Submission not found' });
+      return;
+    }
     console.error('[admin/submissions/verify] Error:', err);
     res.status(500).json({ success: false, error: 'Failed to verify submission' });
   }
@@ -325,16 +333,18 @@ router.delete('/submissions/:id', async (req: AuthenticatedRequest, res: Respons
       return;
     }
 
-    await prisma.submissionImage.deleteMany({ where: { submissionId } });
-    await prisma.submission.delete({ where: { id: submissionId } });
+    await prisma.$transaction(async (tx) => {
+      await tx.submissionImage.deleteMany({ where: { submissionId } });
+      await tx.submission.delete({ where: { id: submissionId } });
 
-    // Decrement user stats
-    if (submission.userId) {
-      await prisma.user.update({
-        where: { id: submission.userId },
-        data: { submissionCount: { decrement: 1 } },
-      });
-    }
+      if (submission.userId) {
+        await tx.user.update({
+          where: { id: submission.userId },
+          data: { submissionCount: { decrement: 1 } },
+        });
+      }
+
+    });
 
     res.json({ success: true, message: 'Submission deleted' });
   } catch (err) {

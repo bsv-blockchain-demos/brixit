@@ -1,12 +1,11 @@
 // src/components/Map/InteractiveMap.tsx
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { BrixDataPoint } from '../../types';
 import { useFormattedSubmissionByIdQuery, useFormattedSubmissionsBoundsQuery } from '../../hooks/useSubmissions';
 import { useFilters } from '../../contexts/FilterContext';
 import { applyFilters } from '../../lib/filterUtils';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { MapPin, X, ArrowLeft } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
@@ -14,21 +13,19 @@ import DataPointDetailModal from '../common/DataPointDetailModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { getMapboxToken } from '@/lib/getMapboxToken';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
-import { getBrixColor, computeNormalizedScore, rankColorFromNormalized, toDisplayScore, scoreBrix } from '../../lib/getBrixColor';
+import { computeNormalizedScore, rankColorFromNormalized, toDisplayScore, scoreBrix } from '../../lib/getBrixColor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import LocationSearch from '../common/LocationSearch';
-
 import { useQueryClient } from '@tanstack/react-query';
-
-// Leaderboard API imports
 import {
   fetchLocationLeaderboard,
   fetchCropLeaderboard,
   fetchBrandLeaderboard,
-  LeaderboardEntry,
   type Filter,
 } from '../../lib/fetchLeaderboards';
+
+// Types
 
 interface InteractiveMapProps {
   userLocation: { lat: number; lng: number } | null;
@@ -36,15 +33,57 @@ interface InteractiveMapProps {
   onNearMeHandled?: () => void;
 }
 
-type SelectedView =
-  | {
-      type: 'crop' | 'brand';
-      id: string;
-      label: string;
-    }
-  | null;
+type SelectedView = { type: 'crop' | 'brand'; id: string; label: string } | null;
+
+// Constants
+
+const MIN_ZOOM_TO_QUERY = 2;
+const BOUNDS_PADDING_RATIO = 0.25;
+const MAP_QUERY_LIMIT = 2000;
+
+// Module-level helpers (no closure over component state)
 
 const safeStr = (v?: any) => (v === null || v === undefined ? '' : String(v));
+
+const tierColorExpr = (scoreExpr: any): any => [
+  'case',
+  ['>=', scoreExpr, 1.75], '#2d6a4f',  // excellent — green-mid
+  ['>=', scoreExpr, 1.5],  '#40916c',  // good      — green-fresh
+  ['>=', scoreExpr, 1.25], '#c9a84c',  // average   — gold
+  '#c0392b',                           // poor      — score-poor
+];
+
+function buildSubmissionsGeoJSON(
+  data: BrixDataPoint[],
+  cache: Record<string, any>,
+  minBrix: number,
+  maxBrix: number,
+): any {
+  const features = [];
+  for (const point of data) {
+    const lat = point.latitude ?? (point as any).lat;
+    const lng = point.longitude ?? (point as any).lng;
+    if (lat == null || lng == null) continue;
+    const cropKey = (point.cropType ?? point.cropLabel ?? (point as any).crop_name ?? 'unknown').toString().toLowerCase().trim();
+    const thresholds =
+      (typeof point.poorBrix === 'number' && typeof point.excellentBrix === 'number')
+        ? { poor: point.poorBrix, average: point.averageBrix ?? 0, good: point.goodBrix ?? 0, excellent: point.excellentBrix }
+        : cache?.[cropKey] ?? null;
+    const brixVal = point.brixLevel ?? (point as any).brix_value;
+    const normalizedScore =
+      typeof brixVal === 'number' && !isNaN(brixVal)
+        ? computeNormalizedScore(brixVal, thresholds, minBrix, maxBrix)
+        : 1.5;
+    features.push({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [lng, lat] },
+      properties: { id: point.id, normalizedScore },
+    });
+  }
+  return { type: 'FeatureCollection', features };
+}
+
+// Component
 
 const InteractiveMap: React.FC<InteractiveMapProps> = ({
   userLocation,
@@ -60,24 +99,14 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  // Stable ref so map interaction handlers always see the latest filtered data
+  const filteredDataRef = useRef<BrixDataPoint[]>([]);
 
   const [allData, setAllData] = useState<BrixDataPoint[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<BrixDataPoint | null>(null);
 
-  const MIN_ZOOM_TO_QUERY = 6;
-  const BOUNDS_PADDING_RATIO = 0.25;
-  const MAP_QUERY_LIMIT = 2000;
-
   const [viewportQuery, setViewportQuery] = useState<
-    | {
-        west: number;
-        south: number;
-        east: number;
-        north: number;
-        zoom: number;
-      }
-    | null
+    { west: number; south: number; east: number; north: number; zoom: number } | null
   >(null);
 
   const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -88,7 +117,6 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const zoomLevel = viewportQuery?.zoom ?? 0;
-
 
   const submissionsQuery = useFormattedSubmissionsBoundsQuery(
     viewportQuery
@@ -109,7 +137,9 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     }
   );
 
-  const highlightedId = (highlightedPoint as any)?.id ? String((highlightedPoint as any).id) : undefined;
+  const highlightedId = (highlightedPoint as any)?.id
+    ? String((highlightedPoint as any).id)
+    : undefined;
   const highlightedQuery = useFormattedSubmissionByIdQuery(highlightedId, {
     enabled: !!highlightedId,
     staleTimeMs: 10 * 60 * 1000,
@@ -117,58 +147,26 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   });
 
   const [selectedEntry, setSelectedEntry] = useState<SelectedView>(null);
-  const [locationLeaderboard, setLocationLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [cropLeaderboard, setCropLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [brandLeaderboard, setBrandLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [locationLeaderboard, setLocationLeaderboard] = useState<any[]>([]);
+  const [cropLeaderboard, setCropLeaderboard] = useState<any[]>([]);
+  const [brandLeaderboard, setBrandLeaderboard] = useState<any[]>([]);
 
   const { cache, loading: thresholdsLoading } = useCropThresholds();
 
-  // mobile sheet visibility (start open by default)
   const [mobileSheetOpen, setMobileSheetOpen] = useState<boolean>(true);
   const isMobile = useIsMobile();
 
-  // determine if mobile device
   function useIsMobile(breakpoint = 768) {
     const [isMobile, setIsMobile] = useState(
-      typeof window !== "undefined" ? window.innerWidth < breakpoint : false
+      typeof window !== 'undefined' ? window.innerWidth < breakpoint : false
     );
-  
     useEffect(() => {
-      function handleResize() {
-        setIsMobile(window.innerWidth < breakpoint);
-      }
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
+      const handleResize = () => setIsMobile(window.innerWidth < breakpoint);
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
     }, [breakpoint]);
-  
     return isMobile;
   }
-
-  // Viewport-based submissions fetch
-  useEffect(() => {
-    if (viewportQuery && viewportQuery.zoom < MIN_ZOOM_TO_QUERY) {
-      setAllData([]);
-      return;
-    }
-
-    if (submissionsQuery.data) {
-      setAllData(submissionsQuery.data || []);
-    }
-    if (submissionsQuery.error) {
-      console.error('Error fetching submissions:', submissionsQuery.error);
-      setAllData([]);
-    }
-  }, [submissionsQuery.data, submissionsQuery.error, viewportQuery]);
-
-  // When a point is selected, ensure group and entry state are set
-  useEffect(() => {
-    if (selectedPoint) {
-      setGroupBy('crop');
-      setSelectedEntry(null);
-      // open mobile sheet when user selects a marker
-      setMobileSheetOpen(true);
-    }
-  }, [selectedPoint]);
 
   const filteredData = useMemo(() => {
     try {
@@ -179,7 +177,33 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     }
   }, [allData, filters, isAdmin]);
 
-  // Base dataset for the selected place (uses filteredData for consistency with map)
+  // Keep the ref current so stable click handlers can read latest data
+  useEffect(() => {
+    filteredDataRef.current = filteredData;
+  }, [filteredData]);
+
+  // Viewport-based submissions fetch
+  useEffect(() => {
+    if (viewportQuery && viewportQuery.zoom < MIN_ZOOM_TO_QUERY) {
+      setAllData([]);
+      return;
+    }
+    if (submissionsQuery.data) setAllData(submissionsQuery.data || []);
+    if (submissionsQuery.error) {
+      console.error('Error fetching submissions:', submissionsQuery.error);
+      setAllData([]);
+    }
+  }, [submissionsQuery.data, submissionsQuery.error, viewportQuery]);
+
+  // Open sheet and reset group when a point is selected
+  useEffect(() => {
+    if (selectedPoint) {
+      setGroupBy('crop');
+      setSelectedEntry(null);
+      setMobileSheetOpen(true);
+    }
+  }, [selectedPoint]);
+
   const selectedPlaceId = useMemo(() => {
     if (!selectedPoint) return null;
     return (selectedPoint as any).placeId ?? (selectedPoint as any).place_id ?? null;
@@ -187,7 +211,9 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   const placeSubmissions = useMemo(() => {
     if (!selectedPlaceId) return [] as BrixDataPoint[];
-    return filteredData.filter((d) => ((d as any).placeId ?? (d as any).place_id) === selectedPlaceId);
+    return filteredData.filter(
+      (d) => ((d as any).placeId ?? (d as any).place_id) === selectedPlaceId
+    );
   }, [filteredData, selectedPlaceId]);
 
   type LocalRankEntry = {
@@ -200,25 +226,25 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     const groups = new Map<string, { total: number; count: number }>();
     for (const sub of placeSubmissions) {
       const cropKey = (sub.cropLabel ?? sub.cropType ?? (sub as any).crop_name ?? 'Unknown').toString();
-      const thresholds = cache?.[cropKey] ?? null;
+      const thresholds =
+        (typeof sub.poorBrix === 'number' && typeof sub.excellentBrix === 'number')
+          ? { poor: sub.poorBrix, average: sub.averageBrix ?? 0, good: sub.goodBrix ?? 0, excellent: sub.excellentBrix }
+          : cache?.[cropKey.toLowerCase().trim()] ?? null;
       const brixVal = sub.brixLevel ?? (sub as any).brix_value;
+      const g = groups.get(cropKey) || { total: 0, count: 0 };
       if (typeof brixVal === 'number' && !isNaN(brixVal)) {
-        const norm = computeNormalizedScore(brixVal, thresholds, minBrix, maxBrix);
-        const g = groups.get(cropKey) || { total: 0, count: 0 };
-        g.total += norm;
+        g.total += computeNormalizedScore(brixVal, thresholds, minBrix, maxBrix);
         g.count += 1;
-        groups.set(cropKey, g);
-      } else {
-        const g = groups.get(cropKey) || { total: 0, count: 0 };
-        groups.set(cropKey, g);
       }
+      groups.set(cropKey, g);
     }
-    const out: LocalRankEntry[] = [];
-    for (const [label, g] of groups.entries()) {
-      out.push({ label, submission_count: g.count, average_normalized_score: g.count ? g.total / g.count : 1.5 });
-    }
-    out.sort((a, b) => b.average_normalized_score - a.average_normalized_score);
-    return out;
+    return [...groups.entries()]
+      .map(([label, g]) => ({
+        label,
+        submission_count: g.count,
+        average_normalized_score: g.count ? g.total / g.count : 1.5,
+      }))
+      .sort((a, b) => b.average_normalized_score - a.average_normalized_score);
   }, [placeSubmissions, cache, minBrix, maxBrix]);
 
   const placeBrandRankings: LocalRankEntry[] = useMemo(() => {
@@ -226,40 +252,40 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     for (const sub of placeSubmissions) {
       const brandKey = (sub.brandLabel ?? sub.brandName ?? (sub as any).brand_name ?? 'Unknown').toString();
       const cropKey = (sub.cropLabel ?? sub.cropType ?? (sub as any).crop_name ?? 'Unknown').toString();
-      const thresholds = cache?.[cropKey] ?? null;
+      const thresholds =
+        (typeof sub.poorBrix === 'number' && typeof sub.excellentBrix === 'number')
+          ? { poor: sub.poorBrix, average: sub.averageBrix ?? 0, good: sub.goodBrix ?? 0, excellent: sub.excellentBrix }
+          : cache?.[cropKey.toLowerCase().trim()] ?? null;
       const brixVal = sub.brixLevel ?? (sub as any).brix_value;
+      const g = groups.get(brandKey) || { total: 0, count: 0 };
       if (typeof brixVal === 'number' && !isNaN(brixVal)) {
-        const norm = computeNormalizedScore(brixVal, thresholds, minBrix, maxBrix);
-        const g = groups.get(brandKey) || { total: 0, count: 0 };
-        g.total += norm;
+        g.total += computeNormalizedScore(brixVal, thresholds, minBrix, maxBrix);
         g.count += 1;
-        groups.set(brandKey, g);
-      } else {
-        const g = groups.get(brandKey) || { total: 0, count: 0 };
-        groups.set(brandKey, g);
       }
+      groups.set(brandKey, g);
     }
-    const out: LocalRankEntry[] = [];
-    for (const [label, g] of groups.entries()) {
-      out.push({ label, submission_count: g.count, average_normalized_score: g.count ? g.total / g.count : 1.5 });
-    }
-    out.sort((a, b) => b.average_normalized_score - a.average_normalized_score);
-    return out;
+    return [...groups.entries()]
+      .map(([label, g]) => ({
+        label,
+        submission_count: g.count,
+        average_normalized_score: g.count ? g.total / g.count : 1.5,
+      }))
+      .sort((a, b) => b.average_normalized_score - a.average_normalized_score);
   }, [placeSubmissions, cache, minBrix, maxBrix]);
 
-  // compute min/max Brix
+  // Min/max Brix from loaded data (fallback scoring range)
   useEffect(() => {
-    if (!allData || allData.length === 0) return;
+    if (!allData.length) return;
     const bVals = allData
       .map((d) => d.brixLevel ?? (d as any).brix_value)
       .filter((v): v is number => typeof v === 'number' && !isNaN(v));
-    if (bVals.length > 0) {
+    if (bVals.length) {
       setMinBrix(Math.min(...bVals));
       setMaxBrix(Math.max(...bVals));
     }
   }, [allData]);
 
-  // near me handling
+  // Near-me handler
   useEffect(() => {
     if (nearMeTriggered && userLocation && mapRef.current) {
       mapRef.current.easeTo({
@@ -271,7 +297,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     }
   }, [nearMeTriggered, userLocation, onNearMeHandled]);
 
-  // initialize Mapbox map
+  // Initialize map, sources, layers, and interactions (runs once)
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
 
@@ -279,8 +305,8 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       ? [userLocation.lng, userLocation.lat]
       : [0, 20];
     const initialZoom = userLocation ? 10 : 2;
-
     let mounted = true;
+
     (async function init() {
       const token = await getMapboxToken();
       if (!token) {
@@ -290,15 +316,185 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       mapboxgl.accessToken = token;
       const map = new mapboxgl.Map({
         container: mapContainer.current!,
+        // satellite-v9 = pure satellite imagery, zero road geometry by design.
+        // We add only the place-label layers we want from the streets tileset.
         style: 'mapbox://styles/mapbox/satellite-v9',
         center: initialCenter,
         zoom: initialZoom,
-      });
+      } as any);
       mapRef.current = map;
+
       map.on('load', () => {
         if (!mounted) return;
+
+        // Place names only — no roads, POIs, or transit.
+        // mapbox-streets-v8 place_label source layer contains country/state/settlement data.
+        map.addSource('mapbox-streets', {
+          type: 'vector',
+          url: 'mapbox://mapbox.mapbox-streets-v8',
+        });
+
+        map.addLayer({
+          id: 'place-country',
+          type: 'symbol',
+          source: 'mapbox-streets',
+          'source-layer': 'place_label',
+          maxzoom: 6,
+          filter: ['==', ['get', 'class'], 'country'],
+          layout: {
+            'text-field': ['get', 'name_en'],
+            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+            'text-size': ['interpolate', ['linear'], ['zoom'], 1, 11, 5, 16],
+            'text-transform': 'uppercase',
+            'text-letter-spacing': 0.15,
+            'symbol-sort-key': ['get', 'rank'],
+          },
+          paint: {
+            'text-color': 'rgba(255,255,255,0.9)',
+            'text-halo-color': 'rgba(0,0,0,0.7)',
+            'text-halo-width': 1.5,
+          },
+        } as any);
+
+        map.addLayer({
+          id: 'place-state',
+          type: 'symbol',
+          source: 'mapbox-streets',
+          'source-layer': 'place_label',
+          minzoom: 3,
+          maxzoom: 8,
+          filter: ['==', ['get', 'class'], 'state'],
+          layout: {
+            'text-field': ['get', 'name_en'],
+            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+            'text-size': ['interpolate', ['linear'], ['zoom'], 3, 10, 7, 13],
+            'symbol-sort-key': ['get', 'rank'],
+          },
+          paint: {
+            'text-color': 'rgba(255,255,255,0.8)',
+            'text-halo-color': 'rgba(0,0,0,0.6)',
+            'text-halo-width': 1,
+          },
+        } as any);
+
+        map.addLayer({
+          id: 'place-settlement',
+          type: 'symbol',
+          source: 'mapbox-streets',
+          'source-layer': 'place_label',
+          minzoom: 4,
+          filter: ['==', ['get', 'class'], 'settlement'],
+          layout: {
+            'text-field': ['get', 'name_en'],
+            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+            'text-size': ['interpolate', ['linear'], ['zoom'], 5, 10, 12, 14],
+            'symbol-sort-key': ['get', 'rank'],
+          },
+          paint: {
+            'text-color': '#ffffff',
+            'text-halo-color': 'rgba(0,0,0,0.6)',
+            'text-halo-width': 1,
+          },
+        } as any);
+
+        // Submissions source — Mapbox handles all clustering automatically
+        map.addSource('submissions', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] },
+          cluster: true,
+          clusterMaxZoom: 13,
+          clusterRadius: 50,
+          // Accumulate score sum across cluster members so we can color by average
+          clusterProperties: {
+            scoreSum: ['+', ['get', 'normalizedScore']],
+          },
+        } as any);
+
+        // Cluster circles — colored by average score across all points in the cluster
+        map.addLayer({
+          id: 'submissions-clusters',
+          type: 'circle',
+          source: 'submissions',
+          filter: ['has', 'point_count'],
+          paint: {
+            'circle-color': tierColorExpr(['/', ['get', 'scoreSum'], ['get', 'point_count']]),
+            'circle-radius': ['step', ['get', 'point_count'], 16, 10, 22, 50, 30, 200, 40],
+            'circle-stroke-color': 'rgba(255,255,255,0.6)',
+            'circle-stroke-width': 2,
+            'circle-opacity': 1,
+          },
+        } as any);
+
+        // Count label on each cluster
+        map.addLayer({
+          id: 'submissions-cluster-count',
+          type: 'symbol',
+          source: 'submissions',
+          filter: ['has', 'point_count'],
+          layout: {
+            'text-field': ['get', 'point_count_abbreviated'],
+            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+            'text-size': 12,
+          },
+          paint: { 'text-color': '#ffffff' },
+        } as any);
+
+        // Individual unclustered points
+        map.addLayer({
+          id: 'submissions-unclustered',
+          type: 'circle',
+          source: 'submissions',
+          filter: ['!', ['has', 'point_count']],
+          paint: {
+            'circle-color': tierColorExpr(['get', 'normalizedScore']),
+            'circle-radius': 7,
+            'circle-stroke-color': 'white',
+            'circle-stroke-width': 1.5,
+            'circle-opacity': 1,
+          },
+        } as any);
+
+        // Cursor: pointer over interactive layers
+        const interactiveLayers = ['submissions-clusters', 'submissions-unclustered'];
+        interactiveLayers.forEach((id) => {
+          map.on('mouseenter', id, () => { map.getCanvas().style.cursor = 'pointer'; });
+          map.on('mouseleave', id, () => { map.getCanvas().style.cursor = ''; });
+        });
+
+        // Click cluster → zoom in to expand
+        map.on('click', 'submissions-clusters', (e) => {
+          const features = map.queryRenderedFeatures(e.point, { layers: ['submissions-clusters'] });
+          if (!features.length) return;
+          const clusterId = (features[0].properties as any).cluster_id;
+          const coords = (features[0].geometry as any).coordinates as [number, number];
+          (map.getSource('submissions') as mapboxgl.GeoJSONSource)
+            .getClusterExpansionZoom(clusterId, (err, zoom) => {
+              if (err || zoom == null) return;
+              map.easeTo({ center: coords, zoom });
+            });
+        });
+
+        // Click individual point → open side panel
+        map.on('click', 'submissions-unclustered', (e) => {
+          const features = map.queryRenderedFeatures(e.point, { layers: ['submissions-unclustered'] });
+          if (!features.length) return;
+          const id = (features[0].properties as any).id;
+          const sub = filteredDataRef.current.find((d) => d.id === id);
+          if (sub) {
+            setSelectedPoint(sub);
+            setMobileSheetOpen(true);
+          }
+        });
+
+        // Click empty map area → clear selection
+        map.on('click', (e) => {
+          const hit = map.queryRenderedFeatures(e.point, { layers: interactiveLayers });
+          if (!hit.length) setSelectedPoint(null);
+        });
+
         setIsMapLoaded(true);
       });
+
       map.on('error', (e) => console.error('Mapbox error:', e.error));
     })();
 
@@ -312,7 +508,14 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update viewport query on moveend/zoomend (debounced)
+  // Push new submission data into the Mapbox source whenever the filtered set changes
+  useEffect(() => {
+    if (!isMapLoaded || !mapRef.current) return;
+    const source = mapRef.current.getSource('submissions') as mapboxgl.GeoJSONSource | undefined;
+    source?.setData(buildSubmissionsGeoJSON(filteredData, cache, minBrix, maxBrix));
+  }, [filteredData, cache, minBrix, maxBrix, isMapLoaded]);
+
+  // Update viewport query on move/zoom (debounced)
   useEffect(() => {
     if (!mapRef.current || !isMapLoaded) return;
 
@@ -325,16 +528,13 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         setViewportQuery({ west: 0, south: 0, east: 0, north: 0, zoom });
         return;
       }
-
       const b = mapRef.current.getBounds();
       const west = b.getWest();
       const east = b.getEast();
       const south = b.getSouth();
       const north = b.getNorth();
-
       const padLng = (east - west) * BOUNDS_PADDING_RATIO;
       const padLat = (north - south) * BOUNDS_PADDING_RATIO;
-
       setViewportQuery({
         west: west - padLng,
         south: south - padLat,
@@ -362,137 +562,21 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     };
   }, [isMapLoaded]);
 
-  // handle highlighted point (from navigation state)
+  // Handle highlighted point from router state
   useEffect(() => {
     if (!highlightedPoint || !mapRef.current) return;
-
     const hpId = (highlightedPoint as any)?.id;
     const localPoint = hpId ? allData.find((d) => d.id === hpId) : null;
     const resolvedPoint = (localPoint ?? highlightedQuery.data) as any;
-
     if (!resolvedPoint) return;
-
     const lat = resolvedPoint.latitude ?? resolvedPoint.lat;
     const lng = resolvedPoint.longitude ?? resolvedPoint.lng;
     if (typeof lat !== 'number' || typeof lng !== 'number') return;
-
-    mapRef.current.easeTo({
-      center: [lng, lat],
-      zoom: 16,
-      duration: 1000,
-    });
+    mapRef.current.easeTo({ center: [lng, lat], zoom: 16, duration: 1000 });
     setSelectedPoint(resolvedPoint as BrixDataPoint);
   }, [highlightedPoint, allData, highlightedQuery.data]);
 
-  // Draw markers and attach click handlers
-  useEffect(() => {
-    if (!mapRef.current || !isMapLoaded) return;
-
-    // Remove previous markers
-    markersRef.current.forEach((m) => m.remove());
-    markersRef.current = [];
-
-    const storeGroups: Record<string, BrixDataPoint[]> = {};
-    const averageScores: Record<string, number> = {};
-
-    for (const point of filteredData) {
-      const lat = point.latitude ?? (point as any).lat;
-      const lon = point.longitude ?? (point as any).lng;
-      const locName = point.locationName || point.placeName || null;
-      if (!lat || !lon || !locName) continue;
-      if (!storeGroups[locName]) storeGroups[locName] = [];
-      storeGroups[locName].push(point);
-    }
-
-    Object.entries(storeGroups).forEach(([storeName, points]) => {
-      if (!points || points.length === 0) return;
-
-      let totalScore = 0;
-      let validCount = 0;
-
-      for (const p of points) {
-        const cropKey = (p.cropType ?? p.cropLabel ?? (p as any).crop_name ?? 'unknown').toString();
-        const thresholds = cache?.[cropKey];
-
-        let normalized = 1.5;
-        const brixVal = p.brixLevel ?? (p as any).brix_value;
-        if (typeof brixVal === 'number' && !isNaN(brixVal)) {
-          normalized = computeNormalizedScore(brixVal, thresholds ?? null, minBrix, maxBrix);
-          totalScore += normalized;
-          validCount++;
-        }
-      }
-
-      averageScores[storeName] = validCount > 0 ? totalScore / validCount : 1.5;
-
-      const first = points[0];
-      const lat = first.latitude ?? (first as any).lat;
-      const lon = first.longitude ?? (first as any).lng;
-      if (!lat || !lon) return;
-
-      const markerHex = getBrixColor(
-        averageScores[storeName],
-        { poor: 1.0, average: 1.25, good: 1.5, excellent: 1.75 },
-        'hex'
-      );
-
-      // build marker element (keeps your original styling)
-      const markerContainer = document.createElement('div');
-      markerContainer.className = 'flex flex-col items-center cursor-pointer select-none';
-
-      const dot = document.createElement('div');
-      dot.style.backgroundColor = markerHex;
-      dot.style.width = '12px';
-      dot.style.height = '12px';
-      dot.style.borderRadius = '50%';
-      dot.style.border = '2px solid white';
-      dot.style.boxShadow = '0 0 5px rgba(0,0,0,0.5)';
-      markerContainer.appendChild(dot);
-
-      const label = document.createElement('div');
-      label.innerText = storeName;
-      label.style.backgroundColor = 'rgba(0,0,0,0.6)';
-      label.style.color = 'white';
-      label.style.padding = '2px 8px';
-      label.style.borderRadius = '4px';
-      label.style.fontSize = '12px';
-      label.style.fontWeight = '600';
-      label.style.whiteSpace = 'nowrap';
-      label.style.maxWidth = '140px';
-      label.style.overflow = 'hidden';
-      label.style.textOverflow = 'ellipsis';
-      markerContainer.appendChild(label);
-
-      const marker = new mapboxgl.Marker({ element: markerContainer, anchor: 'bottom' })
-        .setLngLat([lon, lat])
-        .addTo(mapRef.current!);
-
-      markersRef.current.push(marker);
-
-      // clicking a marker selects the first submission (representative) at that location
-      markerContainer.addEventListener('click', () => {
-        setSelectedPoint(first);
-        setMobileSheetOpen(true); // ensure mobile sheet re-opens if user previously closed it
-      });
-    });
-
-    // clicking map (not markers) clears selection
-    const mapClickListener = (e: mapboxgl.MapMouseEvent) => {
-      const isMarkerClick = markersRef.current.some((m) =>
-        m.getElement().contains(e.originalEvent.target as Node)
-      );
-      if (!isMarkerClick) {
-        setSelectedPoint(null);
-      }
-    };
-
-    mapRef.current.on('click', mapClickListener);
-    return () => {
-      if (mapRef.current) mapRef.current.off('click', mapClickListener);
-    };
-  }, [filteredData, isMapLoaded, cache, minBrix, maxBrix]);
-
-  // Leaderboards fetching when a point selected
+  // Fetch leaderboards whenever the selected point changes
   useEffect(() => {
     if (!selectedPoint) {
       setLocationLeaderboard([]);
@@ -500,9 +584,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       setBrandLeaderboard([]);
       return;
     }
-
     setIsLoading(true);
-
     const localFilters: Filter = {
       city: selectedPoint.city ?? (selectedPoint as any).city_name ?? undefined,
       state: selectedPoint.state ?? undefined,
@@ -510,33 +592,13 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       limit: 25,
       offset: 0,
     };
-
     const staleTime = 5 * 60 * 1000;
-
-    const getLoc = () =>
-      queryClient.fetchQuery({
-        queryKey: ['leaderboard', 'location', 'map', localFilters],
-        queryFn: () => fetchLocationLeaderboard(localFilters),
-        staleTime,
-      });
-
-    const getCrop = () =>
-      queryClient.fetchQuery({
-        queryKey: ['leaderboard', 'crop', 'map', localFilters],
-        queryFn: () => fetchCropLeaderboard(localFilters),
-        staleTime,
-      });
-
-    const getBrand = () =>
-      queryClient.fetchQuery({
-        queryKey: ['leaderboard', 'brand', 'map', localFilters],
-        queryFn: () => fetchBrandLeaderboard(localFilters),
-        staleTime,
-      });
-
-    Promise.all([getLoc(), getCrop(), getBrand()])
+    Promise.all([
+      queryClient.fetchQuery({ queryKey: ['leaderboard', 'location', 'map', localFilters], queryFn: () => fetchLocationLeaderboard(localFilters), staleTime }),
+      queryClient.fetchQuery({ queryKey: ['leaderboard', 'crop', 'map', localFilters], queryFn: () => fetchCropLeaderboard(localFilters), staleTime }),
+      queryClient.fetchQuery({ queryKey: ['leaderboard', 'brand', 'map', localFilters], queryFn: () => fetchBrandLeaderboard(localFilters), staleTime }),
+    ])
       .then(([loc, crop, brand]) => {
-        // adapt returned shape into LeaderboardEntry[] if necessary
         setLocationLeaderboard((loc as any) || []);
         setCropLeaderboard((crop as any) || []);
         setBrandLeaderboard((brand as any) || []);
@@ -550,16 +612,17 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       .finally(() => setIsLoading(false));
   }, [selectedPoint, filters, queryClient]);
 
-  // Render helpers (kept your original markup and logic)
-  const renderSubmissionItem = (sub: BrixDataPoint, key: string, navigable = false) => {
-    const cropKey = (sub.cropType ?? sub.cropLabel ?? (sub as any).crop_name ?? 'unknown').toString();
-    const thresholds = cache?.[cropKey];
-    const brixVal = sub.brixLevel ?? (sub as any).brix_value;
-    const score = typeof brixVal === 'number'
-      ? scoreBrix(brixVal, thresholds ?? null, minBrix, maxBrix)
-      : null;
-    const canNavigate = navigable && !!user && !!sub.id;
+  // Render helpers
 
+  const renderSubmissionItem = (sub: BrixDataPoint, key: string, navigable = false) => {
+    const cropKey = (sub.cropType ?? sub.cropLabel ?? (sub as any).crop_name ?? 'unknown').toString().toLowerCase().trim();
+    const thresholds =
+      (typeof sub.poorBrix === 'number' && typeof sub.excellentBrix === 'number')
+        ? { poor: sub.poorBrix, average: sub.averageBrix ?? 0, good: sub.goodBrix ?? 0, excellent: sub.excellentBrix }
+        : cache?.[cropKey] ?? null;
+    const brixVal = sub.brixLevel ?? (sub as any).brix_value;
+    const score = typeof brixVal === 'number' ? scoreBrix(brixVal, thresholds ?? null, minBrix, maxBrix) : null;
+    const canNavigate = navigable && !!user && !!sub.id;
     return (
       <div
         key={key}
@@ -567,15 +630,15 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         onClick={canNavigate ? () => setModalSubmission(sub) : undefined}
       >
         <div className="flex flex-col min-w-0 flex-1">
-          <span className="font-semibold text-sm truncate">{safeStr(sub.cropLabel ?? sub.cropType ?? 'Unknown Crop')}</span>
+          <span className="font-semibold text-sm truncate">
+            {safeStr(sub.cropLabel ?? sub.cropType ?? 'Unknown Crop')}
+          </span>
           <span className="text-xs text-text-muted-green mt-1 truncate">
             {safeStr(sub.brandLabel ?? sub.brandName ?? 'Unknown Brand')} —{' '}
             {sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString() : '-'}
           </span>
         </div>
-        <div
-          className={`flex-shrink-0 min-w-[52px] px-3 py-1 text-center font-bold text-sm text-white rounded-full ${score?.bgClass ?? 'bg-gray-300'}`}
-        >
+        <div className={`flex-shrink-0 min-w-[52px] px-3 py-1 text-center font-bold text-sm text-white rounded-full ${score?.bgClass ?? 'bg-gray-300'}`}>
           {score ? score.display : '—'}
         </div>
       </div>
@@ -584,13 +647,11 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   const renderDetailedSubmissions = () => {
     if (!selectedEntry || !selectedPoint) return null;
-
     const filteredSubmissions = placeSubmissions.filter((d) =>
       selectedEntry.type === 'crop'
         ? (d.cropLabel ?? d.cropType) === selectedEntry.label
         : (d.brandLabel ?? d.brandName) === selectedEntry.label
     );
-
     return (
       <div className="flex flex-col h-full">
         <div className="flex items-center space-x-2 pb-4 border-b mb-4">
@@ -620,7 +681,9 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           <p className="text-xl font-display font-semibold text-text-dark">Ready to Explore?</p>
           <p className="text-sm text-text-muted-green mt-2">
             <span className="md:hidden">Tap on a marker to view scores and rankings.</span>
-            <span className="hidden md:inline">Click on a marker to view scores and rankings for that location.</span>
+            <span className="hidden md:inline">
+              Click on a marker to view scores and rankings for that location.
+            </span>
           </p>
         </div>
       );
@@ -634,7 +697,12 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     return (
       <div className="h-full flex flex-col">
-        <Tabs defaultValue="crop" value={groupBy} onValueChange={(val) => setGroupBy(val as any)} className="flex-1 flex flex-col">
+        <Tabs
+          defaultValue="crop"
+          value={groupBy}
+          onValueChange={(val) => setGroupBy(val as any)}
+          className="flex-1 flex flex-col"
+        >
           <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="none">All</TabsTrigger>
             <TabsTrigger value="crop">Crop</TabsTrigger>
@@ -668,21 +736,15 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                         <div
                           key={label}
                           className="p-3 cursor-pointer hover:bg-green-mist active:bg-green-pale rounded-lg flex justify-between items-center transition-colors"
-                          onClick={() =>
-                            setSelectedEntry({
-                              type: 'crop',
-                              id: label,
-                              label,
-                            })
-                          }
+                          onClick={() => setSelectedEntry({ type: 'crop', id: label, label })}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="font-medium truncate">{label}</div>
-                            <div className="text-xs text-text-muted-green">Submissions: {c.submission_count ?? '-'}</div>
+                            <div className="text-xs text-text-muted-green">
+                              Submissions: {c.submission_count ?? '-'}
+                            </div>
                           </div>
-                          <div
-                            className={`w-14 h-7 rounded-full text-white flex items-center justify-center text-sm font-semibold ${bgClass}`}
-                          >
+                          <div className={`w-14 h-7 rounded-full text-white flex items-center justify-center text-sm font-semibold ${bgClass}`}>
                             {toDisplayScore(n)}
                           </div>
                         </div>
@@ -708,21 +770,15 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                         <div
                           key={label}
                           className="p-3 cursor-pointer hover:bg-green-mist active:bg-green-pale rounded-lg flex justify-between items-center transition-colors"
-                          onClick={() =>
-                            setSelectedEntry({
-                              type: 'brand',
-                              id: label,
-                              label,
-                            })
-                          }
+                          onClick={() => setSelectedEntry({ type: 'brand', id: label, label })}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="font-medium truncate">{label}</div>
-                            <div className="text-xs text-text-muted-green">Submissions: {b.submission_count ?? '-'}</div>
+                            <div className="text-xs text-text-muted-green">
+                              Submissions: {b.submission_count ?? '-'}
+                            </div>
                           </div>
-                          <div
-                            className={`w-14 h-7 rounded-full text-white flex items-center justify-center text-sm font-semibold ${bgClass}`}
-                          >
+                          <div className={`w-14 h-7 rounded-full text-white flex items-center justify-center text-sm font-semibold ${bgClass}`}>
                             {toDisplayScore(n)}
                           </div>
                         </div>
@@ -746,9 +802,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)] w-full">
-      {/* Map container must be non-zero height for Mapbox to render correctly */}
       <div ref={mapContainer} className="flex-1 relative">
-        {/* Location search overlay */}
         <div className="absolute top-3 left-3 z-10 w-64 sm:w-80 shadow-lg rounded-xl overflow-visible">
           <LocationSearch
             value={searchValue}
@@ -776,18 +830,16 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         )}
       </div>
 
-     {/* Desktop Right Panel (persistent, integrated into layout) */}
+      {/* Desktop right panel */}
       <div className="hidden md:flex md:w-96 flex-col border-l border-border bg-card shadow-inner">
         <div className="p-4 flex-shrink-0 flex flex-row items-start justify-between border-b">
           <div className="min-w-0">
             <h2 className="text-lg font-display font-semibold truncate">
-              {locTitle || "Location details"}
+              {locTitle || 'Location details'}
             </h2>
             {selectedPoint && (
               <p className="text-sm text-text-muted-green mt-1 truncate">
-                {`${street ? `${street}, ` : ""}${city}${
-                  city && state ? `, ${state}` : state ? `, ${state}` : ""
-                }`}
+                {`${street ? `${street}, ` : ''}${city}${city && state ? `, ${state}` : state ? `, ${state}` : ''}`}
               </p>
             )}
           </div>
@@ -804,32 +856,32 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         <div className="flex-1 overflow-y-auto p-4">{renderLeaderboard()}</div>
       </div>
 
-      {/* Mobile BottomSheet — only render when actually mobile */}
-        {isMobile && (
-          <>
-            <BottomSheet
-              open={mobileSheetOpen}
-              onOpenChange={setMobileSheetOpen}
-              title={locTitle || "Location details"}
-              className="pointer-events-auto"
-            >
-              <div className="mb-4">{renderLeaderboard()}</div>
-            </BottomSheet>
+      {/* Mobile bottom sheet */}
+      {isMobile && (
+        <>
+          <BottomSheet
+            open={mobileSheetOpen}
+            onOpenChange={setMobileSheetOpen}
+            title={locTitle || 'Location details'}
+            className="pointer-events-auto"
+          >
+            <div className="mb-4">{renderLeaderboard()}</div>
+          </BottomSheet>
 
-            {!mobileSheetOpen && (
-              <div className="fixed bottom-4 right-4 z-50">
-                <Button
-                  onClick={() => setMobileSheetOpen(true)}
-                  variant="default"
-                  size="sm"
-                  className="shadow-lg bg-primary text-primary-foreground hover:bg-green-mid"
-                >
-                  Explore BRIX Data
-                </Button>
-              </div>
-            )}
-          </>
-        )}
+          {!mobileSheetOpen && (
+            <div className="fixed bottom-4 right-4 z-50">
+              <Button
+                onClick={() => setMobileSheetOpen(true)}
+                variant="default"
+                size="sm"
+                className="shadow-lg bg-primary text-primary-foreground hover:bg-green-mid"
+              >
+                Explore BRIX Data
+              </Button>
+            </div>
+          )}
+        </>
+      )}
 
       <DataPointDetailModal
         dataPoint={modalSubmission}

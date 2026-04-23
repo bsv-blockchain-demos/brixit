@@ -211,8 +211,16 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
         take: 5,
       });
 
-      let existingPlace: { id: string; locationId: string | null } | null =
-        nearbyPlaces.find((p: { id: string; locationId: string | null }) => p.locationId === locationId)
+      interface ExistingPlace {
+        id: string;
+        locationId: string | null;
+        city: string | null;
+        state: string | null;
+        country: string | null;
+      }
+
+      let existingPlace: ExistingPlace | null =
+        nearbyPlaces.find((p: ExistingPlace) => p.locationId === locationId)
         || nearbyPlaces[0]
         || null;
 
@@ -222,6 +230,9 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
         if (!existingPlace.locationId && locationId) {
           await tx.place.update({ where: { id: existingPlace.id }, data: { locationId } });
         }
+        finalCity = finalCity ?? existingPlace.city;
+        finalState = finalState ?? existingPlace.state;
+        finalCountry = finalCountry ?? existingPlace.country;
       } else {
         const placeLabel = createHumanReadableLabel({
           store_name: sanitizedStoreName,
