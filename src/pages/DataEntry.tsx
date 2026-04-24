@@ -55,6 +55,7 @@ interface CropReading {
   brixLevel: number;
   brandName: string;
   notes: string;
+  images: File[];
 }
 
 const POS_OPTIONS = [
@@ -78,6 +79,7 @@ const mkReading = (): CropReading => ({
   brixLevel: 12,
   brandName: '',
   notes: '',
+  images: [],
 });
 
 // ReadingCard (accordion)
@@ -94,7 +96,9 @@ const ReadingCard: React.FC<{
   onRemove: (id: string) => void;
   onToggle: (id: string) => void;
   onAddBrand: (readingId: string, name: string) => void;
-}> = ({ reading, index, crops, brands, errors, showRemove, isOpen, onChange, onRemove, onToggle, onAddBrand }) => {
+  onImageUpload: (id: string, e: React.ChangeEvent<HTMLInputElement>) => void;
+  onImageRemove: (id: string, index: number) => void;
+}> = ({ reading, index, crops, brands, errors, showRemove, isOpen, onChange, onRemove, onToggle, onAddBrand, onImageUpload, onImageRemove }) => {
   const prefersReducedMotion = useReducedMotion();
   const { getThresholds } = useCropThresholds();
   const thresholds = reading.cropType ? getThresholds(reading.cropType) : null;
@@ -275,6 +279,63 @@ const ReadingCard: React.FC<{
                   </p>
                 )}
               </div>
+
+              {/* Photos */}
+              <div>
+                <Label
+                  className="flex items-center gap-1 mb-2 text-xs font-semibold"
+                  style={{ color: 'var(--text-mid)' }}
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  Photos
+                  <span className="font-normal ml-1" style={{ color: 'var(--text-muted)' }}>(optional, max 3)</span>
+                </Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {reading.images.map((file, i) => (
+                    <div
+                      key={i}
+                      className="relative w-20 h-20 rounded-xl overflow-hidden border-2 group"
+                      style={{ borderColor: 'var(--green-pale)' }}
+                    >
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`Preview ${i + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => onImageRemove(reading.id, i)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {reading.images.length < 3 && (
+                    <Label
+                      htmlFor={`image-upload-${reading.id}`}
+                      className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed rounded-xl cursor-pointer hover:border-green-fresh transition-colors"
+                      style={{ borderColor: 'var(--green-pale)', color: 'var(--text-muted)' }}
+                    >
+                      <Camera className="w-5 h-5 mb-1" />
+                      <span className="text-xs text-center">Add Photo</span>
+                      <Input
+                        id={`image-upload-${reading.id}`}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        multiple
+                        onChange={e => onImageUpload(reading.id, e)}
+                        className="sr-only"
+                      />
+                    </Label>
+                  )}
+                </div>
+                {errors[`reading_${reading.id}_images`] && (
+                  <p className="text-destructive text-xs mt-1 flex items-center gap-1">
+                    <X className="w-3 h-3" />{errors[`reading_${reading.id}_images`]}
+                  </p>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
@@ -323,7 +384,6 @@ const DataEntry = () => {
     posType: '',
     purchaseDate: '',
     measurementDate: new Date().toISOString().split('T')[0],
-    images: [] as File[],
     venueChoice: null as VenueChoice | null,
   });
 
@@ -390,32 +450,34 @@ const DataEntry = () => {
     handleReadingChange(readingId, 'brandName', name);
   };
 
-  const validateFile = (file: File): boolean => {
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setErrors(prev => ({ ...prev, images: 'Only JPEG, PNG, and WebP images are allowed' }));
-      return false;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors(prev => ({ ...prev, images: 'File size must be less than 5MB' }));
-      return false;
-    }
-    return true;
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReadingImageUpload = (readingId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const reading = readings.find(r => r.id === readingId);
+    if (!reading) return;
     const files = Array.from(e.target.files || []);
     const valid: File[] = [];
-    let hasErr = false;
-    files.forEach(f => { if (validateFile(f)) valid.push(f); else hasErr = true; });
-    if (valid.length + session.images.length > 3) {
-      setErrors(prev => ({ ...prev, images: 'Maximum 3 images allowed' }));
+    for (const f of files) {
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
+        setErrors(prev => ({ ...prev, [`reading_${readingId}_images`]: 'Only JPEG, PNG, and WebP images are allowed' }));
+        return;
+      }
+      if (f.size > 5 * 1024 * 1024) {
+        setErrors(prev => ({ ...prev, [`reading_${readingId}_images`]: 'File size must be less than 5MB' }));
+        return;
+      }
+      valid.push(f);
+    }
+    if (valid.length + reading.images.length > 3) {
+      setErrors(prev => ({ ...prev, [`reading_${readingId}_images`]: 'Maximum 3 images allowed' }));
       return;
     }
-    if (hasErr) {
-      toast({ title: 'File upload error', description: 'Some files were too large or not supported.', variant: 'destructive' });
-      return;
-    }
-    setSessionField('images', [...session.images, ...valid]);
+    handleReadingChange(readingId, 'images', [...reading.images, ...valid]);
+    if (e.target) e.target.value = '';
+  };
+
+  const handleReadingImageRemove = (readingId: string, index: number) => {
+    setReadings(prev => prev.map(r =>
+      r.id === readingId ? { ...r, images: r.images.filter((_, i) => i !== index) } : r
+    ));
   };
 
   const validateForm = (): boolean => {
@@ -538,17 +600,21 @@ const DataEntry = () => {
       );
 
       const { submissions } = result;
-      const firstId = submissions[0]?.submission_id;
+      const filledReadings = readings.filter(r => r.cropType !== '');
 
-      if (session.images.length > 0 && firstId) {
-        const fd = new FormData();
-        fd.append('submission_id', firstId);
-        session.images.forEach(f => fd.append('images', f));
-        try {
-          const res = await apiFetch('/api/upload', { method: 'POST', body: fd });
-          if (!res.ok) console.error('Image upload failed');
-        } catch (err) {
-          console.error('Image upload error:', err);
+      for (let i = 0; i < filledReadings.length; i++) {
+        const reading = filledReadings[i];
+        const subId = submissions[i]?.submission_id;
+        if (reading.images.length > 0 && subId) {
+          const fd = new FormData();
+          fd.append('submission_id', subId);
+          reading.images.forEach(f => fd.append('images', f));
+          try {
+            const res = await apiFetch('/api/upload', { method: 'POST', body: fd });
+            if (!res.ok) console.error('Image upload failed for reading', i + 1);
+          } catch (err) {
+            console.error('Image upload error for reading', i + 1, err);
+          }
         }
       }
 
@@ -789,6 +855,8 @@ const DataEntry = () => {
                           onRemove={removeReading}
                           onToggle={id => setOpenReadingId(prev => prev === id ? null : id)}
                           onAddBrand={handleAddBrand}
+                          onImageUpload={handleReadingImageUpload}
+                          onImageRemove={handleReadingImageRemove}
                         />
                       ))}
                     </div>
@@ -837,64 +905,6 @@ const DataEntry = () => {
                       )}
                     </div>
 
-                    {/* Images */}
-                    <div>
-                      <Label
-                        className="flex items-center gap-2 mb-3 text-sm font-semibold"
-                        style={{ color: 'var(--text-mid)' }}
-                      >
-                        <Camera className="w-4 h-4" />
-                        Photos
-                        <span className="font-normal ml-1" style={{ color: 'var(--text-muted)' }}>
-                          (max 3, up to 5 MB each)
-                        </span>
-                      </Label>
-                      <div className="flex flex-wrap items-center gap-3">
-                        {session.images.map((file, i) => (
-                          <div
-                            key={i}
-                            className="relative w-24 h-24 rounded-xl overflow-hidden border-2 group"
-                            style={{ borderColor: 'var(--green-pale)' }}
-                          >
-                            <img
-                              src={URL.createObjectURL(file)}
-                              alt={`Preview ${i + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setSessionField('images', session.images.filter((_, j) => j !== i))}
-                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ))}
-                        {session.images.length < 3 && (
-                          <Label
-                            htmlFor="image-upload"
-                            className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed rounded-xl cursor-pointer hover:border-green-fresh transition-colors"
-                            style={{ borderColor: 'var(--green-pale)', color: 'var(--text-muted)' }}
-                          >
-                            <Camera className="w-6 h-6 mb-1" />
-                            <span className="text-xs text-center">Add Photo</span>
-                            <Input
-                              id="image-upload"
-                              type="file"
-                              accept="image/jpeg,image/png,image/webp"
-                              multiple
-                              onChange={handleImageUpload}
-                              className="sr-only"
-                            />
-                          </Label>
-                        )}
-                      </div>
-                      {errors.images && (
-                        <p className="text-destructive text-sm mt-2 flex items-center gap-1">
-                          <X className="w-4 h-4" />{errors.images}
-                        </p>
-                      )}
-                    </div>
                   </div>
                 </motion.div>
 
