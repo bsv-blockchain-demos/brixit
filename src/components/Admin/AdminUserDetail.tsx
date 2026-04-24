@@ -230,7 +230,7 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
   }
 
   const topRole = getTopRole(user.roles);
-  const locationParts = [formatCityState(user.city, user.state), user.country].filter(Boolean);
+  const locationParts = [formatVenueLocation(undefined, user.city, user.state), user.country].filter(Boolean);
 
   return (
     <div className="space-y-6">
