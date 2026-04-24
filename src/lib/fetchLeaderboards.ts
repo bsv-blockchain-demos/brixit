@@ -23,6 +23,7 @@ export interface LeaderboardEntry {
   brand_name?: string;
   brand_label?: string;
   location_name?: string;
+  street_address?: string;
   crop_id?: string;
   brand_id?: string;
   location_id?: string;

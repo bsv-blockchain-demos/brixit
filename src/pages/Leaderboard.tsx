@@ -22,6 +22,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { locationService } from "../lib/locationServiceforRegister";
 import { formatUsername } from "../lib/formatUsername";
+import { formatVenueLocation } from "../lib/formatAddress";
 
 const emptyLocation = {
   country: "",
@@ -426,9 +427,7 @@ const LeaderboardPage: React.FC = () => {
                             <div className="font-medium text-text-dark">{labelKey === 'user' ? formatUsername(label) : label}</div>
                             {labelKey === "location" && (
                               <div className="text-xs text-text-muted-green">
-                                {(entry as any).city
-                                  ? `${(entry as any).city}${(entry as any).state ? `, ${(entry as any).state}` : ""}`
-                                  : ""}
+                                {formatVenueLocation((entry as any).street_address, (entry as any).city, (entry as any).state)}
                               </div>
                             )}
                             <div className="mt-1 text-xs text-text-muted-green">

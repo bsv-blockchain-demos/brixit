@@ -182,6 +182,7 @@ RETURNS TABLE (
   location_id   uuid,
   location_name text,
   location_label text,
+  street_address text,
   city          text,
   state         text,
   country       text,
@@ -197,6 +198,7 @@ LANGUAGE sql STABLE AS $$
       v.id   AS location_id,
       v.name AS location_name,
       v.name AS location_label,
+      v.street_address,
       v.city,
       v.state,
       v.country,
@@ -214,7 +216,7 @@ LANGUAGE sql STABLE AS $$
     GROUP BY v.id, v.name, v.city, v.state, v.country
   ),
   ranked AS (
-    SELECT location_id, location_name, location_label, city, state, country,
+    SELECT location_id, location_name, location_label, street_address, city, state, country,
            average_normalized_score, average_brix, submission_count,
       CASE
         WHEN average_normalized_score >= 1.75 THEN 'Excellent'

@@ -29,6 +29,7 @@ export interface UnverifiedSubmission {
   brand_name: string | null;
   brand_label: string | null;
   place_label: string | null;
+  place_street_address: string | null;
   place_city: string | null;
   place_state: string | null;
   user_display_name: string | null;
@@ -51,6 +52,7 @@ export interface AdminUserDetailSubmission {
   brand_name: string | null;
   brand_label: string | null;
   place_label: string | null;
+  place_street_address: string | null;
   place_city: string | null;
   place_state: string | null;
 }
@@ -237,6 +239,7 @@ export interface AdminVenue {
   posType: string | null;
   latitude: number | null;
   longitude: number | null;
+  streetAddress: string | null;
   city: string | null;
   state: string | null;
   country: string | null;

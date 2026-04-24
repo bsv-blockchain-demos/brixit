@@ -24,6 +24,7 @@ import {
   fetchBrandLeaderboard,
   type Filter,
 } from '../../lib/fetchLeaderboards';
+import { formatCityState } from '../../lib/formatAddress';
 
 // Types
 
@@ -209,12 +210,27 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     return (selectedPoint as any).placeId ?? (selectedPoint as any).place_id ?? null;
   }, [selectedPoint]);
 
+  // Match all submissions at the same geographic location (within ~10 m), not just the same venue.
+  // This handles the case where multiple community-submitted venues share the same coordinates.
+  const COORD_TOLERANCE = 0.0001;
   const placeSubmissions = useMemo(() => {
-    if (!selectedPlaceId) return [] as BrixDataPoint[];
+    if (!selectedPoint) return [] as BrixDataPoint[];
+    const lat = selectedPoint.latitude;
+    const lng = selectedPoint.longitude;
+    if (lat != null && lng != null) {
+      return filteredData.filter((d) => {
+        const dLat = d.latitude ?? (d as any).lat;
+        const dLng = d.longitude ?? (d as any).lng;
+        if (dLat == null || dLng == null) return false;
+        return Math.abs(dLat - lat) <= COORD_TOLERANCE && Math.abs(dLng - lng) <= COORD_TOLERANCE;
+      });
+    }
+    // Fall back to venue ID match when coordinates are unavailable
+    if (!selectedPlaceId) return [];
     return filteredData.filter(
       (d) => ((d as any).placeId ?? (d as any).place_id) === selectedPlaceId
     );
-  }, [filteredData, selectedPlaceId]);
+  }, [filteredData, selectedPoint, selectedPlaceId]);
 
   type LocalRankEntry = {
     label: string;
@@ -795,10 +811,20 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   };
 
   // Panel header values
-  const locTitle = selectedPoint?.locationName ?? (selectedPoint as any)?.location_name ?? safeStr((selectedPoint as any)?.place_label ?? '');
   const street = selectedPoint?.streetAddress ?? (selectedPoint as any)?.street_address ?? '';
   const city = selectedPoint?.city ?? (selectedPoint as any)?.city ?? '';
   const state = selectedPoint?.state ?? (selectedPoint as any)?.state ?? '';
+
+  // When multiple different venues sit at the same pin, show the address rather than one venue name
+  const uniqueVenueNames = useMemo(() => {
+    const names = [...new Set(placeSubmissions.map(s => s.locationName).filter(Boolean))];
+    return names;
+  }, [placeSubmissions]);
+
+  const locTitle = uniqueVenueNames.length > 1
+    ? (street || city || 'Multiple venues')
+    : uniqueVenueNames[0]
+      ?? (selectedPoint?.locationName ?? (selectedPoint as any)?.location_name ?? safeStr((selectedPoint as any)?.place_label ?? ''));
 
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)] w-full">
@@ -839,7 +865,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
             </h2>
             {selectedPoint && (
               <p className="text-sm text-text-muted-green mt-1 truncate">
-                {`${street ? `${street}, ` : ''}${city}${city && state ? `, ${state}` : state ? `, ${state}` : ''}`}
+                {[street, formatCityState(city, state)].filter(Boolean).join(', ')}
               </p>
             )}
           </div>

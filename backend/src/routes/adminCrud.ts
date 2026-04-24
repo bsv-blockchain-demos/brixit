@@ -183,12 +183,13 @@ router.get('/venues', async (req: Request, res: Response) => {
 
 router.post('/venues', async (req: Request, res: Response) => {
   try {
-    const { name, posType, latitude, longitude, verified } = req.body;
+    const { name, posType, streetAddress, latitude, longitude, verified } = req.body;
     if (!name?.trim()) { res.status(400).json({ error: 'name is required' }); return; }
     const venue = await prisma.venue.create({
       data: {
         name: name.trim(),
         posType: posType?.trim() || null,
+        streetAddress: streetAddress?.trim() || null,
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         verified: verified === true,
@@ -204,10 +205,11 @@ router.post('/venues', async (req: Request, res: Response) => {
 
 router.put('/venues/:id', async (req: Request, res: Response) => {
   try {
-    const { name, posType, latitude, longitude, verified } = req.body;
+    const { name, posType, streetAddress, latitude, longitude, verified } = req.body;
     const data: any = {};
     if (name !== undefined) data.name = name.trim();
     if (posType !== undefined) data.posType = posType?.trim() || null;
+    if (streetAddress !== undefined) data.streetAddress = streetAddress?.trim() || null;
     if (latitude !== undefined) data.latitude = parseFloat(latitude);
     if (longitude !== undefined) data.longitude = parseFloat(longitude);
     if (verified !== undefined) data.verified = verified === true;

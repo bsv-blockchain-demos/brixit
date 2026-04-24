@@ -13,6 +13,7 @@ import {
   type AdminUserDetailSubmission,
 } from '@/lib/adminApi';
 import { scoreBrix } from '@/lib/getBrixColor';
+import { formatVenueLocation } from '@/lib/formatAddress';
 
 interface Props {
   userId: string;
@@ -51,7 +52,7 @@ function SubmissionModal({
     ? { poor: submission.poor_brix, average: 0, good: 0, excellent: submission.excellent_brix }
     : undefined;
   const { display: displayScore, bgClass, quality } = scoreBrix(submission.brix_value, thresholds);
-  const locationParts = [submission.place_city, submission.place_state].filter(Boolean);
+  const locationStr = formatVenueLocation(submission.place_street_address, submission.place_city, submission.place_state);
 
   const handleVerify = async (verify: boolean) => {
     setLoading(true);
@@ -116,14 +117,13 @@ function SubmissionModal({
                 <span>{submission.brand_label ?? submission.brand_name}</span>
               </div>
             )}
-            {submission.place_label && (
+            {(submission.place_label || locationStr) && (
               <div className="flex gap-2">
                 <span className="text-muted-foreground w-16 shrink-0">Place</span>
                 <span>
-                  {submission.place_label}
-                  {locationParts.length > 0 && (
-                    <span className="text-muted-foreground ml-1">({locationParts.join(', ')})</span>
-                  )}
+                  {submission.place_label
+                    ? <>{submission.place_label}{locationStr && <span className="text-muted-foreground ml-1">({locationStr})</span>}</>
+                    : locationStr}
                 </span>
               </div>
             )}
@@ -230,7 +230,7 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
   }
 
   const topRole = getTopRole(user.roles);
-  const locationParts = [user.city, user.state, user.country].filter(Boolean);
+  const locationParts = [formatCityState(user.city, user.state), user.country].filter(Boolean);
 
   return (
     <div className="space-y-6">
@@ -293,12 +293,14 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
                   <div className="flex-1 min-w-0 text-sm">
                     <div className="font-medium">{s.crop_label ?? s.crop_name ?? 'Unknown crop'}</div>
                     <div className="text-muted-foreground text-xs mt-0.5">
-                      {s.place_label ?? '—'}
-                      {(s.place_city || s.place_state) && (
-                        <span className="ml-1">
-                          ({[s.place_city, s.place_state].filter(Boolean).join(', ')})
-                        </span>
-                      )}
+                      {(() => {
+                        const loc = formatVenueLocation(s.place_street_address, s.place_city, s.place_state);
+                        const label = s.place_label;
+                        if (loc && label) return <>{label} <span>({loc})</span></>;
+                        if (loc) return loc;
+                        if (label) return label;
+                        return '—';
+                      })()}
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                       <span className="flex items-center gap-1">

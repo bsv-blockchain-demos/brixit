@@ -5,6 +5,7 @@ import { Button } from '../ui/button';
 import { BrixDataPoint } from '../../types';
 import { MapPin, Calendar, CheckCircle, Edit, Trash2, Eye, MessageSquare, Clock, Lock, User } from 'lucide-react';
 import { scoreBrix } from '../../lib/getBrixColor';
+import { formatCityState } from '../../lib/formatAddress';
 
 interface SubmissionTableRowProps {
   submission: BrixDataPoint;
@@ -75,7 +76,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
                   </div>
                 );
               }
-              const addressParts = [streetAddress, city, state, country].filter(Boolean);
+              const addressParts = [streetAddress, formatCityState(city, state), country].filter(Boolean);
               if (addressParts.length > 0) {
                 const fullAddress = addressParts.join(', ');
                 return (

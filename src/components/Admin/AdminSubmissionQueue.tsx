@@ -14,6 +14,7 @@ import {
   type UnverifiedSubmission,
   type AdminSubmission,
 } from '@/lib/adminApi';
+import { formatVenueLocation } from '@/lib/formatAddress';
 
 const PAGE_SIZE = 20;
 
@@ -118,10 +119,14 @@ function SubmissionCard({
             {s.crop_label ?? s.crop_name ?? 'Unknown crop'}{(s.brand_label ?? s.brand_name) ? ` • ${s.brand_label ?? s.brand_name}` : ''}
           </div>
           <div className="text-muted-foreground mt-0.5">
-            {s.place_label ?? 'Unknown place'}
-            {(s.place_city || s.place_state) && (
-              <span className="ml-1">({[s.place_city, s.place_state].filter(Boolean).join(', ')})</span>
-            )}
+            {(() => {
+              const loc = formatVenueLocation(s.place_street_address, s.place_city, s.place_state);
+              const label = s.place_label;
+              if (loc && label) return <>{label} <span className="text-muted-foreground">({loc})</span></>;
+              if (loc) return loc;
+              if (label) return label;
+              return '—';
+            })()}
           </div>
           <div className="mt-0.5">
             <span className="font-medium">Brix:</span> {s.brix_value}
