@@ -35,9 +35,20 @@ const RootContent = () => {
     return (
       <AuthBackground>
         <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-3xl">B</span>
-          </div>
+          <div
+            aria-label="Brixit"
+            style={{
+              height: '6rem',
+              aspectRatio: '680.88 / 389.32',
+              backgroundColor: 'var(--green-deep)',
+              WebkitMaskImage: 'url(/brixit.svg)',
+              maskImage: 'url(/brixit.svg)',
+              WebkitMaskSize: 'contain',
+              maskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat',
+              maskRepeat: 'no-repeat',
+            }}
+          />
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-mid" />
         </div>
       </AuthBackground>

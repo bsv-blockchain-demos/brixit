@@ -600,7 +600,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     />
                   ) : (
                     <>
-                      <p className="font-medium">{getDisplayLabel([], initialDataPoint.placeName)}</p>
+                      <p className="font-medium">{initialDataPoint.streetAddress || 'N/A'}</p>
                       <p className="text-xs text-text-muted-green">
                         {initialDataPoint.latitude?.toFixed(4)}, {initialDataPoint.longitude?.toFixed(4)}
                       </p>
@@ -643,7 +643,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                   {isEditing ? (
                     <Input type="text" value={variety} onChange={e => setVariety(e.target.value)} />
                   ) : (
-                    <p className="font-medium">{initialDataPoint.variety || 'N/A'}</p>
+                    <p className="font-medium">{initialDataPoint.variety || initialDataPoint.posType || 'N/A'}</p>
                   )}
                 </div>
               </div>

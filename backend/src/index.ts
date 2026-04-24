@@ -30,7 +30,7 @@ import geonamesRoutes from './routes/geonames.js';
 import autoVerifySubmissionRoutes from './routes/autoVerifySubmission.js';
 import cropsRoutes from './routes/crops.js';
 import brandsRoutes from './routes/brands.js';
-import locationsRoutes from './routes/locations.js';
+import venuesRoutes from './routes/venues.js';
 import submissionsRoutes from './routes/submissions.js';
 import leaderboardsRoutes from './routes/leaderboards.js';
 import usersRoutes from './routes/users.js';
@@ -87,7 +87,7 @@ app.use('/api/certifier', certifierRoutes);                    // POST /:subject
 // --- Public data routes ---
 app.use('/api/crops', cropsRoutes);
 app.use('/api/brands', brandsRoutes);
-app.use('/api/locations', locationsRoutes);
+app.use('/api/venues', venuesRoutes);
 app.use('/api/leaderboards', leaderboardsRoutes);
 
 // --- Submissions (public GET + authenticated POST/DELETE) ---
@@ -130,7 +130,8 @@ server.listen(config.port, '0.0.0.0', () => {
   console.log(`   GET    /api/crops/categories`);
   console.log(`   GET    /api/crops/:name`);
   console.log(`   GET    /api/brands`);
-  console.log(`   GET    /api/locations`);
+  console.log(`   GET    /api/venues/nearby`);
+  console.log(`   POST   /api/venues`);
   console.log(`   GET    /api/submissions`);
   console.log(`   GET    /api/submissions/count`);
   console.log(`   GET    /api/submissions/bounds`);
@@ -153,9 +154,8 @@ server.listen(config.port, '0.0.0.0', () => {
   console.log(`   DELETE /api/admin/submissions/:id`);
   console.log(`   GET/POST/PUT/DELETE /api/admin/crud/crops`);
   console.log(`   GET/POST/PUT/DELETE /api/admin/crud/brands`);
-  console.log(`   GET/POST/PUT/DELETE /api/admin/crud/locations`);
+  console.log(`   GET/POST/PUT/DELETE /api/admin/crud/venues`);
   console.log(`   GET/POST/PUT/DELETE /api/admin/crud/categories`);
-  console.log(`   GET/POST/PUT/DELETE /api/admin/crud/location-types`);
   console.log(`   POST   /api/upload`);
   console.log('');
 });

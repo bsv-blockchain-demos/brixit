@@ -152,11 +152,21 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/leaderboard" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-green-deep rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-lg">B</span>
-            </div>
-            <span className="text-xl font-bold font-display text-text-dark">BRIX</span>
+          <Link to="/leaderboard" className="flex items-center">
+            <div
+              aria-label="Brixit"
+              style={{
+                height: '2.5rem',
+                aspectRatio: '680.88 / 389.32',
+                backgroundColor: 'var(--green-deep)',
+                WebkitMaskImage: 'url(/brixit.svg)',
+                maskImage: 'url(/brixit.svg)',
+                WebkitMaskSize: 'contain',
+                maskSize: 'contain',
+                WebkitMaskRepeat: 'no-repeat',
+                maskRepeat: 'no-repeat',
+              }}
+            />
           </Link>
 
           {/* Desktop Navigation */}

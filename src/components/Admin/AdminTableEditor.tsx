@@ -39,7 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { PaginatedResult } from '@/lib/adminApi';
 
@@ -48,7 +48,7 @@ import type { PaginatedResult } from '@/lib/adminApi';
 export interface FieldDef {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'select';
+  type: 'text' | 'number' | 'select' | 'checkbox';
   required?: boolean;
   options?: { value: string; label: string }[];
   step?: string;
@@ -193,6 +193,16 @@ export default function AdminTableEditor({
             className="pl-9"
           />
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => queryClient.invalidateQueries({ queryKey: [queryKey] })}
+          disabled={isFetching}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
         <Button size="sm" onClick={openCreate}>
           <Plus className="h-4 w-4 mr-1" /> Add {singularTitle}
         </Button>
@@ -313,7 +323,20 @@ export default function AdminTableEditor({
                   {field.label}
                   {field.required && <span className="text-destructive ml-1">*</span>}
                 </Label>
-                {field.type === 'select' ? (
+                {field.type === 'checkbox' ? (
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      id={field.key}
+                      type="checkbox"
+                      checked={!!formValues[field.key]}
+                      onChange={e => setFormValues(v => ({ ...v, [field.key]: e.target.checked }))}
+                      className="h-4 w-4 rounded border-input accent-green-fresh cursor-pointer"
+                    />
+                    <label htmlFor={field.key} className="text-sm text-muted-foreground cursor-pointer">
+                      {field.label}
+                    </label>
+                  </div>
+                ) : field.type === 'select' ? (
                   <Select
                     value={String(formValues[field.key] ?? '')}
                     onValueChange={val =>

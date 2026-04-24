@@ -26,7 +26,7 @@ const router = Router();
 const FULL_SUBMISSION_INCLUDE = {
   crop: { select: { id: true, name: true, label: true, poorBrix: true, averageBrix: true, goodBrix: true, excellentBrix: true, category: true } },
   brand: { select: { id: true, name: true, label: true } },
-  place: { select: { id: true, label: true, latitude: true, longitude: true, streetAddress: true, city: true, state: true, country: true } },
+  venue: { select: { id: true, name: true, posType: true, latitude: true, longitude: true, streetAddress: true, city: true, state: true, country: true } },
   user: { select: { id: true, displayName: true } },
   verifier: { select: { id: true, displayName: true } },
   images: { select: { imageUrl: true } },
@@ -53,14 +53,16 @@ function formatFullSubmission(s: any) {
     brand_id: s.brand?.id ?? null,
     brand_name: s.brand?.name ?? null,
     brand_label: s.brand?.label ?? null,
-    place_id: s.place?.id ?? null,
-    place_label: s.place?.label ?? null,
-    latitude: s.place?.latitude ?? null,
-    longitude: s.place?.longitude ?? null,
-    street_address: s.place?.streetAddress ?? null,
-    city: s.place?.city ?? null,
-    state: s.place?.state ?? null,
-    country: s.place?.country ?? null,
+    place_id: s.venue?.id ?? null,
+    place_label: s.venue?.name ?? null,
+    latitude: s.venue?.latitude ?? null,
+    longitude: s.venue?.longitude ?? null,
+    street_address: s.venue?.streetAddress ?? null,
+    city: s.venue?.city ?? null,
+    state: s.venue?.state ?? null,
+    country: s.venue?.country ?? null,
+    pos_type: s.venue?.posType ?? null,
+    skip_venue_prompt: s.skipVenuePrompt ?? false,
     user_id: s.user?.id ?? null,
     user_display_name: s.user?.displayName ?? null,
     verified_by_display_name: s.verifier?.displayName ?? null,
@@ -87,13 +89,13 @@ router.get('/', async (req: Request, res: Response) => {
       where.crop = { ...where.crop, category: req.query.category as string };
     }
     if (req.query.city) {
-      where.place = { ...where.place, city: { equals: req.query.city as string, mode: 'insensitive' } };
+      where.venue = { ...where.venue, city: { equals: req.query.city as string, mode: 'insensitive' } };
     }
     if (req.query.state) {
-      where.place = { ...where.place, state: { equals: req.query.state as string, mode: 'insensitive' } };
+      where.venue = { ...where.venue, state: { equals: req.query.state as string, mode: 'insensitive' } };
     }
     if (req.query.country) {
-      where.place = { ...where.place, country: { equals: req.query.country as string, mode: 'insensitive' } };
+      where.venue = { ...where.venue, country: { equals: req.query.country as string, mode: 'insensitive' } };
     }
     if (req.query.brixMin) {
       where.brixValue = { ...where.brixValue, gte: Number(req.query.brixMin) };
@@ -114,7 +116,7 @@ router.get('/', async (req: Request, res: Response) => {
         { crop: { label: { contains: s, mode: 'insensitive' } } },
         { brand: { name: { contains: s, mode: 'insensitive' } } },
         { brand: { label: { contains: s, mode: 'insensitive' } } },
-        { place: { label: { contains: s, mode: 'insensitive' } } },
+        { venue: { name: { contains: s, mode: 'insensitive' } } },
         { outlierNotes: { contains: s, mode: 'insensitive' } },
       ];
     }
@@ -124,7 +126,7 @@ router.get('/', async (req: Request, res: Response) => {
       assessment_date: { assessmentDate: sortOrder },
       brix_value: { brixValue: sortOrder },
       crop_name: { crop: { name: sortOrder } },
-      place_label: { place: { label: sortOrder } },
+      place_label: { venue: { name: sortOrder } },
     };
 
     const submissions = await prisma.submission.findMany({
@@ -132,7 +134,7 @@ router.get('/', async (req: Request, res: Response) => {
       include: {
         crop: { select: { id: true, name: true, label: true, poorBrix: true, averageBrix: true, goodBrix: true, excellentBrix: true, category: true } },
         brand: { select: { id: true, name: true, label: true } },
-        place: { select: { id: true, label: true, latitude: true, longitude: true, streetAddress: true, city: true, state: true, country: true } },
+        venue: { select: { id: true, name: true, posType: true, latitude: true, longitude: true, streetAddress: true, city: true, state: true, country: true } },
       },
       orderBy: orderByMap[sortBy] || { assessmentDate: 'desc' },
       skip: offset,
@@ -160,14 +162,16 @@ router.get('/', async (req: Request, res: Response) => {
       brand_id: s.brand?.id ?? null,
       brand_name: s.brand?.name ?? null,
       brand_label: s.brand?.label ?? null,
-      place_id: s.place?.id ?? null,
-      place_label: s.place?.label ?? null,
-      latitude: s.place?.latitude ?? null,
-      longitude: s.place?.longitude ?? null,
-      street_address: s.place?.streetAddress ?? null,
-      city: s.place?.city ?? null,
-      state: s.place?.state ?? null,
-      country: s.place?.country ?? null,
+      place_id: s.venue?.id ?? null,
+      place_label: s.venue?.name ?? null,
+      latitude: s.venue?.latitude ?? null,
+      longitude: s.venue?.longitude ?? null,
+      street_address: s.venue?.streetAddress ?? null,
+      city: s.venue?.city ?? null,
+      state: s.venue?.state ?? null,
+      country: s.venue?.country ?? null,
+      pos_type: s.venue?.posType ?? null,
+      skip_venue_prompt: s.skipVenuePrompt ?? false,
     }));
 
     res.json(result);
@@ -189,13 +193,13 @@ router.get('/count', async (req: Request, res: Response) => {
       where.crop = { ...where.crop, category: req.query.category as string };
     }
     if (req.query.city) {
-      where.place = { ...where.place, city: { equals: req.query.city as string, mode: 'insensitive' } };
+      where.venue = { ...where.venue, city: { equals: req.query.city as string, mode: 'insensitive' } };
     }
     if (req.query.state) {
-      where.place = { ...where.place, state: { equals: req.query.state as string, mode: 'insensitive' } };
+      where.venue = { ...where.venue, state: { equals: req.query.state as string, mode: 'insensitive' } };
     }
     if (req.query.country) {
-      where.place = { ...where.place, country: { equals: req.query.country as string, mode: 'insensitive' } };
+      where.venue = { ...where.venue, country: { equals: req.query.country as string, mode: 'insensitive' } };
     }
     if (req.query.brixMin) {
       where.brixValue = { ...where.brixValue, gte: Number(req.query.brixMin) };
@@ -230,7 +234,8 @@ router.get('/bounds', async (req: Request, res: Response) => {
     const submissions = await prisma.submission.findMany({
       where: {
         verified: true,
-        place: {
+        skipVenuePrompt: false,
+        venue: {
           latitude: { not: null, gte: south, lte: north },
           longitude: { not: null, gte: west, lte: east },
         },
@@ -238,7 +243,7 @@ router.get('/bounds', async (req: Request, res: Response) => {
       include: {
         crop: { select: { id: true, name: true, label: true, poorBrix: true, averageBrix: true, goodBrix: true, excellentBrix: true, category: true } },
         brand: { select: { id: true, name: true, label: true } },
-        place: { select: { id: true, label: true, latitude: true, longitude: true, streetAddress: true, city: true, state: true, country: true } },
+        venue: { select: { id: true, name: true, posType: true, latitude: true, longitude: true, streetAddress: true, city: true, state: true, country: true } },
       },
       orderBy: { assessmentDate: sortOrder },
       take: limit,
@@ -250,6 +255,7 @@ router.get('/bounds', async (req: Request, res: Response) => {
       brix_value: Number(s.brixValue),
       verified: s.verified,
       crop_variety: s.cropVariety,
+      purchase_date: s.purchaseDate,
       crop_id: s.crop?.id ?? null,
       crop_name: s.crop?.name ?? null,
       crop_label: s.crop?.label ?? null,
@@ -261,14 +267,16 @@ router.get('/bounds', async (req: Request, res: Response) => {
       brand_id: s.brand?.id ?? null,
       brand_name: s.brand?.name ?? null,
       brand_label: s.brand?.label ?? null,
-      place_id: s.place?.id ?? null,
-      place_label: s.place?.label ?? null,
-      latitude: s.place?.latitude ?? null,
-      longitude: s.place?.longitude ?? null,
-      street_address: s.place?.streetAddress ?? null,
-      city: s.place?.city ?? null,
-      state: s.place?.state ?? null,
-      country: s.place?.country ?? null,
+      place_id: s.venue?.id ?? null,
+      place_label: s.venue?.name ?? null,
+      latitude: s.venue?.latitude ?? null,
+      longitude: s.venue?.longitude ?? null,
+      street_address: s.venue?.streetAddress ?? null,
+      city: s.venue?.city ?? null,
+      state: s.venue?.state ?? null,
+      country: s.venue?.country ?? null,
+      pos_type: s.venue?.posType ?? null,
+      skip_venue_prompt: s.skipVenuePrompt ?? false,
     }));
 
     res.json(result);
@@ -393,7 +401,7 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
     if (body.outlier_notes !== undefined) data.outlierNotes = body.outlier_notes;
     if (body.crop_id !== undefined) data.cropId = body.crop_id;
     if (body.brand_id !== undefined) data.brandId = body.brand_id;
-    if (body.location_id !== undefined) data.locationId = body.location_id;
+    if (body.venue_id !== undefined) data.venueId = body.venue_id;
 
     // Only admin can update verification status
     if (isAdmin) {

@@ -31,6 +31,7 @@ interface ApiSubmissionRow {
   city: string | null;
   state: string | null;
   country: string | null;
+  pos_type: string | null;
   user_id?: string | null;
   user_display_name?: string | null;
   verified_by_display_name?: string | null;
@@ -48,9 +49,10 @@ function formatApiRow(r: ApiSubmissionRow): BrixDataPoint {
     category: r.category ?? '',
     latitude: r.latitude ?? null,
     longitude: r.longitude ?? null,
-    placeName: r.place_label ?? '',
+    placeName: r.street_address ?? '',
     locationName: r.place_label ?? '',
     streetAddress: r.street_address ?? '',
+    posType: r.pos_type ?? null,
     city: r.city ?? '',
     state: r.state ?? '',
     country: r.country ?? '',

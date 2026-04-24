@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   fetchAllUsers,
@@ -99,7 +99,8 @@ export default function AdminUserManagement() {
               : `${total} total user${total !== 1 ? 's' : ''}`}
           </p>
         </div>
-        <Button variant="ghost" onClick={invalidate} disabled={isFetching}>
+        <Button variant="ghost" onClick={invalidate} disabled={isFetching} className="flex items-center gap-2">
+          <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>

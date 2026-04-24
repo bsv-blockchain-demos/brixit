@@ -146,11 +146,9 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     const properties = feature.properties || {};
     const context = properties.context || {};
 
-    // Log to debug structure
-    console.log('Mapbox feature:', feature);
-
-    const poi_name = properties.name || '';
-    const business_name = properties.category ? properties.name : '';
+    const isPoi = properties.feature_type === 'poi';
+    const poi_name = isPoi ? (properties.name || '') : '';
+    const business_name = (isPoi && properties.category) ? (properties.name || '') : '';
 
     let street_address = '';
 

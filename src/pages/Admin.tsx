@@ -7,7 +7,7 @@ import AdminSubmissionQueue from '@/components/Admin/AdminSubmissionQueue';
 import AdminOverview from '@/components/Admin/AdminOverview';
 import AdminCrops from '@/components/Admin/AdminCrops';
 import AdminBrands from '@/components/Admin/AdminBrands';
-import AdminLocations from '@/components/Admin/AdminLocations';
+import AdminVenues from '@/components/Admin/AdminVenues';
 import AdminReferenceData from '@/components/Admin/AdminReferenceData';
 import Header from '@/components/Layout/Header';
 import { Button } from '@/components/ui/button';
@@ -50,7 +50,7 @@ export default function Admin() {
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="crops">Crops</TabsTrigger>
             <TabsTrigger value="brands">Brands</TabsTrigger>
-            <TabsTrigger value="locations">Locations</TabsTrigger>
+            <TabsTrigger value="venues">Venues</TabsTrigger>
             <TabsTrigger value="reference">Reference Data</TabsTrigger>
           </TabsList>
 
@@ -86,14 +86,14 @@ export default function Admin() {
             <AdminBrands />
           </TabsContent>
 
-          <TabsContent value="locations" className="mt-6">
+          <TabsContent value="venues" className="mt-6">
             <div className="mb-4">
-              <h2 className="text-xl font-semibold">Locations</h2>
+              <h2 className="text-xl font-semibold">Venues</h2>
               <p className="text-sm text-muted-foreground">
-                Manage location chains and store types
+                Manage community-submitted and system-created venues
               </p>
             </div>
-            <AdminLocations />
+            <AdminVenues />
           </TabsContent>
 
           <TabsContent value="reference" className="mt-6">

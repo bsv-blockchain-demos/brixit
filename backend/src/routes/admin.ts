@@ -80,7 +80,7 @@ router.get('/users/:id', async (req: AuthenticatedRequest, res: Response) => {
           include: {
             crop: { select: { name: true, label: true, poorBrix: true, excellentBrix: true } },
             brand: { select: { name: true, label: true } },
-            place: { select: { label: true, city: true, state: true } },
+            venue: { select: { name: true, city: true, state: true } },
           },
           orderBy: { assessmentDate: 'desc' },
           take: 50,
@@ -114,9 +114,9 @@ router.get('/users/:id', async (req: AuthenticatedRequest, res: Response) => {
         excellent_brix: s.crop?.excellentBrix ? Number(s.crop.excellentBrix) : null,
         brand_name: s.brand?.name ?? null,
         brand_label: s.brand?.label ?? null,
-        place_label: s.place?.label ?? null,
-        place_city: s.place?.city ?? null,
-        place_state: s.place?.state ?? null,
+        place_label: s.venue?.name ?? null,
+        place_city: s.venue?.city ?? null,
+        place_state: s.venue?.state ?? null,
       })),
     });
   } catch (err) {
@@ -140,7 +140,7 @@ router.get('/submissions', async (req: AuthenticatedRequest, res: Response) => {
       where.OR = [
         { crop: { name: { contains: search, mode: 'insensitive' } } },
         { crop: { label: { contains: search, mode: 'insensitive' } } },
-        { place: { label: { contains: search, mode: 'insensitive' } } },
+        { venue: { name: { contains: search, mode: 'insensitive' } } },
         { brand: { name: { contains: search, mode: 'insensitive' } } },
         { user: { displayName: { contains: search, mode: 'insensitive' } } },
       ];
@@ -152,7 +152,7 @@ router.get('/submissions', async (req: AuthenticatedRequest, res: Response) => {
         include: {
           crop: { select: { name: true, label: true } },
           brand: { select: { name: true, label: true } },
-          place: { select: { label: true, city: true, state: true } },
+          venue: { select: { name: true, city: true, state: true } },
           user: { select: { id: true, displayName: true } },
         },
         orderBy: { assessmentDate: 'desc' },
@@ -171,9 +171,9 @@ router.get('/submissions', async (req: AuthenticatedRequest, res: Response) => {
       crop_label: s.crop?.label ?? null,
       brand_name: s.brand?.name ?? null,
       brand_label: s.brand?.label ?? null,
-      place_label: s.place?.label ?? null,
-      place_city: s.place?.city ?? null,
-      place_state: s.place?.state ?? null,
+      place_label: s.venue?.name ?? null,
+      place_city: s.venue?.city ?? null,
+      place_state: s.venue?.state ?? null,
       user_display_name: s.user?.displayName ?? null,
       user_id: s.user?.id ?? null,
     }));
@@ -199,7 +199,7 @@ router.get('/submissions/unverified', async (req: AuthenticatedRequest, res: Res
         include: {
           crop: { select: { name: true, label: true } },
           brand: { select: { name: true, label: true } },
-          place: { select: { label: true, city: true, state: true } },
+          venue: { select: { name: true, city: true, state: true } },
           user: { select: { id: true, displayName: true } },
         },
         orderBy: { assessmentDate: 'desc' },
@@ -217,9 +217,9 @@ router.get('/submissions/unverified', async (req: AuthenticatedRequest, res: Res
       crop_label: s.crop?.label ?? null,
       brand_name: s.brand?.name ?? null,
       brand_label: s.brand?.label ?? null,
-      place_label: s.place?.label ?? null,
-      place_city: s.place?.city ?? null,
-      place_state: s.place?.state ?? null,
+      place_label: s.venue?.name ?? null,
+      place_city: s.venue?.city ?? null,
+      place_state: s.venue?.state ?? null,
       user_display_name: s.user?.displayName ?? null,
       user_id: s.user?.id ?? null,
     }));

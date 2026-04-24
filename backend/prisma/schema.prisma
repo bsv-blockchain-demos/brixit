@@ -40,6 +40,7 @@ model User {
   walletIdentity   WalletIdentity?
   submissions      Submission[]      @relation("UserSubmissions")
   verifiedItems    Submission[]      @relation("VerifiedByUser")
+  venues           Venue[]           @relation("VenueCreator")
 
   @@index([country], name: "users_country_idx")
   @@index([state], name: "users_state_idx")
@@ -84,16 +85,6 @@ model CropCategory {
   @@map("crop_categories")
 }
 
-// Lookup table — replaces the old LocationType enum.
-model LocationType {
-  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name      String  @unique
-  label     String?
-  sortOrder Int     @default(0) @map("sort_order")
-
-  @@map("location_types")
-}
-
 model Crop {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name         String   @unique
@@ -119,37 +110,28 @@ model Brand {
   @@map("brands")
 }
 
-model Location {
-  id    String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name  String  @unique
-  label String?
-  type  String?  // references location_types.name
+// ─── Venues ──────────────────────────────────────────────────────────────────
 
-  places      Place[]
-  submissions Submission[]
+model Venue {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  posType         String?   @map("pos_type")
+  latitude        Float?
+  longitude       Float?
+  streetAddress   String?   @map("street_address")
+  city            String?
+  state           String?
+  country         String?
+  verified        Boolean   @default(false)
+  createdByUserId   String?   @map("created_by_user_id") @db.Uuid
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
-  @@map("locations")
-}
+  createdBy    User?        @relation("VenueCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  submissions  Submission[]
 
-model Place {
-  id                String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  label             String?
-  latitude          Float?
-  longitude         Float?
-  streetAddress     String? @map("street_address")
-  city              String?
-  state             String?
-  country           String?
-  normalizedAddress String? @map("normalized_address")
-  locationId        String? @map("location_id") @db.Uuid
-
-  location    Location?    @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  submissions Submission[]
-
-  @@index([locationId], name: "idx_places_location_id")
-  @@index([country], name: "idx_places_country")
-  @@index([latitude, longitude], name: "idx_places_lat_lng")
-  @@map("places")
+  @@index([latitude, longitude], name: "idx_venues_lat_lng")
+  @@index([city], name: "idx_venues_city")
+  @@map("venues")
 }
 
 // ─── Submissions ─────────────────────────────────────────────────────────────
@@ -159,8 +141,8 @@ model Submission {
   userId          String?   @map("user_id") @db.Uuid
   cropId          String    @map("crop_id") @db.Uuid
   brandId         String?   @map("brand_id") @db.Uuid
-  locationId      String?   @map("location_id") @db.Uuid
-  placeId         String?   @map("place_id") @db.Uuid
+  venueId         String?   @map("venue_id") @db.Uuid
+  skipVenuePrompt Boolean   @default(false) @map("skip_venue_prompt")
   brixValue       Decimal   @map("brix_value") @db.Decimal(5, 2)
   cropVariety     String?   @map("crop_variety")
   assessmentDate  DateTime  @map("assessment_date") @db.Timestamptz
@@ -175,15 +157,13 @@ model Submission {
   user     User?     @relation("UserSubmissions", fields: [userId], references: [id])
   crop     Crop      @relation(fields: [cropId], references: [id])
   brand    Brand?    @relation(fields: [brandId], references: [id])
-  location Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  place    Place?    @relation(fields: [placeId], references: [id])
+  venue    Venue?    @relation(fields: [venueId], references: [id], onDelete: SetNull)
   verifier User?     @relation("VerifiedByUser", fields: [verifiedBy], references: [id])
   images   SubmissionImage[]
 
   @@index([cropId], name: "submissions_crop_id_idx")
-  @@index([placeId], name: "submissions_place_id_idx")
-  @@index([locationId], name: "submissions_location_id_idx")
   @@index([userId], name: "submissions_user_id_idx")
+  @@index([venueId], name: "submissions_venue_id_idx")
   @@map("submissions")
 }
 

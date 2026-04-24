@@ -183,21 +183,7 @@ export interface AdminBrand {
   label: string | null;
 }
 
-export interface AdminLocation {
-  id: string;
-  name: string;
-  label: string | null;
-  type: string | null;
-}
-
 export interface AdminCategory {
-  id: string;
-  name: string;
-  label: string | null;
-  sort_order: number;
-}
-
-export interface AdminLocationType {
   id: string;
   name: string;
   label: string | null;
@@ -243,19 +229,31 @@ export const updateAdminBrand = (id: string, d: Partial<AdminBrand>) =>
 export const deleteAdminBrand = (id: string) =>
   apiDelete(`/api/admin/crud/brands/${id}`);
 
-// Locations
+// Venues
 
-export const fetchAdminLocations = (p: { search?: string; limit: number; offset: number }) =>
-  apiGet<PaginatedResult<AdminLocation>>(`/api/admin/crud/locations${buildQs(p)}`);
+export interface AdminVenue {
+  id: string;
+  name: string;
+  posType: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  verified: boolean;
+}
 
-export const createAdminLocation = (d: Partial<AdminLocation>) =>
-  apiPost<AdminLocation>('/api/admin/crud/locations', d);
+export const fetchAdminVenues = (p: { search?: string; limit: number; offset: number }) =>
+  apiGet<PaginatedResult<AdminVenue>>(`/api/admin/crud/venues${buildQs(p)}`);
 
-export const updateAdminLocation = (id: string, d: Partial<AdminLocation>) =>
-  apiPut<AdminLocation>(`/api/admin/crud/locations/${id}`, d);
+export const createAdminVenue = (d: Partial<AdminVenue>) =>
+  apiPost<AdminVenue>('/api/admin/crud/venues', d);
 
-export const deleteAdminLocation = (id: string) =>
-  apiDelete(`/api/admin/crud/locations/${id}`);
+export const updateAdminVenue = (id: string, d: Partial<AdminVenue>) =>
+  apiPut<AdminVenue>(`/api/admin/crud/venues/${id}`, d);
+
+export const deleteAdminVenue = (id: string) =>
+  apiDelete(`/api/admin/crud/venues/${id}`);
 
 // Categories
 
@@ -271,16 +269,3 @@ export const updateAdminCategory = (id: string, d: Partial<AdminCategory>) =>
 export const deleteAdminCategory = (id: string) =>
   apiDelete(`/api/admin/crud/categories/${id}`);
 
-// Location Types
-
-export const fetchAdminLocationTypes = (p: { search?: string; limit: number; offset: number }) =>
-  apiGet<PaginatedResult<AdminLocationType>>(`/api/admin/crud/location-types${buildQs(p)}`);
-
-export const createAdminLocationType = (d: Partial<AdminLocationType>) =>
-  apiPost<AdminLocationType>('/api/admin/crud/location-types', d);
-
-export const updateAdminLocationType = (id: string, d: Partial<AdminLocationType>) =>
-  apiPut<AdminLocationType>(`/api/admin/crud/location-types/${id}`, d);
-
-export const deleteAdminLocationType = (id: string) =>
-  apiDelete(`/api/admin/crud/location-types/${id}`);

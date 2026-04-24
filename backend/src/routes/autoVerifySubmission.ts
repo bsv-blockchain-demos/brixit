@@ -6,7 +6,7 @@
  *
  * Accepts a session context (shared across all readings) plus an array of
  * crop readings.  All DB writes execute in a single transaction — brand,
- * location, place, and every submission row commit together or not at all.
+ * venue, and every submission row commit together or not at all.
  *
  * Request body:
  *   {
@@ -14,6 +14,7 @@
  *     latitude, longitude, locationName,
  *     street_address, city, state, country,
  *     poi_name, business_name, normalized_address, store_name, pos_type,
+ *     venueId, newVenue, skipVenuePrompt,
  *     readings: [{ cropName, brixValue }, ...]
  *   }
  *
@@ -28,7 +29,6 @@ import {
   sanitizeInput,
   fixPrecision,
   parseAddressString,
-  createHumanReadableLabel,
   type ParsedAddress,
 } from '../utils/sanitize.js';
 import prisma from '../db/client.js';
@@ -40,6 +40,8 @@ const router = Router();
 interface ReadingInput {
   cropName?: unknown;
   brixValue?: unknown;
+  brandName?: unknown;
+  notes?: unknown;
 }
 
 interface BulkSubmissionRequestBody {
@@ -60,6 +62,9 @@ interface BulkSubmissionRequestBody {
   normalized_address?: unknown;
   store_name?: unknown;
   pos_type?: unknown;
+  venueId?: unknown;
+  newVenue?: unknown;
+  skipVenuePrompt?: unknown;
   readings?: unknown;
 }
 
@@ -109,8 +114,12 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       brix: number;
       poorBrixNum: number | null;
       excellentBrixNum: number | null;
+      brandName: string | null;
+      notes: string | null;
     }
 
+    const sessionBrandName = sanitizeInput(body.brandName);
+    const sessionNotes = sanitizeInput(body.outlierNotes);
     const resolvedReadings: ResolvedReading[] = [];
 
     for (let i = 0; i < rawReadings.length; i++) {
@@ -142,6 +151,8 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
         brix,
         poorBrixNum: cropData.poorBrix ? Number(cropData.poorBrix) : null,
         excellentBrixNum: cropData.excellentBrix ? Number(cropData.excellentBrix) : null,
+        brandName: sanitizeInput(r.brandName) ?? sessionBrandName,
+        notes: sanitizeInput(r.notes) ?? sessionNotes,
       });
     }
 
@@ -170,101 +181,80 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 
     const purchaseDateStr = typeof body.purchaseDate === 'string' ? body.purchaseDate : null;
 
-    // ── Single transaction: brand + location + place + all submissions ─────
+    // ── Single transaction: venue + brand + all submissions ───────────────
     const submissionResults = await prisma.$transaction(async (tx) => {
-      // Brand find-or-create
-      let brandId: string | null = null;
-      const sanitizedBrandName = sanitizeInput(body.brandName);
-      if (sanitizedBrandName) {
-        const existingBrand = await tx.brand.findFirst({
-          where: { name: { equals: sanitizedBrandName, mode: 'insensitive' } },
-        });
-        brandId = existingBrand
-          ? existingBrand.id
-          : (await tx.brand.create({ data: { name: sanitizedBrandName } })).id;
-      }
+      // Resolve venue
+      const skipVenue = body.skipVenuePrompt === true;
+      let venueId: string | null = null;
 
-      // Location lookup
-      let locationId: string | null = null;
-      if (sanitizedStoreName) {
-        const matchingLocation = await tx.location.findFirst({
-          where: { name: { equals: sanitizedStoreName, mode: 'insensitive' } },
-        });
-        if (matchingLocation) locationId = matchingLocation.id;
-      } else {
-        const businessOrPoi = sanitizeInput(body.business_name || body.poi_name);
-        if (businessOrPoi) {
-          const businessLocation = await tx.location.findFirst({
-            where: { name: { equals: businessOrPoi, mode: 'insensitive' } },
-          });
-          if (businessLocation) locationId = businessLocation.id;
+      if (!skipVenue) {
+        const existingVenueId = typeof body.venueId === 'string' ? body.venueId : null;
+
+        if (existingVenueId) {
+          // Use selected existing venue
+          venueId = existingVenueId;
+        } else {
+          // Determine name: from newVenue, or from Mapbox poi_name/business_name
+          const newVenuePayload = body.newVenue && typeof body.newVenue === 'object'
+            ? body.newVenue as { name?: string; posType?: string }
+            : null;
+
+          const poiName = sanitizeInput(body.poi_name);
+          const businessName = sanitizeInput(body.business_name);
+          const venueName = newVenuePayload?.name
+            ? sanitizeInput(newVenuePayload.name)
+            : (businessName || poiName || sanitizeInput(body.store_name));
+
+          if (venueName) {
+            // Deduplicate: find within ~100m, case-insensitive name match
+            const tolerance = 0.001;
+            const existing = await tx.$queryRaw<{ id: string }[]>`
+              SELECT id FROM venues
+              WHERE lower(name) = lower(${venueName})
+                AND ABS(latitude - ${fixedLat}) < ${tolerance}
+                AND ABS(longitude - ${fixedLng}) < ${tolerance}
+              LIMIT 1
+            `;
+
+            if (existing.length > 0) {
+              venueId = existing[0].id;
+            } else {
+              const venue = await tx.venue.create({
+                data: {
+                  name: venueName,
+                  posType: newVenuePayload?.posType ?? sanitizeInput(body.pos_type) ?? null,
+                  latitude: fixedLat,
+                  longitude: fixedLng,
+                  streetAddress: finalStreetAddress,
+                  city: finalCity,
+                  state: finalState,
+                  country: finalCountry,
+                  verified: !newVenuePayload, // system-created = verified, community = unverified
+                  createdByUserId: newVenuePayload ? authedUserId : null,
+                },
+              });
+              venueId = venue.id;
+            }
+          }
         }
-      }
-
-      // Place proximity search / find-or-create
-      const tolerance = 0.0001;
-      const nearbyPlaces = await tx.place.findMany({
-        where: {
-          latitude: { gte: fixedLat - tolerance, lte: fixedLat + tolerance },
-          longitude: { gte: fixedLng - tolerance, lte: fixedLng + tolerance },
-        },
-        take: 5,
-      });
-
-      interface ExistingPlace {
-        id: string;
-        locationId: string | null;
-        city: string | null;
-        state: string | null;
-        country: string | null;
-      }
-
-      let existingPlace: ExistingPlace | null =
-        nearbyPlaces.find((p: ExistingPlace) => p.locationId === locationId)
-        || nearbyPlaces[0]
-        || null;
-
-      let placeId: string;
-      if (existingPlace) {
-        placeId = existingPlace.id;
-        if (!existingPlace.locationId && locationId) {
-          await tx.place.update({ where: { id: existingPlace.id }, data: { locationId } });
-        }
-        finalCity = finalCity ?? existingPlace.city;
-        finalState = finalState ?? existingPlace.state;
-        finalCountry = finalCountry ?? existingPlace.country;
-      } else {
-        const placeLabel = createHumanReadableLabel({
-          store_name: sanitizedStoreName,
-          business_name: sanitizeInput(body.business_name),
-          poi_name: sanitizeInput(body.poi_name),
-          street_address: finalStreetAddress,
-          city: finalCity,
-          state: finalState,
-          country: finalCountry,
-          locationName: sanitizeInput(body.locationName),
-        });
-        const newPlace = await tx.place.create({
-          data: {
-            label: placeLabel,
-            latitude: fixedLat,
-            longitude: fixedLng,
-            streetAddress: finalStreetAddress,
-            city: finalCity,
-            state: finalState,
-            country: finalCountry,
-            locationId,
-            normalizedAddress: sanitizeInput(body.normalized_address),
-          },
-        });
-        placeId = newPlace.id;
       }
 
       // Insert one submission per reading
       const results: { submission_id: string; verified: boolean }[] = [];
 
       for (const reading of resolvedReadings) {
-        const { cropId, brix, poorBrixNum, excellentBrixNum } = reading;
+        const { cropId, brix, poorBrixNum, excellentBrixNum, brandName: readingBrandName, notes } = reading;
+
+        // Per-reading brand find-or-create
+        let brandId: string | null = null;
+        if (readingBrandName && readingBrandName.toLowerCase() !== 'unknown') {
+          const existingBrand = await tx.brand.findFirst({
+            where: { name: { equals: readingBrandName, mode: 'insensitive' } },
+          });
+          brandId = existingBrand
+            ? existingBrand.id
+            : (await tx.brand.create({ data: { name: readingBrandName } })).id;
+        }
 
         let isVerified = true;
         let verifiedById: string | null = null;
@@ -283,16 +273,16 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
         const submission = await tx.submission.create({
           data: {
             cropId,
-            placeId,
-            locationId,
+            venueId,
             brandId,
+            skipVenuePrompt: skipVenue,
             cropVariety: null,
             brixValue: brix,
             userId: authedUserId,
             contributorName,
             assessmentDate: new Date(assessmentDateStr),
             purchaseDate: purchaseDateStr ? new Date(purchaseDateStr) : null,
-            outlierNotes: sanitizeInput(body.outlierNotes),
+            outlierNotes: notes,
             verified: isVerified,
             verifiedBy: verifiedById,
             verifiedAt,

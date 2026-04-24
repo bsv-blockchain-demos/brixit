@@ -10,9 +10,8 @@
  *   DELETE /crops/:id             delete (blocked if submissions exist)
  *
  *   GET/POST/PUT/DELETE /brands
- *   GET/POST/PUT/DELETE /locations
+ *   GET/POST/PUT/DELETE /venues
  *   GET/POST/PUT/DELETE /categories       → crop_categories
- *   GET/POST/PUT/DELETE /location-types   → location_types
  */
 import { Router } from 'express';
 import type { Request, Response } from 'express';
@@ -166,59 +165,67 @@ router.delete('/brands/:id', async (req: Request, res: Response) => {
   }
 });
 
-// ─── Locations ────────────────────────────────────────────────────────────────
+// ─── Venues ──────────────────────────────────────────────────────────────────
 
-router.get('/locations', async (req: Request, res: Response) => {
+router.get('/venues', async (req: Request, res: Response) => {
   try {
-    const { limit, offset, search } = paginate(req);
-    const where = search
-      ? { OR: [{ name: { contains: search, mode: 'insensitive' as const } }, { label: { contains: search, mode: 'insensitive' as const } }] }
-      : undefined;
+    const limit = Math.min(Number(req.query.limit) || 50, 200);
+    const offset = Number(req.query.offset) || 0;
+    const search = req.query.search as string | undefined;
+    const where: any = search ? { name: { contains: search, mode: 'insensitive' } } : {};
     const [data, total] = await Promise.all([
-      prisma.location.findMany({ where, orderBy: { name: 'asc' }, take: limit, skip: offset }),
-      prisma.location.count({ where }),
+      prisma.venue.findMany({ where, orderBy: { name: 'asc' }, take: limit, skip: offset }),
+      prisma.venue.count({ where }),
     ]);
     res.json({ data, total });
-  } catch (err) { console.error('[admin/crud/locations GET]', err); res.status(500).json({ error: 'Failed to fetch locations' }); }
+  } catch (err) { console.error('[admin/crud/venues GET]', err); res.status(500).json({ error: 'Failed to fetch venues' }); }
 });
 
-router.post('/locations', async (req: Request, res: Response) => {
+router.post('/venues', async (req: Request, res: Response) => {
   try {
-    const { name, label, type } = req.body;
+    const { name, posType, latitude, longitude, verified } = req.body;
     if (!name?.trim()) { res.status(400).json({ error: 'name is required' }); return; }
-    const location = await prisma.location.create({ data: { name: name.trim(), label: label?.trim() || null, type: type?.trim() || null } });
-    res.status(201).json(location);
+    const venue = await prisma.venue.create({
+      data: {
+        name: name.trim(),
+        posType: posType?.trim() || null,
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null,
+        verified: verified === true,
+        createdByUserId: null,
+      },
+    });
+    res.status(201).json(venue);
   } catch (err: any) {
-    if (err.code === 'P2002') { res.status(409).json({ error: 'A location with that name already exists' }); return; }
-    console.error('[admin/crud/locations POST]', err); res.status(500).json({ error: 'Failed to create location' });
+    console.error('[admin/crud/venues POST]', err);
+    res.status(500).json({ error: 'Failed to create venue' });
   }
 });
 
-router.put('/locations/:id', async (req: Request, res: Response) => {
+router.put('/venues/:id', async (req: Request, res: Response) => {
   try {
+    const { name, posType, latitude, longitude, verified } = req.body;
     const data: any = {};
-    if (req.body.name !== undefined) data.name = req.body.name.trim();
-    if (req.body.label !== undefined) data.label = req.body.label?.trim() || null;
-    if (req.body.type !== undefined) data.type = req.body.type?.trim() || null;
-    const location = await prisma.location.update({ where: { id: req.params.id }, data });
-    res.json(location);
+    if (name !== undefined) data.name = name.trim();
+    if (posType !== undefined) data.posType = posType?.trim() || null;
+    if (latitude !== undefined) data.latitude = parseFloat(latitude);
+    if (longitude !== undefined) data.longitude = parseFloat(longitude);
+    if (verified !== undefined) data.verified = verified === true;
+    const venue = await prisma.venue.update({ where: { id: req.params.id }, data });
+    res.json(venue);
   } catch (err: any) {
-    if (err.code === 'P2025') { res.status(404).json({ error: 'Location not found' }); return; }
-    if (err.code === 'P2002') { res.status(409).json({ error: 'A location with that name already exists' }); return; }
-    console.error('[admin/crud/locations PUT]', err); res.status(500).json({ error: 'Failed to update location' });
+    console.error('[admin/crud/venues PUT]', err);
+    res.status(500).json({ error: 'Failed to update venue' });
   }
 });
 
-router.delete('/locations/:id', async (req: Request, res: Response) => {
+router.delete('/venues/:id', async (req: Request, res: Response) => {
   try {
-    const count = await prisma.submission.count({ where: { locationId: req.params.id } });
-    if (count > 0) { res.status(409).json({ error: `Cannot delete — ${count} submission(s) reference this location` }); return; }
-    await prisma.location.delete({ where: { id: req.params.id } });
+    const count = await prisma.submission.count({ where: { venueId: req.params.id } });
+    if (count > 0) { res.status(409).json({ error: `Cannot delete — ${count} submission(s) reference this venue` }); return; }
+    await prisma.venue.delete({ where: { id: req.params.id } });
     res.json({ success: true });
-  } catch (err: any) {
-    if (err.code === 'P2025') { res.status(404).json({ error: 'Location not found' }); return; }
-    console.error('[admin/crud/locations DELETE]', err); res.status(500).json({ error: 'Failed to delete location' });
-  }
+  } catch (err) { console.error('[admin/crud/venues DELETE]', err); res.status(500).json({ error: 'Failed to delete venue' }); }
 });
 
 // ─── Crop Categories ─────────────────────────────────────────────────────────
@@ -271,58 +278,6 @@ router.delete('/categories/:id', async (req: Request, res: Response) => {
     await prisma.cropCategory.delete({ where: { id: req.params.id } });
     res.json({ success: true });
   } catch (err) { console.error('[admin/crud/categories DELETE]', err); res.status(500).json({ error: 'Failed to delete category' }); }
-});
-
-// ─── Location Types ───────────────────────────────────────────────────────────
-
-router.get('/location-types', async (req: Request, res: Response) => {
-  try {
-    const { limit, offset, search } = paginate(req);
-    const where = search ? { OR: [{ name: { contains: search, mode: 'insensitive' as const } }, { label: { contains: search, mode: 'insensitive' as const } }] } : undefined;
-    const [data, total] = await Promise.all([
-      prisma.locationType.findMany({ where, orderBy: { sortOrder: 'asc' }, take: limit, skip: offset }),
-      prisma.locationType.count({ where }),
-    ]);
-    res.json({ data: data.map((t: any) => ({ id: t.id, name: t.name, label: t.label, sort_order: t.sortOrder })), total });
-  } catch (err) { console.error('[admin/crud/location-types GET]', err); res.status(500).json({ error: 'Failed to fetch location types' }); }
-});
-
-router.post('/location-types', async (req: Request, res: Response) => {
-  try {
-    const { name, label, sort_order } = req.body;
-    if (!name?.trim()) { res.status(400).json({ error: 'name is required' }); return; }
-    const lt = await prisma.locationType.create({ data: { name: name.trim(), label: label?.trim() || null, sortOrder: Number(sort_order) || 0 } });
-    res.status(201).json({ id: lt.id, name: lt.name, label: lt.label, sort_order: lt.sortOrder });
-  } catch (err: any) {
-    if (err.code === 'P2002') { res.status(409).json({ error: 'A location type with that name already exists' }); return; }
-    console.error('[admin/crud/location-types POST]', err); res.status(500).json({ error: 'Failed to create location type' });
-  }
-});
-
-router.put('/location-types/:id', async (req: Request, res: Response) => {
-  try {
-    const data: any = {};
-    if (req.body.name !== undefined) data.name = req.body.name.trim();
-    if (req.body.label !== undefined) data.label = req.body.label?.trim() || null;
-    if (req.body.sort_order !== undefined) data.sortOrder = Number(req.body.sort_order) || 0;
-    const lt = await prisma.locationType.update({ where: { id: req.params.id }, data });
-    res.json({ id: lt.id, name: lt.name, label: lt.label, sort_order: lt.sortOrder });
-  } catch (err: any) {
-    if (err.code === 'P2025') { res.status(404).json({ error: 'Location type not found' }); return; }
-    if (err.code === 'P2002') { res.status(409).json({ error: 'A location type with that name already exists' }); return; }
-    console.error('[admin/crud/location-types PUT]', err); res.status(500).json({ error: 'Failed to update location type' });
-  }
-});
-
-router.delete('/location-types/:id', async (req: Request, res: Response) => {
-  try {
-    const lt = await prisma.locationType.findUnique({ where: { id: req.params.id } });
-    if (!lt) { res.status(404).json({ error: 'Location type not found' }); return; }
-    const count = await prisma.location.count({ where: { type: lt.name } });
-    if (count > 0) { res.status(409).json({ error: `Cannot delete — ${count} location(s) use this type` }); return; }
-    await prisma.locationType.delete({ where: { id: req.params.id } });
-    res.json({ success: true });
-  } catch (err) { console.error('[admin/crud/location-types DELETE]', err); res.status(500).json({ error: 'Failed to delete location type' }); }
 });
 
 export default router;

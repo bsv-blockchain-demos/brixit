@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, CheckCircle, ChevronLeft, ChevronRight, Clock, Search } from 'lucide-react';
+import { Calendar, CheckCircle, ChevronLeft, ChevronRight, Clock, RefreshCw, Search } from 'lucide-react';
 import {
   fetchUnverifiedSubmissions,
   fetchAllSubmissions,
@@ -184,7 +184,10 @@ function AllSubmissionsTab() {
             ? `${total} result${total !== 1 ? 's' : ''} for "${committedSearch}"`
             : `${total} total submission${total !== 1 ? 's' : ''}`}
         </p>
-        <Button variant="ghost" onClick={invalidate} disabled={isFetching}>Refresh</Button>
+        <Button variant="ghost" onClick={invalidate} disabled={isFetching} className="flex items-center gap-2">
+          <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       <div className="relative">
@@ -247,7 +250,10 @@ function PendingTab() {
         <p className="text-sm text-muted-foreground">
           {total} submission{total !== 1 ? 's' : ''} awaiting review
         </p>
-        <Button variant="ghost" onClick={invalidate} disabled={isFetching}>Refresh</Button>
+        <Button variant="ghost" onClick={invalidate} disabled={isFetching} className="flex items-center gap-2">
+          <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       {isLoading ? (

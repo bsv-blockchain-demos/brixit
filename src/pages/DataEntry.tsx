@@ -30,6 +30,7 @@ import { apiPost, apiFetch } from '@/lib/api';
 import ComboBoxAddable from '../components/ui/combo-box-addable';
 import Combobox from '../components/ui/combo-box';
 import LocationSearch from '../components/common/LocationSearch';
+import VenuePrompt, { type VenueChoice } from '../components/common/VenuePrompt';
 import { useStaticData } from '../hooks/useStaticData';
 import { Slider } from '../components/ui/slider';
 import { useCropThresholds } from '../contexts/CropThresholdContext';
@@ -52,6 +53,8 @@ interface CropReading {
   id: string;
   cropType: string;
   brixLevel: number;
+  brandName: string;
+  notes: string;
 }
 
 const POS_OPTIONS = [
@@ -73,6 +76,8 @@ const mkReading = (): CropReading => ({
   id: crypto.randomUUID(),
   cropType: '',
   brixLevel: 12,
+  brandName: '',
+  notes: '',
 });
 
 // ReadingCard (accordion)
@@ -81,13 +86,15 @@ const ReadingCard: React.FC<{
   reading: CropReading;
   index: number;
   crops: { id: string; name: string; label?: string }[];
+  brands: { id?: string; name: string; label?: string }[];
   errors: Record<string, string>;
   showRemove: boolean;
   isOpen: boolean;
   onChange: (id: string, field: keyof CropReading, value: any) => void;
   onRemove: (id: string) => void;
   onToggle: (id: string) => void;
-}> = ({ reading, index, crops, errors, showRemove, isOpen, onChange, onRemove, onToggle }) => {
+  onAddBrand: (readingId: string, name: string) => void;
+}> = ({ reading, index, crops, brands, errors, showRemove, isOpen, onChange, onRemove, onToggle, onAddBrand }) => {
   const prefersReducedMotion = useReducedMotion();
   const { getThresholds } = useCropThresholds();
   const thresholds = reading.cropType ? getThresholds(reading.cropType) : null;
@@ -180,6 +187,29 @@ const ReadingCard: React.FC<{
                 )}
               </div>
 
+              {/* Brand Name */}
+              <div>
+                <Label
+                  className="flex items-center gap-1 mb-1.5 text-xs font-semibold"
+                  style={{ color: 'var(--text-mid)' }}
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  Farm / Brand Name <span className="text-destructive ml-0.5">*</span>
+                </Label>
+                <ComboBoxAddable
+                  items={[{ name: 'Unknown', label: 'Unknown' }, ...brands]}
+                  value={reading.brandName}
+                  onSelect={val => onChange(reading.id, 'brandName', val)}
+                  onAddNew={name => onAddBrand(reading.id, name)}
+                  placeholder="Select or enter farm/brand name"
+                />
+                {errors[`reading_${reading.id}_brandName`] && (
+                  <p className="text-destructive text-xs mt-1 flex items-center gap-1">
+                    <X className="w-3 h-3" />{errors[`reading_${reading.id}_brandName`]}
+                  </p>
+                )}
+              </div>
+
               {/* BRIX */}
               <div>
                 <Label
@@ -221,6 +251,30 @@ const ReadingCard: React.FC<{
                   </p>
                 )}
               </div>
+
+              {/* Notes */}
+              <div>
+                <Label
+                  className="flex items-center gap-1 mb-1.5 text-xs font-semibold"
+                  style={{ color: 'var(--text-mid)' }}
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  Notes
+                </Label>
+                <Textarea
+                  placeholder="Any observations or anomalies..."
+                  value={reading.notes}
+                  onChange={e => onChange(reading.id, 'notes', e.target.value)}
+                  rows={2}
+                  className={`w-full border-2 rounded-xl px-3 py-2 text-sm transition-all hover:border-green-light focus:outline-none focus:ring-4 focus:ring-green-pale ${errors[`reading_${reading.id}_notes`] ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh bg-card'}`}
+                  style={{ color: 'var(--text-dark)' }}
+                />
+                {errors[`reading_${reading.id}_notes`] && (
+                  <p className="text-destructive text-xs mt-1 flex items-center gap-1">
+                    <X className="w-3 h-3" />{errors[`reading_${reading.id}_notes`]}
+                  </p>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
@@ -256,7 +310,6 @@ const DataEntry = () => {
   const [openReadingId, setOpenReadingId] = useState<string | null>(firstReading.current.id);
 
   const [session, setSession] = useState({
-    brand: '',
     location: '',
     latitude: 0,
     longitude: 0,
@@ -270,8 +323,8 @@ const DataEntry = () => {
     posType: '',
     purchaseDate: '',
     measurementDate: new Date().toISOString().split('T')[0],
-    outlierNotes: '',
     images: [] as File[],
+    venueChoice: null as VenueChoice | null,
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -327,13 +380,14 @@ const DataEntry = () => {
       poi_name: loc.poi_name || '',
       business_name: loc.business_name || '',
       normalized_address: loc.normalized_address || '',
+      venueChoice: null,
     }));
     if (errors.location) setErrors(prev => ({ ...prev, location: '' }));
   };
 
-  const handleAddBrand = (name: string) => {
+  const handleAddBrand = (readingId: string, name: string) => {
     if (!pendingBrands.includes(name)) setPendingBrands(prev => [...prev, name]);
-    setSessionField('brand', name);
+    handleReadingChange(readingId, 'brandName', name);
   };
 
   const validateFile = (file: File): boolean => {
@@ -366,9 +420,24 @@ const DataEntry = () => {
 
   const validateForm = (): boolean => {
     const e: Record<string, string> = {};
-    if (!session.brand.trim()) e.brand = 'Please select a farm or brand';
     if (!session.location.trim()) e.location = 'Please enter a location';
-    if (!session.posType) e.posType = 'Please select a purchase type';
+
+    const needsVenuePrompt = session.latitude !== 0 && !session.business_name && !session.poi_name;
+    if (needsVenuePrompt && !session.venueChoice) {
+      e.venueChoice = 'Please select or register a place, or choose Skip';
+    }
+    if (needsVenuePrompt && session.venueChoice?.kind === 'register') {
+      const rc = session.venueChoice as any;
+      if (!rc.name?.trim()) e.venueChoice = 'Please enter a place name';
+    }
+
+    // When no venue prompt, or venue choice isn't an existing venue with posType, require posType selection
+    const lockedPosType =
+      session.venueChoice?.kind === 'existing' && (session.venueChoice as any).posType
+        ? (session.venueChoice as any).posType as string
+        : null;
+    if (!lockedPosType && !session.posType) e.posType = 'Please select a purchase type';
+
     if (!session.purchaseDate) e.purchaseDate = 'Please enter a purchase date';
 
     const today = new Date();
@@ -379,7 +448,6 @@ const DataEntry = () => {
     if (session.purchaseDate && session.measurementDate &&
         new Date(session.purchaseDate) > new Date(session.measurementDate))
       e.purchaseDate = 'Purchase date should be before or same as assessment date';
-    if (session.outlierNotes.length > 500) e.outlierNotes = 'Notes too long (max 500 characters)';
 
     const filledReadings = readings.filter(r => r.cropType !== '');
     if (filledReadings.length === 0) {
@@ -388,6 +456,10 @@ const DataEntry = () => {
       filledReadings.forEach(r => {
         if (typeof r.brixLevel !== 'number' || isNaN(r.brixLevel) || r.brixLevel < 0 || r.brixLevel > 100)
           e[`reading_${r.id}_brixLevel`] = 'BRIX must be between 0–100';
+        if (!r.brandName.trim())
+          e[`reading_${r.id}_brandName`] = 'Please select a brand, or choose Unknown';
+        if (r.notes.length > 500)
+          e[`reading_${r.id}_notes`] = 'Notes too long (max 500 characters)';
       });
     }
 
@@ -416,14 +488,30 @@ const DataEntry = () => {
     ).toISOString();
     const purchaseDate = new Date(session.purchaseDate + 'T00:00:00.000Z').toISOString();
 
+    const lockedPosType =
+      session.venueChoice?.kind === 'existing' && (session.venueChoice as any).posType
+        ? (session.venueChoice as any).posType as string
+        : null;
+
+    const venuePayload: Record<string, any> = {};
+    if (session.venueChoice) {
+      if (session.venueChoice.kind === 'existing') {
+        venuePayload.venueId = session.venueChoice.venueId;
+      } else if (session.venueChoice.kind === 'register') {
+        venuePayload.newVenue = {
+          name: session.venueChoice.name,
+        };
+      } else if (session.venueChoice.kind === 'skip') {
+        venuePayload.skipVenuePrompt = true;
+      }
+    }
+
     try {
       const result = await apiPost<{ submissions: { submission_id: string; verified: boolean }[] }>(
         '/api/submissions/create',
         {
-          brandName: session.brand,
           assessmentDate,
           purchaseDate,
-          outlierNotes: session.outlierNotes,
           userId: user?.id,
           latitude: session.latitude,
           longitude: session.longitude,
@@ -436,12 +524,15 @@ const DataEntry = () => {
           business_name: session.business_name || null,
           normalized_address: session.normalized_address || null,
           store_name: session.business_name || session.poi_name || session.posType,
-          pos_type: session.posType,
+          pos_type: lockedPosType || session.posType,
+          ...venuePayload,
           readings: readings
             .filter(r => r.cropType !== '')
             .map(r => ({
               cropName: r.cropType,
               brixValue: Number(r.brixLevel.toFixed(2)),
+              brandName: r.brandName || null,
+              notes: r.notes || null,
             })),
         }
       );
@@ -468,6 +559,7 @@ const DataEntry = () => {
       });
       queryClient.invalidateQueries({ queryKey: ['staticData'] });
       queryClient.invalidateQueries({ queryKey: ['submissions', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: ['submissions', 'public_formatted'] });
       navigate('/your-data');
     } catch (err: any) {
       toast({ title: err.message || 'Something went wrong', variant: 'destructive' });
@@ -545,7 +637,7 @@ const DataEntry = () => {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div className="mb-6">
                       {/* Location */}
                       <div>
                         <Label
@@ -565,32 +657,24 @@ const DataEntry = () => {
                             <X className="w-4 h-4" />{errors.location}
                           </p>
                         )}
-                      </div>
-
-                      {/* Brand / Farm */}
-                      <div>
-                        <Label
-                          className="flex items-center gap-2 mb-2 text-sm font-semibold"
-                          style={{ color: 'var(--text-mid)' }}
-                        >
-                          <Building2 className="w-4 h-4 text-green-fresh" />
-                          Farm / Brand Name <span className="text-destructive">*</span>
-                        </Label>
-                        <ComboBoxAddable
-                          items={allBrands}
-                          value={session.brand}
-                          onSelect={val => setSessionField('brand', val)}
-                          onAddNew={handleAddBrand}
-                          placeholder="Select or enter farm/brand name"
-                        />
-                        {errors.brand && (
-                          <p className="text-destructive text-sm mt-2 flex items-center gap-1">
-                            <X className="w-4 h-4" />{errors.brand}
-                          </p>
+                        {/* Venue prompt — only when Mapbox returned no business name */}
+                        {session.latitude !== 0 && !session.business_name && !session.poi_name && (
+                          <VenuePrompt
+                            latitude={session.latitude}
+                            longitude={session.longitude}
+                            onSelect={choice => setSessionField('venueChoice', choice)}
+                            error={errors.venueChoice}
+                          />
                         )}
                       </div>
                     </div>
 
+                    {(() => {
+                      const lockedPosType =
+                        session.venueChoice?.kind === 'existing' && (session.venueChoice as any).posType
+                          ? (session.venueChoice as any).posType as string
+                          : null;
+                      return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* POS type */}
                       <div>
@@ -600,6 +684,19 @@ const DataEntry = () => {
                         >
                           Purchase Type <span className="text-destructive">*</span>
                         </Label>
+                        {lockedPosType ? (
+                          <div className="flex flex-wrap gap-2">
+                            <span
+                              className="px-4 py-2 rounded-full text-sm font-medium border"
+                              style={{ borderColor: 'var(--green-fresh)', backgroundColor: 'var(--green-fresh)', color: '#fff' }}
+                            >
+                              {lockedPosType}
+                            </span>
+                            <span className="text-xs self-center" style={{ color: 'var(--text-muted)' }}>
+                              (from venue)
+                            </span>
+                          </div>
+                        ) : (
                         <div className="flex flex-wrap gap-2">
                           {POS_OPTIONS.map(opt => (
                             <button
@@ -617,6 +714,7 @@ const DataEntry = () => {
                             </button>
                           ))}
                         </div>
+                        )}
                         {errors.posType && (
                           <p className="text-destructive text-sm mt-2 flex items-center gap-1">
                             <X className="w-4 h-4" />{errors.posType}
@@ -649,6 +747,8 @@ const DataEntry = () => {
                         )}
                       </div>
                     </div>
+                      );
+                    })()}
                   </div>
                 </motion.div>
 
@@ -681,12 +781,14 @@ const DataEntry = () => {
                           reading={reading}
                           index={idx}
                           crops={crops}
+                          brands={allBrands}
                           errors={errors}
                           showRemove={readings.length > 1}
                           isOpen={openReadingId === reading.id}
                           onChange={handleReadingChange}
                           onRemove={removeReading}
                           onToggle={id => setOpenReadingId(prev => prev === id ? null : id)}
+                          onAddBrand={handleAddBrand}
                         />
                       ))}
                     </div>
@@ -711,54 +813,28 @@ const DataEntry = () => {
                       Additional Information
                     </h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                      <div>
-                        <Label
-                          className="flex items-center gap-2 mb-2 text-sm font-semibold"
-                          style={{ color: 'var(--text-mid)' }}
-                        >
-                          <Clock className="w-4 h-4" />
-                          Assessment Date
-                        </Label>
-                        <Input
-                          id="measurementDate"
-                          type="date"
-                          value={session.measurementDate}
-                          onChange={e => setSessionField('measurementDate', e.target.value)}
-                          max={new Date().toISOString().split('T')[0]}
-                          className={`w-full border-2 rounded-xl px-4 py-3 transition-all hover:border-green-light focus:outline-none focus:ring-4 focus:ring-green-pale ${errors.measurementDate ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh bg-card'}`}
-                          style={{ color: 'var(--text-dark)' }}
-                        />
-                        {errors.measurementDate && (
-                          <p className="text-destructive text-sm mt-2 flex items-center gap-1">
-                            <X className="w-4 h-4" />{errors.measurementDate}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <Label
-                          className="flex items-center gap-2 mb-2 text-sm font-semibold"
-                          style={{ color: 'var(--text-mid)' }}
-                        >
-                          <FileText className="w-4 h-4" />
-                          Notes / Observations
-                        </Label>
-                        <Textarea
-                          id="outlierNotes"
-                          placeholder="Describe any anomalies or interesting details."
-                          value={session.outlierNotes}
-                          onChange={e => setSessionField('outlierNotes', e.target.value)}
-                          rows={3}
-                          className={`w-full border-2 rounded-xl px-4 py-3 transition-all hover:border-green-light focus:outline-none focus:ring-4 focus:ring-green-pale ${errors.outlierNotes ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh bg-card'}`}
-                          style={{ color: 'var(--text-dark)' }}
-                        />
-                        {errors.outlierNotes && (
-                          <p className="text-destructive text-sm mt-2 flex items-center gap-1">
-                            <X className="w-4 h-4" />{errors.outlierNotes}
-                          </p>
-                        )}
-                      </div>
+                    <div className="mb-6 max-w-xs">
+                      <Label
+                        className="flex items-center gap-2 mb-2 text-sm font-semibold"
+                        style={{ color: 'var(--text-mid)' }}
+                      >
+                        <Clock className="w-4 h-4" />
+                        Assessment Date
+                      </Label>
+                      <Input
+                        id="measurementDate"
+                        type="date"
+                        value={session.measurementDate}
+                        onChange={e => setSessionField('measurementDate', e.target.value)}
+                        max={new Date().toISOString().split('T')[0]}
+                        className={`w-full border-2 rounded-xl px-4 py-3 transition-all hover:border-green-light focus:outline-none focus:ring-4 focus:ring-green-pale ${errors.measurementDate ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh bg-card'}`}
+                        style={{ color: 'var(--text-dark)' }}
+                      />
+                      {errors.measurementDate && (
+                        <p className="text-destructive text-sm mt-2 flex items-center gap-1">
+                          <X className="w-4 h-4" />{errors.measurementDate}
+                        </p>
+                      )}
                     </div>
 
                     {/* Images */}
