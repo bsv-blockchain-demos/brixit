@@ -253,7 +253,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   return (
     <div className="relative">
       <div className="relative">
-        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           type="text"
           value={value}
@@ -262,7 +262,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
           className="pl-10"
         />
         {(isLoading || isSearching) && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />
+          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
         )}
       </div>
 
@@ -271,14 +271,14 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
           {suggestions.map((suggestion) => (
             <div
               key={suggestion.mapbox_id}
-              className="p-3 hover:bg-gray-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0 transition-colors"
+              className="p-3 hover:bg-accent cursor-pointer text-sm border-b border-border last:border-b-0 transition-colors"
               onClick={() => handleSelect(suggestion)}
             >
-              <div className="font-medium text-gray-900">
+              <div className="font-medium text-foreground">
                 {suggestion.name}
               </div>
               {suggestion.full_address && suggestion.full_address !== suggestion.name && (
-                <div className="text-gray-500 text-xs mt-1">
+                <div className="text-muted-foreground text-xs mt-1">
                   {suggestion.full_address}
                 </div>
               )}
@@ -289,7 +289,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
       {!hasSelected && value.length >= 2 && !isSearching && suggestions.length === 0 && (
         <div className="absolute z-50 w-full bg-card border border-border rounded-md shadow-lg mt-1 p-3">
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-muted-foreground">
             No locations found. Try a different search term.
           </div>
         </div>

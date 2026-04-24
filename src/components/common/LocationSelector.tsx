@@ -379,7 +379,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
               variant="outline"
               role="combobox"
               aria-expanded={countryPopoverOpen}
-              className="w-full mt-1 justify-between"
+              className="w-full mt-1 justify-between text-foreground"
               disabled={disabled || loading.countries}
             >
               {value.country === ALL_COUNTRIES
@@ -454,7 +454,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
                 variant="outline"
                 role="combobox"
                 aria-expanded={statePopoverOpen}
-                className="w-full mt-1 justify-between"
+                className="w-full mt-1 justify-between text-foreground"
                 disabled={disabled || loading.states || states.length === 0}
               >
                 {value.state || (loading.states ? "Loading states..." : states.length === 0 ? "No states available" : "Select state/province")}

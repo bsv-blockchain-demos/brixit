@@ -6,155 +6,192 @@
 
 @layer base {
   :root {
-    /* ── BRIXIT palette ──────────────────────────────── */
-    --green-deep: #1a3a2a;
-    --green-mid: #2d6a4f;
-    --green-fresh: #40916c;
-    --green-light: #74c69d;
-    --green-pale: #d8f3dc;
-    --green-mist: #f0faf2;
-    --cream: #faf8f3;
-    --gold: #c9a84c;
-    --text-dark: #1a2e1f;
-    --text-mid: #3d5a47;
-    --text-muted: #7a9b82;
-    --score-poor: #c0392b;
+    /* ── BRIXIT palette (style guide 2026) ───────────────
+     *
+     * Background blue : #5787a1  (RGB 87,136,161)
+     * Brand green     : #639647  (RGB 99,150,71)
+     * Dark brown      : #524d40  (RGB 82,76,64)
+     * CTA orange      : #eb6e24  (RGB 235,110,36)
+     * Base white      : #FFFFFF
+     *
+     * Score — Poor    : #d9772c
+     * Score — Average : #e1b12c
+     * Score — Good    : #6fae3f
+     * Score — Excellent: #1f6b3f
+     * ─────────────────────────────────────────────────── */
 
-    /* ── UI action tokens (separate from score palette) ─ */
-    --action-primary: var(--green-fresh);
-    --action-primary-hover: var(--green-mid);
+    /* Blue structural family (formerly green-deep / green-mist) */
+    --green-deep:  #2c4a5c;   /* dark blue — hero, footer, nav backgrounds   */
+    --blue-mid:    #5787a1;   /* mid blue — header fill, cards on dark bg     */
+    --green-light: #8cb3c9;   /* lighter blue accent                          */
+    --green-pale:  #dde8f0;   /* pale blue — borders, badge fills             */
+    --green-mist:  #eef4f8;   /* near-white blue — section backgrounds        */
+
+    /* Brand & score greens */
+    --green-fresh:    #639647;  /* brand green — links, secondary actions      */
+    --green-mid:      #1f6b3f;  /* excellent score color                       */
+    --score-excellent: #1f6b3f;
+    --score-good:      #6fae3f;
+
+    /* CTA / action */
+    --orange: #eb6e24;
+
+    /* Score palette */
+    --gold:          #e1b12c;   /* average score                               */
+    --score-average: #e1b12c;
+    --score-poor:    #d9772c;   /* poor score                                  */
+
+    /* Text — warm brown family from style guide */
+    --text-dark:  #524d40;   /* primary body text                             */
+    --text-mid:   #6b6057;   /* secondary text                                */
+    --text-muted: #9e9289;   /* labels, placeholders                          */
+
+    /* Page background — keep warm off-white */
+    --cream: #faf8f3;
+
+    /* ── UI action tokens ─────────────────────────────── */
+    --action-primary:       #eb6e24;   /* orange CTA                          */
+    --action-primary-hover: #c85a1a;   /* darker orange on hover              */
     --action-danger: var(--score-poor);
 
-    /* ── Badge tiers ─────────────────────────────────── */
-    --badge-gold-bg: #fef9ee;
-    --badge-gold-text: #a07c1e;
-    --badge-amber-bg: #fef3e2;
-    --badge-amber-text: #b8860b;
-    --badge-poor-bg: #fdecea;
+    /* ── Badge tiers ──────────────────────────────────── */
+    --badge-gold-bg:    #fef6e4;
+    --badge-gold-text:  #96720e;
+    --badge-amber-bg:   #fdf0d8;
+    --badge-amber-text: #a06a10;
+    --badge-poor-bg:    #fdeee3;
 
-    /* ── Table surfaces ──────────────────────────────── */
-    --table-header: #f5f5f4;
-    --table-stripe: #fafaf9;
+    /* ── Table surfaces ───────────────────────────────── */
+    --table-header: #f2f6f9;
+    --table-stripe: #f8fafc;
 
-    /* ── Neutral badge (ranks without score color) ──── */
-    --badge-neutral-bg: #f5f5f4;
-    --badge-neutral-text: #78716c;
+    /* ── Neutral badge ────────────────────────────────── */
+    --badge-neutral-bg:   #f2f4f6;
+    --badge-neutral-text: #7a7268;
 
-    /* ── Typography ──────────────────────────────────── */
+    /* ── Typography ───────────────────────────────────── */
     --font-display: 'Lora', Georgia, serif;
     --font-body: 'DM Sans', system-ui, sans-serif;
 
-    /* ── shadcn semantic tokens (remapped to BRIXIT) ── */
-    --background: 40 33% 97%;       /* cream #faf8f3 */
-    --foreground: 140 28% 14%;      /* text-dark #1a2e1f */
+    /* ── shadcn semantic tokens (remapped to BRIXIT) ──── */
+    --background: 40 33% 97%;         /* cream  #faf8f3                       */
+    --foreground: 43 12% 29%;         /* text-dark #524d40                    */
 
     --card: 0 0% 100%;
-    --card-foreground: 140 28% 14%;
+    --card-foreground: 43 12% 29%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 140 28% 14%;
+    --popover-foreground: 43 12% 29%;
 
-    --primary: 153 38% 41%;         /* green-fresh #40916c */
+    --primary: 22 83% 53%;            /* orange #eb6e24                       */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 140 47% 93%;       /* green-pale #d8f3dc */
-    --secondary-foreground: 140 28% 14%;
+    --secondary: 205 39% 90%;         /* blue-pale #dde8f0                    */
+    --secondary-foreground: 43 12% 29%;
 
-    --muted: 136 60% 96%;           /* green-mist #f0faf2 */
-    --muted-foreground: 144 14% 38%; /* darker muted ~#536e5a */
+    --muted: 204 43% 95%;             /* blue-mist #eef4f8                    */
+    --muted-foreground: 27 10% 38%;   /* text-mid #6b6057                     */
 
-    --accent: 136 60% 96%;
-    --accent-foreground: 140 28% 14%;
+    --accent: 204 43% 95%;
+    --accent-foreground: 43 12% 29%;
 
-    --destructive: 4 70% 46%;       /* score-poor #c0392b */
+    --destructive: 26 70% 51%;        /* score-poor #d9772c                   */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 138 30% 88%;          /* pale green border */
-    --input: 138 30% 88%;
-    --ring: 153 38% 41%;            /* green-fresh */
+    --border: 205 39% 90%;            /* blue-pale                            */
+    --input: 205 39% 90%;
+    --ring: 22 83% 53%;               /* orange                               */
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 201 30% 49%;   /* blue-mid #5787a1                  */
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 22 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 201 25% 42%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 201 25% 42%;
+    --sidebar-ring: 22 83% 53%;
   }
 
   .dark {
-    /* ── BRIXIT palette (dark overrides) ──────────── */
-    --green-deep: #1a3a2a;       /* keep for branded elements (logo, badges) */
-    --green-mid: #40916c;        /* slightly brighter for contrast */
-    --green-fresh: #52b788;      /* brighter links/buttons */
-    --green-light: #74c69d;      /* keep */
-    --green-pale: #243d30;       /* dark border / subtle bg */
-    --green-mist: #132a1e;       /* dark section bg */
-    --cream: #0f1f16;            /* dark page bg */
-    --gold: #d4b65c;             /* brighter gold */
-    --text-dark: #e2ede6;        /* light primary text */
-    --text-mid: #a5c4ad;         /* lighter secondary text */
-    --text-muted: #6b9b78;       /* labels/placeholders */
-    --score-poor: #e74c3c;       /* brighter red */
+    /* ── BRIXIT palette (dark overrides) ─────────────── */
+    --green-deep:  #152230;   /* very dark blue for dark backgrounds          */
+    --blue-mid:    #4a7a94;   /* slightly dimmed structural blue              */
+    --green-light: #6a9ab5;
+    --green-pale:  #1e3347;   /* dark blue border / subtle bg                 */
+    --green-mist:  #132130;   /* dark section bg                              */
+    --cream:       #0d1a24;   /* dark page bg                                 */
 
-    /* ── UI action tokens ────────────────────────── */
-    --action-primary: var(--green-fresh);
-    --action-primary-hover: var(--green-mid);
+    --green-fresh:     #7ab35b;   /* brighter brand green for dark            */
+    --green-mid:       #2a9460;   /* brighter excellent for dark              */
+    --score-excellent: #2a9460;
+    --score-good:      #7fc850;
+
+    --orange: #f07830;
+    --gold:          #f0c040;
+    --score-average: #f0c040;
+    --score-poor:    #f08040;
+
+    --text-dark:  #e8e0d8;
+    --text-mid:   #b0a898;
+    --text-muted: #7e7368;
+
+    /* ── UI action tokens ─────────────────────────────── */
+    --action-primary:       #f07830;
+    --action-primary-hover: #d46520;
     --action-danger: var(--score-poor);
 
-    /* ── Badge tiers (dark) ──────────────────────── */
-    --badge-gold-bg: #332a0f;
-    --badge-gold-text: #d4b65c;
-    --badge-amber-bg: #33260a;
+    /* ── Badge tiers (dark) ───────────────────────────── */
+    --badge-gold-bg:    #2e2208;
+    --badge-gold-text:  #f0c040;
+    --badge-amber-bg:   #2a1e06;
     --badge-amber-text: #d4a830;
-    --badge-poor-bg: #331512;
+    --badge-poor-bg:    #2e1a0a;
 
-    /* ── Table surfaces (dark) ─────────────────────── */
-    --table-header: #292524;
-    --table-stripe: #1c1917;
-    --badge-neutral-bg: #292524;
-    --badge-neutral-text: #a8a29e;
+    /* ── Table surfaces (dark) ────────────────────────── */
+    --table-header: #1a2a38;
+    --table-stripe: #121e28;
+    --badge-neutral-bg:   #1e2830;
+    --badge-neutral-text: #9e9890;
 
-    /* ── shadcn semantic tokens ──────────────────── */
-    --background: 150 30% 8%;
-    --foreground: 136 60% 96%;
+    /* ── shadcn semantic tokens ──────────────────────── */
+    --background: 210 40% 10%;
+    --foreground: 30 20% 90%;
 
-    --card: 150 28% 12%;
-    --card-foreground: 136 60% 96%;
+    --card: 210 38% 14%;
+    --card-foreground: 30 20% 90%;
 
-    --popover: 150 28% 12%;
-    --popover-foreground: 136 60% 96%;
+    --popover: 210 38% 14%;
+    --popover-foreground: 30 20% 90%;
 
-    --primary: 153 38% 45%;
+    --primary: 22 83% 57%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 150 20% 16%;
-    --secondary-foreground: 136 60% 96%;
+    --secondary: 210 30% 20%;
+    --secondary-foreground: 30 20% 90%;
 
-    --muted: 150 20% 16%;
-    --muted-foreground: 140 13% 60%;
+    --muted: 210 30% 18%;
+    --muted-foreground: 30 12% 62%;
 
-    --accent: 150 20% 16%;
-    --accent-foreground: 136 60% 96%;
+    --accent: 210 30% 18%;
+    --accent-foreground: 30 20% 90%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 26 65% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 150 20% 20%;
-    --input: 150 20% 20%;
-    --ring: 153 38% 45%;
+    --border: 210 30% 22%;
+    --input: 210 30% 22%;
+    --ring: 22 83% 57%;
 
-    --sidebar-background: 150 30% 8%;
-    --sidebar-foreground: 136 60% 96%;
-    --sidebar-primary: 153 38% 45%;
+    --sidebar-background: 210 40% 12%;
+    --sidebar-foreground: 30 20% 90%;
+    --sidebar-primary: 22 83% 57%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 150 20% 16%;
-    --sidebar-accent-foreground: 136 60% 96%;
-    --sidebar-border: 150 20% 20%;
-    --sidebar-ring: 153 38% 45%;
+    --sidebar-accent: 210 30% 20%;
+    --sidebar-accent-foreground: 30 20% 90%;
+    --sidebar-border: 210 30% 22%;
+    --sidebar-ring: 22 83% 57%;
   }
 
   html {
