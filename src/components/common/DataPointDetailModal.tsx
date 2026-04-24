@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { BrixDataPoint } from '../../types';
 import { Button } from '../ui/button';
 import {
@@ -399,7 +399,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md md:max-w-3xl rounded-2xl flex flex-col items-center justify-center h-64">
           <Loader2 className="w-12 h-12 animate-spin text-green-mid" />
-          <p className="mt-4 text-text-muted-green">Loading data...</p>
+          <p className="mt-4 text-text-muted-brown">Loading data...</p>
         </DialogContent>
       </Dialog>
     );
@@ -440,7 +440,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="shrink-0 hover:bg-green-mist -ml-2"
+              className="shrink-0 hover:bg-blue-mist -ml-2"
             >
               <ArrowLeft className="w-5 h-5" />
               <span className="sr-only">Back</span>
@@ -452,7 +452,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               variant="ghost"
               size="icon"
               onClick={() => setIsEditing(true)}
-              className="hover:bg-green-mist"
+              className="hover:bg-blue-mist"
             >
               <Edit className="w-5 h-5" />
               <span className="sr-only">Edit</span>
@@ -475,7 +475,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
           <div className="space-y-6">
             <div
               className="rounded-2xl border shadow-sm p-6"
-              style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}
+              style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}
             >
               <p className="uppercase tracking-[0.2em] text-xs font-medium mb-4" style={{ color: 'var(--text-muted)' }}>
                 Refractometer Reading
@@ -507,13 +507,13 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               </div>
             </div>
 
-            <div className="pt-4 border-t border-green-pale">
+            <div className="pt-4 border-t border-blue-pale">
               <h3 className="text-lg font-bold font-display text-text-dark mb-4">Submission Details</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
+                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}>
                   <Label className="text-sm text-text-dark flex items-center space-x-2">
-                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
+                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--blue-deep)' }}>
                       <Droplets className="w-3.5 h-3.5 text-white" />
                     </span>
                     <span>BRIX Level</span>
@@ -524,9 +524,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     <p className="font-medium">{initialDataPoint.brixLevel}</p>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
+                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}>
                   <Label className="text-sm text-text-dark flex items-center space-x-2">
-                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
+                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--blue-deep)' }}>
                       <Package className="w-3.5 h-3.5 text-white" />
                     </span>
                     <span>Crop Type</span>
@@ -544,9 +544,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     <p className="font-medium">{getDisplayLabel(crops, initialDataPoint.cropType)}</p>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
+                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}>
                   <Label className="text-sm text-text-dark flex items-center space-x-2">
-                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
+                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--blue-deep)' }}>
                       <Tag className="w-3.5 h-3.5 text-white" />
                     </span>
                     <span>Brand</span>
@@ -564,9 +564,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     <p className="font-medium">{getDisplayLabel(brands, initialDataPoint.brandName)}</p>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
+                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}>
                   <Label className="text-sm text-text-dark flex items-center space-x-2">
-                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
+                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--blue-deep)' }}>
                       <Building className="w-3.5 h-3.5 text-white" />
                     </span>
                     <span>Location (Store)</span>
@@ -584,9 +584,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     <p className="font-medium">{getDisplayLabel(locations, initialDataPoint.locationName)}</p>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
+                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}>
                   <Label className="text-sm text-text-dark flex items-center space-x-2">
-                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
+                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--blue-deep)' }}>
                       <MapIcon className="w-3.5 h-3.5 text-white" />
                     </span>
                     <span>Place (Address)</span>
@@ -601,15 +601,15 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                   ) : (
                     <>
                       <p className="font-medium">{initialDataPoint.streetAddress || 'N/A'}</p>
-                      <p className="text-xs text-text-muted-green">
+                      <p className="text-xs text-text-muted-brown">
                         {initialDataPoint.latitude?.toFixed(4)}, {initialDataPoint.longitude?.toFixed(4)}
                       </p>
                     </>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
+                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}>
                   <Label className="text-sm text-text-dark flex items-center space-x-2">
-                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
+                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--blue-deep)' }}>
                       <Calendar className="w-3.5 h-3.5 text-white" />
                     </span>
                     <span>Assessment Date</span>
@@ -620,9 +620,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     <p className="font-medium">{new Date(initialDataPoint.submittedAt).toLocaleDateString()}</p>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
+                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}>
                   <Label className="text-sm text-text-dark flex items-center space-x-2">
-                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
+                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--blue-deep)' }}>
                       <Calendar className="w-3.5 h-3.5 text-white" />
                     </span>
                     <span>Purchase Date</span>
@@ -633,9 +633,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     <p className="font-medium">{initialDataPoint.purchaseDate ? new Date(initialDataPoint.purchaseDate).toLocaleDateString() : 'N/A'}</p>
                   )}
                 </div>
-                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
+                <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}>
                   <Label className="text-sm text-text-dark flex items-center space-x-2">
-                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
+                    <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--blue-deep)' }}>
                       <Tag className="w-3.5 h-3.5 text-white" />
                     </span>
                     <span>Variety</span>
@@ -648,9 +648,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                 </div>
               </div>
 
-              <div className="rounded-2xl border shadow-sm p-4 mt-4" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
+              <div className="rounded-2xl border shadow-sm p-4 mt-4" style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}>
                 <Label className="text-sm text-text-dark mb-2 flex items-center space-x-2">
-                  <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
+                  <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--blue-deep)' }}>
                     <FileText className="w-3.5 h-3.5 text-white" />
                   </span>
                   <span>Outlier Notes</span>
@@ -662,9 +662,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                 )}
               </div>
 
-              <div className="rounded-2xl border shadow-sm p-4 mt-4 flex items-center justify-between" style={{ borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}>
+              <div className="rounded-2xl border shadow-sm p-4 mt-4 flex items-center justify-between" style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}>
                 <div className="flex items-center space-x-2">
-                  <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
+                  <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--blue-deep)' }}>
                     <CheckCircle className="w-3.5 h-3.5 text-white" />
                   </span>
                   <Label htmlFor="verified-checkbox" className="text-sm font-semibold text-text-mid">
@@ -687,16 +687,16 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               </div>
 
               {verified && (
-                <div className="mt-2 text-sm text-text-muted-green flex items-center justify-end">
+                <div className="mt-2 text-sm text-text-muted-brown flex items-center justify-end">
                   <User className="w-4 h-4 mr-1" />
                   <span>Verified by: {verifiedBy ? formatUsername(verifiedBy) : 'N/A'}</span>
                 </div>
               )}
             </div>
 
-            <div className="pt-4 border-t border-green-pale">
+            <div className="pt-4 border-t border-blue-pale">
               <h3 className="flex items-center space-x-2 text-lg font-bold font-display text-text-dark mb-4">
-                <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--green-deep)' }}>
+                <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--blue-deep)' }}>
                   <ImageIcon className="w-3.5 h-3.5 text-white" />
                 </span>
                 <span>Reference Images ({imageUrls.length})</span>
@@ -704,14 +704,14 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               {imagesLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-8 h-8 animate-spin text-green-mid" />
-                  <span className="ml-3 text-text-muted-green">Loading images...</span>
+                  <span className="ml-3 text-text-muted-brown">Loading images...</span>
                 </div>
               ) : imageUrls.length === 0 ? (
-                <p className="text-text-muted-green italic">No images added for this submission.</p>
+                <p className="text-text-muted-brown italic">No images added for this submission.</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {imageUrls.map((url: string, index: number) => (
-                    <div key={index} className="relative w-full pb-[75%] rounded-2xl overflow-hidden shadow-sm border group" style={{ borderColor: 'var(--green-pale)' }}>
+                    <div key={index} className="relative w-full pb-[75%] rounded-2xl overflow-hidden shadow-sm border group" style={{ borderColor: 'var(--blue-pale)' }}>
                       <img
                         src={url}
                         alt={`Submission image ${index + 1}`}
@@ -729,7 +729,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-between items-center pt-4 border-t border-green-pale pb-[env(safe-area-inset-bottom,1rem)]">
+        <div className="flex justify-between items-center pt-4 border-t border-blue-pale pb-[env(safe-area-inset-bottom,1rem)]">
           {isEditing ? (
             <>
               <Button

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback } from "../ui/avatar";
@@ -75,7 +75,7 @@ const Header = () => {
         <Button
           variant="ghost"
           className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/leaderboard") ? "bg-green-mist text-green-fresh border border-green-fresh" : ""
+            isActive("/leaderboard") ? "bg-blue-mist text-green-fresh border border-green-fresh" : ""
           }`}
         >
           <Trophy className="w-4 h-4" />
@@ -87,7 +87,7 @@ const Header = () => {
         <Button
           variant="ghost"
           className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/map") ? "bg-green-mist text-green-fresh border border-green-fresh" : ""
+            isActive("/map") ? "bg-blue-mist text-green-fresh border border-green-fresh" : ""
           }`}
         >
           <Eye className="w-4 h-4" />
@@ -99,7 +99,7 @@ const Header = () => {
         <Button
           variant="ghost"
           className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/data") ? "bg-green-mist text-green-fresh border border-green-fresh" : ""
+            isActive("/data") ? "bg-blue-mist text-green-fresh border border-green-fresh" : ""
           }`}
         >
           <Database className="w-4 h-4" />
@@ -111,7 +111,7 @@ const Header = () => {
         <Button
           variant="ghost"
           className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/your-data") ? "bg-green-mist text-green-fresh border border-green-fresh" : ""
+            isActive("/your-data") ? "bg-blue-mist text-green-fresh border border-green-fresh" : ""
           }`}
         >
           <User className="w-4 h-4" />
@@ -158,7 +158,7 @@ const Header = () => {
               style={{
                 height: '2.5rem',
                 aspectRatio: '680.88 / 389.32',
-                backgroundColor: 'var(--green-deep)',
+                backgroundColor: 'var(--blue-deep)',
                 WebkitMaskImage: 'url(/brixit.svg)',
                 maskImage: 'url(/brixit.svg)',
                 WebkitMaskSize: 'contain',
@@ -193,7 +193,7 @@ const Header = () => {
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center space-x-2 cursor-pointer hover:opacity-80 focus:outline-none">
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-green-deep text-white">
+                      <AvatarFallback className="bg-blue-deep text-white">
                         {getUserInitial()}
                       </AvatarFallback>
                     </Avatar>

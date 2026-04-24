@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { BrixDataPoint } from '../../types';
 import { scoreBrix } from '../../lib/getBrixColor';
 import { CheckCircle, Clock, MapPin, User, MoreVertical, Edit, Trash2 } from 'lucide-react';
@@ -30,13 +30,13 @@ const MobileSubmissionCard: React.FC<{
       tabIndex={0}
       onClick={onOpenModal}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenModal(); } }}
-      className="w-full text-left rounded-xl border border-green-pale bg-white p-4 shadow-sm active:shadow-md transition-shadow cursor-pointer"
+      className="w-full text-left rounded-xl border border-blue-pale bg-white p-4 shadow-sm active:shadow-md transition-shadow cursor-pointer"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-text-dark truncate">{submission.cropLabel ?? submission.cropType}</p>
           {submission.variety && (
-            <p className="text-xs text-text-muted-green">{submission.variety}</p>
+            <p className="text-xs text-text-muted-brown">{submission.variety}</p>
           )}
           {submission.brandName && (
             <p className="text-xs text-text-dark mt-0.5">Brand: {submission.brandName}</p>
@@ -48,7 +48,7 @@ const MobileSubmissionCard: React.FC<{
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="p-1.5 -m-1 rounded-lg hover:bg-green-mist transition-colors"
+                  className="p-1.5 -m-1 rounded-lg hover:bg-blue-mist transition-colors"
                   onClick={(e) => e.stopPropagation()}
                   aria-label="Submission actions"
                 >
@@ -98,14 +98,14 @@ const MobileSubmissionCard: React.FC<{
       </div>
 
       {submission.locationName && (
-        <div className="mt-1.5 flex items-center gap-1 text-xs text-text-muted-green">
+        <div className="mt-1.5 flex items-center gap-1 text-xs text-text-muted-brown">
           <MapPin className="w-3 h-3 shrink-0" />
           <span className="truncate">{submission.locationName}</span>
         </div>
       )}
 
       {isOwner && (
-        <Badge className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-green-pale text-green-fresh font-medium text-xs">
+        <Badge className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-pale text-green-fresh font-medium text-xs">
           <User className="w-3 h-3" />
           Your Submission
         </Badge>

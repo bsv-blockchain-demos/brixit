@@ -1,4 +1,4 @@
-// src/pages/Profile.tsx
+﻿// src/pages/Profile.tsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -134,11 +134,11 @@ const Profile = () => {
 
           {/* Profile Hero Card */}
           <motion.div {...fadeUp}>
-            <Card className="border border-green-pale rounded-2xl shadow-sm">
+            <Card className="border border-blue-pale rounded-2xl shadow-sm">
               <CardContent className="p-6 space-y-5">
                 <div className="flex flex-col items-center text-center gap-3">
                   <Avatar className="h-20 w-20">
-                    <AvatarFallback className="bg-green-deep text-white text-2xl font-bold">
+                    <AvatarFallback className="bg-blue-deep text-white text-2xl font-bold">
                       {displayName?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
@@ -147,7 +147,7 @@ const Profile = () => {
                       {isHexKey ? 'Set your display name' : displayName}
                     </h1>
                     {user.role && (
-                      <span className="inline-block mt-2 px-3 py-1 rounded-full text-sm font-medium bg-green-pale text-green-mid">
+                      <span className="inline-block mt-2 px-3 py-1 rounded-full text-sm font-medium bg-blue-pale text-green-mid">
                         {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                       </span>
                     )}
@@ -156,9 +156,9 @@ const Profile = () => {
 
                 {/* Identity key */}
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted-green mb-1.5">Public Identity Key</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted-brown mb-1.5">Public Identity Key</p>
                 </div>
-                <div className="flex items-center gap-2 border border-green-pale rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2 border border-blue-pale rounded-lg px-3 py-2">
                   <code className="flex-1 text-xs break-all font-mono text-text-mid">
                     {user.identity_key}
                   </code>
@@ -176,18 +176,18 @@ const Profile = () => {
                 </div>
 
                 {/* Stats row */}
-                <div className="grid grid-cols-3 divide-x divide-green-pale">
+                <div className="grid grid-cols-3 divide-x divide-blue-pale">
                   <div className="p-3 text-center">
                     <div className="text-2xl font-bold font-display text-text-dark">{level}</div>
-                    <div className="text-xs text-text-muted-green">Level</div>
+                    <div className="text-xs text-text-muted-brown">Level</div>
                   </div>
                   <div className="p-3 text-center">
                     <div className="text-2xl">{badge.emoji}</div>
-                    <div className="text-xs text-text-muted-green">{badge.label}</div>
+                    <div className="text-xs text-text-muted-brown">{badge.label}</div>
                   </div>
                   <div className="p-3 text-center">
                     <div className="text-2xl font-bold font-display text-text-dark">{user.submission_count ?? 0}</div>
-                    <div className="text-xs text-text-muted-green">Submissions</div>
+                    <div className="text-xs text-text-muted-brown">Submissions</div>
                   </div>
                 </div>
               </CardContent>
@@ -198,7 +198,7 @@ const Profile = () => {
           <motion.div className="space-y-6" {...stagger}>
             {/* Display Name Card */}
             <motion.div {...staggerChild}>
-              <Card className="border border-green-pale rounded-2xl shadow-sm">
+              <Card className="border border-blue-pale rounded-2xl shadow-sm">
                 <CardHeader>
                   <CardTitle className="font-display text-text-dark">Display Name</CardTitle>
                 </CardHeader>
@@ -229,16 +229,16 @@ const Profile = () => {
 
             {/* Progress Card */}
             <motion.div {...staggerChild}>
-              <Card className="border border-green-pale rounded-2xl shadow-sm">
+              <Card className="border border-blue-pale rounded-2xl shadow-sm">
                 <CardHeader>
                   <CardTitle className="font-display font-semibold text-text-dark">Progress</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-text-mid">Level {level}</span>
-                    <span className="text-sm text-text-muted-green">{progress} / 100 pts</span>
+                    <span className="text-sm text-text-muted-brown">{progress} / 100 pts</span>
                   </div>
-                  <div className="w-full h-3 rounded-full" style={{ background: 'var(--green-pale)' }}>
+                  <div className="w-full h-3 rounded-full" style={{ background: 'var(--blue-pale)' }}>
                     <div
                       className="h-3 rounded-full transition-all duration-500"
                       style={{
@@ -253,7 +253,7 @@ const Profile = () => {
 
             {/* Location Card */}
             <motion.div {...staggerChild}>
-              <Card className="border border-green-pale rounded-2xl shadow-sm">
+              <Card className="border border-blue-pale rounded-2xl shadow-sm">
                 <CardHeader>
                   <CardTitle className="font-display text-text-dark">Location</CardTitle>
                 </CardHeader>
@@ -284,7 +284,7 @@ const Profile = () => {
               <Card className="border-destructive/30 bg-destructive/5 rounded-2xl">
                 <CardContent className="p-6">
                   <p className="text-sm font-medium text-destructive mb-1">Danger Zone</p>
-                  <p className="text-sm text-text-muted-green mb-3">
+                  <p className="text-sm text-text-muted-brown mb-3">
                     Account deletion is not available at this time.
                   </p>
                   <Button variant="destructive" disabled className="opacity-50">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import Header from '../components/Layout/Header';
 import InteractiveMap from '../components/Map/InteractiveMap';
 import { Card, CardContent } from '../components/ui/card';
@@ -103,7 +103,7 @@ const MapView = () => {
             <Button
               variant="outline"
               onClick={handleLocationSearch}
-              className="flex items-center space-x-2 border-green-pale text-green-fresh hover:bg-green-mist"
+              className="flex items-center space-x-2 border-blue-pale text-green-fresh hover:bg-blue-mist"
             >
               <Locate className="w-4 h-4" />
               <span>Near Me</span>
@@ -111,7 +111,7 @@ const MapView = () => {
           </div>
         </div>
 
-        <Card className="rounded-2xl border border-green-pale overflow-hidden shadow-sm">
+        <Card className="rounded-2xl border border-blue-pale overflow-hidden shadow-sm">
           <CardContent className="p-0">
             <div className="h-[calc(100vh-13rem)] w-full relative">
               <InteractiveMap

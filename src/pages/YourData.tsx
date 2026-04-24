@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Header from '../components/Layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -300,7 +300,7 @@ const YourData: React.FC = () => {
           </TabsList>
 
           <TabsContent value="submissions">
-            <Card className="rounded-2xl border border-green-pale shadow-sm">
+            <Card className="rounded-2xl border border-blue-pale shadow-sm">
               <CardHeader>
                 <CardTitle>Submitted Measurements ({totalCount})</CardTitle>
               </CardHeader>
@@ -323,7 +323,7 @@ const YourData: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <AlertCircle className="w-16 h-16 text-text-muted-green mx-auto mb-4" />
+                        <AlertCircle className="w-16 h-16 text-text-muted-brown mx-auto mb-4" />
                         <h3 className="text-lg font-semibold text-text-dark mb-2">Submissions are disabled</h3>
                         <p className="text-text-mid mb-6">
                           Your account currently has observer access, so you can browse data but can't submit measurements yet.
@@ -345,16 +345,16 @@ const YourData: React.FC = () => {
                     <div className="hidden desktop:block overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow className="border-green-pale">
-                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">Crop</TableHead>
-                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">Variety</TableHead>
-                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">Brand</TableHead>
-                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">Location</TableHead>
-                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider text-center">BRIX</TableHead>
-                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">Notes</TableHead>
-                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">Date</TableHead>
-                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider text-center">Verified?</TableHead>
-                            <TableHead className="text-xs text-text-muted-green uppercase tracking-wider text-center">Actions</TableHead>
+                          <TableRow className="border-blue-pale">
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Crop</TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Variety</TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Brand</TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Location</TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">BRIX</TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Notes</TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Date</TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Verified?</TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -399,7 +399,7 @@ const YourData: React.FC = () => {
                     <div className="mt-6 flex items-center justify-between">
                       <Button
                         variant="outline"
-                        className="border-green-pale hover:bg-green-mist"
+                        className="border-blue-pale hover:bg-blue-mist"
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
                       >
@@ -410,7 +410,7 @@ const YourData: React.FC = () => {
                       </span>
                       <Button
                         variant="outline"
-                        className="border-green-pale hover:bg-green-mist"
+                        className="border-blue-pale hover:bg-blue-mist"
                         onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
                       >
@@ -425,10 +425,10 @@ const YourData: React.FC = () => {
 
           <TabsContent value="stats">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="rounded-2xl border border-green-pale shadow-sm">
+              <Card className="rounded-2xl border border-blue-pale shadow-sm">
                 <CardContent className="p-6">
                   <div className="flex items-center space-x-3">
-                    <div className="bg-green-deep rounded-xl p-2">
+                    <div className="bg-blue-deep rounded-xl p-2">
                       <Beaker className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -439,10 +439,10 @@ const YourData: React.FC = () => {
                 </CardContent>
               </Card>
 
-              <Card className="rounded-2xl border border-green-pale shadow-sm">
+              <Card className="rounded-2xl border border-blue-pale shadow-sm">
                 <CardContent className="p-6">
                   <div className="flex items-center space-x-3">
-                    <div className="bg-green-deep rounded-xl p-2">
+                    <div className="bg-blue-deep rounded-xl p-2">
                       <CheckCircle className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -455,10 +455,10 @@ const YourData: React.FC = () => {
                 </CardContent>
               </Card>
 
-              <Card className="rounded-2xl border border-green-pale shadow-sm">
+              <Card className="rounded-2xl border border-blue-pale shadow-sm">
                 <CardContent className="p-6">
                   <div className="flex items-center space-x-3">
-                    <div className="bg-green-deep rounded-xl p-2">
+                    <div className="bg-blue-deep rounded-xl p-2">
                       <MapPin className="w-5 h-5 text-white" />
                     </div>
                     <div>

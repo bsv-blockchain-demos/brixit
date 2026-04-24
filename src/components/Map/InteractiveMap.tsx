@@ -1,4 +1,4 @@
-// src/components/Map/InteractiveMap.tsx
+﻿// src/components/Map/InteractiveMap.tsx
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -642,14 +642,14 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     return (
       <div
         key={key}
-        className={`flex justify-between items-start py-3 border-b border-green-pale last:border-b-0 ${canNavigate ? 'cursor-pointer hover:bg-green-mist rounded-lg px-2 -mx-2 transition-colors' : ''}`}
+        className={`flex justify-between items-start py-3 border-b border-blue-pale last:border-b-0 ${canNavigate ? 'cursor-pointer hover:bg-blue-mist rounded-lg px-2 -mx-2 transition-colors' : ''}`}
         onClick={canNavigate ? () => setModalSubmission(sub) : undefined}
       >
         <div className="flex flex-col min-w-0 flex-1">
           <span className="font-semibold text-sm truncate">
             {safeStr(sub.cropLabel ?? sub.cropType ?? 'Unknown Crop')}
           </span>
-          <span className="text-xs text-text-muted-green mt-1 truncate">
+          <span className="text-xs text-text-muted-brown mt-1 truncate">
             {safeStr(sub.brandLabel ?? sub.brandName ?? 'Unknown Brand')} —{' '}
             {sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString() : '-'}
           </span>
@@ -682,7 +682,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           {filteredSubmissions.length > 0 ? (
             filteredSubmissions.map((sub) => renderSubmissionItem(sub, sub.id, true))
           ) : (
-            <div className="text-center text-text-muted-green py-8">No submissions found.</div>
+            <div className="text-center text-text-muted-brown py-8">No submissions found.</div>
           )}
         </div>
       </div>
@@ -693,9 +693,9 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     if (!selectedPoint) {
       return (
         <div className="flex flex-col items-center justify-center h-full text-center p-6">
-          <MapPin className="w-16 h-16 text-green-light mb-4" />
+          <MapPin className="w-16 h-16 text-blue-light mb-4" />
           <p className="text-xl font-display font-semibold text-text-dark">Ready to Explore?</p>
-          <p className="text-sm text-text-muted-green mt-2">
+          <p className="text-sm text-text-muted-brown mt-2">
             <span className="md:hidden">Tap on a marker to view scores and rankings.</span>
             <span className="hidden md:inline">
               Click on a marker to view scores and rankings for that location.
@@ -742,7 +742,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                 <h4 className="font-semibold mb-3 text-base">Top Crops</h4>
                 <div className="space-y-2">
                   {placeCropRankings.length === 0 ? (
-                    <div className="text-sm text-text-muted-green p-3 text-center">No crop data.</div>
+                    <div className="text-sm text-text-muted-brown p-3 text-center">No crop data.</div>
                   ) : (
                     placeCropRankings.map((c) => {
                       const n = Number(c.average_normalized_score ?? 1.5);
@@ -751,12 +751,12 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                       return (
                         <div
                           key={label}
-                          className="p-3 cursor-pointer hover:bg-green-mist active:bg-green-pale rounded-lg flex justify-between items-center transition-colors"
+                          className="p-3 cursor-pointer hover:bg-blue-mist active:bg-blue-pale rounded-lg flex justify-between items-center transition-colors"
                           onClick={() => setSelectedEntry({ type: 'crop', id: label, label })}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="font-medium truncate">{label}</div>
-                            <div className="text-xs text-text-muted-green">
+                            <div className="text-xs text-text-muted-brown">
                               Submissions: {c.submission_count ?? '-'}
                             </div>
                           </div>
@@ -776,7 +776,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                 <h4 className="font-semibold mb-3 text-base">Top Brands</h4>
                 <div className="space-y-2">
                   {placeBrandRankings.length === 0 ? (
-                    <div className="text-sm text-text-muted-green p-3 text-center">No brand data.</div>
+                    <div className="text-sm text-text-muted-brown p-3 text-center">No brand data.</div>
                   ) : (
                     placeBrandRankings.map((b) => {
                       const n = Number(b.average_normalized_score ?? 1.5);
@@ -785,12 +785,12 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                       return (
                         <div
                           key={label}
-                          className="p-3 cursor-pointer hover:bg-green-mist active:bg-green-pale rounded-lg flex justify-between items-center transition-colors"
+                          className="p-3 cursor-pointer hover:bg-blue-mist active:bg-blue-pale rounded-lg flex justify-between items-center transition-colors"
                           onClick={() => setSelectedEntry({ type: 'brand', id: label, label })}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="font-medium truncate">{label}</div>
-                            <div className="text-xs text-text-muted-green">
+                            <div className="text-xs text-text-muted-brown">
                               Submissions: {b.submission_count ?? '-'}
                             </div>
                           </div>
@@ -864,7 +864,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
               {locTitle || 'Location details'}
             </h2>
             {selectedPoint && (
-              <p className="text-sm text-text-muted-green mt-1 truncate">
+              <p className="text-sm text-text-muted-brown mt-1 truncate">
                 {[street, formatCityState(city, state)].filter(Boolean).join(', ')}
               </p>
             )}

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { TableCell, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -29,7 +29,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
   return (
     <TableRow
       key={submission.id}
-      className="border-green-pale odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors cursor-pointer"
+      className="border-blue-pale odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors cursor-pointer"
       onClick={() => onOpenModal(submission)} // Make the whole row clickable
     >
       {/* Cell 1 — Crop */}
@@ -37,7 +37,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
         <div>
           <span className="text-sm text-text-mid">{submission.cropLabel ?? submission.cropType}</span>
           {showOwnerBadge && isOwner && (
-            <Badge className="flex items-center space-x-1 px-2 py-0.5 rounded-md bg-green-pale text-green-fresh font-medium text-xs mt-1 w-fit">
+            <Badge className="flex items-center space-x-1 px-2 py-0.5 rounded-md bg-blue-pale text-green-fresh font-medium text-xs mt-1 w-fit">
               <User className="w-3 h-3" />
               <span>Your Submission</span>
             </Badge>
@@ -47,12 +47,12 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
 
       {/* Cell 2 — Variety */}
       <TableCell className="py-3 px-4 max-w-[120px] truncate text-sm text-text-mid">
-        {submission.variety || <span className="text-text-muted-green">--</span>}
+        {submission.variety || <span className="text-text-muted-brown">--</span>}
       </TableCell>
 
       {/* Cell 3 — Brand */}
       <TableCell className="py-3 px-4 max-w-[120px] truncate text-sm text-text-mid">
-        {submission.brandName || <span className="text-text-muted-green">--</span>}
+        {submission.brandName || <span className="text-text-muted-brown">--</span>}
       </TableCell>
 
       {/* Cell 4 — Location */}
@@ -60,7 +60,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
         {submission.locationName ? (
           <div>
             <div className="flex items-center space-x-1 text-sm text-text-mid">
-              <MapPin className="w-3.5 h-3.5 text-text-muted-green flex-shrink-0" />
+              <MapPin className="w-3.5 h-3.5 text-text-muted-brown flex-shrink-0" />
               <span className="font-medium truncate">{submission.locationName}</span>
             </div>
             {/* Smart address sub-line */}
@@ -71,7 +71,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
                 (state && streetAddress.toLowerCase().includes(state.toLowerCase()))
               )) {
                 return (
-                  <div className="text-xs text-text-muted-green ml-5 truncate" title={streetAddress}>
+                  <div className="text-xs text-text-muted-brown ml-5 truncate" title={streetAddress}>
                     {streetAddress}
                   </div>
                 );
@@ -80,7 +80,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
               if (addressParts.length > 0) {
                 const fullAddress = addressParts.join(', ');
                 return (
-                  <div className="text-xs text-text-muted-green ml-5 truncate" title={fullAddress}>
+                  <div className="text-xs text-text-muted-brown ml-5 truncate" title={fullAddress}>
                     {fullAddress}
                   </div>
                 );
@@ -89,7 +89,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
             })()}
           </div>
         ) : (
-          <span className="text-text-muted-green">--</span>
+          <span className="text-text-muted-brown">--</span>
         )}
       </TableCell>
 
@@ -106,18 +106,18 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       <TableCell className="py-3 px-4 max-w-[150px]">
         {submission.outlier_notes ? (
           <div className="flex items-start space-x-1 text-sm text-text-mid line-clamp-2">
-            <MessageSquare className="w-3 h-3 flex-shrink-0 text-text-muted-green mt-0.5" />
+            <MessageSquare className="w-3 h-3 flex-shrink-0 text-text-muted-brown mt-0.5" />
             <span>{submission.outlier_notes}</span>
           </div>
         ) : (
-          <span className="text-text-muted-green text-sm">--</span>
+          <span className="text-text-muted-brown text-sm">--</span>
         )}
       </TableCell>
 
       {/* Cell 7 — Date */}
       <TableCell className="py-3 px-4 whitespace-nowrap">
         <div className="flex items-center space-x-1 text-sm text-text-mid">
-          <Calendar className="w-3.5 h-3.5 text-text-muted-green" />
+          <Calendar className="w-3.5 h-3.5 text-text-muted-brown" />
           <span>{new Date(submission.submittedAt).toLocaleDateString()}</span>
         </div>
       </TableCell>
@@ -173,7 +173,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
           ) : (
             isOwner && submission.verified && (
               <span title="Verified submissions cannot be deleted by non-admins." className="cursor-not-allowed">
-                <Button variant="ghost" size="sm" className="text-text-muted-green opacity-70 cursor-not-allowed" disabled>
+                <Button variant="ghost" size="sm" className="text-text-muted-brown opacity-70 cursor-not-allowed" disabled>
                   <Lock className="w-5 h-5" />
                 </Button>
               </span>
