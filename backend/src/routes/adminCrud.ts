@@ -230,6 +230,62 @@ router.delete('/venues/:id', async (req: Request, res: Response) => {
   } catch (err) { console.error('[admin/crud/venues DELETE]', err); res.status(500).json({ error: 'Failed to delete venue' }); }
 });
 
+const COORD_TOLERANCE = 0.0001;
+
+router.get('/venues/:id/nearby-unverified', async (req: Request, res: Response) => {
+  try {
+    const venue = await prisma.venue.findUnique({ where: { id: req.params.id } });
+    if (!venue) { res.status(404).json({ error: 'Venue not found' }); return; }
+    if (venue.latitude == null || venue.longitude == null) { res.json([]); return; }
+
+    const nearby = await prisma.venue.findMany({
+      where: {
+        id: { not: req.params.id },
+        verified: false,
+        latitude: { gte: venue.latitude - COORD_TOLERANCE, lte: venue.latitude + COORD_TOLERANCE },
+        longitude: { gte: venue.longitude - COORD_TOLERANCE, lte: venue.longitude + COORD_TOLERANCE },
+      },
+    });
+
+    const counts = await prisma.submission.groupBy({
+      by: ['venueId'],
+      where: { venueId: { in: nearby.map(v => v.id) } },
+      _count: { id: true },
+    });
+    const countMap = Object.fromEntries(counts.map(c => [c.venueId, c._count.id]));
+
+    res.json(nearby.map(v => ({ ...v, submission_count: countMap[v.id] ?? 0 })));
+  } catch (err) {
+    console.error('[admin/crud/venues nearby-unverified]', err);
+    res.status(500).json({ error: 'Failed to fetch nearby venues' });
+  }
+});
+
+router.post('/venues/:id/verify', async (req: Request, res: Response) => {
+  try {
+    const mergeIds: string[] = Array.isArray(req.body.merge_venue_ids) ? req.body.merge_venue_ids : [];
+
+    await prisma.$transaction(async (tx) => {
+      if (mergeIds.length) {
+        await tx.submission.updateMany({
+          where: { venueId: { in: mergeIds } },
+          data: { venueId: req.params.id },
+        });
+        // Only delete venues that are still unverified — guards against bad IDs
+        await tx.venue.deleteMany({
+          where: { id: { in: mergeIds }, verified: false },
+        });
+      }
+      await tx.venue.update({ where: { id: req.params.id }, data: { verified: true } });
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[admin/crud/venues verify]', err);
+    res.status(500).json({ error: 'Failed to verify venue' });
+  }
+});
+
 // ─── Crop Categories ─────────────────────────────────────────────────────────
 
 router.get('/categories', async (req: Request, res: Response) => {

@@ -70,6 +70,7 @@ interface Props {
   createFn: (data: Record<string, any>) => Promise<any>;
   updateFn: (id: string, data: Record<string, any>) => Promise<any>;
   deleteFn: (id: string) => Promise<any>;
+  extraRowActions?: (row: any, invalidate: () => void) => React.ReactNode;
 }
 
 // Component
@@ -86,6 +87,7 @@ export default function AdminTableEditor({
   createFn,
   updateFn,
   deleteFn,
+  extraRowActions,
 }: Props) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -252,6 +254,7 @@ export default function AdminTableEditor({
                   ))}
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
+                      {extraRowActions?.(row, () => queryClient.invalidateQueries({ queryKey: [queryKey] }))}
                       <Button
                         variant="ghost"
                         size="icon"

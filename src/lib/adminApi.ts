@@ -258,6 +258,16 @@ export const updateAdminVenue = (id: string, d: Partial<AdminVenue>) =>
 export const deleteAdminVenue = (id: string) =>
   apiDelete(`/api/admin/crud/venues/${id}`);
 
+export interface NearbyUnverifiedVenue extends AdminVenue {
+  submission_count: number;
+}
+
+export const fetchNearbyUnverifiedVenues = (id: string) =>
+  apiGet<NearbyUnverifiedVenue[]>(`/api/admin/crud/venues/${id}/nearby-unverified`);
+
+export const verifyVenueWithMerge = (id: string, mergeVenueIds: string[] = []) =>
+  apiPost<AdminResponse>(`/api/admin/crud/venues/${id}/verify`, { merge_venue_ids: mergeVenueIds });
+
 // Categories
 
 export const fetchAdminCategories = (p: { search?: string; limit: number; offset: number }) =>
