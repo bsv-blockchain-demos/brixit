@@ -1,4 +1,4 @@
-import { Toaster } from "@/components/ui/toaster";
+﻿import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -40,7 +40,7 @@ const RootContent = () => {
             style={{
               height: '6rem',
               aspectRatio: '680.88 / 389.32',
-              backgroundColor: 'var(--green-deep)',
+              backgroundColor: 'var(--blue-deep)',
               WebkitMaskImage: 'url(/brixit.svg)',
               maskImage: 'url(/brixit.svg)',
               WebkitMaskSize: 'contain',

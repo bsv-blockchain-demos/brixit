@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { MapPin, ShieldCheck, Users } from 'lucide-react';
 import { Input } from '../ui/input';
 import { apiGet } from '@/lib/api';
@@ -75,12 +75,12 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
     return (
       <div
         className="mt-3 rounded-xl border overflow-hidden"
-        style={{ borderColor: 'var(--green-pale)', backgroundColor: 'var(--green-mist)' }}
+        style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'var(--blue-mist)' }}
       >
         <div className="flex items-center gap-3 p-4">
           <div
             className="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: 'var(--green-pale)' }}
+            style={{ backgroundColor: 'var(--blue-pale)' }}
           >
             <ShieldCheck className="w-5 h-5" style={{ color: 'var(--green-mid)' }} />
           </div>
@@ -91,7 +91,7 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
               </p>
               <span
                 className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full shrink-0"
-                style={{ backgroundColor: 'var(--green-pale)', color: 'var(--green-mid)' }}
+                style={{ backgroundColor: 'var(--blue-pale)', color: 'var(--green-mid)' }}
               >
                 <ShieldCheck className="w-3 h-3" /> Verified
               </span>
@@ -123,13 +123,13 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
   return (
     <div
       className="mt-3 rounded-xl border overflow-hidden"
-      style={{ borderColor: 'var(--green-pale)', backgroundColor: 'var(--green-mist)' }}
+      style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'var(--blue-mist)' }}
     >
       {/* Header */}
-      <div className="flex gap-3 p-4 border-b" style={{ borderColor: 'var(--green-pale)' }}>
+      <div className="flex gap-3 p-4 border-b" style={{ borderColor: 'var(--blue-pale)' }}>
         <div
           className="shrink-0 w-16 h-16 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: 'var(--green-pale)' }}
+          style={{ backgroundColor: 'var(--blue-pale)' }}
         >
           <MapPin className="w-6 h-6" style={{ color: 'var(--green-mid)' }} />
         </div>
@@ -152,7 +152,7 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
       </div>
 
       {/* Options */}
-      <div className="divide-y" style={{ borderColor: 'var(--green-pale)' }}>
+      <div className="divide-y" style={{ borderColor: 'var(--blue-pale)' }}>
         {loading && (
           <div className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>
             Searching nearby places&hellip;
@@ -163,7 +163,7 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
           <label
             key={venue.id}
             className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors"
-            style={{ backgroundColor: selected === venue.id ? 'var(--green-pale)' : undefined }}
+            style={{ backgroundColor: selected === venue.id ? 'var(--blue-pale)' : undefined }}
           >
             <input
               type="radio"
@@ -180,7 +180,7 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
                 {venue.verified ? (
                   <span
                     className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full shrink-0"
-                    style={{ backgroundColor: 'var(--green-pale)', color: 'var(--green-mid)' }}
+                    style={{ backgroundColor: 'var(--blue-pale)', color: 'var(--green-mid)' }}
                   >
                     <ShieldCheck className="w-3 h-3" /> Verified
                   </span>
@@ -201,7 +201,7 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
         ))}
 
         {/* Register new */}
-        <div style={{ backgroundColor: selected === 'register' ? 'var(--green-pale)' : undefined }}>
+        <div style={{ backgroundColor: selected === 'register' ? 'var(--blue-pale)' : undefined }}>
           <label className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors">
             <input
               type="radio"
@@ -226,7 +226,7 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
                 value={regName}
                 onChange={e => setRegName(e.target.value)}
                 className="border-2 rounded-xl"
-                style={{ borderColor: 'var(--green-pale)' }}
+                style={{ borderColor: 'var(--blue-pale)' }}
               />
             </div>
           )}
@@ -235,7 +235,7 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
         {/* Skip */}
         <label
           className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors"
-          style={{ backgroundColor: selected === 'skip' ? 'var(--green-pale)' : undefined }}
+          style={{ backgroundColor: selected === 'skip' ? 'var(--blue-pale)' : undefined }}
         >
           <input
             type="radio"

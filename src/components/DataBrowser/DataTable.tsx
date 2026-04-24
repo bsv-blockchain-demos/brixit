@@ -1,4 +1,4 @@
-// src/components/DataBrowser/DataTable.tsx
+﻿// src/components/DataBrowser/DataTable.tsx
 
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
@@ -439,7 +439,7 @@ const DataTable: React.FC = () => {
           size="sm"
           onClick={handleRefresh}
           disabled={cooldownSeconds > 0}
-          className="flex items-center gap-2 border-green-pale text-green-deep hover:bg-green-mist"
+          className="flex items-center gap-2 border-blue-pale text-blue-deep hover:bg-blue-mist"
         >
           <RefreshCw className={`w-4 h-4 ${submissionsPageQuery.isFetching ? 'animate-spin' : ''}`} />
           {cooldownSeconds > 0 ? `Refresh (${cooldownSeconds}s)` : 'Refresh'}
@@ -447,7 +447,7 @@ const DataTable: React.FC = () => {
       </div>
 
       {fromLeaderboard && (
-        <div className="mb-4 p-3 bg-green-mist border border-green-pale rounded-md">
+        <div className="mb-4 p-3 bg-blue-mist border border-blue-pale rounded-md">
           <div className="flex items-center justify-between">
             <p className="text-text-dark text-sm">
               Showing filtered results from leaderboard selection
@@ -469,10 +469,10 @@ const DataTable: React.FC = () => {
 
       <div className="mb-6 flex flex-col md:flex-row gap-4 items-center">
         <div className="relative w-full md:w-1/3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted-green" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted-brown" />
           <Input
             placeholder="Search by crop, submitter, location, notes..."
-            className="pl-9 pr-3 py-2 rounded-md border border-green-pale focus-visible:ring-green-fresh/30"
+            className="pl-9 pr-3 py-2 rounded-md border border-blue-pale focus-visible:ring-green-fresh/30"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -480,7 +480,7 @@ const DataTable: React.FC = () => {
         <Button
           variant="outline"
           onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center space-x-2 border-green-pale text-green-deep hover:bg-green-mist"
+          className="flex items-center space-x-2 border-blue-pale text-blue-deep hover:bg-blue-mist"
         >
           <Filter className="w-4 h-4" />
           <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
@@ -493,7 +493,7 @@ const DataTable: React.FC = () => {
       </div>
 
       {showFilters && (
-        <Card className="mb-6 rounded-2xl border border-green-pale shadow-sm">
+        <Card className="mb-6 rounded-2xl border border-blue-pale shadow-sm">
           <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <Label className="text-sm font-medium mb-2 block">Crop Types</Label>
@@ -733,48 +733,48 @@ const DataTable: React.FC = () => {
         </p>
       )}
 
-      <Card className="rounded-2xl border border-green-pale shadow-sm overflow-hidden">
+      <Card className="rounded-2xl border border-blue-pale shadow-sm overflow-hidden">
         <CardContent className="p-0">
           {/* Desktop table */}
           <div className="hidden desktop:block overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-green-pale">
+                <TableRow className="border-blue-pale">
                   <TableHead
-                    className="text-xs text-text-muted-green uppercase tracking-wider cursor-pointer"
+                    className="text-xs text-text-muted-brown uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('cropType')}
                   >
                     Crop {sortBy === 'cropType' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
-                  <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">
+                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">
                     Variety
                   </TableHead>
-                  <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">
+                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">
                     Brand
                   </TableHead>
                   <TableHead
-                    className="text-xs text-text-muted-green uppercase tracking-wider cursor-pointer"
+                    className="text-xs text-text-muted-brown uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('locationName')}
                   >
                     Location {sortBy === 'locationName' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
                   <TableHead
-                    className="text-xs text-text-muted-green uppercase tracking-wider text-center cursor-pointer"
+                    className="text-xs text-text-muted-brown uppercase tracking-wider text-center cursor-pointer"
                     onClick={() => handleSort('brixLevel')}
                   >
                     Score {sortBy === 'brixLevel' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
-                  <TableHead className="text-xs text-text-muted-green uppercase tracking-wider">
+                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">
                     Notes
                   </TableHead>
                   <TableHead
-                    className="text-xs text-text-muted-green uppercase tracking-wider whitespace-nowrap cursor-pointer"
+                    className="text-xs text-text-muted-brown uppercase tracking-wider whitespace-nowrap cursor-pointer"
                     onClick={() => handleSort('submittedAt')}
                   >
                     Date {sortBy === 'submittedAt' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
-                  <TableHead className="text-xs text-text-muted-green uppercase tracking-wider text-center">Verified?</TableHead>
-                  <TableHead className="text-xs text-text-muted-green uppercase tracking-wider text-center">Actions</TableHead>
+                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Verified?</TableHead>
+                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -828,7 +828,7 @@ const DataTable: React.FC = () => {
           variant="outline"
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="border-green-pale hover:bg-green-mist"
+          className="border-blue-pale hover:bg-blue-mist"
         >
           <ChevronLeft className="w-4 h-4 mr-2" /> Previous
         </Button>
@@ -839,7 +839,7 @@ const DataTable: React.FC = () => {
           variant="outline"
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="border-green-pale hover:bg-green-mist"
+          className="border-blue-pale hover:bg-blue-mist"
         >
           Next <ChevronRight className="w-4 h-4 ml-2" />
         </Button>

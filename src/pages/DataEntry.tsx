@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
@@ -107,7 +107,7 @@ const ReadingCard: React.FC<{
   return (
     <div
       className="rounded-xl border overflow-hidden"
-      style={{ borderColor: hasError ? 'var(--score-poor)' : 'var(--green-pale)', backgroundColor: 'hsl(var(--card))' }}
+      style={{ borderColor: hasError ? 'var(--score-poor)' : 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}
     >
       {/* Accordion header */}
       <div
@@ -115,7 +115,7 @@ const ReadingCard: React.FC<{
         tabIndex={0}
         onClick={() => onToggle(reading.id)}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(reading.id); } }}
-        className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-green-mist transition-colors"
+        className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-blue-mist transition-colors"
       >
         <div className="flex items-center gap-2 min-w-0">
           <span
@@ -164,7 +164,7 @@ const ReadingCard: React.FC<{
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             style={{ overflow: 'hidden' }}
           >
-            <div className="px-4 pb-5 border-t space-y-4" style={{ borderColor: 'var(--green-pale)' }}>
+            <div className="px-4 pb-5 border-t space-y-4" style={{ borderColor: 'var(--blue-pale)' }}>
               {/* Crop Type */}
               <div className="pt-4">
                 <Label
@@ -266,7 +266,7 @@ const ReadingCard: React.FC<{
                   value={reading.notes}
                   onChange={e => onChange(reading.id, 'notes', e.target.value)}
                   rows={2}
-                  className={`w-full border-2 rounded-xl px-3 py-2 text-sm transition-all hover:border-green-light focus:outline-none focus:ring-4 focus:ring-green-pale ${errors[`reading_${reading.id}_notes`] ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh bg-card'}`}
+                  className={`w-full border-2 rounded-xl px-3 py-2 text-sm transition-all hover:border-blue-light focus:outline-none focus:ring-4 focus:ring-blue-pale ${errors[`reading_${reading.id}_notes`] ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh bg-card'}`}
                   style={{ color: 'var(--text-dark)' }}
                 />
                 {errors[`reading_${reading.id}_notes`] && (
@@ -603,16 +603,16 @@ const DataEntry = () => {
         </motion.div>
 
         <motion.div {...fadeUp}>
-          <Card className="rounded-2xl border shadow-sm" style={{ borderColor: 'var(--green-pale)' }}>
+          <Card className="rounded-2xl border shadow-sm" style={{ borderColor: 'var(--blue-pale)' }}>
             <CardHeader
               className="rounded-t-2xl border-b"
-              style={{ backgroundColor: 'var(--green-mist)', borderColor: 'var(--green-pale)' }}
+              style={{ backgroundColor: 'var(--blue-mist)', borderColor: 'var(--blue-pale)' }}
             >
               <CardTitle
                 className="flex items-center space-x-3 text-xl font-display font-bold"
                 style={{ color: 'var(--text-dark)' }}
               >
-                <div className="p-2 rounded-xl" style={{ backgroundColor: 'var(--green-deep)' }}>
+                <div className="p-2 rounded-xl" style={{ backgroundColor: 'var(--blue-deep)' }}>
                   <Upload className="w-6 h-6 text-white" />
                 </div>
                 <span>New Measurement Entry</span>
@@ -631,7 +631,7 @@ const DataEntry = () => {
                       </h3>
                       <span
                         className="px-3 py-1 text-sm font-medium rounded-full"
-                        style={{ backgroundColor: 'var(--green-pale)', color: 'var(--green-mid)' }}
+                        style={{ backgroundColor: 'var(--blue-pale)', color: 'var(--green-mid)' }}
                       >
                         Required
                       </span>
@@ -707,7 +707,7 @@ const DataEntry = () => {
                               style={
                                 session.posType === opt.value
                                   ? { borderColor: 'var(--green-fresh)', backgroundColor: 'var(--green-fresh)', color: '#fff' }
-                                  : { borderColor: 'var(--green-pale)', backgroundColor: 'hsl(var(--card))', color: 'var(--text-mid)' }
+                                  : { borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))', color: 'var(--text-mid)' }
                               }
                             >
                               {opt.label}
@@ -737,7 +737,7 @@ const DataEntry = () => {
                           value={session.purchaseDate}
                           onChange={e => setSessionField('purchaseDate', e.target.value)}
                           max={new Date().toISOString().split('T')[0]}
-                          className={`w-full border-2 rounded-xl px-4 py-3 transition-all hover:border-green-light focus:outline-none focus:ring-4 focus:ring-green-pale ${errors.purchaseDate ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh bg-card'}`}
+                          className={`w-full border-2 rounded-xl px-4 py-3 transition-all hover:border-blue-light focus:outline-none focus:ring-4 focus:ring-blue-pale ${errors.purchaseDate ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh bg-card'}`}
                           style={{ color: 'var(--text-dark)' }}
                         />
                         {errors.purchaseDate && (
@@ -752,18 +752,18 @@ const DataEntry = () => {
                   </div>
                 </motion.div>
 
-                <div className="border-t" style={{ borderColor: 'var(--green-pale)' }} />
+                <div className="border-t" style={{ borderColor: 'var(--blue-pale)' }} />
 
                 {/* ── Section 2: Crop readings ── */}
                 <motion.div {...staggerChild}>
-                  <div className="border-l-4 pl-5 sm:pl-8" style={{ borderColor: 'var(--green-light)' }}>
+                  <div className="border-l-4 pl-5 sm:pl-8" style={{ borderColor: 'var(--blue-light)' }}>
                     <div className="flex items-center gap-3 mb-6">
                       <h3 className="text-xl font-display font-bold" style={{ color: 'var(--text-dark)' }}>
                         What did you measure?
                       </h3>
                       <span
                         className="px-3 py-1 text-sm font-medium rounded-full"
-                        style={{ backgroundColor: 'var(--green-pale)', color: 'var(--green-mid)' }}
+                        style={{ backgroundColor: 'var(--blue-pale)', color: 'var(--green-mid)' }}
                       >
                         Required
                       </span>
@@ -796,7 +796,7 @@ const DataEntry = () => {
                     <button
                       type="button"
                       onClick={addReading}
-                      className="mt-3 w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed text-sm font-medium transition-colors text-text-muted border-green-pale hover:border-green-fresh hover:text-green-fresh"
+                      className="mt-3 w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed text-sm font-medium transition-colors text-text-muted border-blue-pale hover:border-green-fresh hover:text-green-fresh"
                     >
                       <Plus className="w-4 h-4" />
                       Add another crop
@@ -804,11 +804,11 @@ const DataEntry = () => {
                   </div>
                 </motion.div>
 
-                <div className="border-t" style={{ borderColor: 'var(--green-pale)' }} />
+                <div className="border-t" style={{ borderColor: 'var(--blue-pale)' }} />
 
                 {/* ── Section 3: Optional ── */}
                 <motion.div {...staggerChild}>
-                  <div className="border-l-4 pl-5 sm:pl-8" style={{ borderColor: 'var(--green-pale)' }}>
+                  <div className="border-l-4 pl-5 sm:pl-8" style={{ borderColor: 'var(--blue-pale)' }}>
                     <h3 className="text-xl font-display font-bold mb-6" style={{ color: 'var(--text-dark)' }}>
                       Additional Information
                     </h3>
@@ -827,7 +827,7 @@ const DataEntry = () => {
                         value={session.measurementDate}
                         onChange={e => setSessionField('measurementDate', e.target.value)}
                         max={new Date().toISOString().split('T')[0]}
-                        className={`w-full border-2 rounded-xl px-4 py-3 transition-all hover:border-green-light focus:outline-none focus:ring-4 focus:ring-green-pale ${errors.measurementDate ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh bg-card'}`}
+                        className={`w-full border-2 rounded-xl px-4 py-3 transition-all hover:border-blue-light focus:outline-none focus:ring-4 focus:ring-blue-pale ${errors.measurementDate ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh bg-card'}`}
                         style={{ color: 'var(--text-dark)' }}
                       />
                       {errors.measurementDate && (
@@ -854,7 +854,7 @@ const DataEntry = () => {
                           <div
                             key={i}
                             className="relative w-24 h-24 rounded-xl overflow-hidden border-2 group"
-                            style={{ borderColor: 'var(--green-pale)' }}
+                            style={{ borderColor: 'var(--blue-pale)' }}
                           >
                             <img
                               src={URL.createObjectURL(file)}
@@ -874,7 +874,7 @@ const DataEntry = () => {
                           <Label
                             htmlFor="image-upload"
                             className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed rounded-xl cursor-pointer hover:border-green-fresh transition-colors"
-                            style={{ borderColor: 'var(--green-pale)', color: 'var(--text-muted)' }}
+                            style={{ borderColor: 'var(--blue-pale)', color: 'var(--text-muted)' }}
                           >
                             <Camera className="w-6 h-6 mb-1" />
                             <span className="text-xs text-center">Add Photo</span>
@@ -909,7 +909,7 @@ const DataEntry = () => {
         className="fixed bottom-0 left-0 right-0 border-t shadow-lg"
         style={{
           backgroundColor: 'var(--cream)',
-          borderColor: 'var(--green-pale)',
+          borderColor: 'var(--blue-pale)',
           padding: '0.75rem 1rem',
           paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0.5rem))',
         }}

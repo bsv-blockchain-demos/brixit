@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useWallet } from '@/contexts/WalletContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -47,7 +47,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 function FeedCard({ product, location, pct, score, user, rating }: { product: string; location: string; pct: string; score: number; user: string; rating: 'Excellent' | 'Good' | 'Poor' }) {
   const color = rating === 'Excellent' ? 'var(--green-mid)' : rating === 'Good' ? 'var(--gold)' : 'var(--score-poor)';
   return (
-    <Card className="overflow-hidden border" style={{ borderColor: 'var(--green-pale)' }}>
+    <Card className="overflow-hidden border" style={{ borderColor: 'var(--blue-pale)' }}>
       <CardContent className="p-5">
         <p className="font-display font-bold text-4xl leading-none" style={{ color }} aria-label={`Score ${pct}, rated ${rating}`}>{pct}</p>
         <p className="text-xs font-medium mt-1" style={{ color }}>{rating}</p>
@@ -361,7 +361,7 @@ export default function WalletLogin() {
         {/* ═══ Section 1: Hero ═══════════════════════════════════ */}
         <section
           className="relative flex items-center overflow-hidden"
-          style={{ background: `radial-gradient(ellipse at 30% 20%, #244536 0%, var(--green-deep) 70%)` }}
+          style={{ background: `radial-gradient(ellipse at 30% 20%, #244536 0%, var(--blue-deep) 70%)` }}
         >
           <div className="w-full max-w-6xl mx-auto px-5 py-20 desktop:py-28">
             <div className="grid desktop:grid-cols-2 gap-12 desktop:gap-16 items-center">
@@ -376,7 +376,7 @@ export default function WalletLogin() {
                   style={{ fontSize: 'clamp(2.125rem, 9vw, 3.25rem)' }}
                 >
                   Finally know if your food is{' '}
-                  <em className="italic" style={{ color: 'var(--green-light)' }}>actually</em>{' '}
+                  <em className="italic" style={{ color: 'var(--blue-light)' }}>actually</em>{' '}
                   nutritious.
                 </h1>
                 <p className="text-base desktop:text-lg leading-relaxed mb-8 max-w-md" style={{ color: 'rgba(255,255,255,0.75)' }}>
@@ -492,7 +492,7 @@ export default function WalletLogin() {
         </section>
 
         {/* ═══ Section 3: Community Scores ═══════════════════════ */}
-        <section id="community" className="py-20 desktop:py-28" style={{ backgroundColor: 'var(--green-mist)' }}>
+        <section id="community" className="py-20 desktop:py-28" style={{ backgroundColor: 'var(--blue-mist)' }}>
           <div className="max-w-5xl mx-auto px-5">
             <motion.div className="mb-10" {...fadeUp}>
               <p className="uppercase tracking-[0.2em] text-sm font-medium mb-3" style={{ color: 'var(--green-fresh)' }}>
@@ -518,7 +518,7 @@ export default function WalletLogin() {
         </section>
 
         {/* ═══ Section 4: Mission ════════════════════════════════ */}
-        <section className="py-24 desktop:py-32" style={{ background: `radial-gradient(ellipse at 70% 80%, #244536 0%, var(--green-deep) 70%)` }}>
+        <section className="py-24 desktop:py-32" style={{ background: `radial-gradient(ellipse at 70% 80%, #244536 0%, var(--blue-deep) 70%)` }}>
           <div className="max-w-2xl mx-auto px-5 text-center">
             <motion.div {...fadeUp}>
               <p className="uppercase tracking-[0.2em] text-sm font-medium mb-5" style={{ color: 'var(--green-fresh)' }}>
@@ -529,7 +529,7 @@ export default function WalletLogin() {
                 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)' }}
               >
                 Every score you submit helps{' '}
-                <em style={{ color: 'var(--green-light)' }}>another family</em>{' '}
+                <em style={{ color: 'var(--blue-light)' }}>another family</em>{' '}
                 eat better
               </h2>
               <p className="text-lg leading-relaxed mb-10" style={{ color: 'rgba(255,255,255,0.75)' }}>
@@ -560,22 +560,22 @@ export default function WalletLogin() {
             </motion.div>
 
             <motion.div {...stagger} className="grid desktop:grid-cols-3 gap-6 mb-12">
-              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--green-pale)' }}>
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--green-deep)' }}>
+              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--blue-pale)' }}>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--blue-deep)' }}>
                   <KeyRound className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>No password to forget</h3>
                 <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>Your wallet handles authentication. No emails, no resets, no breaches.</p>
               </motion.div>
-              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--green-pale)' }}>
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--green-deep)' }}>
+              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--blue-pale)' }}>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--blue-deep)' }}>
                   <ShieldCheck className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>Your data is never sold</h3>
                 <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>Scores are public, but your identity stays private unless you choose otherwise.</p>
               </motion.div>
-              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--green-pale)' }}>
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--green-deep)' }}>
+              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--blue-pale)' }}>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--blue-deep)' }}>
                   <MonitorSmartphone className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>Works on phone or computer</h3>
@@ -635,7 +635,7 @@ export default function WalletLogin() {
         </section>
 
         {/* ═══ Section 6: Footer ═════════════════════════════════ */}
-        <footer className="py-5" style={{ backgroundColor: 'var(--green-deep)' }}>
+        <footer className="py-5" style={{ backgroundColor: 'var(--blue-deep)' }}>
           <div className="max-w-5xl mx-auto px-5 grid grid-cols-3 items-center">
             <span className="font-display font-bold text-white tracking-wide text-sm">BRIX</span>
             <nav className="flex items-center justify-center gap-6 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>

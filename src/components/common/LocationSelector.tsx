@@ -510,7 +510,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
                 variant="outline"
                 role="combobox"
                 aria-expanded={cityPopoverOpen}
-                className="w-full mt-1 justify-between font-normal"
+                className="w-full mt-1 justify-between font-normal text-foreground"
                 disabled={disabled || loading.cities || cities.length === 0}
               >
                 {value.city || (

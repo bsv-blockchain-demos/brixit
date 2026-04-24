@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -99,11 +99,11 @@ function SubmissionCard({
       <div className="flex-1 space-y-1.5">
         <div className="flex items-center gap-2 flex-wrap">
           {verified ? (
-            <Badge variant="outline" className="bg-green-mist text-action-primary border-green-pale flex items-center gap-1">
+            <Badge variant="outline" className="bg-blue-mist text-action-primary border-blue-pale flex items-center gap-1">
               <CheckCircle className="w-3 h-3" /> Verified
             </Badge>
           ) : (
-            <Badge variant="outline" className="bg-green-mist text-gold border-green-pale flex items-center gap-1">
+            <Badge variant="outline" className="bg-blue-mist text-gold border-blue-pale flex items-center gap-1">
               <Clock className="w-3 h-3" /> Awaiting Verification
             </Badge>
           )}

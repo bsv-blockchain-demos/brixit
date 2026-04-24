@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '@/contexts/WalletContext';
 import { Utils } from '@bsv/sdk';
@@ -122,13 +122,13 @@ export default function CreateAccount() {
     <AuthBackground>
       <div className="max-w-md w-full">
         <div className="text-center mb-6">
-          <div className="w-12 h-12 bg-green-deep rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+          <div className="w-12 h-12 bg-blue-deep rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
             <span className="text-white font-bold text-2xl">B</span>
           </div>
           <h1 className="text-2xl font-bold font-display text-text-dark">Create your BRIX account</h1>
         </div>
 
-        <Card className="border border-green-pale">
+        <Card className="border border-blue-pale">
           <CardHeader className="pb-3">
             {step === 'checking' && <CardTitle className="font-display text-text-dark">Checking your wallet…</CardTitle>}
             {(step === 'details' || step === 'acquiring') && (
@@ -155,7 +155,7 @@ export default function CreateAccount() {
             {step === 'details' && (
               <form onSubmit={handleCreateNamed} className="space-y-4">
                 <div className="space-y-1">
-                  <Label htmlFor="username">Display Name <span className="text-text-muted-green font-normal">(optional)</span></Label>
+                  <Label htmlFor="username">Display Name <span className="text-text-muted-brown font-normal">(optional)</span></Label>
                   <Input
                     id="username"
                     type="text"
@@ -167,7 +167,7 @@ export default function CreateAccount() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="email">Email <span className="text-text-muted-green font-normal">(optional)</span></Label>
+                  <Label htmlFor="email">Email <span className="text-text-muted-brown font-normal">(optional)</span></Label>
                   <Input
                     id="email"
                     type="email"
@@ -224,7 +224,7 @@ export default function CreateAccount() {
               <div className="text-center py-6">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-mid mx-auto mb-4" />
                 <p className="text-text-mid">Issuing your identity certificate…</p>
-                <p className="text-sm text-text-muted-green mt-1">Please approve the request in your wallet.</p>
+                <p className="text-sm text-text-muted-brown mt-1">Please approve the request in your wallet.</p>
               </div>
             )}
           </CardContent>

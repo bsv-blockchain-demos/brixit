@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -20,12 +20,12 @@
      * Score — Excellent: #1f6b3f
      * ─────────────────────────────────────────────────── */
 
-    /* Blue structural family (formerly green-deep / green-mist) */
-    --green-deep:  #2c4a5c;   /* dark blue — hero, footer, nav backgrounds   */
+    /* Blue structural family (formerly blue-deep / blue-mist) */
+    --blue-deep:  #2c4a5c;   /* dark blue — hero, footer, nav backgrounds   */
     --blue-mid:    #5787a1;   /* mid blue — header fill, cards on dark bg     */
-    --green-light: #8cb3c9;   /* lighter blue accent                          */
-    --green-pale:  #dde8f0;   /* pale blue — borders, badge fills             */
-    --green-mist:  #eef4f8;   /* near-white blue — section backgrounds        */
+    --blue-light: #8cb3c9;   /* lighter blue accent                          */
+    --blue-pale:  #dde8f0;   /* pale blue — borders, badge fills             */
+    --blue-mist:  #eef4f8;   /* near-white blue — section backgrounds        */
 
     /* Brand & score greens */
     --green-fresh:    #639647;  /* brand green — links, secondary actions      */
@@ -116,11 +116,11 @@
 
   .dark {
     /* ── BRIXIT palette (dark overrides) ─────────────── */
-    --green-deep:  #152230;   /* very dark blue for dark backgrounds          */
+    --blue-deep:  #152230;   /* very dark blue for dark backgrounds          */
     --blue-mid:    #4a7a94;   /* slightly dimmed structural blue              */
-    --green-light: #6a9ab5;
-    --green-pale:  #1e3347;   /* dark blue border / subtle bg                 */
-    --green-mist:  #132130;   /* dark section bg                              */
+    --blue-light: #6a9ab5;
+    --blue-pale:  #1e3347;   /* dark blue border / subtle bg                 */
+    --blue-mist:  #132130;   /* dark section bg                              */
     --cream:       #0d1a24;   /* dark page bg                                 */
 
     --green-fresh:     #7ab35b;   /* brighter brand green for dark            */

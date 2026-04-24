@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, Loader2 } from "lucide-react";
 import Header from "../components/Layout/Header";
@@ -351,7 +351,7 @@ const LeaderboardPage: React.FC = () => {
     loadMoreType: 'location' | 'brand' | 'user',
     hasMore: boolean
   ) => (
-    <Card className="w-full border border-green-pale rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+    <Card className="w-full border border-blue-pale rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold font-display text-text-dark text-center">{title}</CardTitle>
         {labelKey === "user" && (
@@ -363,10 +363,10 @@ const LeaderboardPage: React.FC = () => {
       <CardContent className="px-0">
         <div className={isFirstLoad || isFetching ? 'opacity-50 pointer-events-none' : ''}>
             {data.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-sm text-text-muted-green">No data available.</div>
+              <div className="flex flex-col items-center justify-center py-10 text-sm text-text-muted-brown">No data available.</div>
             ) : (
               <div>
-                <div className="grid grid-cols-3 text-xs font-medium text-text-muted-green uppercase tracking-wider border-b border-green-pale px-4 py-2 bg-table-header">
+                <div className="grid grid-cols-3 text-xs font-medium text-text-muted-brown uppercase tracking-wider border-b border-blue-pale px-4 py-2 bg-table-header">
                   <span className="text-left">
                     {labelKey === "location" ? "Store" : "Name"}
                   </span>
@@ -408,7 +408,7 @@ const LeaderboardPage: React.FC = () => {
                       const isTie = rankCounts[rank] > 1;
                       const getBadgeClasses = () => {
                         if (labelKey === "user") return "bg-badge-neutral-bg text-badge-neutral-text";
-                        if (normalizedScore >= 1.75) return "bg-green-pale text-green-mid";
+                        if (normalizedScore >= 1.75) return "bg-blue-pale text-green-mid";
                         if (normalizedScore >= 1.5) return "bg-[var(--badge-gold-bg)] text-[var(--badge-gold-text)]";
                         if (normalizedScore >= 1.25) return "bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)]";
                         return "bg-badge-neutral-bg text-badge-neutral-text";
@@ -419,18 +419,18 @@ const LeaderboardPage: React.FC = () => {
                         <div
                           key={(entry as any)[`${labelKey}_id`] ?? label ?? idx}
                           onClick={() => handleNavigate(entry, labelKey as 'location' | 'brand' | 'user')}
-                          className={`grid grid-cols-3 items-center px-4 py-2 border-b border-green-pale last:border-0 odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors text-sm ${
+                          className={`grid grid-cols-3 items-center px-4 py-2 border-b border-blue-pale last:border-0 odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors text-sm ${
                             labelKey !== "user" ? "cursor-pointer" : ""
                           }`}
                         >
                           <div className="flex flex-col min-w-0">
                             <div className="font-medium text-text-dark">{labelKey === 'user' ? formatUsername(label) : label}</div>
                             {labelKey === "location" && (
-                              <div className="text-xs text-text-muted-green">
+                              <div className="text-xs text-text-muted-brown">
                                 {formatVenueLocation((entry as any).street_address, (entry as any).city, (entry as any).state)}
                               </div>
                             )}
-                            <div className="mt-1 text-xs text-text-muted-green">
+                            <div className="mt-1 text-xs text-text-muted-brown">
                               {entry.submission_count ?? 0} submissions
                             </div>
                           </div>
@@ -446,7 +446,7 @@ const LeaderboardPage: React.FC = () => {
                               {rank}
                             </span>
                             {isTie && (
-                              <span className="text-xs text-text-muted-green mt-1">(tie)</span>
+                              <span className="text-xs text-text-muted-brown mt-1">(tie)</span>
                             )}
                           </div>
                         </div>
@@ -456,11 +456,11 @@ const LeaderboardPage: React.FC = () => {
                 </div>
 
                 {hasMore && (
-                  <div className="p-3 border-t border-green-pale">
+                  <div className="p-3 border-t border-blue-pale">
                     <button
                       onClick={() => loadMore(loadMoreType)}
                       disabled={loadingMore[loadMoreType]}
-                      className="w-full flex items-center justify-center gap-2 text-sm text-green-fresh hover:text-green-mid disabled:text-text-muted-green"
+                      className="w-full flex items-center justify-center gap-2 text-sm text-green-fresh hover:text-green-mid disabled:text-text-muted-brown"
                     >
                       <span>{loadingMore[loadMoreType] ? 'Loading…' : 'Load more'}</span>
                       <ChevronDown className="h-4 w-4" />
@@ -491,13 +491,13 @@ const LeaderboardPage: React.FC = () => {
         <div className="flex flex-col md:flex-row gap-6">
           {/* Filters sidebar */}
           <aside className="w-full md:w-72">
-            <div className="bg-card border border-green-pale rounded-2xl shadow-sm p-4">
+            <div className="bg-card border border-blue-pale rounded-2xl shadow-sm p-4">
             <h2 className="text-lg font-semibold font-display text-text-dark mb-4">Filters</h2>
             <div className="space-y-4">
               <button
                 onClick={handleRefresh}
                 disabled={!canRefresh}
-                className={`text-sm ${canRefresh ? 'text-green-fresh hover:text-green-mid' : 'text-text-muted-green'} text-left`}
+                className={`text-sm ${canRefresh ? 'text-green-fresh hover:text-green-mid' : 'text-text-muted-brown'} text-left`}
               >
                 Refresh Leaderboards
               </button>
@@ -512,7 +512,7 @@ const LeaderboardPage: React.FC = () => {
                 <select
                   value={crop}
                   onChange={(e) => setCrop(e.target.value)}
-                  className="w-full rounded-lg border border-green-pale bg-card text-text-dark px-2 py-2"
+                  className="w-full rounded-lg border border-blue-pale bg-card text-text-dark px-2 py-2"
                 >
                   <option value="">All crops</option>
                   {allCrops.map((c) => (
@@ -554,7 +554,7 @@ const LeaderboardPage: React.FC = () => {
           {/* Leaderboard grid */}
           <section className="flex-1">
             {dataScopeMessage && (
-              <div className="mb-4 p-3 bg-green-mist border border-green-pale rounded-lg text-sm text-text-mid">
+              <div className="mb-4 p-3 bg-blue-mist border border-blue-pale rounded-lg text-sm text-text-mid">
                 {dataScopeMessage}
               </div>
             )}

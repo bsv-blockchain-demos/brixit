@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Smartphone, KeyRound, ShieldCheck, Leaf, Fingerprint } from 'lucide-react';
 import { AuthBackground } from '@/components/ui/AuthBackground';
@@ -192,7 +192,7 @@ export default function Help() {
               key={value}
               value={value}
               id={value}
-              className="border border-green-pale rounded-xl bg-card overflow-hidden px-4"
+              className="border border-blue-pale rounded-xl bg-card overflow-hidden px-4"
             >
               <AccordionTrigger className="hover:no-underline py-4 gap-3 text-left">
                 <span className="flex items-center gap-3">
@@ -208,7 +208,7 @@ export default function Help() {
         </Accordion>
 
         {/* Getting started */}
-        <Card className="border-green-pale bg-green-mist">
+        <Card className="border-blue-pale bg-blue-mist">
           <CardHeader className="pb-2">
             <CardTitle className="text-base text-green-mid">Getting started</CardTitle>
           </CardHeader>
