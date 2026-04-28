@@ -16,6 +16,7 @@ test.describe('Data entry form', () => {
 
   test('renders required section labels', async ({ authedPage }) => {
     await expect(authedPage.locator('label').filter({ hasText: /location/i })).toBeVisible();
+    // Farm / Brand Name is inside the first reading accordion, which is open by default
     await expect(authedPage.locator('label').filter({ hasText: /farm \/ brand name/i })).toBeVisible();
     await expect(authedPage.getByText('Purchase Type')).toBeVisible();
   });
@@ -36,6 +37,7 @@ test.describe('Data entry form', () => {
   });
 
   test('crop combobox trigger shows placeholder', async ({ authedPage }) => {
+    // First reading accordion is open by default
     await expect(authedPage.getByRole('combobox').filter({ hasText: /select crop type/i })).toBeVisible();
   });
 
@@ -55,7 +57,7 @@ test.describe('Data entry form', () => {
     // Remove buttons are hidden when only one reading exists
     await expect(authedPage.getByRole('button', { name: 'Remove reading', exact: true })).not.toBeVisible();
     await authedPage.getByRole('button', { name: /add another crop/i }).click();
-    // Both readings now show a remove button
+    // Both readings now show a remove button in the accordion header
     await expect(authedPage.getByRole('button', { name: 'Remove reading', exact: true })).toHaveCount(2);
   });
 
@@ -70,7 +72,11 @@ test.describe('Data entry form', () => {
   });
 
   test('shows validation error for missing brand when submitting', async ({ authedPage }) => {
+    // Brand validation only runs for readings that have a crop selected —
+    // select a crop first so the reading is included in validation
+    await authedPage.getByRole('combobox').filter({ hasText: /select crop type/i }).click();
+    await authedPage.getByRole('option', { name: 'Bell Peppers' }).click();
     await authedPage.getByRole('button', { name: /submit reading/i }).click();
-    await expect(authedPage.getByText(/please select a farm or brand/i)).toBeVisible();
+    await expect(authedPage.getByText(/please select a brand, or choose unknown/i)).toBeVisible();
   });
 });

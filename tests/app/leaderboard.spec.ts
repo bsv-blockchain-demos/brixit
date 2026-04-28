@@ -1,9 +1,17 @@
 import { test, expect } from '../fixtures/auth';
-import { mockLeaderboards } from '../fixtures/api';
+import { mockLeaderboards, MOCK_CROPS } from '../fixtures/api';
 
 test.describe('Leaderboard', () => {
   test.beforeEach(async ({ authedPage }) => {
     await mockLeaderboards(authedPage);
+    // LocationSelector mounts and fetches countries/states for its dropdowns
+    await authedPage.route('**/api/geonames/**', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
+    );
+    // Crop filter dropdown in the sidebar
+    await authedPage.route('**/api/crops', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_CROPS) })
+    );
     await authedPage.goto('/leaderboard');
   });
 
@@ -34,7 +42,7 @@ test.describe('Leaderboard', () => {
 
   test('Most Submissions leaderboard shows submission counts', async ({ authedPage }) => {
     await expect(authedPage.getByText('Loading leaderboards...')).not.toBeVisible({ timeout: 5000 });
-    // Mock user has submission_count: 5
+    // Mock user has submission_count: 5; display_name short enough to pass through formatUsername unchanged
     await expect(authedPage.getByText('Test Contributor')).toBeVisible();
     await expect(authedPage.getByText('5 submissions', { exact: true })).toBeVisible();
   });
