@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Header from "../components/Layout/Header";
 import LocationSelector from "../components/common/LocationSelector";
 import { fetchCropTypes, CropType } from "../lib/fetchCropTypes";
@@ -12,17 +12,9 @@ import {
 } from "../lib/fetchLeaderboards";
 import { ALL_COUNTRIES } from "../lib/locationConstants";
 import { useQueryClient } from "@tanstack/react-query";
-import { computeNormalizedScore, toDisplayScore } from "../lib/getBrixColor";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
 import { useAuth } from "../contexts/AuthContext";
 import { locationService } from "../lib/locationServiceforRegister";
-import { formatUsername } from "../lib/formatUsername";
-import { formatVenueLocation } from "../lib/formatAddress";
+import { LeaderboardCard } from "../components/leaderboard/LeaderboardCard";
 
 const emptyLocation = {
   country: "",
@@ -342,138 +334,6 @@ const LeaderboardPage: React.FC = () => {
     navigate(`/data?${params}`);
   };
 
-  // Render card
-
-  const renderLeaderboardCard = (
-    title: string,
-    data: LeaderboardEntry[],
-    labelKey: string,
-    loadMoreType: 'location' | 'brand' | 'user',
-    hasMore: boolean
-  ) => (
-    <Card className="w-full border border-blue-pale rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold font-display text-text-dark text-center">{title}</CardTitle>
-        {labelKey === "user" && (
-          <p className="text-sm text-muted-foreground text-center mt-1">
-            Global rankings • All users
-          </p>
-        )}
-      </CardHeader>
-      <CardContent className="px-0">
-        <div className={isFirstLoad || isFetching ? 'opacity-50 pointer-events-none' : ''}>
-            {data.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-sm text-text-muted-brown">No data available.</div>
-            ) : (
-              <div>
-                <div className="grid grid-cols-3 text-xs font-medium text-text-muted-brown uppercase tracking-wider border-b border-blue-pale px-4 py-2 bg-table-header">
-                  <span className="text-left">
-                    {labelKey === "location" ? "Store" : "Name"}
-                  </span>
-                  <span className="text-center">
-                    {labelKey === "user" ? "Submissions" : "Score"}
-                  </span>
-                  <span className="text-center">Rank</span>
-                </div>
-
-                <div>
-                  {(() => {
-                    const rankCounts = data.reduce((acc, entry) => {
-                      const r = entry.rank ?? 0;
-                      acc[r] = (acc[r] || 0) + 1;
-                      return acc;
-                    }, {} as Record<number, number>);
-
-                    return data.map((entry, idx) => {
-                      const label =
-                        (entry as any)[`${labelKey}_label`] ||
-                        (entry as any)[`${labelKey}_name`] ||
-                        (entry as any).user_name ||
-                        (entry as any).display_name ||
-                        (entry as any).entity_name ||
-                        "Unknown";
-
-                      const score = entry.average_normalized_score ?? null;
-                      const normalizedScore =
-                        typeof score === "number"
-                          ? score
-                          : (() => {
-                              const avgBrix = entry.average_brix;
-                              return typeof avgBrix === "number"
-                                ? computeNormalizedScore(avgBrix)
-                                : 1.5;
-                            })();
-
-                      const rank = entry.rank ?? idx + 1;
-                      const isTie = rankCounts[rank] > 1;
-                      const getBadgeClasses = () => {
-                        if (labelKey === "user") return "bg-badge-neutral-bg text-badge-neutral-text";
-                        if (normalizedScore >= 1.75) return "bg-blue-pale text-green-mid";
-                        if (normalizedScore >= 1.5) return "bg-[var(--badge-gold-bg)] text-[var(--badge-gold-text)]";
-                        if (normalizedScore >= 1.25) return "bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)]";
-                        return "bg-badge-neutral-bg text-badge-neutral-text";
-                      };
-                      const badgeClasses = getBadgeClasses();
-
-                      return (
-                        <div
-                          key={(entry as any)[`${labelKey}_id`] ?? label ?? idx}
-                          onClick={() => handleNavigate(entry, labelKey as 'location' | 'brand' | 'user')}
-                          className={`grid grid-cols-3 items-center px-4 py-2 border-b border-blue-pale last:border-0 odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors text-sm ${
-                            labelKey !== "user" ? "cursor-pointer" : ""
-                          }`}
-                        >
-                          <div className="flex flex-col min-w-0">
-                            <div className="font-medium text-text-dark">{labelKey === 'user' ? formatUsername(label) : label}</div>
-                            {labelKey === "location" && (
-                              <div className="text-xs text-text-muted-brown">
-                                {formatVenueLocation((entry as any).street_address, (entry as any).city, (entry as any).state)}
-                              </div>
-                            )}
-                            <div className="mt-1 text-xs text-text-muted-brown">
-                              {entry.submission_count ?? 0} submissions
-                            </div>
-                          </div>
-
-                          <div className="text-center text-text-dark font-display font-bold text-sm">
-                            {labelKey === "user"
-                              ? entry.submission_count ?? 0
-                              : toDisplayScore(normalizedScore ?? 1)}
-                          </div>
-
-                          <div className="flex flex-col items-center">
-                            <span className={`px-3 py-1 text-sm font-semibold rounded-full ${badgeClasses}`}>
-                              {rank}
-                            </span>
-                            {isTie && (
-                              <span className="text-xs text-text-muted-brown mt-1">(tie)</span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
-
-                {hasMore && (
-                  <div className="p-3 border-t border-blue-pale">
-                    <button
-                      onClick={() => loadMore(loadMoreType)}
-                      disabled={loadingMore[loadMoreType]}
-                      className="w-full flex items-center justify-center gap-2 text-sm text-green-fresh hover:text-green-mid disabled:text-text-muted-brown"
-                    >
-                      <span>{loadingMore[loadMoreType] ? 'Loading…' : 'Load more'}</span>
-                      <ChevronDown className="h-4 w-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   // Render
 
   return (
@@ -559,9 +419,42 @@ const LeaderboardPage: React.FC = () => {
               </div>
             )}
             <div className="grid grid-cols-1 gap-6">
-              {renderLeaderboardCard("Top Locations", locationData, "location", 'location', locationHasMore)}
-              {renderLeaderboardCard("Top Brands", brandData, "brand", 'brand', brandHasMore)}
-              {renderLeaderboardCard("Most Submissions", userData, "user", 'user', userHasMore)}
+              <LeaderboardCard
+                title="Top Locations"
+                data={locationData}
+                labelKey="location"
+                loadMoreType="location"
+                hasMore={locationHasMore}
+                isFirstLoad={isFirstLoad}
+                isFetching={isFetching}
+                isLoadingMore={loadingMore.location}
+                onLoadMore={() => loadMore('location')}
+                onNavigate={handleNavigate}
+              />
+              <LeaderboardCard
+                title="Top Brands"
+                data={brandData}
+                labelKey="brand"
+                loadMoreType="brand"
+                hasMore={brandHasMore}
+                isFirstLoad={isFirstLoad}
+                isFetching={isFetching}
+                isLoadingMore={loadingMore.brand}
+                onLoadMore={() => loadMore('brand')}
+                onNavigate={handleNavigate}
+              />
+              <LeaderboardCard
+                title="Most Submissions"
+                data={userData}
+                labelKey="user"
+                loadMoreType="user"
+                hasMore={userHasMore}
+                isFirstLoad={isFirstLoad}
+                isFetching={isFetching}
+                isLoadingMore={loadingMore.user}
+                onLoadMore={() => loadMore('user')}
+                onNavigate={handleNavigate}
+              />
             </div>
           </section>
         </div>

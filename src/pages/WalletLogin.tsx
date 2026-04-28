@@ -4,9 +4,7 @@ import { useWallet } from '@/contexts/WalletContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Utils, createNonce } from '@bsv/sdk';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Smartphone, ArrowRight, ShieldCheck, KeyRound, MonitorSmartphone } from 'lucide-react';
 import { getDataFromWallet } from '@/utils/getDataFromWallet';
 import { useMobileWalletLogin } from '@/hooks/useMobileWalletLogin';
@@ -14,46 +12,13 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { motion, useReducedMotion } from 'framer-motion';
 import { getMapboxToken } from '@/lib/getMapboxToken';
 import { apiGet } from '@/lib/api';
-import { scoreBrix } from '@/lib/getBrixColor';
+import { MapPreviewPanel, type MapPreview, type MapCluster } from '@/components/landing/MapPreviewPanel';
+import { FeedCard } from '@/components/landing/FeedCard';
+import { AuthDialogContent } from '@/components/auth/AuthDialogContent';
 
 const MYCELIA_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
 const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
-
-interface ClusterSample {
-  brixValue: number;
-  cropLabel: string;
-  cropVariety: string | null;
-  venueName: string | null;
-  venueCity: string | null;
-  poorBrix: number | null;
-  excellentBrix: number | null;
-}
-interface MapCluster { lat: number; lng: number; count: number; sample?: ClusterSample; }
-interface MapPreview {
-  url: string;
-  clusters: MapCluster[];
-  center: { lat: number; lng: number };
-  zoom: number;
-}
-
-// Web Mercator: returns position as % of the 560×380 static image
-function toImagePct(
-  lat: number, lng: number,
-  centerLat: number, centerLng: number,
-  zoom: number,
-): { x: number; y: number } {
-  const S = 256 * Math.pow(2, zoom);
-  const wx = (l: number) => (l + 180) / 360 * S;
-  const wy = (l: number) => {
-    const r = l * Math.PI / 180;
-    return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * S;
-  };
-  return {
-    x: Math.max(8, Math.min(92, (wx(lng) - wx(centerLng)) / 560 * 100 + 50)),
-    y: Math.max(8, Math.min(92, (wy(lat) - wy(centerLat)) / 380 * 100 + 50)),
-  };
-}
 
 // ── Stat column (hero strip) ─────────────────────────────────────
 function Stat({ value, label }: { value: string; label: string }) {
@@ -65,20 +30,6 @@ function Stat({ value, label }: { value: string; label: string }) {
   );
 }
 
-// ── Community feed card ──────────────────────────────────────────
-function FeedCard({ product, location, pct, score, user, rating }: { product: string; location: string; pct: string; score: number; user: string; rating: 'Excellent' | 'Good' | 'Poor' }) {
-  const color = rating === 'Excellent' ? 'var(--green-mid)' : rating === 'Good' ? 'var(--gold)' : 'var(--score-poor)';
-  return (
-    <Card className="overflow-hidden border" style={{ borderColor: 'var(--blue-pale)' }}>
-      <CardContent className="p-5">
-        <p className="font-display font-bold text-4xl leading-none" style={{ color }} aria-label={`Score ${pct}, rated ${rating}`}>{pct}</p>
-        <p className="text-xs font-medium mt-1" style={{ color }}>{rating}</p>
-        <p className="font-semibold mt-4" style={{ color: 'var(--text-dark)' }}>{product}</p>
-        <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>{location} · {user} · {score} BRIX</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 export default function WalletLogin() {
   const [searchParams] = useSearchParams();
@@ -255,145 +206,6 @@ export default function WalletLogin() {
   const isQRScanning = loginStatus === 'scanning' || loginStatus === 'authenticating';
   const isAuthActive = hasStartedLogin || showMobileQR;
 
-  function renderAuthState() {
-    // QR scanning / authenticating
-    if (isQRScanning) {
-      return (
-        <div className="space-y-4">
-          <DialogHeader>
-            <DialogTitle className="font-display">
-              {loginStatus === 'authenticating' ? 'Verifying...' : 'Scan with your mobile wallet'}
-            </DialogTitle>
-            <DialogDescription>
-              {loginStatus === 'authenticating'
-                ? 'Retrieving your identity and certificates'
-                : 'Open the wallet app on your phone and scan this code'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col items-center gap-4">
-            {session?.qrDataUrl && loginStatus === 'scanning' ? (
-              <>
-                <img
-                  src={session.qrDataUrl}
-                  alt="Scan to connect mobile wallet"
-                  className="w-56 h-56 rounded-xl border border-border shadow-sm"
-                />
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  session.status === 'connected' ? 'bg-secondary text-green-fresh' : 'bg-amber-50 text-amber-700'
-                }`}>
-                  {session.status === 'connected' ? 'Connected' : 'Waiting for scan...'}
-                </span>
-              </>
-            ) : (
-              <div className="w-56 h-56 bg-muted rounded-xl animate-pulse" />
-            )}
-            {loginStatus === 'authenticating' && (
-              <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-primary" />
-            )}
-            <Button variant="outline" onClick={handleResetLogin} className="w-full mt-2">
-              Cancel
-            </Button>
-          </div>
-        </div>
-      );
-    }
-
-    // Mobile QR error
-    if (loginStatus === 'error' && loginError && loginError !== 'NO_CERTIFICATE') {
-      return (
-        <div className="space-y-4">
-          <DialogHeader>
-            <DialogTitle className="font-display">Connection failed</DialogTitle>
-          </DialogHeader>
-          <Alert variant="destructive">
-            <AlertDescription>{loginError}</AlertDescription>
-          </Alert>
-          <div className="flex flex-col gap-2">
-            <Button onClick={() => { resetMobileLogin(); startMobileLogin(); }} className="w-full">
-              Try Again
-            </Button>
-            <Button variant="outline" onClick={handleResetLogin} className="w-full">
-              Back
-            </Button>
-          </div>
-        </div>
-      );
-    }
-
-    // Max retries exceeded
-    if (maxRetriesExceeded) {
-      return (
-        <div className="space-y-4">
-          <DialogHeader>
-            <DialogTitle className="font-display">Couldn't connect</DialogTitle>
-          </DialogHeader>
-          <Alert variant="destructive">
-            <AlertDescription>
-              Unable to connect to your wallet. Please ensure it's unlocked and try again.
-            </AlertDescription>
-          </Alert>
-          <Button onClick={() => window.location.reload()} className="w-full">
-            Retry
-          </Button>
-        </div>
-      );
-    }
-
-    // Certificate error
-    if (certificateError && hasStartedLogin) {
-      return (
-        <div className="space-y-4">
-          <DialogHeader>
-            <DialogTitle className="font-display">Verification failed</DialogTitle>
-          </DialogHeader>
-          <Alert variant="destructive">
-            <AlertDescription>{certificateError}</AlertDescription>
-          </Alert>
-          <Button
-            onClick={checkUserCertificates}
-            disabled={isCheckingCertificates}
-            className="w-full"
-          >
-            {isCheckingCertificates ? 'Checking...' : 'Try Again'}
-          </Button>
-        </div>
-      );
-    }
-
-    // Connecting
-    if (hasStartedLogin && isConnecting) {
-      return (
-        <div className="text-center space-y-4 py-4">
-          <DialogTitle className="sr-only">Connecting to your wallet</DialogTitle>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-          <div>
-            <p className="font-semibold text-foreground">Connecting to your wallet...</p>
-            <p className="text-sm text-muted-foreground mt-1">Please approve the connection request</p>
-            {retryCount > 0 && (
-              <p className="text-xs text-muted-foreground mt-2">Retry attempt {retryCount}...</p>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    // Checking certificates
-    if (hasStartedLogin && isCheckingCertificates) {
-      return (
-        <div className="text-center space-y-4 py-4">
-          <DialogTitle className="sr-only">Verifying your identity</DialogTitle>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-          <div>
-            <p className="font-semibold text-foreground">Verifying your identity...</p>
-            <p className="text-sm text-muted-foreground mt-1">Checking your credentials</p>
-          </div>
-        </div>
-      );
-    }
-
-    return null;
-  }
-
   // ── Motion helpers ─────────────────────────────────────────────
 
   const fadeUp = prefersReducedMotion
@@ -442,120 +254,7 @@ export default function WalletLogin() {
               </motion.div>
 
               {/* Right: map preview */}
-              <motion.div
-                className="flex flex-col gap-2 mt-4 desktop:mt-0"
-                {...(prefersReducedMotion ? {} : { initial: { opacity: 0, x: 40 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true }, transition: { duration: 0.6, delay: 0.2 } })}
-              >
-                <p className="text-xs font-medium uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  Where people are testing their food
-                </p>
-                <div className="relative rounded-2xl overflow-hidden shadow-xl h-[200px] desktop:h-[260px]">
-                  {mapPreview ? (
-                    <>
-                      <img
-                        src={mapPreview.url}
-                        alt="Map showing community BRIX score locations"
-                        className="w-full h-full object-cover"
-                        loading="eager"
-                      />
-
-                      {/* Cluster circles + score popup for the largest cluster */}
-                      {(() => {
-                        const { clusters, center, zoom } = mapPreview;
-                        const largest = clusters[0];
-                        const largestPct = toImagePct(largest.lat, largest.lng, center.lat, center.lng, zoom);
-
-                        return (
-                          <>
-                            {/* All cluster circles */}
-                            {clusters.map((c, i) => {
-                              const pct = toImagePct(c.lat, c.lng, center.lat, center.lng, zoom);
-                              const d = c.count >= 200 ? 80 : c.count >= 50 ? 60 : c.count >= 10 ? 44 : 32;
-                              return (
-                                <div
-                                  key={i}
-                                  className="absolute pointer-events-none flex items-center justify-center rounded-full font-bold text-white text-sm"
-                                  style={{
-                                    top: `${pct.y}%`, left: `${pct.x}%`,
-                                    width: d, height: d,
-                                    transform: 'translate(-50%, -50%)',
-                                    backgroundColor: '#2d6a4f',
-                                    border: '2px solid rgba(255,255,255,0.6)',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
-                                    fontSize: d < 36 ? 11 : 13,
-                                  }}
-                                >
-                                  {c.count}
-                                </div>
-                              );
-                            })}
-
-                            {/* Score popup on the largest cluster — arrow points down to it */}
-                            {(() => {
-                              const s = largest.sample;
-                              const score = s ? scoreBrix(
-                                s.brixValue,
-                                s.poorBrix != null && s.excellentBrix != null
-                                  ? { poor: s.poorBrix, average: null, good: null, excellent: s.excellentBrix }
-                                  : null,
-                              ) : null;
-                              const displayPct  = score?.display ?? '88%';
-                              const quality     = score?.quality ?? 'Excellent';
-                              const scoreColor  = score?.hex     ?? 'var(--green-mid)';
-                              const productName = s
-                                ? (s.cropVariety ? `${s.cropVariety} ${s.cropLabel}` : s.cropLabel)
-                                : 'Banana';
-                              const location = s ? (s.venueName || s.venueCity || '') : 'Aldi · Zurich';
-                              return (
-                                <div
-                                  className="absolute pointer-events-none"
-                                  style={{
-                                    bottom: `calc(${100 - largestPct.y}% + 20px)`,
-                                    left: `${largestPct.x}%`,
-                                    transform: 'translateX(-50%)',
-                                  }}
-                                >
-                                  <div className="bg-white rounded-xl shadow-xl px-2 py-1.5 desktop:px-3 desktop:py-2.5 w-36 desktop:w-44 relative">
-                                    <div className="flex items-baseline gap-1 mb-0.5">
-                                      <span className="font-display font-bold text-base desktop:text-xl leading-none" style={{ color: scoreColor }}>
-                                        {displayPct}
-                                      </span>
-                                      <span className="font-semibold uppercase tracking-wide" style={{ color: scoreColor, fontSize: '10px' }}>
-                                        {quality}
-                                      </span>
-                                    </div>
-                                    <p className="text-xs font-semibold leading-snug" style={{ color: 'var(--text-dark)' }}>
-                                      {productName}
-                                    </p>
-                                    {location && (
-                                      <p className="text-xs leading-snug hidden desktop:block" style={{ color: 'var(--text-muted)' }}>
-                                        {location}
-                                      </p>
-                                    )}
-                                    <p className="leading-snug mt-1 pt-1 border-t" style={{ color: 'var(--text-muted)', borderColor: 'var(--blue-pale)', fontSize: '10px' }}>
-                                      {largest.count - 1} other submissions on this location
-                                    </p>
-                                    {/* Arrow tip pointing down toward the cluster circle */}
-                                    <div
-                                      className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white rotate-45"
-                                      style={{ boxShadow: '2px 2px 3px rgba(0,0,0,0.06)' }}
-                                    />
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                          </>
-                        );
-                      })()}
-                    </>
-                  ) : (
-                    <div className="w-full h-full bg-white/5 animate-pulse" />
-                  )}
-                </div>
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                  Verified scores from real growers and shoppers
-                </p>
-              </motion.div>
+              <MapPreviewPanel mapPreview={mapPreview} />
             </div>
 
             {/* Button row — same column grid + items-start guarantees equal top position */}
@@ -835,7 +534,21 @@ export default function WalletLogin() {
         }}
       >
         <DialogContent className={isQRScanning ? 'max-w-2xl' : 'max-w-md'}>
-          {renderAuthState()}
+          <AuthDialogContent
+            loginStatus={loginStatus}
+            loginError={loginError}
+            session={session}
+            isQRScanning={isQRScanning}
+            hasStartedLogin={hasStartedLogin}
+            isConnecting={isConnecting}
+            maxRetriesExceeded={maxRetriesExceeded}
+            isCheckingCertificates={isCheckingCertificates}
+            certificateError={certificateError}
+            retryCount={retryCount}
+            onCheck={checkUserCertificates}
+            onReset={handleResetLogin}
+            onRetryMobile={() => { resetMobileLogin(); startMobileLogin(); }}
+          />
         </DialogContent>
       </Dialog>
     </>

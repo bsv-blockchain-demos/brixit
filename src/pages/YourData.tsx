@@ -18,6 +18,7 @@ import { useToast } from '../hooks/use-toast';
 import DataPointDetailModal from '../components/common/DataPointDetailModal';
 import { useStaticData } from '../hooks/useStaticData';
 import { useQueryClient } from '@tanstack/react-query';
+import { IconStatGrid } from '../components/common/IconStatGrid';
 
 import {
   AlertDialog,
@@ -424,53 +425,11 @@ const YourData: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="stats">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="rounded-2xl border border-blue-pale shadow-sm">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-blue-deep rounded-xl p-2">
-                      <Beaker className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-display font-bold text-text-dark">{totalCount}</p>
-                      <p className="text-sm text-text-mid">Total Submissions</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-2xl border border-blue-pale shadow-sm">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-blue-deep rounded-xl p-2">
-                      <CheckCircle className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-display font-bold text-text-dark">
-                        {verifiedCount}
-                      </p>
-                      <p className="text-sm text-text-mid">Verified Measurements</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-2xl border border-blue-pale shadow-sm">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-blue-deep rounded-xl p-2">
-                      <MapPin className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-display font-bold text-text-dark">
-                        {uniqueCropTypesCount}
-                      </p>
-                      <p className="text-sm text-text-mid">Unique Crop Types</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <IconStatGrid stats={[
+              { icon: Beaker,        value: totalCount,           label: 'Total Submissions' },
+              { icon: CheckCircle,   value: verifiedCount,        label: 'Verified Measurements' },
+              { icon: MapPin,        value: uniqueCropTypesCount, label: 'Unique Crop Types' },
+            ]} />
           </TabsContent>
         </Tabs>
 
