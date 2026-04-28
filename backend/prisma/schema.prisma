@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
@@ -69,7 +68,6 @@ model WalletIdentity {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId], name: "idx_wallet_identities_user_id")
   @@map("wallet_identities")
 }
 
@@ -164,6 +162,8 @@ model Submission {
   @@index([cropId], name: "submissions_crop_id_idx")
   @@index([userId], name: "submissions_user_id_idx")
   @@index([venueId], name: "submissions_venue_id_idx")
+  @@index([brandId], name: "submissions_brand_id_idx")
+  @@index([verified], name: "submissions_verified_idx")
   @@map("submissions")
 }
 

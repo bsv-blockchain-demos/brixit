@@ -25,7 +25,8 @@
     "@bsv/sdk": "^2.0.13",
     "@bsv/wallet-helper": "^0.0.6",
     "@bsv/wallet-relay": "github:kjartan221/wallet-relay-lib",
-    "@prisma/client": "^6.4.1",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
     "cors": "^2.8.5",
     "express": "^4.21.0",
     "express-rate-limit": "^8.2.1",
@@ -41,7 +42,7 @@
     "@types/node": "^22.5.5",
     "@types/qrcode": "^1.5.0",
     "@types/ws": "^8.5.0",
-    "prisma": "^6.4.1",
+    "prisma": "^7.8.0",
     "tsx": "^4.19.0",
     "typescript": "^5.5.3",
     "vitest": "^2.1.9"

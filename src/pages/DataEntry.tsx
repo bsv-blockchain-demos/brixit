@@ -224,23 +224,20 @@ const ReadingCard: React.FC<{
                   BRIX Reading <span className="text-destructive ml-0.5">*</span>
                 </Label>
                 <div className="flex items-center gap-4">
-                  <div className="flex flex-col items-center shrink-0">
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="100"
-                      inputMode="decimal"
-                      value={isNaN(reading.brixLevel) ? '' : reading.brixLevel}
-                      onChange={e => {
-                        const parsed = parseFloat(e.target.value);
-                        onChange(reading.id, 'brixLevel', isNaN(parsed) ? 0 : Math.min(Math.max(parsed, 0), 100));
-                      }}
-                      className="w-20 text-center border-2 rounded-xl px-2 py-2 font-display font-bold text-lg transition-all border-input focus:border-green-fresh bg-card focus:outline-none"
-                      style={{ color: tierColor }}
-                    />
-                    <span className="text-xs font-medium mt-1" style={{ color: tierColor }}>{tierLabel}</span>
-                  </div>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    inputMode="decimal"
+                    value={isNaN(reading.brixLevel) ? '' : reading.brixLevel}
+                    onChange={e => {
+                      const parsed = parseFloat(e.target.value);
+                      onChange(reading.id, 'brixLevel', isNaN(parsed) ? 0 : Math.min(Math.max(parsed, 0), 100));
+                    }}
+                    className="w-20 shrink-0 text-center border-2 rounded-xl px-2 py-2 font-display font-bold text-lg transition-all border-input focus:border-green-fresh bg-card focus:outline-none"
+                    style={{ color: tierColor }}
+                  />
                   <Slider
                     value={[reading.brixLevel]}
                     onValueChange={([v]) => onChange(reading.id, 'brixLevel', Math.min(Math.max(v, 0), 100))}
@@ -249,6 +246,7 @@ const ReadingCard: React.FC<{
                     className="flex-1"
                   />
                 </div>
+                <span className="text-xs font-medium mt-1 inline-block w-20 text-center" style={{ color: tierColor }}>{tierLabel}</span>
                 {errors[`reading_${reading.id}_brixLevel`] && (
                   <p className="text-destructive text-xs mt-1 flex items-center gap-1">
                     <X className="w-3 h-3" />{errors[`reading_${reading.id}_brixLevel`]}
@@ -264,9 +262,10 @@ const ReadingCard: React.FC<{
                 >
                   <FileText className="w-3.5 h-3.5" />
                   Notes
+                  <span className="font-normal ml-1" style={{ color: 'var(--text-muted)' }}>(optional)</span>
                 </Label>
                 <Textarea
-                  placeholder="Any observations or anomalies..."
+                  placeholder="Variety, observations, or anomalies — e.g. Red Delicious, grown outdoors, unusually sweet..."
                   value={reading.notes}
                   onChange={e => onChange(reading.id, 'notes', e.target.value)}
                   rows={2}

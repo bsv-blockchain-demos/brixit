@@ -37,6 +37,7 @@ import usersRoutes from './routes/users.js';
 import adminRoutes from './routes/admin.js';
 import adminCrudRoutes from './routes/adminCrud.js';
 import uploadRoutes from './routes/upload.js';
+import mapPreviewRoutes from './routes/mapPreview.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -89,6 +90,7 @@ app.use('/api/crops', cropsRoutes);
 app.use('/api/brands', brandsRoutes);
 app.use('/api/venues', venuesRoutes);
 app.use('/api/leaderboards', leaderboardsRoutes);
+app.use('/api/map-preview', mapPreviewRoutes);
 
 // --- Submissions (public GET + authenticated POST/DELETE) ---
 app.use('/api/submissions', submissionsRoutes);

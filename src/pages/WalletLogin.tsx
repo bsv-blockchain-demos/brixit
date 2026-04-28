@@ -12,25 +12,47 @@ import { getDataFromWallet } from '@/utils/getDataFromWallet';
 import { useMobileWalletLogin } from '@/hooks/useMobileWalletLogin';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { motion, useReducedMotion } from 'framer-motion';
+import { getMapboxToken } from '@/lib/getMapboxToken';
+import { apiGet } from '@/lib/api';
+import { scoreBrix } from '@/lib/getBrixColor';
 
 const MYCELIA_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
 const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 
-// ── Illustrative score card (hero decoration) ────────────────────
-function ScoreCard({ product, origin, score, pct, rating }: { product: string; origin: string; score: number; pct: string; rating: 'Excellent' | 'Good' | 'Poor' }) {
-  const color = rating === 'Excellent' ? 'var(--green-mid)' : rating === 'Good' ? 'var(--gold)' : 'var(--score-poor)';
-  return (
-    <div className="rounded-2xl p-5 shadow-lg" style={{ backgroundColor: 'hsl(var(--card))' }}>
-      <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>{origin}</p>
-      <p className="text-lg font-display font-semibold mt-0.5" style={{ color: 'var(--text-dark)' }}>{product}</p>
-      <div className="flex items-end gap-2 mt-3">
-        <span className="text-3xl font-display font-bold" style={{ color }} aria-label={`Score ${pct}, rated ${rating}`}>{pct}</span>
-        <span className="text-sm pb-1" style={{ color: 'var(--text-muted)' }}>{score} BRIX</span>
-      </div>
-      <span className="inline-block mt-2 text-xs font-medium" style={{ color }}>{rating}</span>
-    </div>
-  );
+interface ClusterSample {
+  brixValue: number;
+  cropLabel: string;
+  cropVariety: string | null;
+  venueName: string | null;
+  venueCity: string | null;
+  poorBrix: number | null;
+  excellentBrix: number | null;
+}
+interface MapCluster { lat: number; lng: number; count: number; sample?: ClusterSample; }
+interface MapPreview {
+  url: string;
+  clusters: MapCluster[];
+  center: { lat: number; lng: number };
+  zoom: number;
+}
+
+// Web Mercator: returns position as % of the 560×380 static image
+function toImagePct(
+  lat: number, lng: number,
+  centerLat: number, centerLng: number,
+  zoom: number,
+): { x: number; y: number } {
+  const S = 256 * Math.pow(2, zoom);
+  const wx = (l: number) => (l + 180) / 360 * S;
+  const wy = (l: number) => {
+    const r = l * Math.PI / 180;
+    return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * S;
+  };
+  return {
+    x: Math.max(8, Math.min(92, (wx(lng) - wx(centerLng)) / 560 * 100 + 50)),
+    y: Math.max(8, Math.min(92, (wy(lat) - wy(centerLat)) / 380 * 100 + 50)),
+  };
 }
 
 // ── Stat column (hero strip) ─────────────────────────────────────
@@ -68,6 +90,40 @@ export default function WalletLogin() {
   const [isCheckingCertificates, setIsCheckingCertificates] = useState(false);
   const [hasStartedLogin, setHasStartedLogin] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [mapPreview, setMapPreview] = useState<MapPreview | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const FALLBACK: Omit<MapPreview, 'url'> = {
+      center: { lat: 47.5, lng: 8.0 },
+      zoom: 3,
+      clusters: [
+        { lat: 47.5, lng: 8.0, count: 8 },   // Switzerland / Central Europe
+        { lat: 48.8, lng: 2.3, count: 5 },   // Paris / France
+        { lat: 41.9, lng: 12.5, count: 3 },  // Rome / Italy
+      ],
+    };
+    const buildUrl = (token: string, d: Omit<MapPreview, 'url'>) =>
+      `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/${d.center.lng.toFixed(4)},${d.center.lat.toFixed(4)},${d.zoom},0/560x380@2x?access_token=${token}`;
+
+    getMapboxToken().then(token => {
+      if (!token) { console.warn('[map-preview] No Mapbox token'); return; }
+      if (cancelled) return;
+      console.log('[map-preview] Using fallback, fetching live data…');
+      setMapPreview({ ...FALLBACK, url: buildUrl(token, FALLBACK) });
+      apiGet<{ clusters: MapCluster[]; center: { lat: number; lng: number }; zoom: number }>('/api/map-preview')
+        .then(data => {
+          console.log('[map-preview] Data received:', data);
+          if (cancelled) return;
+          if (!data?.clusters?.length) { console.warn('[map-preview] No clusters in response, staying on fallback'); return; }
+          const live = { ...data, zoom: 3 };
+          setMapPreview({ ...live, url: buildUrl(token, live) });
+          console.log('[map-preview] Upgraded to live data, clusters:', live.clusters.length);
+        })
+        .catch(err => { console.error('[map-preview] API error:', err); });
+    }).catch(err => { console.error('[map-preview] getMapboxToken error:', err); });
+    return () => { cancelled = true; };
+  }, []);
   const isFetchingRef = useRef(false);
   const hasAttemptedRef = useRef(false);
 
@@ -364,7 +420,8 @@ export default function WalletLogin() {
           style={{ background: `radial-gradient(ellipse at 30% 20%, #244536 0%, var(--blue-deep) 70%)` }}
         >
           <div className="w-full max-w-6xl mx-auto px-5 py-20 desktop:py-28">
-            <div className="grid desktop:grid-cols-2 gap-12 desktop:gap-16 items-center">
+            {/* Content row */}
+            <div className="grid desktop:grid-cols-2 gap-6 desktop:gap-16 items-start mb-8">
 
               {/* Left: copy */}
               <motion.div {...fadeUp}>
@@ -379,42 +436,151 @@ export default function WalletLogin() {
                   <em className="italic" style={{ color: 'var(--blue-light)' }}>actually</em>{' '}
                   nutritious.
                 </h1>
-                <p className="text-base desktop:text-lg leading-relaxed mb-8 max-w-md" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                <p className="text-base desktop:text-lg leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>
                   BRIX measures the nutrient density of fresh produce — so you can shop smarter, feed your family better, and share what you discover.
                 </p>
+              </motion.div>
 
-                <div className="flex flex-col gap-3 mb-6">
-                  <Button
-                    onClick={handleLoginClick}
-                    size="lg"
-                    className="bg-green-fresh hover:bg-green-mid text-white h-auto py-4 px-7 text-base font-medium gap-2 rounded-xl w-full max-w-md"
-                  >
-                    Start tracking my food
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="h-auto py-4 px-7 text-base rounded-xl w-full max-w-md border-white/20 bg-transparent text-white/70 hover:text-white hover:bg-white/5"
-                    onClick={() => navigate('/map')}
-                  >
-                    Browse scores near me
-                  </Button>
+              {/* Right: map preview */}
+              <motion.div
+                className="flex flex-col gap-2 mt-4 desktop:mt-0"
+                {...(prefersReducedMotion ? {} : { initial: { opacity: 0, x: 40 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true }, transition: { duration: 0.6, delay: 0.2 } })}
+              >
+                <p className="text-xs font-medium uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                  Where people are testing their food
+                </p>
+                <div className="relative rounded-2xl overflow-hidden shadow-xl h-[200px] desktop:h-[260px]">
+                  {mapPreview ? (
+                    <>
+                      <img
+                        src={mapPreview.url}
+                        alt="Map showing community BRIX score locations"
+                        className="w-full h-full object-cover"
+                        loading="eager"
+                      />
+
+                      {/* Cluster circles + score popup for the largest cluster */}
+                      {(() => {
+                        const { clusters, center, zoom } = mapPreview;
+                        const largest = clusters[0];
+                        const largestPct = toImagePct(largest.lat, largest.lng, center.lat, center.lng, zoom);
+
+                        return (
+                          <>
+                            {/* All cluster circles */}
+                            {clusters.map((c, i) => {
+                              const pct = toImagePct(c.lat, c.lng, center.lat, center.lng, zoom);
+                              const d = c.count >= 200 ? 80 : c.count >= 50 ? 60 : c.count >= 10 ? 44 : 32;
+                              return (
+                                <div
+                                  key={i}
+                                  className="absolute pointer-events-none flex items-center justify-center rounded-full font-bold text-white text-sm"
+                                  style={{
+                                    top: `${pct.y}%`, left: `${pct.x}%`,
+                                    width: d, height: d,
+                                    transform: 'translate(-50%, -50%)',
+                                    backgroundColor: '#2d6a4f',
+                                    border: '2px solid rgba(255,255,255,0.6)',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+                                    fontSize: d < 36 ? 11 : 13,
+                                  }}
+                                >
+                                  {c.count}
+                                </div>
+                              );
+                            })}
+
+                            {/* Score popup on the largest cluster — arrow points down to it */}
+                            {(() => {
+                              const s = largest.sample;
+                              const score = s ? scoreBrix(
+                                s.brixValue,
+                                s.poorBrix != null && s.excellentBrix != null
+                                  ? { poor: s.poorBrix, average: null, good: null, excellent: s.excellentBrix }
+                                  : null,
+                              ) : null;
+                              const displayPct  = score?.display ?? '88%';
+                              const quality     = score?.quality ?? 'Excellent';
+                              const scoreColor  = score?.hex     ?? 'var(--green-mid)';
+                              const productName = s
+                                ? (s.cropVariety ? `${s.cropVariety} ${s.cropLabel}` : s.cropLabel)
+                                : 'Banana';
+                              const location = s ? (s.venueName || s.venueCity || '') : 'Aldi · Zurich';
+                              return (
+                                <div
+                                  className="absolute pointer-events-none"
+                                  style={{
+                                    bottom: `calc(${100 - largestPct.y}% + 20px)`,
+                                    left: `${largestPct.x}%`,
+                                    transform: 'translateX(-50%)',
+                                  }}
+                                >
+                                  <div className="bg-white rounded-xl shadow-xl px-2 py-1.5 desktop:px-3 desktop:py-2.5 w-36 desktop:w-44 relative">
+                                    <div className="flex items-baseline gap-1 mb-0.5">
+                                      <span className="font-display font-bold text-base desktop:text-xl leading-none" style={{ color: scoreColor }}>
+                                        {displayPct}
+                                      </span>
+                                      <span className="font-semibold uppercase tracking-wide" style={{ color: scoreColor, fontSize: '10px' }}>
+                                        {quality}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs font-semibold leading-snug" style={{ color: 'var(--text-dark)' }}>
+                                      {productName}
+                                    </p>
+                                    {location && (
+                                      <p className="text-xs leading-snug hidden desktop:block" style={{ color: 'var(--text-muted)' }}>
+                                        {location}
+                                      </p>
+                                    )}
+                                    <p className="leading-snug mt-1 pt-1 border-t" style={{ color: 'var(--text-muted)', borderColor: 'var(--blue-pale)', fontSize: '10px' }}>
+                                      {largest.count - 1} other submissions on this location
+                                    </p>
+                                    {/* Arrow tip pointing down toward the cluster circle */}
+                                    <div
+                                      className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white rotate-45"
+                                      style={{ boxShadow: '2px 2px 3px rgba(0,0,0,0.06)' }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </>
+                        );
+                      })()}
+                    </>
+                  ) : (
+                    <div className="w-full h-full bg-white/5 animate-pulse" />
+                  )}
                 </div>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  Verified scores from real growers and shoppers
+                </p>
+              </motion.div>
+            </div>
 
+            {/* Button row — same column grid + items-start guarantees equal top position */}
+            <div className="grid desktop:grid-cols-2 gap-3 desktop:gap-16 mb-6 items-start">
+              <div className="flex flex-col gap-3">
+                <Button
+                  onClick={handleLoginClick}
+                  size="lg"
+                  className="bg-green-fresh hover:bg-green-mid text-white h-auto py-4 px-7 text-base font-medium gap-2 rounded-xl w-full max-w-md"
+                >
+                  Start tracking my food
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
                 <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                   Free &middot; No credit card &middot; Your data is yours
                 </p>
-              </motion.div>
-
-              {/* Right: illustrative score cards (desktop only) */}
-              <motion.div
-                className="hidden desktop:flex flex-col gap-4"
-                {...(prefersReducedMotion ? {} : { initial: { opacity: 0, x: 40 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true }, transition: { duration: 0.6, delay: 0.2 } })}
+              </div>
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full max-w-md h-auto py-4 px-7 text-base rounded-xl border-white/20 bg-transparent text-white/70 hover:text-white hover:bg-white/5"
+                onClick={() => navigate('/map')}
               >
-                <ScoreCard product="Organic Carrots" origin="Green Valley Farm, OR" score={18.4} pct="92%" rating="Excellent" />
-                <ScoreCard product="Supermarket Tomatoes" origin="Generic Grocery, CA" score={5.2} pct="21%" rating="Poor" />
-              </motion.div>
+                Browse scores near me
+              </Button>
             </div>
 
             {/* Stats strip */}
@@ -594,22 +760,32 @@ export default function WalletLogin() {
                 Why do we use this instead of a password?
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
-              <Button
-                onClick={handleLoginClick}
-                size="lg"
-                className="bg-green-fresh hover:bg-green-mid text-white h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
-              >
-                {isMobile ? 'Connect with mobile browser' : 'Connect with desktop wallet'}
-              </Button>
-              {!isMobile && (
+              {!isMobile ? (
                 <Button
                   onClick={handleMobileLoginClick}
+                  size="lg"
+                  className="bg-green-fresh hover:bg-green-mid text-white h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
+                >
+                  <Smartphone className="w-4 h-4" />
+                  Connect with my phone
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleLoginClick}
+                  size="lg"
+                  className="bg-green-fresh hover:bg-green-mid text-white h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
+                >
+                  Connect with mobile browser
+                </Button>
+              )}
+              {!isMobile && (
+                <Button
+                  onClick={handleLoginClick}
                   variant="outline"
                   size="lg"
                   className="h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
                 >
-                  <Smartphone className="w-4 h-4" />
-                  Connect with my phone
+                  Connect with desktop wallet
                 </Button>
               )}
               <p className="text-sm text-center mt-2" style={{ color: 'var(--text-muted)' }}>

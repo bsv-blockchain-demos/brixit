@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY prisma/ prisma/
+COPY prisma.config.ts ./
 RUN npx prisma generate
 COPY tsconfig.json tsconfig.scripts.json ./
 COPY src/ src/
@@ -18,6 +19,7 @@ RUN npm ci --omit=dev
 COPY --from=build /app/node_modules/.prisma node_modules/.prisma
 COPY --from=build /app/node_modules/@prisma node_modules/@prisma
 COPY prisma/ prisma/
+COPY prisma.config.ts ./
 COPY --from=build /app/dist dist/
 COPY entrypoint.sh ./
 RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh

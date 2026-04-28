@@ -156,7 +156,7 @@ const Header = () => {
             <div
               aria-label="Brixit"
               style={{
-                height: '2.5rem',
+                height: '3.5rem',
                 aspectRatio: '680.88 / 389.32',
                 backgroundColor: 'var(--blue-deep)',
                 WebkitMaskImage: 'url(/brixit.svg)',
