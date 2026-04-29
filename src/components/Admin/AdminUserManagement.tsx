@@ -131,7 +131,7 @@ export default function AdminUserManagement() {
             return (
               <div
                 key={u.id}
-                className="border rounded p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 cursor-pointer hover:bg-muted/40 transition-colors"
+                className="border rounded p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-card text-card-foreground cursor-pointer hover:bg-accent transition-colors"
                 onClick={() => setSelectedUserId(u.id)}
               >
                 <div className="text-sm flex-1">

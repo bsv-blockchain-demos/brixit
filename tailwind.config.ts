@@ -20,6 +20,7 @@ export default {
 		extend: {
 			fontFamily: {
 				display: ['Lora', 'Georgia', 'serif'],
+				landing: ['Cooper BT', 'Georgia', 'serif'],
 				body: ['DM Sans', 'system-ui', 'sans-serif'],
 			},
 			screens: {
@@ -85,6 +86,11 @@ export default {
 				'score-good': 'var(--score-good)',
 				'score-excellent': 'var(--score-excellent)',
 				'score-average': 'var(--score-average)',
+				'on-bg-text':   'var(--on-bg-text)',
+				'on-bg-body':   'var(--on-bg-body)',
+				'on-bg-subtle': 'var(--on-bg-subtle)',
+				'on-bg-muted':  'var(--on-bg-muted)',
+				'on-bg-faint':  'var(--on-bg-faint)',
 				'action-primary': 'var(--action-primary)',
 				'action-primary-hover': 'var(--action-primary-hover)',
 				'action-danger': 'var(--action-danger)',

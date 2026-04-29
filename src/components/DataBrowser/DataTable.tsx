@@ -414,7 +414,7 @@ const DataTable: React.FC = () => {
 
   if (submissionsPageQuery.isLoading || submissionsCountQuery.isLoading || isLoadingStaticData) {
     return (
-      <div className="text-center py-12 text-text-dark flex items-center justify-center gap-2">
+      <div className="text-center py-12 text-on-bg-body flex items-center justify-center gap-2">
         <Loader2 className="w-5 h-5 animate-spin text-green-mid" />
         Loading data...
       </div>
@@ -431,15 +431,15 @@ const DataTable: React.FC = () => {
     <div className="px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-display font-bold text-text-dark">All Submissions</h2>
-          <p className="text-text-dark mt-1">Browse community measurements across crops and locations</p>
+          <h2 className="text-2xl font-display font-bold text-white">All Submissions</h2>
+          <p className="text-on-bg-body mt-1">Browse community measurements across crops and locations</p>
         </div>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={handleRefresh}
           disabled={cooldownSeconds > 0}
-          className="flex items-center gap-2 border-blue-pale text-blue-deep hover:bg-blue-mist"
+          className="flex items-center gap-2 text-sm"
         >
           <RefreshCw className={`w-4 h-4 ${submissionsPageQuery.isFetching ? 'animate-spin' : ''}`} />
           {cooldownSeconds > 0 ? `Refresh (${cooldownSeconds}s)` : 'Refresh'}
@@ -728,8 +728,8 @@ const DataTable: React.FC = () => {
       )}
 
       {filterSummary !== 'No active filters' && (
-        <p className="text-sm text-text-dark mb-4">
-          Applying filters: <span className="font-semibold">{filterSummary}</span>
+        <p className="text-sm text-on-bg-body mb-4">
+          Applying filters: <span className="font-semibold text-white">{filterSummary}</span>
         </p>
       )}
 
@@ -820,30 +820,31 @@ const DataTable: React.FC = () => {
               ))
             )}
           </div>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-blue-pale">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="border-blue-pale hover:bg-blue-mist gap-1"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" /> Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="border-blue-pale hover:bg-blue-mist gap-1"
+            >
+              Next <ChevronRight className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </CardContent>
       </Card>
-
-      <div className="flex justify-between items-center mt-6">
-        <Button
-          variant="outline"
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="border-blue-pale hover:bg-blue-mist"
-        >
-          <ChevronLeft className="w-4 h-4 mr-2" /> Previous
-        </Button>
-        <span className="text-sm text-text-dark">
-          Page {currentPage} of {totalPages}
-        </span>
-        <Button
-          variant="outline"
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="border-blue-pale hover:bg-blue-mist"
-        >
-          Next <ChevronRight className="w-4 h-4 ml-2" />
-        </Button>
-      </div>
 
       <DataPointDetailModal
         dataPoint={selectedDataPoint}

@@ -137,7 +137,7 @@ function SubmissionModal({
             <div className="flex gap-2">
               <span className="text-muted-foreground w-16 shrink-0">Status</span>
               {verified ? (
-                <span className="inline-flex items-center gap-1 text-action-primary">
+                <span className="inline-flex items-center gap-1 bg-green-pale text-green-mid px-1.5 py-0.5 rounded-full text-xs">
                   <CheckCircle className="w-3 h-3" /> Verified
                 </span>
               ) : (
@@ -245,7 +245,7 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
         />
       )}
 
-      <div className="border rounded-lg p-4 space-y-3">
+      <div className="border rounded-lg p-4 space-y-3 bg-card text-card-foreground">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold">{user.display_name ?? user.id}</h2>
@@ -287,7 +287,7 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
               return (
                 <div
                   key={s.id}
-                  className="border rounded p-3 flex items-start justify-between gap-3 cursor-pointer hover:bg-muted/40 transition-colors"
+                  className="border rounded p-3 flex items-start justify-between gap-3 bg-card text-card-foreground cursor-pointer hover:bg-accent transition-colors"
                   onClick={() => setSelected(s)}
                 >
                   <div className="flex-1 min-w-0 text-sm">

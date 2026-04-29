@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Cooper BT';
+  src: url('/fonts/CooperBT-Medium.woff2') format('woff2'),
+       url('/fonts/CooperBT-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
 
 @layer base {
@@ -69,36 +78,46 @@
     --badge-neutral-bg:   #f2f4f6;
     --badge-neutral-text: #7a7268;
 
+    /* ── On-background text hierarchy ────────────────── *
+     * White-at-opacity scale for text sitting on the blue
+     * page background. Change these to retone all pages.  */
+    --on-bg-text:   rgba(255,255,255,0.80);  /* nav items, usernames          */
+    --on-bg-body:   rgba(255,255,255,0.75);  /* body paragraphs, subtitles    */
+    --on-bg-subtle: rgba(255,255,255,0.65);  /* eyebrow labels, section labels */
+    --on-bg-muted:  rgba(255,255,255,0.55);  /* footer nav, fine print        */
+    --on-bg-faint:  rgba(255,255,255,0.40);  /* footer legal, ghost text      */
+
     /* ── Typography ───────────────────────────────────── */
     --font-display: 'Lora', Georgia, serif;
+    --font-landing: 'Cooper BT', Georgia, serif;
     --font-body: 'DM Sans', system-ui, sans-serif;
 
     /* ── shadcn semantic tokens (remapped to BRIXIT) ──── */
-    --background: 40 33% 97%;         /* cream  #faf8f3                       */
-    --foreground: 43 12% 29%;         /* text-dark #524d40                    */
+    --background: 201 30% 49%;        /* blue-mid #5787a1                     */
+    --foreground: 0 0% 98%;           /* near-white — text directly on blue   */
 
-    --card: 0 0% 100%;
-    --card-foreground: 43 12% 29%;
+    --card: 0 0% 100%;                /* white card surfaces                  */
+    --card-foreground: 43 12% 29%;    /* dark brown text inside cards         */
 
     --popover: 0 0% 100%;
     --popover-foreground: 43 12% 29%;
 
-    --primary: 22 83% 53%;            /* orange #eb6e24                       */
+    --primary: 22 83% 53%;            /* orange #eb6e24 — all action buttons  */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 205 39% 90%;         /* blue-pale #dde8f0                    */
+    --secondary: 0 0% 100%;           /* white — secondary buttons/surfaces   */
     --secondary-foreground: 43 12% 29%;
 
-    --muted: 204 43% 95%;             /* blue-mist #eef4f8                    */
-    --muted-foreground: 27 10% 38%;   /* text-mid #6b6057                     */
+    --muted: 201 25% 40%;             /* slightly darker blue for muted areas */
+    --muted-foreground: 0 0% 75%;     /* light grey muted text on blue        */
 
-    --accent: 204 43% 95%;
-    --accent-foreground: 43 12% 29%;
+    --accent: 204 43% 95%;            /* blue-mist — hover on white surfaces  */
+    --accent-foreground: 43 12% 29%;  /* dark text on light hover             */
 
     --destructive: 26 70% 51%;        /* score-poor #d9772c                   */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 205 39% 90%;            /* blue-pale                            */
+    --border: 205 39% 90%;            /* blue-pale — card/input borders       */
     --input: 205 39% 90%;
     --ring: 22 83% 53%;               /* orange                               */
 
@@ -208,4 +227,28 @@
     @apply bg-background text-foreground;
     font-family: var(--font-body);
   }
+}
+
+/* Minimal scrollbar — applied globally */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--blue-pale) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--blue-pale);
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--blue-light);
 }

@@ -56,7 +56,7 @@ export function AuthDialogContent({
                 className="w-56 h-56 rounded-xl border border-border shadow-sm"
               />
               <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                session.status === 'connected' ? 'bg-secondary text-green-fresh' : 'bg-amber-50 text-amber-700'
+                session.status === 'connected' ? 'bg-secondary text-green-fresh' : 'bg-muted text-muted-foreground'
               }`}>
                 {session.status === 'connected' ? 'Connected' : 'Waiting for scan...'}
               </span>
@@ -144,7 +144,7 @@ export function AuthDialogContent({
         <DialogTitle className="sr-only">Connecting to your wallet</DialogTitle>
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
         <div>
-          <p className="font-semibold text-foreground">Connecting to your wallet...</p>
+          <p className="font-semibold text-card-foreground">Connecting to your wallet...</p>
           <p className="text-sm text-muted-foreground mt-1">Please approve the connection request</p>
           {retryCount > 0 && (
             <p className="text-xs text-muted-foreground mt-2">Retry attempt {retryCount}...</p>
@@ -161,7 +161,7 @@ export function AuthDialogContent({
         <DialogTitle className="sr-only">Verifying your identity</DialogTitle>
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
         <div>
-          <p className="font-semibold text-foreground">Verifying your identity...</p>
+          <p className="font-semibold text-card-foreground">Verifying your identity...</p>
           <p className="text-sm text-muted-foreground mt-1">Checking your credentials</p>
         </div>
       </div>

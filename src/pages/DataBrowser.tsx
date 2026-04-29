@@ -6,7 +6,7 @@ import { FilterProvider } from '../contexts/FilterContext';
 const DataBrowser = () => {
   return (
     <FilterProvider>
-      <div className="min-h-screen bg-cream">
+      <div className="min-h-screen bg-background">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
           <DataTable />

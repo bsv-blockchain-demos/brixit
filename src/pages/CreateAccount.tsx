@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { API_BASE } from '@/lib/api';
 import { AuthBackground } from '@/components/ui/AuthBackground';
+import { BrixLogo } from '@/components/common/BrixLogo';
 
 const MYCELIA_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
 const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
@@ -122,10 +123,8 @@ export default function CreateAccount() {
     <AuthBackground>
       <div className="max-w-md w-full">
         <div className="text-center mb-6">
-          <div className="w-12 h-12 bg-blue-deep rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
-            <span className="text-white font-bold text-2xl">B</span>
-          </div>
-          <h1 className="text-2xl font-bold font-display text-text-dark">Create your BRIX account</h1>
+          <BrixLogo height="5rem" color="white" className="mx-auto mb-4" />
+          <h1 className="text-2xl font-bold font-display text-foreground">Create your BRIX account</h1>
         </div>
 
         <Card className="border border-blue-pale">
@@ -148,7 +147,7 @@ export default function CreateAccount() {
 
             {step === 'checking' && (
               <div className="flex justify-center py-6">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-mid" />
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
               </div>
             )}
 
@@ -204,7 +203,7 @@ export default function CreateAccount() {
                 </label>
                 <Button
                   type="submit"
-                  className="w-full bg-green-fresh hover:bg-green-mid text-white"
+                  className="w-full bg-action-primary hover:bg-action-primary-hover text-white"
                   disabled={isLoading || !agreedToTerms}
                 >
                   {isLoading ? 'Creating…' : username.trim() ? 'Create Account' : 'Create Anonymous Account'}
@@ -222,7 +221,7 @@ export default function CreateAccount() {
 
             {step === 'acquiring' && (
               <div className="text-center py-6">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-mid mx-auto mb-4" />
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-4" />
                 <p className="text-text-mid">Issuing your identity certificate…</p>
                 <p className="text-sm text-text-muted-brown mt-1">Please approve the request in your wallet.</p>
               </div>

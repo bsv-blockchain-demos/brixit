@@ -30,6 +30,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { BrixLogo } from "@/components/common/BrixLogo";
 
 const Header = () => {
   const { user, logout, isAdmin } = useAuth();
@@ -75,7 +76,7 @@ const Header = () => {
         <Button
           variant="ghost"
           className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/leaderboard") ? "bg-blue-mist text-green-fresh border border-green-fresh" : ""
+            isActive("/leaderboard") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
           }`}
         >
           <Trophy className="w-4 h-4" />
@@ -87,7 +88,7 @@ const Header = () => {
         <Button
           variant="ghost"
           className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/map") ? "bg-blue-mist text-green-fresh border border-green-fresh" : ""
+            isActive("/map") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
           }`}
         >
           <Eye className="w-4 h-4" />
@@ -99,7 +100,7 @@ const Header = () => {
         <Button
           variant="ghost"
           className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/data") ? "bg-blue-mist text-green-fresh border border-green-fresh" : ""
+            isActive("/data") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
           }`}
         >
           <Database className="w-4 h-4" />
@@ -111,7 +112,7 @@ const Header = () => {
         <Button
           variant="ghost"
           className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/your-data") ? "bg-blue-mist text-green-fresh border border-green-fresh" : ""
+            isActive("/your-data") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
           }`}
         >
           <User className="w-4 h-4" />
@@ -123,7 +124,7 @@ const Header = () => {
         <Link to="/data-entry">
           <Button
             variant={isActive("/data-entry") ? "default" : "ghost"}
-            className="flex items-center space-x-2 w-full justify-start bg-green-fresh hover:bg-green-mid text-white hover:text-white"
+            className="flex items-center space-x-2 w-full justify-start bg-action-primary hover:bg-action-primary-hover text-white hover:text-white"
           >
             <Plus className="w-4 h-4" />
             <span>Submit</span>
@@ -148,25 +149,12 @@ const Header = () => {
   );
 
   return (
-    <header className="bg-card shadow-sm border-b">
+    <header className="bg-background border-b border-white/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/leaderboard" className="flex items-center">
-            <div
-              aria-label="Brixit"
-              style={{
-                height: '3.5rem',
-                aspectRatio: '680.88 / 389.32',
-                backgroundColor: 'var(--blue-deep)',
-                WebkitMaskImage: 'url(/brixit.svg)',
-                maskImage: 'url(/brixit.svg)',
-                WebkitMaskSize: 'contain',
-                maskSize: 'contain',
-                WebkitMaskRepeat: 'no-repeat',
-                maskRepeat: 'no-repeat',
-              }}
-            />
+            <BrixLogo height="3.5rem" color="white" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -198,7 +186,7 @@ const Header = () => {
                       </AvatarFallback>
                     </Avatar>
                     <div className="hidden sm:flex items-center space-x-1.5">
-                      <span className="text-sm font-medium text-text-mid font-mono">{getDisplayName()}</span>
+                      <span className="text-sm font-medium text-on-bg-text font-mono">{getDisplayName()}</span>
                       {user.role === "admin" && (
                         <Badge variant="destructive" className="text-xs px-1 py-0">
                           Admin
@@ -224,8 +212,8 @@ const Header = () => {
                     Identity Key
                   </DropdownMenuLabel>
                   <div className="px-2 pb-2">
-                    <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-2">
-                      <code className="flex-1 text-xs break-all font-mono">
+                    <div className="flex items-center gap-2 rounded-md bg-blue-mist px-3 py-2">
+                      <code className="flex-1 text-xs break-all font-mono text-card-foreground">
                         {user.identity_key}
                       </code>
                       <button
@@ -289,7 +277,7 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         {user && menuOpen && (
-          <nav className="md:hidden py-4 space-y-2 border-t">
+          <nav className="md:hidden py-4 space-y-2 border-t border-white/10">
             <NavLinks />
             <Button
               onClick={handleLogout}

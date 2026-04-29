@@ -68,7 +68,7 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
         <CardTitle className="text-2xl flex items-center space-x-3">
           <span>{dataPoint.cropLabel ?? dataPoint.cropType}</span>
           {dataPoint.verified && (
-            <CheckCircle className="w-6 h-6 text-green-600" aria-label="Verified" />
+            <CheckCircle className="w-6 h-6 text-green-mid" aria-label="Verified" />
           )}
         </CardTitle>
         {dataPoint.variety && (
@@ -107,13 +107,19 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
           </div>
           <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
             {dataPoint.verified ? (
-              <CheckCircle className="w-5 h-5 text-green-600" />
+              <CheckCircle className="w-5 h-5 text-green-mid" />
             ) : (
-              <AlertCircle className="w-5 h-5 text-yellow-500" />
+              <AlertCircle className="w-5 h-5 text-gold" />
             )}
             <div>
               <p className="text-sm text-gray-600">Verification Status</p>
-              <p className="font-medium">{dataPoint.verified ? 'Verified' : 'Pending'}</p>
+              {dataPoint.verified ? (
+                <span className="inline-flex items-center gap-1 bg-green-pale text-green-mid px-1.5 py-0.5 rounded-full text-sm font-medium">
+                  <CheckCircle className="w-3 h-3" /> Verified
+                </span>
+              ) : (
+                <p className="font-medium text-gold">Pending</p>
+              )}
             </div>
           </div>
           {dataPoint.verified && dataPoint.verifiedBy && (

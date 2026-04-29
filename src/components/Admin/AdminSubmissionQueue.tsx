@@ -95,11 +95,11 @@ function SubmissionCard({
   const verified = 'verified' in s ? s.verified : false;
 
   return (
-    <div className="border rounded-lg p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+    <div className="border rounded-lg p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 bg-card text-card-foreground">
       <div className="flex-1 space-y-1.5">
         <div className="flex items-center gap-2 flex-wrap">
           {verified ? (
-            <Badge variant="outline" className="bg-blue-mist text-action-primary border-blue-pale flex items-center gap-1">
+            <Badge variant="outline" className="bg-green-pale text-green-mid border-green-pale flex items-center gap-1">
               <CheckCircle className="w-3 h-3" /> Verified
             </Badge>
           ) : (

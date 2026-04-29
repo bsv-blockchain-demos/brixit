@@ -211,7 +211,7 @@ export default function AdminTableEditor({
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border bg-card text-card-foreground">
         <Table>
           <TableHeader>
             <TableRow>

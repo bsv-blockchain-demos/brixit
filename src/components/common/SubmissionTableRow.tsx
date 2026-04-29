@@ -125,7 +125,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       {/* Cell 8 — Verified? */}
       <TableCell className="text-center py-3 px-4">
         {submission.verified ? (
-          <Badge className="flex items-center space-x-1 px-3 py-1 rounded-full bg-muted text-text-mid font-medium text-sm shadow-sm">
+          <Badge className="flex items-center space-x-1 px-3 py-1 rounded-full bg-green-pale text-green-mid font-medium text-sm shadow-sm">
             <CheckCircle className="w-4 h-4" />
             <span>Verified</span>
           </Badge>

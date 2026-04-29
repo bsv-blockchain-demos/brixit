@@ -5,6 +5,7 @@ import { AuthBackground } from '@/components/ui/AuthBackground';
 import { Button } from '@/components/ui/button';
 import { Smartphone, HelpCircle } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { BrixLogo } from '@/components/common/BrixLogo';
 
 export default function WalletError() {
   const navigate = useNavigate();
@@ -14,10 +15,8 @@ export default function WalletError() {
     <AuthBackground>
       <div className="max-w-sm w-full text-center">
 
-        <div className="w-12 h-12 bg-green-fresh rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-          <span className="text-white font-bold text-2xl">B</span>
-        </div>
-        <h1 className="text-xl font-bold text-text-dark mb-4">Couldn't connect to your device</h1>
+        <BrixLogo height="5rem" color="white" className="mx-auto mb-4" />
+        <h1 className="text-xl font-bold text-white mb-4">Couldn't connect to your device</h1>
 
         <Card>
           <CardContent className="pt-5 space-y-4">

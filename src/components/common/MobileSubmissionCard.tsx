@@ -87,11 +87,11 @@ const MobileSubmissionCard: React.FC<{
         <span>{new Date(submission.submittedAt).toLocaleDateString()}</span>
         <span>·</span>
         {submission.verified ? (
-          <span className="inline-flex items-center gap-1 text-green-700">
+          <span className="inline-flex items-center gap-1 bg-green-pale text-green-mid px-1.5 py-0.5 rounded-full">
             <CheckCircle className="w-3 h-3" /> Verified
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 text-orange-600">
+          <span className="inline-flex items-center gap-1 text-action-primary">
             <Clock className="w-3 h-3" /> Pending
           </span>
         )}

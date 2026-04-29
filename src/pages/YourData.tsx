@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Plus, Beaker, CheckCircle, MapPin, AlertCircle, Lock, Loader2, RefreshCw } from 'lucide-react';
+import { Plus, Beaker, CheckCircle, MapPin, AlertCircle, Lock, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { deleteSubmission } from '../lib/fetchSubmissions';
@@ -203,7 +203,7 @@ const YourData: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-cream">
+      <div className="min-h-screen bg-background">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
           <Card>
@@ -225,12 +225,12 @@ const YourData: React.FC = () => {
   // Combined loading state check
   if (isLoading || isLoadingStaticData) {
     return (
-      <div className="min-h-screen bg-cream">
+      <div className="min-h-screen bg-background">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 text-center">
           <div className="flex items-center justify-center gap-2">
             <Loader2 className="w-5 h-5 text-green-mid animate-spin" />
-            <p className="text-text-dark">Loading your submissions...</p>
+            <p className="text-on-bg-body">Loading your submissions...</p>
           </div>
         </main>
       </div>
@@ -239,7 +239,7 @@ const YourData: React.FC = () => {
 
   if (isError) {
     return (
-      <div className="min-h-screen bg-cream">
+      <div className="min-h-screen bg-background">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 text-center">
           <p className="text-red-600">Error: Failed to load your submissions.</p>
@@ -249,16 +249,16 @@ const YourData: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-background">
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
           <div>
-            <h1 className="text-2xl font-display font-bold text-text-dark mb-2">
+            <h1 className="text-2xl font-display font-bold text-white mb-2">
               Your Data
             </h1>
-            <p className="text-text-dark">
+            <p className="text-on-bg-body">
               Manage and track your BRIX measurement submissions
             </p>
           </div>
@@ -276,7 +276,7 @@ const YourData: React.FC = () => {
             </Button>
             {canSubmit ? (
               <Link to="/data-entry">
-                <Button className="flex items-center space-x-2 bg-green-fresh hover:bg-green-mid">
+                <Button className="flex items-center space-x-2 bg-action-primary hover:bg-action-primary-hover text-white">
                   <Plus className="w-4 h-4" />
                   <span>Add New Measurement</span>
                 </Button>
@@ -397,25 +397,27 @@ const YourData: React.FC = () => {
                       })}
                     </div>
 
-                    <div className="mt-6 flex items-center justify-between">
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-blue-pale">
                       <Button
                         variant="outline"
-                        className="border-blue-pale hover:bg-blue-mist"
+                        size="sm"
+                        className="border-blue-pale hover:bg-blue-mist gap-1"
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
                       >
-                        Previous
+                        <ChevronLeft className="w-3.5 h-3.5" /> Previous
                       </Button>
-                      <span className="text-sm text-text-dark">
+                      <span className="text-sm text-muted-foreground">
                         Page {currentPage} of {totalPages}
                       </span>
                       <Button
                         variant="outline"
-                        className="border-blue-pale hover:bg-blue-mist"
+                        size="sm"
+                        className="border-blue-pale hover:bg-blue-mist gap-1"
                         onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
                       >
-                        Next
+                        Next <ChevronRight className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>

@@ -349,7 +349,7 @@ const DataEntry = () => {
 
   if (staticDataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--cream)' }}>
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center p-6">
           <Loader2 className="w-12 h-12 animate-spin mx-auto" style={{ color: 'var(--green-mid)' }} />
           <p className="mt-4" style={{ color: 'var(--text-mid)' }}>Loading form data...</p>
@@ -361,20 +361,20 @@ const DataEntry = () => {
   const allBrands = [...brands, ...pendingBrands.map(name => ({ name, label: name }))];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--cream)' }}>
+    <div className="min-h-screen bg-background">
       <Header />
       <main
         className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8"
         style={{ paddingBottom: 'calc(7rem + env(safe-area-inset-bottom, 1rem))' }}
       >
         <motion.div className="text-center mb-8 md:mb-12" {...fadeUp}>
-          <p className="uppercase tracking-[0.2em] text-sm font-medium mb-2" style={{ color: 'var(--green-fresh)' }}>
+          <p className="uppercase tracking-[0.2em] text-sm font-medium mb-2 text-white">
             New Entry
           </p>
-          <h1 className="text-3xl sm:text-4xl font-display font-bold mb-2" style={{ color: 'var(--text-dark)' }}>
+          <h1 className="text-3xl sm:text-4xl font-display font-bold mb-2 text-white">
             Submit BRIX Reading
           </h1>
-          <p className="text-md max-w-2xl mx-auto" style={{ color: 'var(--text-mid)' }}>
+          <p className="text-md max-w-2xl mx-auto text-on-bg-body">
             Record one or more refractometer readings from a single shopping session
           </p>
         </motion.div>
@@ -608,7 +608,7 @@ const DataEntry = () => {
       <div
         className="fixed bottom-0 left-0 right-0 border-t shadow-lg"
         style={{
-          backgroundColor: 'var(--cream)',
+          backgroundColor: 'hsl(var(--card))',
           borderColor: 'var(--blue-pale)',
           padding: '0.75rem 1rem',
           paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0.5rem))',

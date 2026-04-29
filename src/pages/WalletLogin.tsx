@@ -25,7 +25,7 @@ function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="text-center border-l border-white/10 first:border-l-0 px-4">
       <p className="font-display text-2xl desktop:text-3xl font-bold text-white">{value}</p>
-      <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
+      <p className="text-xs mt-1 text-on-bg-muted">{label}</p>
     </div>
   );
 }
@@ -229,7 +229,7 @@ export default function WalletLogin() {
         {/* ═══ Section 1: Hero ═══════════════════════════════════ */}
         <section
           className="relative flex items-center overflow-hidden"
-          style={{ background: `radial-gradient(ellipse at 30% 20%, #244536 0%, var(--blue-deep) 70%)` }}
+          style={{ backgroundColor: 'hsl(var(--background))' }}
         >
           <div className="w-full max-w-6xl mx-auto px-5 py-20 desktop:py-28">
             {/* Content row */}
@@ -237,18 +237,18 @@ export default function WalletLogin() {
 
               {/* Left: copy */}
               <motion.div {...fadeUp}>
-                <p className="uppercase tracking-[0.2em] text-sm font-medium mb-4" style={{ color: 'var(--text-muted)' }}>
+                <p className="uppercase tracking-[0.2em] text-sm font-medium mb-4 text-on-bg-subtle">
                   Real food. Real nutrition.
                 </p>
                 <h1
-                  className="font-display font-bold text-white leading-[1.12] mb-6"
+                  className="font-landing font-medium text-white leading-[1.12] mb-6"
                   style={{ fontSize: 'clamp(2.125rem, 9vw, 3.25rem)' }}
                 >
                   Finally know if your food is{' '}
-                  <em className="italic" style={{ color: 'var(--blue-light)' }}>actually</em>{' '}
+                  <em className="italic" style={{ color: 'white' }}>actually</em>{' '}
                   nutritious.
                 </h1>
-                <p className="text-base desktop:text-lg leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                <p className="text-base desktop:text-lg leading-relaxed text-on-bg-body">
                   BRIX measures the nutrient density of fresh produce — so you can shop smarter, feed your family better, and share what you discover.
                 </p>
               </motion.div>
@@ -263,19 +263,19 @@ export default function WalletLogin() {
                 <Button
                   onClick={handleLoginClick}
                   size="lg"
-                  className="bg-green-fresh hover:bg-green-mid text-white h-auto py-4 px-7 text-base font-medium gap-2 rounded-xl w-full max-w-md"
+                  className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-4 px-7 text-base font-medium gap-2 rounded-xl w-full max-w-md"
                 >
                   Start tracking my food
                   <ArrowRight className="w-4 h-4" />
                 </Button>
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                <p className="text-sm text-on-bg-muted">
                   Free &middot; No credit card &middot; Your data is yours
                 </p>
               </div>
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full max-w-md h-auto py-4 px-7 text-base rounded-xl border-white/20 bg-transparent text-white/70 hover:text-white hover:bg-white/5"
+                className="w-full max-w-md h-auto py-4 px-7 text-base rounded-xl border-white/20 bg-transparent text-on-bg-body hover:text-white hover:bg-white/5"
                 onClick={() => navigate('/map')}
               >
                 Browse scores near me
@@ -295,7 +295,7 @@ export default function WalletLogin() {
         </section>
 
         {/* ═══ Section 2: What is BRIX? ══════════════════════════ */}
-        <section id="about" className="py-20 desktop:py-28" style={{ backgroundColor: 'var(--cream)' }}>
+        <section id="about" className="py-20 desktop:py-28" style={{ backgroundColor: 'hsl(var(--card))' }}>
           <div className="max-w-5xl mx-auto px-5">
             <div className="grid desktop:grid-cols-2 gap-12 desktop:gap-16 items-start">
               {/* Left column — text */}
@@ -304,7 +304,7 @@ export default function WalletLogin() {
                   <p className="uppercase tracking-[0.2em] text-sm font-medium mb-3" style={{ color: 'var(--green-fresh)' }}>
                     What is a brix score?
                   </p>
-                  <h2 className="font-display text-3xl desktop:text-4xl font-bold" style={{ color: 'var(--text-dark)' }}>
+                  <h2 className="font-landing text-3xl desktop:text-4xl font-medium" style={{ color: 'var(--text-dark)' }}>
                     A number that tells you how{' '}
                     <em style={{ color: 'var(--green-fresh)' }}>good</em>{' '}
                     your food really is
@@ -357,13 +357,13 @@ export default function WalletLogin() {
         </section>
 
         {/* ═══ Section 3: Community Scores ═══════════════════════ */}
-        <section id="community" className="py-20 desktop:py-28" style={{ backgroundColor: 'var(--blue-mist)' }}>
+        <section id="community" className="py-20 desktop:py-28" style={{ backgroundColor: 'hsl(var(--card))' }}>
           <div className="max-w-5xl mx-auto px-5">
             <motion.div className="mb-10" {...fadeUp}>
               <p className="uppercase tracking-[0.2em] text-sm font-medium mb-3" style={{ color: 'var(--green-fresh)' }}>
                 Community
               </p>
-              <h2 className="font-display text-3xl desktop:text-4xl font-bold" style={{ color: 'var(--text-dark)' }}>
+              <h2 className="font-landing text-3xl desktop:text-4xl font-medium" style={{ color: 'var(--text-dark)' }}>
                 What people are finding
               </h2>
             </motion.div>
@@ -383,27 +383,27 @@ export default function WalletLogin() {
         </section>
 
         {/* ═══ Section 4: Mission ════════════════════════════════ */}
-        <section className="py-24 desktop:py-32" style={{ background: `radial-gradient(ellipse at 70% 80%, #244536 0%, var(--blue-deep) 70%)` }}>
+        <section className="py-24 desktop:py-32" style={{ backgroundColor: 'hsl(var(--background))' }}>
           <div className="max-w-2xl mx-auto px-5 text-center">
             <motion.div {...fadeUp}>
-              <p className="uppercase tracking-[0.2em] text-sm font-medium mb-5" style={{ color: 'var(--green-fresh)' }}>
+              <p className="uppercase tracking-[0.2em] text-sm font-medium mb-5 text-on-bg-subtle">
                 Our Mission
               </p>
               <h2
-                className="font-display font-bold text-white leading-tight mb-6"
+                className="font-landing font-medium text-white leading-tight mb-6"
                 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)' }}
               >
                 Every score you submit helps{' '}
-                <em style={{ color: 'var(--blue-light)' }}>another family</em>{' '}
+                <em style={{ color: 'white' }}>another family</em>{' '}
                 eat better
               </h2>
-              <p className="text-lg leading-relaxed mb-10" style={{ color: 'rgba(255,255,255,0.75)' }}>
+              <p className="text-lg leading-relaxed mb-10 text-on-bg-body">
                 Good food knowledge shouldn't be locked away. When you share a score, you're not just helping yourself — you're changing what your whole community reaches for.
               </p>
               <Button
                 onClick={handleLoginClick}
                 size="lg"
-                className="bg-green-fresh hover:bg-green-mid text-white h-auto py-4 px-10 text-base font-medium gap-2 rounded-xl"
+                className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-4 px-10 text-base font-medium gap-2 rounded-xl"
               >
                 Join 8,400 conscious shoppers
                 <ArrowRight className="w-4 h-4" />
@@ -413,10 +413,10 @@ export default function WalletLogin() {
         </section>
 
         {/* ═══ Section 5: Sign Up ════════════════════════════════ */}
-        <section className="py-20 desktop:py-28" style={{ backgroundColor: 'var(--cream)' }}>
+        <section className="py-20 desktop:py-28" style={{ backgroundColor: 'hsl(var(--card))' }}>
           <div className="max-w-3xl mx-auto px-5">
             <motion.div className="text-center mb-12" {...fadeUp}>
-              <h2 className="font-display text-3xl desktop:text-4xl font-bold mb-4" style={{ color: 'var(--text-dark)' }}>
+              <h2 className="font-landing text-3xl desktop:text-4xl font-medium mb-4" style={{ color: 'var(--text-dark)' }}>
                 Your account is yours alone — forever
               </h2>
               <p className="text-lg leading-relaxed" style={{ color: 'var(--text-mid)' }}>
@@ -426,21 +426,21 @@ export default function WalletLogin() {
 
             <motion.div {...stagger} className="grid desktop:grid-cols-3 gap-6 mb-12">
               <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--blue-pale)' }}>
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--blue-deep)' }}>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--blue-mid)' }}>
                   <KeyRound className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>No password to forget</h3>
                 <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>Your wallet handles authentication. No emails, no resets, no breaches.</p>
               </motion.div>
               <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--blue-pale)' }}>
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--blue-deep)' }}>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--blue-mid)' }}>
                   <ShieldCheck className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>Your data is never sold</h3>
                 <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>Scores are public, but your identity stays private unless you choose otherwise.</p>
               </motion.div>
               <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--blue-pale)' }}>
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--blue-deep)' }}>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--blue-mid)' }}>
                   <MonitorSmartphone className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>Works on phone or computer</h3>
@@ -463,7 +463,7 @@ export default function WalletLogin() {
                 <Button
                   onClick={handleMobileLoginClick}
                   size="lg"
-                  className="bg-green-fresh hover:bg-green-mid text-white h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
+                  className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
                 >
                   <Smartphone className="w-4 h-4" />
                   Connect with my phone
@@ -472,7 +472,7 @@ export default function WalletLogin() {
                 <Button
                   onClick={handleLoginClick}
                   size="lg"
-                  className="bg-green-fresh hover:bg-green-mid text-white h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
+                  className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
                 >
                   Connect with mobile browser
                 </Button>
@@ -510,15 +510,15 @@ export default function WalletLogin() {
         </section>
 
         {/* ═══ Section 6: Footer ═════════════════════════════════ */}
-        <footer className="py-5" style={{ backgroundColor: 'var(--blue-deep)' }}>
+        <footer className="py-5" style={{ backgroundColor: 'hsl(var(--background))' }}>
           <div className="max-w-5xl mx-auto px-5 grid grid-cols-3 items-center">
             <span className="font-display font-bold text-white tracking-wide text-sm">BRIX</span>
-            <nav className="flex items-center justify-center gap-6 text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            <nav className="flex items-center justify-center gap-6 text-sm text-on-bg-muted">
               <button onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white/80 transition-colors">About</button>
               <button onClick={() => navigate('/faq')} className="hover:text-white/80 transition-colors">FAQ</button>
               <button onClick={() => navigate('/contact')} className="hover:text-white/80 transition-colors">Contact</button>
             </nav>
-            <nav className="flex items-center justify-end gap-4 text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <nav className="flex items-center justify-end gap-4 text-xs text-on-bg-faint">
               <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors">Privacy</a>
               <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors">Terms</a>
             </nav>

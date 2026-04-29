@@ -23,6 +23,7 @@ import ProtectedRoute from "./components/misc/ProtectedRoute";
 import { FilterProvider } from './contexts/FilterContext'
 import { CropThresholdProvider } from './contexts/CropThresholdContext';
 import { AuthBackground } from '@/components/ui/AuthBackground';
+import { BrixLogo } from '@/components/common/BrixLogo';
 import { WalletRelayProvider } from './contexts/WalletRelayContext';
 
 
@@ -35,21 +36,8 @@ const RootContent = () => {
     return (
       <AuthBackground>
         <div className="flex flex-col items-center gap-4">
-          <div
-            aria-label="Brixit"
-            style={{
-              height: '6rem',
-              aspectRatio: '680.88 / 389.32',
-              backgroundColor: 'var(--blue-deep)',
-              WebkitMaskImage: 'url(/brixit.svg)',
-              maskImage: 'url(/brixit.svg)',
-              WebkitMaskSize: 'contain',
-              maskSize: 'contain',
-              WebkitMaskRepeat: 'no-repeat',
-              maskRepeat: 'no-repeat',
-            }}
-          />
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-mid" />
+          <BrixLogo height="6rem" color="white" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
       </AuthBackground>
     );

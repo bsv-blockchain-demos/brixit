@@ -40,7 +40,7 @@ export default function Admin() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

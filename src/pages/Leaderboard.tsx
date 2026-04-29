@@ -337,7 +337,7 @@ const LeaderboardPage: React.FC = () => {
   // Render
 
   return (
-    <div className="min-h-screen bg-cream flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {isFirstLoad && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
@@ -351,7 +351,7 @@ const LeaderboardPage: React.FC = () => {
         <div className="flex flex-col md:flex-row gap-6">
           {/* Filters sidebar */}
           <aside className="w-full md:w-72">
-            <div className="bg-card border border-blue-pale rounded-2xl shadow-sm p-4">
+            <div className="bg-card text-card-foreground border border-blue-pale rounded-2xl shadow-sm p-4">
             <h2 className="text-lg font-semibold font-display text-text-dark mb-4">Filters</h2>
             <div className="space-y-4">
               <button
