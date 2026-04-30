@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Smartphone, ArrowRight, ShieldCheck, KeyRound, MonitorSmartphone } from 'lucide-react';
 import { getDataFromWallet } from '@/utils/getDataFromWallet';
-import { useMobileWalletLogin } from '@/hooks/useMobileWalletLogin';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { motion, useReducedMotion } from 'framer-motion';
 import { getMapboxToken } from '@/lib/getMapboxToken';
@@ -81,9 +80,7 @@ export default function WalletLogin() {
   const comingFromAccountCreation = searchParams.get('autocert') === '1';
   const shouldStartMobileQR = searchParams.get('qr') === '1';
 
-  const { session, loginStatus, loginError, start: startMobileLogin, reset: resetMobileLogin } = useMobileWalletLogin();
   const isMobile = useIsMobile();
-  const showMobileQR = loginStatus !== 'idle';
   const prefersReducedMotion = useReducedMotion();
 
   // ── Auth handlers (unchanged) ──────────────────────────────────
@@ -94,11 +91,6 @@ export default function WalletLogin() {
     initializeWallet();
   }, [initializeWallet]);
 
-  const handleMobileLoginClick = useCallback(() => {
-    setAuthDialogOpen(true);
-    startMobileLogin();
-  }, [startMobileLogin]);
-
   const handleResetLogin = useCallback(() => {
     setHasStartedLogin(false);
     setCertificateError(null);
@@ -107,8 +99,7 @@ export default function WalletLogin() {
     hasAttemptedRef.current = false;
     setAuthDialogOpen(false);
     resetWalletState();
-    resetMobileLogin();
-  }, [resetWalletState, resetMobileLogin]);
+  }, [resetWalletState]);
 
   const checkUserCertificates = useCallback(async () => {
     if (!userWallet || !userPubKey) return;
@@ -166,6 +157,10 @@ export default function WalletLogin() {
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
+    if (shouldStartMobileQR) navigate('/mobile-login', { replace: true });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     if (comingFromAccountCreation && !hasStartedLogin) {
       setAuthDialogOpen(true);
       if (userWallet && userPubKey) {
@@ -183,28 +178,6 @@ export default function WalletLogin() {
     }
   }, [userWallet, userPubKey, hasStartedLogin, checkUserCertificates]);
 
-  useEffect(() => {
-    if (shouldStartMobileQR && loginStatus === 'idle') {
-      resetWalletState();
-      setAuthDialogOpen(true);
-      startMobileLogin();
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (loginStatus === 'done') navigate('/leaderboard');
-  }, [loginStatus, navigate]);
-
-  useEffect(() => {
-    if (loginStatus === 'error' && loginError === 'NO_CERTIFICATE') {
-      navigate('/create-account');
-    }
-  }, [loginStatus, loginError, navigate]);
-
-  // ── Auth dialog content ────────────────────────────────────────
-
-  const isQRScanning = loginStatus === 'scanning' || loginStatus === 'authenticating';
-  const isAuthActive = hasStartedLogin || showMobileQR;
 
   // ── Motion helpers ─────────────────────────────────────────────
 
@@ -228,10 +201,38 @@ export default function WalletLogin() {
 
         {/* ═══ Section 1: Hero ═══════════════════════════════════ */}
         <section
-          className="relative flex items-center overflow-hidden"
+          className="relative isolate flex items-center overflow-hidden"
           style={{ backgroundColor: 'hsl(var(--background))' }}
         >
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 -z-10 bg-cover bg-center pointer-events-none select-none opacity-[0.55]"
+            style={{ backgroundImage: "url('/backdrop/backdropwallpaper.svg')" }}
+          />
           <div className="w-full max-w-6xl mx-auto px-5 py-20 desktop:py-28">
+            {/* Landing logo — full-width, left-aligned, above content grid */}
+            <motion.div
+              {...(prefersReducedMotion ? {} : { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.45 } })}
+              className="mb-10"
+            >
+              <div
+                aria-label="BRIXit"
+                style={{
+                  height: '6rem',
+                  aspectRatio: '519.7 / 232.2',
+                  backgroundColor: 'white',
+                  WebkitMaskImage: 'url(/logos/BRIXit-landing.svg)',
+                  maskImage: 'url(/logos/BRIXit-landing.svg)',
+                  WebkitMaskSize: 'contain',
+                  maskSize: 'contain',
+                  WebkitMaskRepeat: 'no-repeat',
+                  maskRepeat: 'no-repeat',
+                  WebkitMaskPosition: 'left center',
+                  maskPosition: 'left center',
+                }}
+              />
+            </motion.div>
+
             {/* Content row */}
             <div className="grid desktop:grid-cols-2 gap-6 desktop:gap-16 items-start mb-8">
 
@@ -261,7 +262,7 @@ export default function WalletLogin() {
             <div className="grid desktop:grid-cols-2 gap-3 desktop:gap-16 mb-6 items-start">
               <div className="flex flex-col gap-3">
                 <Button
-                  onClick={handleLoginClick}
+                  onClick={() => navigate('/mobile-login')}
                   size="lg"
                   className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-4 px-7 text-base font-medium gap-2 rounded-xl w-full max-w-md"
                 >
@@ -301,12 +302,12 @@ export default function WalletLogin() {
               {/* Left column — text */}
               <div>
                 <motion.div className="mb-8" {...fadeUp}>
-                  <p className="uppercase tracking-[0.2em] text-sm font-medium mb-3" style={{ color: 'var(--green-fresh)' }}>
+                  <p className="uppercase tracking-[0.2em] text-sm font-medium mb-3" style={{ color: 'var(--blue-mid)' }}>
                     What is a brix score?
                   </p>
                   <h2 className="font-landing text-3xl desktop:text-4xl font-medium" style={{ color: 'var(--text-dark)' }}>
                     A number that tells you how{' '}
-                    <em style={{ color: 'var(--green-fresh)' }}>good</em>{' '}
+                    <em style={{ color: 'var(--blue-mid)' }}>good</em>{' '}
                     your food really is
                   </h2>
                 </motion.div>
@@ -360,7 +361,7 @@ export default function WalletLogin() {
         <section id="community" className="py-20 desktop:py-28" style={{ backgroundColor: 'hsl(var(--card))' }}>
           <div className="max-w-5xl mx-auto px-5">
             <motion.div className="mb-10" {...fadeUp}>
-              <p className="uppercase tracking-[0.2em] text-sm font-medium mb-3" style={{ color: 'var(--green-fresh)' }}>
+              <p className="uppercase tracking-[0.2em] text-sm font-medium mb-3" style={{ color: 'var(--blue-mid)' }}>
                 Community
               </p>
               <h2 className="font-landing text-3xl desktop:text-4xl font-medium" style={{ color: 'var(--text-dark)' }}>
@@ -452,16 +453,16 @@ export default function WalletLogin() {
               <button
                 onClick={() => navigate('/faq')}
                 className="flex items-center gap-1.5 text-sm font-medium mb-1 transition-colors"
-                style={{ color: 'var(--green-fresh)' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--green-mid)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--green-fresh)')}
+                style={{ color: 'var(--blue-mid)' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--blue-deep)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--blue-mid)')}
               >
                 Why do we use this instead of a password?
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
               {!isMobile ? (
                 <Button
-                  onClick={handleMobileLoginClick}
+                  onClick={() => navigate('/mobile-login')}
                   size="lg"
                   className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
                 >
@@ -493,14 +494,14 @@ export default function WalletLogin() {
                   onClick={() => navigate('/faq#mycelia')}
                   className="font-semibold underline underline-offset-2 transition-colors"
                   style={{ color: 'var(--text-mid)' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--green-fresh)')}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--blue-deep)')}
                   onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-mid)')}
                 >Mycelia app</button>
                 {' '}— it's made to work together with BRIX and handles all the complexity for you.{' '}
                 <a
                   href="#"
                   className="underline underline-offset-2 transition-opacity hover:opacity-70"
-                  style={{ color: 'var(--green-fresh)' }}
+                  style={{ color: 'var(--blue-mid)' }}
                 >
                   Install here
                 </a>
@@ -528,17 +529,13 @@ export default function WalletLogin() {
 
       {/* ═══ Auth Dialog ═════════════════════════════════════════ */}
       <Dialog
-        open={authDialogOpen && isAuthActive}
+        open={authDialogOpen && hasStartedLogin}
         onOpenChange={(open) => {
           if (!open) handleResetLogin();
         }}
       >
-        <DialogContent className={isQRScanning ? 'max-w-2xl' : 'max-w-md'}>
+        <DialogContent className="max-w-md">
           <AuthDialogContent
-            loginStatus={loginStatus}
-            loginError={loginError}
-            session={session}
-            isQRScanning={isQRScanning}
             hasStartedLogin={hasStartedLogin}
             isConnecting={isConnecting}
             maxRetriesExceeded={maxRetriesExceeded}
@@ -547,7 +544,6 @@ export default function WalletLogin() {
             retryCount={retryCount}
             onCheck={checkUserCertificates}
             onReset={handleResetLogin}
-            onRetryMobile={() => { resetMobileLogin(); startMobileLogin(); }}
           />
         </DialogContent>
       </Dialog>

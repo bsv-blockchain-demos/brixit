@@ -48,7 +48,7 @@ export default function WalletError() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate('/login?qr=1')}
+                onClick={() => navigate('/mobile-login')}
                 className="w-full gap-2 bg-card"
               >
                 <Smartphone className="w-4 h-4" />

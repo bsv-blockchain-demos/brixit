@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import Header from '../components/Layout/Header';
+import { PageBackground } from '../components/ui/PageBackground';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -349,19 +350,19 @@ const DataEntry = () => {
 
   if (staticDataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <PageBackground className="min-h-screen flex items-center justify-center">
         <div className="text-center p-6">
           <Loader2 className="w-12 h-12 animate-spin mx-auto" style={{ color: 'var(--green-mid)' }} />
           <p className="mt-4" style={{ color: 'var(--text-mid)' }}>Loading form data...</p>
         </div>
-      </div>
+      </PageBackground>
     );
   }
 
   const allBrands = [...brands, ...pendingBrands.map(name => ({ name, label: name }))];
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageBackground className="min-h-screen">
       <Header />
       <main
         className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8"
@@ -633,7 +634,7 @@ const DataEntry = () => {
           </Button>
         </div>
       </div>
-    </div>
+    </PageBackground>
   );
 };
 

@@ -2,6 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import Header from "../components/Layout/Header";
+import { PageBackground } from '../components/ui/PageBackground';
 import LocationSelector from "../components/common/LocationSelector";
 import { fetchCropTypes, CropType } from "../lib/fetchCropTypes";
 import {
@@ -337,7 +338,7 @@ const LeaderboardPage: React.FC = () => {
   // Render
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <PageBackground className="min-h-screen flex flex-col">
       {isFirstLoad && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
@@ -459,7 +460,7 @@ const LeaderboardPage: React.FC = () => {
           </section>
         </div>
       </main>
-    </div>
+    </PageBackground>
   );
 };
 

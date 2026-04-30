@@ -9,7 +9,7 @@ const WalletRelayContext = createContext<WalletRelayContextType | undefined>(und
 
 /**
  * Keeps a single WalletRelayClient alive above the router so the relay session
- * (and HTTP polling) survives navigation between /login and /create-account.
+ * (and HTTP polling) survives navigation between /mobile-login and /create-account.
  */
 export function WalletRelayProvider({ children }: { children: ReactNode }) {
   const relay = useWalletRelayClient({ apiUrl: API_URL, autoCreate: false });

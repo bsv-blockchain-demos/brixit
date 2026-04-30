@@ -154,7 +154,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   const { getThresholds, loading: thresholdsLoading } = useCropThresholds();
 
-  const [mobileSheetOpen, setMobileSheetOpen] = useState<boolean>(true);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState<boolean>(false);
   const isMobile = useIsMobile();
 
   function useIsMobile(breakpoint = 768) {
@@ -849,7 +849,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
         {isMapLoaded && zoomLevel > 0 && zoomLevel < MIN_ZOOM_TO_QUERY && (
           <div className="absolute inset-0 z-10 flex items-start justify-center pointer-events-none">
-            <div className="mt-16 bg-card/90 backdrop-blur border border-border text-foreground px-4 py-2 rounded-md shadow-sm text-sm">
+            <div className="mt-16 bg-card/90 backdrop-blur border border-border text-card-foreground px-4 py-2 rounded-md shadow-sm text-sm">
               Zoom in to load submissions
             </div>
           </div>
@@ -894,18 +894,6 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
             <div className="mb-4">{renderLeaderboard()}</div>
           </BottomSheet>
 
-          {!mobileSheetOpen && (
-            <div className="fixed bottom-4 right-4 z-50">
-              <Button
-                onClick={() => setMobileSheetOpen(true)}
-                variant="default"
-                size="sm"
-                className="shadow-lg bg-primary text-primary-foreground hover:bg-green-mid"
-              >
-                Explore BRIX Data
-              </Button>
-            </div>
-          )}
         </>
       )}
 

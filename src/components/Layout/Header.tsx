@@ -12,6 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { useAuth } from "../../contexts/AuthContext";
+import { useWallet } from "../../contexts/WalletContext";
+import { useWalletRelay } from "../../contexts/WalletRelayContext";
 import { formatUsername } from "../../lib/formatUsername";
 import {
   Eye,
@@ -34,6 +36,8 @@ import { BrixLogo } from "@/components/common/BrixLogo";
 
 const Header = () => {
   const { user, logout, isAdmin } = useAuth();
+  const { resetWalletState } = useWallet();
+  const { cancelSession } = useWalletRelay();
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -67,6 +71,8 @@ const Header = () => {
   };
 
   const handleLogout = () => {
+    cancelSession();
+    resetWalletState();
     logout();
   };
 
@@ -154,7 +160,7 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/leaderboard" className="flex items-center">
-            <BrixLogo height="3.5rem" color="white" />
+            <BrixLogo height="3rem" color="white" />
           </Link>
 
           {/* Desktop Navigation */}

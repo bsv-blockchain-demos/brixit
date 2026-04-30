@@ -11,10 +11,10 @@ export function BrixLogo({ height = '2.5rem', color = 'var(--blue-deep)', classN
       className={className}
       style={{
         height,
-        aspectRatio: '680.88 / 389.32',
+        aspectRatio: '519.7 / 124.7',
         backgroundColor: color,
-        WebkitMaskImage: 'url(/brixit.svg)',
-        maskImage: 'url(/brixit.svg)',
+        WebkitMaskImage: 'url(/logos/BRIXit-platform.svg)',
+        maskImage: 'url(/logos/BRIXit-platform.svg)',
         WebkitMaskSize: 'contain',
         maskSize: 'contain',
         WebkitMaskRepeat: 'no-repeat',

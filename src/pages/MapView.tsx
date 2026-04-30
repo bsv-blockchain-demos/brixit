@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import Header from '../components/Layout/Header';
+import { PageBackground } from '../components/ui/PageBackground';
 import InteractiveMap from '../components/Map/InteractiveMap';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -87,7 +88,7 @@ const MapView = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageBackground className="min-h-screen">
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
@@ -123,7 +124,7 @@ const MapView = () => {
           </CardContent>
         </Card>
       </main>
-    </div>
+    </PageBackground>
   );
 };
 

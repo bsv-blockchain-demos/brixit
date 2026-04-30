@@ -25,19 +25,19 @@ export function BottomSheet({
       <Sheet.Portal>
         <Sheet.Content
           className={cn(
-            "fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-2xl bg-card shadow-lg animate-in slide-in-from-bottom duration-300",
+            "fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-2xl bg-card text-card-foreground shadow-lg animate-in slide-in-from-bottom duration-300",
             "h-[85vh] sm:max-w-md sm:mx-auto",
             className
           )}
         >
           {/* Drag handle */}
-          <div className="mx-auto mt-2 h-1.5 w-12 rounded-full bg-gray-300" />
+          <div className="mx-auto mt-2 h-1.5 w-12 rounded-full bg-border" />
 
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-2 border-b">
             {title && <div className="font-medium text-lg truncate">{title}</div>}
             <button
-              className="p-2 rounded-full hover:bg-gray-100"
+              className="p-2 rounded-full hover:bg-accent"
               onClick={() => onOpenChange(false)}
             >
               <X size={20} />

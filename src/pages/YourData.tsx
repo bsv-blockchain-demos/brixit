@@ -1,5 +1,6 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Header from '../components/Layout/Header';
+import { PageBackground } from '../components/ui/PageBackground';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '../components/ui/table';
@@ -203,7 +204,7 @@ const YourData: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
+      <PageBackground className="min-h-screen">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
           <Card>
@@ -218,14 +219,14 @@ const YourData: React.FC = () => {
             </CardContent>
           </Card>
         </main>
-      </div>
+      </PageBackground>
     );
   }
 
   // Combined loading state check
   if (isLoading || isLoadingStaticData) {
     return (
-      <div className="min-h-screen bg-background">
+      <PageBackground className="min-h-screen">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 text-center">
           <div className="flex items-center justify-center gap-2">
@@ -233,23 +234,23 @@ const YourData: React.FC = () => {
             <p className="text-on-bg-body">Loading your submissions...</p>
           </div>
         </main>
-      </div>
+      </PageBackground>
     );
   }
 
   if (isError) {
     return (
-      <div className="min-h-screen bg-background">
+      <PageBackground className="min-h-screen">
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 text-center">
           <p className="text-red-600">Error: Failed to load your submissions.</p>
         </main>
-      </div>
+      </PageBackground>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageBackground className="min-h-screen">
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
@@ -494,7 +495,7 @@ const YourData: React.FC = () => {
           </AlertDialogContent>
         </AlertDialog>
       </main>
-    </div>
+    </PageBackground>
   );
 };
 

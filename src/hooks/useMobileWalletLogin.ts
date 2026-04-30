@@ -28,7 +28,7 @@ export function useMobileWalletLogin() {
   const authRunningRef = useRef(false); // prevent double-fire (StrictMode)
 
   // Relay session lives in context above the router — survives navigation to /create-account
-  const { session, error: relayError, createSession, wallet } = useWalletRelay();
+  const { session, error: relayError, createSession, cancelSession, wallet } = useWalletRelay();
 
   const { walletLogin } = useAuth();
   const { setRelayWallet } = useWallet();
@@ -105,5 +105,5 @@ export function useMobileWalletLogin() {
     }
   }, [relayError, loginStatus]);
 
-  return { session, loginStatus, loginError, start, reset };
+  return { session, loginStatus, loginError, start, reset, cancelSession };
 }

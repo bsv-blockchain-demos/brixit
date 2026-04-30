@@ -14,6 +14,7 @@ import YourData from "./pages/YourData";
 import WalletLogin from "./pages/WalletLogin";
 import CreateAccount from "./pages/CreateAccount";
 import WalletError from "./pages/WalletError";
+import MobileLogin from "./pages/MobileLogin";
 import Help from "./pages/Help";
 import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
@@ -36,7 +37,7 @@ const RootContent = () => {
     return (
       <AuthBackground>
         <div className="flex flex-col items-center gap-4">
-          <BrixLogo height="6rem" color="white" />
+          <BrixLogo height="4rem" color="white" />
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
       </AuthBackground>
@@ -52,6 +53,7 @@ const RootContent = () => {
         <Route path="/login" element={<WalletLogin />} />
         <Route path="/create-account" element={<CreateAccount />} />
         <Route path="/wallet-error" element={<WalletError />} />
+        <Route path="/mobile-login" element={<MobileLogin />} />
         <Route path="/faq" element={<Help />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<NotFound />} />
