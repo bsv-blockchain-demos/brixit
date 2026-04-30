@@ -123,6 +123,7 @@ server.listen(config.port, '0.0.0.0', () => {
   console.log(`   POST   /api/auth/wallet-login`);
   console.log(`   GET    /api/session (wallet relay)`);
   console.log(`   GET    /api/session/:id (wallet relay)`);
+  console.log(`   DELETE /api/session/:id (wallet relay)`);
   console.log(`   POST   /api/request/:id (wallet relay)`);
   console.log(`   WS     /ws (wallet relay)`);
   console.log(`   POST   /api/auth/refresh`);

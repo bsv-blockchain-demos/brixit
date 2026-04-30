@@ -15,8 +15,11 @@ export default function MobileLogin() {
   const authCompletedRef = useRef(false);
 
   useEffect(() => {
-    start();
+    // setTimeout(0) prevents StrictMode double-fire: cleanup cancels the timer
+    // before it fires, so createSession() is only called once per real mount.
+    const timer = setTimeout(() => start(), 0);
     return () => {
+      clearTimeout(timer);
       reset();
       if (!authCompletedRef.current) cancelSession();
     };
