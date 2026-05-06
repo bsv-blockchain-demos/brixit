@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { scoreBrix } from '@/lib/getBrixColor';
 
 export interface ClusterSample {
@@ -38,6 +39,7 @@ function toImagePct(
 
 export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null }) {
   const prefersReducedMotion = useReducedMotion();
+  const navigate = useNavigate();
 
   return (
     <motion.div
@@ -151,7 +153,13 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
         )}
       </div>
       <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
-        Verified scores from real growers and shoppers
+        Verified scores from real growers and shoppers.{' '}
+        <button
+          onClick={() => navigate('/map')}
+          className="underline underline-offset-2 hover:opacity-70 transition-opacity"
+        >
+          browse the map near you &rarr;
+        </button>
       </p>
     </motion.div>
   );

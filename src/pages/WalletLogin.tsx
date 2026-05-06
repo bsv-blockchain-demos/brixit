@@ -197,28 +197,21 @@ export default function WalletLogin() {
 
   return (
     <>
-      <div className="min-h-screen overflow-x-hidden">
+      {/* Header + hero share one backdrop — no z-index isolation on the header */}
+      <div className="relative overflow-hidden" style={{ backgroundColor: 'hsl(var(--background))' }}>
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-cover bg-center pointer-events-none select-none opacity-[0.55]"
+          style={{ backgroundImage: "url('/backdrop/backdropwallpaper.svg')" }}
+        />
 
-        {/* ═══ Section 1: Hero ═══════════════════════════════════ */}
-        <section
-          className="relative isolate flex items-center overflow-hidden"
-          style={{ backgroundColor: 'hsl(var(--background))' }}
-        >
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 -z-10 bg-cover bg-center pointer-events-none select-none opacity-[0.55]"
-            style={{ backgroundImage: "url('/backdrop/backdropwallpaper.svg')" }}
-          />
-          <div className="w-full max-w-6xl mx-auto px-5 py-20 desktop:py-28">
-            {/* Landing logo — full-width, left-aligned, above content grid */}
-            <motion.div
-              {...(prefersReducedMotion ? {} : { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.45 } })}
-              className="mb-10"
-            >
+        <header className="relative border-b border-white/30">
+          <div className="max-w-6xl mx-auto px-5">
+            <div className="flex items-center justify-between py-2">
               <div
                 aria-label="BRIXit"
                 style={{
-                  height: '6rem',
+                  height: '5rem',
                   aspectRatio: '519.7 / 232.2',
                   backgroundColor: 'white',
                   WebkitMaskImage: 'url(/logos/BRIXit-landing.svg)',
@@ -231,8 +224,22 @@ export default function WalletLogin() {
                   maskPosition: 'left center',
                 }}
               />
-            </motion.div>
+              <nav className="hidden sm:flex items-center gap-6 text-sm text-on-bg-muted">
+                <button onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white/80 transition-colors">About</button>
+                <button onClick={() => navigate('/faq')} className="hover:text-white/80 transition-colors">FAQ</button>
+                <button onClick={() => navigate('/contact')} className="hover:text-white/80 transition-colors">Contact</button>
+              </nav>
+              <nav className="flex items-center gap-4 text-xs text-on-bg-faint">
+                <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors">Privacy</a>
+                <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors">Terms</a>
+              </nav>
+            </div>
+          </div>
+        </header>
 
+        {/* ═══ Section 1: Hero ═══════════════════════════════════ */}
+        <section className="relative flex items-center overflow-hidden">
+          <div className="w-full max-w-6xl mx-auto px-5 py-20 desktop:py-28">
             {/* Content row */}
             <div className="grid desktop:grid-cols-2 gap-6 desktop:gap-16 items-start mb-8">
 
@@ -258,29 +265,27 @@ export default function WalletLogin() {
               <MapPreviewPanel mapPreview={mapPreview} />
             </div>
 
-            {/* Button row — same column grid + items-start guarantees equal top position */}
-            <div className="grid desktop:grid-cols-2 gap-3 desktop:gap-16 mb-6 items-start">
-              <div className="flex flex-col gap-3">
-                <Button
-                  onClick={() => navigate('/mobile-login')}
-                  size="lg"
-                  className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-4 px-7 text-base font-medium gap-2 rounded-xl w-full max-w-md"
-                >
-                  Start tracking my food
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-                <p className="text-sm text-on-bg-muted">
-                  Free &middot; No credit card &middot; Your data is yours
-                </p>
-              </div>
+            {/* Button row */}
+            <div className="flex flex-col gap-3 max-w-md mb-6">
+              <Button
+                onClick={() => navigate('/mobile-login')}
+                size="lg"
+                className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-4 px-7 text-base font-medium gap-2 rounded-xl w-full"
+              >
+                Start tracking my food
+                <ArrowRight className="w-4 h-4" />
+              </Button>
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full max-w-md h-auto py-4 px-7 text-base rounded-xl border-white/20 bg-transparent text-on-bg-body hover:text-white hover:bg-white/5"
+                className="w-full h-auto py-4 px-7 text-base rounded-xl border-white/20 bg-transparent text-on-bg-body hover:text-white hover:bg-white/5"
                 onClick={() => navigate('/map')}
               >
                 Browse scores near me
               </Button>
+              <p className="text-sm text-on-bg-muted">
+                Free &middot; No credit card &middot; Your data is yours
+              </p>
             </div>
 
             {/* Stats strip */}
@@ -294,6 +299,9 @@ export default function WalletLogin() {
             </motion.div>
           </div>
         </section>
+      </div>
+
+      <div className="overflow-x-hidden">
 
         {/* ═══ Section 2: What is BRIX? ══════════════════════════ */}
         <section id="about" className="py-20 desktop:py-28" style={{ backgroundColor: 'hsl(var(--card))' }}>
@@ -324,8 +332,8 @@ export default function WalletLogin() {
 
               {/* Right column — score guide card */}
               <motion.div
-                className="rounded-2xl p-6 desktop:p-8 shadow-sm"
-                style={{ backgroundColor: 'hsl(var(--card))' }}
+                className="rounded-2xl p-6 desktop:p-8 bg-white border shadow-sm"
+                style={{ borderColor: 'var(--blue-pale)' }}
                 {...fadeUp}
               >
                 <p className="uppercase tracking-[0.15em] text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>
@@ -511,7 +519,7 @@ export default function WalletLogin() {
         </section>
 
         {/* ═══ Section 6: Footer ═════════════════════════════════ */}
-        <footer className="py-5" style={{ backgroundColor: 'hsl(var(--background))' }}>
+        <footer className="py-5" style={{ backgroundColor: 'var(--green-fresh)' }}>
           <div className="max-w-5xl mx-auto px-5 grid grid-cols-3 items-center">
             <span className="font-display font-bold text-white tracking-wide text-sm">BRIX</span>
             <nav className="flex items-center justify-center gap-6 text-sm text-on-bg-muted">
