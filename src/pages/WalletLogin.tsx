@@ -241,9 +241,9 @@ export default function WalletLogin() {
         <section className="relative flex items-center overflow-hidden">
           <div className="w-full max-w-6xl mx-auto px-5 py-20 desktop:py-28">
             {/* Content row */}
-            <div className="grid desktop:grid-cols-2 gap-6 desktop:gap-16 items-start mb-8">
+            <div className="grid desktop:grid-cols-2 gap-6 desktop:gap-16 items-center mb-8">
 
-              {/* Left: copy */}
+              {/* Left: copy + CTAs */}
               <motion.div {...fadeUp}>
                 <p className="uppercase tracking-[0.2em] text-sm font-medium mb-4 text-on-bg-subtle">
                   Real food. Real nutrition.
@@ -256,36 +256,34 @@ export default function WalletLogin() {
                   <em className="italic" style={{ color: 'white' }}>actually</em>{' '}
                   nutritious.
                 </h1>
-                <p className="text-base desktop:text-lg leading-relaxed text-on-bg-body">
+                <p className="text-base desktop:text-lg leading-relaxed text-on-bg-body mb-8">
                   BRIX measures the nutrient density of fresh produce — so you can shop smarter, feed your family better, and share what you discover.
                 </p>
+                <div className="flex flex-col gap-3 max-w-md">
+                  <Button
+                    onClick={() => navigate('/mobile-login')}
+                    size="lg"
+                    className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-4 px-7 text-base font-medium gap-2 rounded-xl w-full"
+                  >
+                    Start tracking my food
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full h-auto py-4 px-7 text-base rounded-xl border-white/20 bg-transparent text-on-bg-body hover:text-white hover:bg-white/5"
+                    onClick={() => navigate('/map')}
+                  >
+                    Browse scores near me
+                  </Button>
+                  <p className="text-sm text-on-bg-muted">
+                    Free &middot; No credit card &middot; Your data is yours
+                  </p>
+                </div>
               </motion.div>
 
               {/* Right: map preview */}
               <MapPreviewPanel mapPreview={mapPreview} />
-            </div>
-
-            {/* Button row */}
-            <div className="flex flex-col gap-3 max-w-md mb-6">
-              <Button
-                onClick={() => navigate('/mobile-login')}
-                size="lg"
-                className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-4 px-7 text-base font-medium gap-2 rounded-xl w-full"
-              >
-                Start tracking my food
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full h-auto py-4 px-7 text-base rounded-xl border-white/20 bg-transparent text-on-bg-body hover:text-white hover:bg-white/5"
-                onClick={() => navigate('/map')}
-              >
-                Browse scores near me
-              </Button>
-              <p className="text-sm text-on-bg-muted">
-                Free &middot; No credit card &middot; Your data is yours
-              </p>
             </div>
 
             {/* Stats strip */}
