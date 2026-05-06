@@ -83,7 +83,7 @@ export default function WalletLogin() {
   const isMobile = useIsMobile();
   const prefersReducedMotion = useReducedMotion();
 
-  // ── Auth handlers (unchanged) ──────────────────────────────────
+  // ── Auth handlers ──────────────────────────────────
 
   const handleLoginClick = useCallback(() => {
     setHasStartedLogin(true);
@@ -148,7 +148,7 @@ export default function WalletLogin() {
     }
   }, [userWallet, userPubKey, walletLogin, navigate]);
 
-  // ── Effects (unchanged) ────────────────────────────────────────
+  // ── Effects ────────────────────────────────────────
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -197,7 +197,7 @@ export default function WalletLogin() {
 
   return (
     <>
-      {/* Header + hero share one backdrop — no z-index isolation on the header */}
+      {/* Header */}
       <div className="relative overflow-hidden" style={{ backgroundColor: 'hsl(var(--background))' }}>
         <div
           aria-hidden="true"
@@ -205,7 +205,7 @@ export default function WalletLogin() {
           style={{ backgroundImage: "url('/backdrop/backdropwallpaper.svg')" }}
         />
 
-        <header className="relative border-b border-white/30">
+        <header className="relative">
           <div className="max-w-6xl mx-auto px-5">
             <div className="flex items-center justify-between py-2">
               <div
@@ -229,10 +229,15 @@ export default function WalletLogin() {
                 <button onClick={() => navigate('/faq')} className="hover:text-white/80 transition-colors">FAQ</button>
                 <button onClick={() => navigate('/contact')} className="hover:text-white/80 transition-colors">Contact</button>
               </nav>
-              <nav className="flex items-center gap-4 text-xs text-on-bg-faint">
-                <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors">Privacy</a>
-                <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors">Terms</a>
-              </nav>
+              <div className="flex items-center gap-4">
+                <Button
+                  onClick={() => navigate('/mobile-login')}
+                  size="sm"
+                  className="bg-action-primary hover:bg-action-primary-hover text-white font-medium rounded-lg px-4"
+                >
+                  Join BRIXit
+                </Button>
+              </div>
             </div>
           </div>
         </header>

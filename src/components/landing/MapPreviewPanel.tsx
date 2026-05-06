@@ -156,7 +156,7 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
         Verified scores from real growers and shoppers.{' '}
         <button
           onClick={() => navigate('/map')}
-          className="underline underline-offset-2 hover:opacity-70 transition-opacity"
+          className="underline underline-offset-2 hover:opacity-70 transition-opacity text-white"
         >
           browse the map near you &rarr;
         </button>
