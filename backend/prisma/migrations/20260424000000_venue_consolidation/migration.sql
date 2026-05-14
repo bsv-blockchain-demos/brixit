@@ -69,7 +69,7 @@ BEGIN
       p.country,
       true,             -- system-created → verified
       NULL,
-      COALESCE(p.created_at, now())
+      now()             -- places table has no created_at; backfill to migration time
     FROM places p
     ON CONFLICT (id) DO NOTHING;  -- idempotent re-run guard
 
