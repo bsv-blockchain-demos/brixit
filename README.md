@@ -1,4 +1,4 @@
-# BRIXIT
+# BRIXit
 
 A geospatial data-collection platform where citizen scientists worldwide submit [BRIX](https://en.wikipedia.org/wiki/Brix) bionutrient measurements for food quality tracking. Users record refractometer readings at points of purchase, and the data feeds leaderboards, an interactive map, and brand/location rankings — all authenticated through BSV wallet identity.
 
