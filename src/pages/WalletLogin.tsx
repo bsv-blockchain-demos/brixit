@@ -2,7 +2,7 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useWallet } from '@/contexts/WalletContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Utils, createNonce, WalletClient } from '@bsv/sdk';
+import { Utils, createNonce } from '@bsv/sdk';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Smartphone, ArrowRight, ShieldCheck, KeyRound, MonitorSmartphone } from 'lucide-react';
@@ -41,22 +41,6 @@ export default function WalletLogin() {
   const [hasStartedLogin, setHasStartedLogin] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [mapPreview, setMapPreview] = useState<MapPreview | null>(null);
-  const [hasLocalWallet, setHasLocalWallet] = useState(
-    typeof window !== 'undefined' && typeof (window as any).CWI === 'object'
-  );
-
-  useEffect(() => {
-    if (hasLocalWallet) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const probe = new WalletClient('auto');
-        await probe.isAuthenticated();
-        if (!cancelled) setHasLocalWallet(true);
-      } catch { /* no wallet substrate */ }
-    })();
-    return () => { cancelled = true; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let cancelled = false;
@@ -106,14 +90,6 @@ export default function WalletLogin() {
     setAuthDialogOpen(true);
     initializeWallet();
   }, [initializeWallet]);
-
-  const handleCTA = useCallback(() => {
-    if (hasLocalWallet) {
-      handleLoginClick();
-    } else {
-      navigate('/mobile-login');
-    }
-  }, [hasLocalWallet, handleLoginClick, navigate]);
 
   const handleResetLogin = useCallback(() => {
     setHasStartedLogin(false);
@@ -255,7 +231,7 @@ export default function WalletLogin() {
               </nav>
               <div className="flex items-center gap-4">
                 <Button
-                  onClick={handleCTA}
+                  onClick={() => navigate('/mobile-login')}
                   size="sm"
                   className="bg-action-primary hover:bg-action-primary-hover text-white font-medium rounded-lg px-4"
                 >
@@ -290,7 +266,7 @@ export default function WalletLogin() {
                 </p>
                 <div className="flex flex-col gap-3 max-w-md">
                   <Button
-                    onClick={handleCTA}
+                    onClick={() => navigate('/mobile-login')}
                     size="lg"
                     className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-4 px-7 text-base font-medium gap-2 rounded-xl w-full"
                   >
@@ -548,7 +524,7 @@ export default function WalletLogin() {
         {/* ═══ Section 6: Footer ═════════════════════════════════ */}
         <footer className="py-5" style={{ backgroundColor: 'var(--green-fresh)' }}>
           <div className="max-w-5xl mx-auto px-5 grid grid-cols-3 items-center">
-            <img src="/logos/BRIXit-footer.svg" alt="BRIXit" className="h-6" />
+            <span className="font-display font-bold text-white tracking-wide text-sm">BRIX</span>
             <nav className="flex items-center justify-center gap-6 text-sm text-on-bg-muted">
               <button onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white/80 transition-colors">About</button>
               <button onClick={() => navigate('/faq')} className="hover:text-white/80 transition-colors">FAQ</button>
