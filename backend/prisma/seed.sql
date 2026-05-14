@@ -170,6 +170,9 @@ $$;
 
 -- ─── Leaderboard: Location ───────────────────────────────────────────────────
 
+-- Drop first: signature unchanged but return columns changed (added location_label) in venue consolidation.
+DROP FUNCTION IF EXISTS get_location_leaderboard(text, text, text, text, integer, integer);
+
 CREATE OR REPLACE FUNCTION get_location_leaderboard(
   country_filter text DEFAULT NULL,
   state_filter   text DEFAULT NULL,
