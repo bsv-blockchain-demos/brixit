@@ -44,17 +44,15 @@ export default function WalletError() {
               FAQ
             </button>
 
-            {!isMobile && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate('/mobile-login')}
-                className="w-full gap-2 bg-card"
-              >
-                <Smartphone className="w-4 h-4" />
-                Connect with my phone
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate('/mobile-login')}
+              className="w-full gap-2 bg-card"
+            >
+              <Smartphone className="w-4 h-4" />
+              Connect with my phone
+            </Button>
           </CardContent>
         </Card>
 
