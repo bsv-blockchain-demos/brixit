@@ -20,6 +20,8 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../hooks/use-toast';
 import { apiPost, apiFetch } from '@/lib/api';
+import { useWallet } from '@/contexts/WalletContext';
+import { signSubmissionPayload } from '@/lib/signSubmissionPayload';
 import LocationSearch from '../components/common/LocationSearch';
 import VenuePrompt, { type VenueChoice } from '../components/common/VenuePrompt';
 import { useStaticData } from '../hooks/useStaticData';
@@ -60,6 +62,7 @@ const mkReading = (): CropReading => ({
 
 const DataEntry = () => {
   const { user } = useAuth();
+  const { userWallet, userPubKey } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -280,6 +283,52 @@ const DataEntry = () => {
       }
     }
 
+    if (!userWallet || !userPubKey) {
+      toast({ title: 'Wallet not connected — please log in again.', variant: 'destructive' });
+      setIsLoading(false);
+      return;
+    }
+
+    // Sign each filled reading. Serial (not Promise.all) so wallet prompts
+    // don't race and the user sees them one at a time.
+    const filledReadings = readings.filter(r => r.cropType !== '');
+    const signedReadings = [];
+    try {
+      for (const r of filledReadings) {
+        const brixValue = Number(r.brixLevel.toFixed(2));
+        const payload = {
+          cropName: r.cropType,
+          brixValue,
+          brandName: r.brandName || null,
+          notes: r.notes || null,
+          assessmentDate,
+          purchaseDate: purchaseDate || null,
+          latitude: session.latitude,
+          longitude: session.longitude,
+          locationName: session.location || null,
+        };
+        const sig = await signSubmissionPayload(userWallet, userPubKey, payload);
+        signedReadings.push({
+          cropName: r.cropType,
+          brixValue,
+          brandName: r.brandName || null,
+          notes: r.notes || null,
+          payloadJson: sig.payloadJson,
+          userSignature: sig.userSignature,
+          userKeyID: sig.userKeyID,
+          userIdentityKey: sig.userIdentityKey,
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Signing failed',
+        description: err?.message || 'Please approve the signature in your wallet and try again.',
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const result = await apiPost<{ submissions: { submission_id: string; verified: boolean }[] }>(
         '/api/submissions/create',
@@ -300,19 +349,11 @@ const DataEntry = () => {
           store_name: session.business_name || session.poi_name || session.posType,
           pos_type: lockedPosType || session.posType,
           ...venuePayload,
-          readings: readings
-            .filter(r => r.cropType !== '')
-            .map(r => ({
-              cropName: r.cropType,
-              brixValue: Number(r.brixLevel.toFixed(2)),
-              brandName: r.brandName || null,
-              notes: r.notes || null,
-            })),
+          readings: signedReadings,
         }
       );
 
       const { submissions } = result;
-      const filledReadings = readings.filter(r => r.cropType !== '');
 
       for (let i = 0; i < filledReadings.length; i++) {
         const reading = filledReadings[i];

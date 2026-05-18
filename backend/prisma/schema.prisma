@@ -151,6 +151,14 @@ model Submission {
   verifiedBy      String?   @map("verified_by") @db.Uuid
   verifiedAt      DateTime? @map("verified_at") @db.Timestamptz
 
+  // On-chain anchor — outpoint of this reading's PushDrop UTXO in
+  // 'txid.vout' form. NULL while broadcast is pending or if it failed.
+  // Sibling rows from the same submission session share the same txid prefix
+  // but have different vouts (one PushDrop output per reading in the tx).
+  // EDIT updates this in place; DELETE removes the row entirely (the on-chain
+  // history remains the source of truth for the full lifecycle).
+  outpoint        String?   @map("outpoint")
+
   // Relations
   user     User?     @relation("UserSubmissions", fields: [userId], references: [id])
   crop     Crop      @relation(fields: [cropId], references: [id])
@@ -164,6 +172,7 @@ model Submission {
   @@index([venueId], name: "submissions_venue_id_idx")
   @@index([brandId], name: "submissions_brand_id_idx")
   @@index([verified], name: "submissions_verified_idx")
+  @@index([outpoint], name: "submissions_outpoint_idx")
   @@map("submissions")
 }
 

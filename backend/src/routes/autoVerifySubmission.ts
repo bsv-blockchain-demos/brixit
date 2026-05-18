@@ -32,6 +32,9 @@ import {
   type ParsedAddress,
 } from '../utils/sanitize.js';
 import prisma from '../db/client.js';
+import serverWallet from '../serverWallet.js';
+import { createSubmissionTx } from '../lib/createSubmissionTx.js';
+import { enqueueWalletTask } from '../lib/walletQueue.js';
 
 const router = Router();
 
@@ -42,6 +45,11 @@ interface ReadingInput {
   brixValue?: unknown;
   brandName?: unknown;
   notes?: unknown;
+  // On-chain signing artifacts (frontend generates these in signSubmissionPayload).
+  payloadJson?: unknown;
+  userSignature?: unknown;
+  userKeyID?: unknown;
+  userIdentityKey?: unknown;
 }
 
 interface BulkSubmissionRequestBody {
@@ -108,6 +116,17 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
     }
     const rawReadings = body.readings as ReadingInput[];
 
+    // ── Look up user's wallet identity key (for signing-field validation) ──
+    const walletIdentity = await prisma.walletIdentity.findUnique({
+      where: { userId: authedUserId },
+      select: { identityKey: true },
+    });
+    if (!walletIdentity) {
+      res.status(403).json({ error: 'No wallet identity registered for this user.' });
+      return;
+    }
+    const userIdentityKey = walletIdentity.identityKey;
+
     // ── Pre-validate + look up each crop (read-only, outside transaction) ──
     interface ResolvedReading {
       cropId: string;
@@ -116,6 +135,9 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       excellentBrixNum: number | null;
       brandName: string | null;
       notes: string | null;
+      payloadJson: string;
+      userSignature: string;
+      userKeyID: string;
     }
 
     const sessionBrandName = sanitizeInput(body.brandName);
@@ -146,6 +168,25 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
         return;
       }
 
+      // ── On-chain signing artifacts ──────────────────────────────────────
+      const payloadJson = typeof r.payloadJson === 'string' ? r.payloadJson : null;
+      const userSignature = typeof r.userSignature === 'string' ? r.userSignature : null;
+      const userKeyID = typeof r.userKeyID === 'string' ? r.userKeyID : null;
+      const claimedIdentityKey = typeof r.userIdentityKey === 'string' ? r.userIdentityKey : null;
+
+      if (!payloadJson || !userSignature || !userKeyID || !claimedIdentityKey) {
+        res.status(400).json({
+          error: `Reading ${i + 1}: missing on-chain signing fields (payloadJson, userSignature, userKeyID, userIdentityKey).`,
+        });
+        return;
+      }
+      if (claimedIdentityKey.toLowerCase() !== userIdentityKey.toLowerCase()) {
+        res.status(403).json({
+          error: `Reading ${i + 1}: userIdentityKey does not match authenticated user.`,
+        });
+        return;
+      }
+
       resolvedReadings.push({
         cropId: cropData.id,
         brix,
@@ -153,6 +194,9 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
         excellentBrixNum: cropData.excellentBrix ? Number(cropData.excellentBrix) : null,
         brandName: sanitizeInput(r.brandName) ?? sessionBrandName,
         notes: sanitizeInput(r.notes) ?? sessionNotes,
+        payloadJson,
+        userSignature,
+        userKeyID,
       });
     }
 
@@ -307,9 +351,46 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       return results;
     }, { timeout: 30_000 });
 
+    // ── Enqueue the on-chain anchor (single tx, one PushDrop output per reading) ──
+    // Fire-and-forget: rows are returned with tx_id NULL ("anchoring…") and
+    // the wallet queue updates them when the broadcast completes. A failed
+    // anchor leaves tx_id NULL for a reconciliation surface to retry.
+    const entries = submissionResults.map((row, i) => ({
+      submissionUuid: row.submission_id,
+      userIdentityKey,
+      userKeyID:       resolvedReadings[i].userKeyID,
+      payloadJson:     resolvedReadings[i].payloadJson,
+      userSignature:   resolvedReadings[i].userSignature,
+    }));
+
+    void enqueueWalletTask(async () => {
+      try {
+        const anchor = await createSubmissionTx({
+          op: 'NEW',
+          wallet: serverWallet,
+          entries,
+        });
+        // Each reading gets its own outpoint (same txid, distinct vout).
+        // Per-row UPDATE keeps the mapping precise — sibling rows can't be
+        // updated together because their outpoint vouts differ.
+        await prisma.$transaction(
+          anchor.results.map((r) =>
+            prisma.submission.update({
+              where: { id: r.submissionUuid },
+              data: { outpoint: r.pushDropOutpoint ?? null },
+            }),
+          ),
+        );
+        console.log(`[anchor] ${entries.length} reading(s) → ${anchor.txid}`);
+      } catch (err) {
+        console.error('[anchor] failed for session', entries.map((e) => e.submissionUuid), err);
+        // Leave outpoint NULL — admin/reconciliation surface can retry.
+      }
+    });
+
     res.json({
       message: 'Submission(s) processed successfully',
-      submissions: submissionResults,
+      submissions: submissionResults.map((s) => ({ ...s, outpoint: null })),
     });
   } catch (err) {
     console.error('[auto-verify-submission] Error:', err);
