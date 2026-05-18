@@ -1,33 +1,18 @@
 /**
- * createSubmissionTx — builds, funds, and broadcasts the on-chain anchor
- * transaction(s) for a BRIXit submission session.
+ * PushDrop anchor for submission readings. One PushDrop output per reading;
+ * NEW batches all readings of a session into a single tx.
  *
- * Each *reading* gets its own PushDrop output (so EDIT/DELETE can target a
- * single reading), but NEW submissions batch all readings into one
- * transaction with N PushDrop outputs — one fee, one broadcast, granular
- * downstream operations.
- *
- *   NEW    → 1 tx, N PushDrop outputs (wallet funds, no inputs to spend)
- *   EDIT   → 1 tx, 1 input (the previous PushDrop UTXO), 1 PushDrop output
- *   DELETE → 1 tx, 1 input (the previous PushDrop UTXO), 1 P2PKH output back
- *            to the treasury (`brixit-delete` label is the deletion ledger)
- *
- * PushDrop field schema (10 fields, fixed, versioned):
- *   [0] protocol_marker      'brixit-submission'                  (utf8)
- *   [1] version              '1'                                  (utf8)
- *   [2] submission_uuid      DB primary key                       (utf8)
- *   [3] user_identity_key    33-byte pubkey                       (hex)
- *   [4] user_keyID           random per-reading                   (utf8)
- *   [5] payload_json         canonical JSON                       (utf8)
- *   [6] op                   'NEW' | 'EDIT'                       (utf8)
- *   [7] previous_txid        '' on NEW                            (utf8)
- *   [8] user_signature       user sig over payload, ctp 'anyone'  (hex)
- *   [9] server_signature     treasury sig over sha256(fields[0..8]) (hex)
- *
- * See transaction-flow.md for the createAction → sign → signAction pattern.
- *
- * Wallet requirement: a real BRC-100 wallet (createAction/signAction).
- * ProtoWallet alone is not sufficient.
+ * Field schema:
+ *   [0] protocol_marker  'brixit-submission'   (utf8)
+ *   [1] version          '1'                   (utf8)
+ *   [2] submission_uuid                        (utf8)
+ *   [3] user_identity_key                      (hex)
+ *   [4] user_keyID                             (utf8)
+ *   [5] payload_json                           (utf8)
+ *   [6] op               'NEW' | 'EDIT'        (utf8)
+ *   [7] previous_txid    '' on NEW             (utf8)
+ *   [8] user_signature                         (hex)
+ *   [9] server_signature over sha256(0..8)     (hex)
  */
 
 import {
@@ -41,53 +26,34 @@ import {
   type WalletProtocol,
 } from '@bsv/sdk';
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-
 const PROTOCOL_MARKER = 'brixit-submission';
 const PROTOCOL_VERSION = '1';
-
-/** PushDrop protocol ID for output lock + input unlock derivation. */
 const PUSHDROP_PROTOCOL: WalletProtocol = [2, 'brixit submission'];
-
-/** Protocol ID for the server's anchor signature (separate so verifiers know which key was used). */
 const SERVER_ANCHOR_PROTOCOL: WalletProtocol = [2, 'brixit anchor'];
-
-/** counterparty: 'anyone' makes the derived public key publicly recomputable. */
+// 'anyone' so anyone can recompute the derived pubkey to verify authorship.
 const PUSHDROP_COUNTERPARTY = 'anyone';
 const SERVER_ANCHOR_COUNTERPARTY = 'anyone';
-
-/** PushDrop output value — token-style 1 sat. */
 const PUSHDROP_SATOSHIS = 1;
-
-/** Basket that holds live submission anchors. Find them later via listOutputs. */
 export const BRIXIT_SUBMISSION_BASKET = 'brixit-submissions';
-
-// ─── Public types ────────────────────────────────────────────────────────────
 
 export type SubmissionOp = 'NEW' | 'EDIT' | 'DELETE';
 
-/** One signed reading. NEW takes an array of these (one per crop in the session). */
 export interface SubmissionEntry {
-  /** DB primary key for the reading. */
   submissionUuid: string;
-  /** Submitter's identity pubkey (33-byte compressed, hex). */
+  /** 33-byte compressed pubkey, hex. */
   userIdentityKey: string;
-  /** Random per-reading keyID the user passed to createSignature(counterparty:'anyone'). */
   userKeyID: string;
-  /** Canonical JSON of the reading payload — exact bytes the user signed. */
+  /** Canonical JSON — exact bytes the user signed. */
   payloadJson: string;
-  /** User's signature over `payloadJson`, hex-encoded. */
+  /** Hex-encoded. */
   userSignature: string;
 }
 
 interface PreviousPushDropOutpoint {
   /** 'txid.vout' */
   outpoint: string;
-  /** BEEF of the source tx (so the wallet can verify and consume the input). */
   sourceBEEF: number[];
-  /** Satoshi value of the previous output. */
   sourceSatoshis: number;
-  /** Locking script of the previous output, hex. */
   sourceLockingScriptHex: string;
 }
 
@@ -112,7 +78,7 @@ export type CreateSubmissionTxInput =
       submissionUuid: string;
       previousTxid: string;
       previous: PreviousPushDropOutpoint;
-      /** P2PKH locking script (hex) the spent sats return to. */
+      /** P2PKH locking script the spent sats return to, hex. */
       deletionPayoutLockingScriptHex: string;
       deletionPayoutSatoshis: number;
       extraLabels?: string[];
@@ -120,13 +86,10 @@ export type CreateSubmissionTxInput =
 
 export interface PerEntryResult {
   submissionUuid: string;
-  /** 'txid.vout' for NEW/EDIT; undefined for DELETE (no PushDrop output). */
+  /** 'txid.vout' for NEW/EDIT, undefined for DELETE. */
   pushDropOutpoint?: string;
-  /** Position in `action.outputs` (== vout for non-randomized actions). */
   outputIndex?: number;
-  /** Server signature hex; absent for DELETE. */
   serverSignature?: string;
-  /** All 10 PushDrop fields, hex-encoded — useful for logging. Absent for DELETE. */
   fields?: string[];
 }
 
@@ -136,8 +99,6 @@ export interface CreateSubmissionTxResult {
   results: PerEntryResult[];
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
 function utf8Field(s: string): number[] {
   return Utils.toArray(s, 'utf8');
 }
@@ -146,11 +107,7 @@ function hexField(hex: string): number[] {
   return Utils.toArray(hex, 'hex');
 }
 
-/**
- * sha256(length-prefixed concat of fields[0..8]). Length prefixes prevent
- * field-boundary ambiguity — two different field splits cannot produce the
- * same hash.
- */
+// Length-prefix each field so different field splits can't hash to the same value.
 function buildServerSigPreimage(fields: number[][]): number[] {
   const out: number[] = [];
   for (const f of fields) {
@@ -172,11 +129,6 @@ interface BuiltPushDropOutput {
   fieldsHex: string[];
 }
 
-/**
- * Build a single PushDrop output for one signed reading. The server signs
- * sha256(fields[0..8]) with its identity key — included as field [9] so a
- * verifier can recompute the hash from the on-chain script alone.
- */
 async function buildPushDropOutput(args: {
   pushDrop: PushDrop;
   wallet: WalletInterface;
@@ -212,10 +164,12 @@ async function buildPushDropOutput(args: {
     hexField(serverSignatureHex),
   ];
 
+  // PushDrop.lock mutates the array — pass a copy so `fields` stays canonical.
+  // Lock keyID = submissionUuid so edits unlock with the same derivation.
   const lock = await pushDrop.lock(
     [...fields],
     PUSHDROP_PROTOCOL,
-    entry.submissionUuid,                // lock keyID = submissionUuid (stable across edits)
+    entry.submissionUuid,
     PUSHDROP_COUNTERPARTY,
   );
 
@@ -243,7 +197,7 @@ async function buildPushDropOutput(args: {
   };
 }
 
-/** Shared helper: spend one PushDrop UTXO via the 3-step createAction flow. */
+// createAction → sign → signAction, spending a single PushDrop UTXO.
 async function spendPreviousPushDrop(args: {
   wallet: WalletInterface;
   pushDrop: PushDrop;
@@ -327,21 +281,16 @@ async function spendPreviousPushDrop(args: {
   return { txid: finalized.txid, tx: finalized.tx };
 }
 
-// ─── Main ────────────────────────────────────────────────────────────────────
-
 export async function createSubmissionTx(
   input: CreateSubmissionTxInput,
 ): Promise<CreateSubmissionTxResult> {
   const pushDrop = new PushDrop(input.wallet);
 
-  // ── NEW: N PushDrop outputs, no inputs (wallet funds + broadcasts) ─────────
   if (input.op === 'NEW') {
     if (input.entries.length === 0) {
       throw new Error('createSubmissionTx: entries must not be empty for NEW');
     }
 
-    // Build each PushDrop output (one server signature per reading — local
-    // wallet calls, fast).
     const built: BuiltPushDropOutput[] = [];
     for (const entry of input.entries) {
       built.push(await buildPushDropOutput({
@@ -387,7 +336,6 @@ export async function createSubmissionTx(
     };
   }
 
-  // ── EDIT: spend previous PushDrop → new PushDrop ───────────────────────────
   if (input.op === 'EDIT') {
     const built = await buildPushDropOutput({
       pushDrop,
@@ -420,7 +368,7 @@ export async function createSubmissionTx(
     };
   }
 
-  // ── DELETE: spend previous PushDrop → P2PKH back to treasury ───────────────
+  // DELETE: spend previous PushDrop → P2PKH back to treasury.
   const { txid, tx } = await spendPreviousPushDrop({
     wallet: input.wallet,
     pushDrop,
@@ -438,9 +386,6 @@ export async function createSubmissionTx(
   return {
     txid,
     rawTxBEEF: tx,
-    results: [{
-      submissionUuid: input.submissionUuid,
-      // No pushDropOutpoint / serverSignature / fields for DELETE
-    }],
+    results: [{ submissionUuid: input.submissionUuid }],
   };
 }

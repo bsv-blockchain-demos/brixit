@@ -1,13 +1,8 @@
 /**
- * Deterministic JSON serialization: object keys are sorted recursively so the
- * same logical value always produces the same bytes.
+ * Recursively key-sorted JSON so the same object always produces the same
+ * bytes — required for signature reproducibility across client and server.
  *
- * Used to make submission payloads signable + verifiable across client and
- * server — without a canonical form, two parties stringifying the same object
- * can produce different bytes, which would invalidate signatures.
- *
- * Note: assumes all values are JSON-safe (no Date, BigInt, undefined values,
- * function values, etc.). Callers must normalize those before passing in.
+ * Assumes JSON-safe values; callers normalize Date / BigInt / undefined first.
  */
 export function canonicalJSON(value: unknown): string {
   return JSON.stringify(canonicalize(value));

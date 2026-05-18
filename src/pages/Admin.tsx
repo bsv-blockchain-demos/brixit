@@ -9,6 +9,7 @@ import AdminCrops from '@/components/Admin/AdminCrops';
 import AdminBrands from '@/components/Admin/AdminBrands';
 import AdminVenues from '@/components/Admin/AdminVenues';
 import AdminReferenceData from '@/components/Admin/AdminReferenceData';
+import AdminTreasury from '@/components/Admin/AdminTreasury';
 import Header from '@/components/Layout/Header';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -52,6 +53,7 @@ export default function Admin() {
             <TabsTrigger value="brands">Brands</TabsTrigger>
             <TabsTrigger value="venues">Venues</TabsTrigger>
             <TabsTrigger value="reference">Reference Data</TabsTrigger>
+            <TabsTrigger value="treasury">Treasury</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">
@@ -98,6 +100,10 @@ export default function Admin() {
 
           <TabsContent value="reference" className="mt-6">
             <AdminReferenceData />
+          </TabsContent>
+
+          <TabsContent value="treasury" className="mt-6">
+            <AdminTreasury />
           </TabsContent>
         </Tabs>
       </div>

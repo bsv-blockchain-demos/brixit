@@ -1,25 +1,9 @@
 /**
- * Submission processing + auto-verification route.
+ * POST /api/submissions/create
  *
- * Endpoint:
- *   POST /api/submissions/create
- *
- * Accepts a session context (shared across all readings) plus an array of
- * crop readings.  All DB writes execute in a single transaction — brand,
- * venue, and every submission row commit together or not at all.
- *
- * Request body:
- *   {
- *     brandName, assessmentDate, purchaseDate, outlierNotes,
- *     latitude, longitude, locationName,
- *     street_address, city, state, country,
- *     poi_name, business_name, normalized_address, store_name, pos_type,
- *     venueId, newVenue, skipVenuePrompt,
- *     readings: [{ cropName, brixValue }, ...]
- *   }
- *
- * Response:
- *   { submissions: [{ submission_id, verified }, ...] }
+ * Accepts session metadata plus an array of signed readings. All DB writes
+ * commit in a single transaction; the on-chain PushDrop anchor is enqueued
+ * fire-and-forget so the response returns without waiting on broadcast.
  */
 import { Router } from 'express';
 import type { Response } from 'express';
@@ -45,7 +29,6 @@ interface ReadingInput {
   brixValue?: unknown;
   brandName?: unknown;
   notes?: unknown;
-  // On-chain signing artifacts (frontend generates these in signSubmissionPayload).
   payloadJson?: unknown;
   userSignature?: unknown;
   userKeyID?: unknown;
@@ -83,13 +66,11 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
     const authedUserId = req.user!.sub;
     const body = req.body as BulkSubmissionRequestBody;
 
-    // ── Verify claimed userId ──────────────────────────────────────────────
     if (body.userId && String(body.userId) !== authedUserId) {
       res.status(403).json({ error: 'userId does not match authenticated user' });
       return;
     }
 
-    // ── Validate shared session fields ─────────────────────────────────────
     const assessmentDateStr = typeof body.assessmentDate === 'string' ? body.assessmentDate : null;
     if (!assessmentDateStr) {
       res.status(400).json({ error: 'assessmentDate is required' });
@@ -109,14 +90,12 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       return;
     }
 
-    // ── Validate readings array ────────────────────────────────────────────
     if (!Array.isArray(body.readings) || body.readings.length === 0) {
       res.status(400).json({ error: 'readings must be a non-empty array.' });
       return;
     }
     const rawReadings = body.readings as ReadingInput[];
 
-    // ── Look up user's wallet identity key (for signing-field validation) ──
     const walletIdentity = await prisma.walletIdentity.findUnique({
       where: { userId: authedUserId },
       select: { identityKey: true },
@@ -127,7 +106,6 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
     }
     const userIdentityKey = walletIdentity.identityKey;
 
-    // ── Pre-validate + look up each crop (read-only, outside transaction) ──
     interface ResolvedReading {
       cropId: string;
       brix: number;
@@ -351,10 +329,8 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       return results;
     }, { timeout: 30_000 });
 
-    // ── Enqueue the on-chain anchor (single tx, one PushDrop output per reading) ──
-    // Fire-and-forget: rows are returned with tx_id NULL ("anchoring…") and
-    // the wallet queue updates them when the broadcast completes. A failed
-    // anchor leaves tx_id NULL for a reconciliation surface to retry.
+    // Fire-and-forget anchor. Rows return with outpoint NULL; the queue
+    // populates it when broadcast completes. Failed anchors stay NULL.
     const entries = submissionResults.map((row, i) => ({
       submissionUuid: row.submission_id,
       userIdentityKey,
@@ -370,9 +346,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
           wallet: serverWallet,
           entries,
         });
-        // Each reading gets its own outpoint (same txid, distinct vout).
-        // Per-row UPDATE keeps the mapping precise — sibling rows can't be
-        // updated together because their outpoint vouts differ.
+        // Same txid, distinct vout per row — per-row update, not updateMany.
         await prisma.$transaction(
           anchor.results.map((r) =>
             prisma.submission.update({
@@ -384,7 +358,6 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
         console.log(`[anchor] ${entries.length} reading(s) → ${anchor.txid}`);
       } catch (err) {
         console.error('[anchor] failed for session', entries.map((e) => e.submissionUuid), err);
-        // Leave outpoint NULL — admin/reconciliation surface can retry.
       }
     });
 

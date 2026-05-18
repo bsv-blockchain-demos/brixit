@@ -1,14 +1,8 @@
 /**
- * Backend treasury wallet.
- *
- * Built from a private key + remote storage (wallet-toolbox-client). The full
- * BRC-100 Wallet implementation supports createAction / signAction / etc.,
- * which we need to anchor submissions on chain. ProtoWallet alone could only
- * sign, not fund or broadcast.
- *
- * Initialization is async; this module uses top-level await so all importers
- * (auth middleware, certifier route, submission anchor) see a fully-initialized
- * wallet by the time their handlers run.
+ * Backend treasury wallet — full BRC-100 implementation backed by remote
+ * wallet-toolbox storage. Initialization is async; the top-level await blocks
+ * importers until the wallet is ready, so request handlers never run against
+ * an uninitialized wallet.
  */
 import {
   KeyDeriver,

@@ -36,6 +36,7 @@ import leaderboardsRoutes from './routes/leaderboards.js';
 import usersRoutes from './routes/users.js';
 import adminRoutes from './routes/admin.js';
 import adminCrudRoutes from './routes/adminCrud.js';
+import adminWalletRoutes from './routes/adminWallet.js';
 import uploadRoutes from './routes/upload.js';
 import mapPreviewRoutes from './routes/mapPreview.js';
 
@@ -106,6 +107,7 @@ app.use('/api/users', usersRoutes);
 // --- Admin routes (authenticated + admin role) ---
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/crud', adminCrudRoutes);
+app.use('/api/admin/wallet', adminWalletRoutes);
 
 // --- File upload (authenticated) ---
 app.use('/api/upload', uploadRoutes);
