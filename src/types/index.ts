@@ -108,7 +108,7 @@ export interface AuthState {
 }
 
 export interface MapFilter {
-  cropTypes: string[]; // Consistent array for selected crop types
+  cropTypes: string[];
   brixRange: [number, number];
   dateRange: [string, string];
   verifiedOnly: boolean;
@@ -117,8 +117,9 @@ export interface MapFilter {
   brand: string;
   hasImage: boolean;
   category: string;
-  location: string; // Store/location name
-  city?: string; // Geographic city filter
-  state?: string; // Geographic state filter
-  country?: string; // Geographic country filter
+  location: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  search: string;
 }

@@ -17,6 +17,7 @@ export const DEFAULT_MAP_FILTERS: MapFilter = {
   city: '',
   state: '',
   country: '',
+  search: '',
 };
 
 interface FilterContextType {

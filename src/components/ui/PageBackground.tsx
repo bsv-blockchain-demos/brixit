@@ -8,9 +8,11 @@ interface PageBackgroundProps extends React.HTMLAttributes<HTMLDivElement> {
 export function PageBackground({ children, className, ...props }: PageBackgroundProps) {
   return (
     <div className={cn('relative isolate bg-background', className)} {...props}>
+      {/* Pinned to the viewport so the wallpaper doesn't rescale when content
+          height changes (filter expand/collapse, banners appearing, etc.). */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 -z-10 bg-cover bg-center pointer-events-none select-none opacity-[0.55]"
+        className="fixed inset-0 -z-10 bg-cover bg-center pointer-events-none select-none opacity-[0.55]"
         style={{ backgroundImage: "url('/backdrop/backdropwallpaper.svg')" }}
       />
       {children}
