@@ -42,9 +42,10 @@ test.describe('Leaderboard', () => {
 
   test('Most Submissions leaderboard shows submission counts', async ({ authedPage }) => {
     await expect(authedPage.getByText('Loading leaderboards...')).not.toBeVisible({ timeout: 5000 });
-    // Mock user has submission_count: 5; display_name short enough to pass through formatUsername unchanged
-    await expect(authedPage.getByText('Test Contributor')).toBeVisible();
-    await expect(authedPage.getByText('5 submissions', { exact: true })).toBeVisible();
+    // Scope to <main> — "Test Contributor" also appears in the header user menu.
+    const main = authedPage.getByRole('main');
+    await expect(main.getByText('Test Contributor')).toBeVisible();
+    await expect(main.getByText('5 submissions', { exact: true })).toBeVisible();
   });
 
   test('unauthenticated user is redirected to login', async ({ page }) => {

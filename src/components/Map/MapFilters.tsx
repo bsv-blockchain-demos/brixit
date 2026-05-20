@@ -191,7 +191,7 @@ const MapFilters: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={clearAllFilters}
-            className="text-xs text-muted-foreground hover:text-foreground"
+            className="text-xs text-muted-foreground hover:text-card-foreground"
             aria-label="Clear all filters"
           >
             Clear All

@@ -2,14 +2,12 @@ import { apiGet } from './api';
 
 export interface Location {
   id: string;
-  name: string; // The unique identifier for the location.
-  label: string; // The human-readable name for display.
+  name: string;
+  label: string;
 }
 
-/**
- * Fetches a list of locations from the database.
- * @returns {Promise<Location[]>} A promise that resolves to an array of Location objects.
- */
+// Backed by the `venues` table on the server — "location" is the user-facing
+// concept (store / market / farm name + address).
 export const fetchLocations = async (): Promise<Location[]> => {
-  return apiGet<Location[]>('/api/locations', { skipAuth: true });
+  return apiGet<Location[]>('/api/venues', { skipAuth: true });
 };

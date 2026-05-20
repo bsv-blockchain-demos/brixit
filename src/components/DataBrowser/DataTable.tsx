@@ -56,10 +56,14 @@ const BrixRangeSlider = ({
     setLocalValues(brixRange);
   }, [brixRange]);
 
+  // Drag updates only local state; commit on release pushes to parent so the
+  // query refetch happens once, not per drag pixel.
   const handleSliderChange = (values: number[]) => {
-    const newRange: [number, number] = [values[0], values[1]];
-    setLocalValues(newRange);
-    onChange(newRange);
+    setLocalValues([values[0], values[1]]);
+  };
+
+  const handleSliderCommit = (values: number[]) => {
+    onChange([values[0], values[1]]);
   };
 
   const handleInputChange = (index: 0 | 1, value: string) => {
@@ -67,8 +71,6 @@ const BrixRangeSlider = ({
     if (!isNaN(numValue) && numValue >= MIN_BRIX && numValue <= MAX_BRIX) {
       const newRange: [number, number] = [...localValues];
       newRange[index] = numValue;
-      
-      // Ensure min <= max
       if (newRange[0] <= newRange[1]) {
         setLocalValues(newRange);
         onChange(newRange);
@@ -81,6 +83,7 @@ const BrixRangeSlider = ({
       <Slider
         value={localValues}
         onValueChange={handleSliderChange}
+        onValueCommit={handleSliderCommit}
         max={MAX_BRIX}
         min={MIN_BRIX}
         step={STEP}
@@ -412,7 +415,12 @@ const DataTable: React.FC = () => {
     handleCloseModal();
   };
 
-  if (submissionsPageQuery.isLoading || submissionsCountQuery.isLoading || isLoadingStaticData) {
+  // Only show the full loader on the very first load — when no data has ever
+  // resolved. Filter-change refetches show previous results (placeholderData)
+  // plus the inline spinner on the Refresh button.
+  const hasAnyData =
+    submissionsPageQuery.data !== undefined && submissionsCountQuery.data !== undefined;
+  if (!hasAnyData && (submissionsPageQuery.isLoading || submissionsCountQuery.isLoading || isLoadingStaticData)) {
     return (
       <div className="text-center py-12 text-on-bg-body flex items-center justify-center gap-2">
         <Loader2 className="w-5 h-5 animate-spin text-green-mid" />
@@ -494,7 +502,9 @@ const DataTable: React.FC = () => {
 
       {showFilters && (
         <Card className="mb-6 rounded-2xl border border-blue-pale shadow-sm">
-          <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <CardContent className="p-6 space-y-5">
+            {/* Row 1 — three equal-height dropdowns */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label className="text-sm font-medium mb-2 block">Crop Types</Label>
               {filters.cropTypes.length > 0 && (
@@ -559,54 +569,6 @@ const DataTable: React.FC = () => {
                 </PopoverContent>
               </Popover>
             </div>
-
-            <div>
-              <Label className="text-sm font-medium mb-2 block">BRIX Range</Label>
-              <BrixRangeSlider
-                brixRange={filters.brixRange}
-                onChange={(newRange) => {
-                  if (newRange[0] <= newRange[1]) {
-                    handleFilterChange('brixRange', newRange);
-                  }
-                }}
-              />
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium mb-2 block flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                Date Range
-              </Label>
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="start-date-data" className="text-xs">From</Label>
-                  <Input
-                    id="start-date-data"
-                    type="date"
-                    value={filters.dateRange[0]}
-                    onChange={(e) =>
-                      handleFilterChange('dateRange', [e.target.value, filters.dateRange[1]])
-                    }
-                    className="text-sm"
-                    aria-label="Start date"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="end-date-data" className="text-xs">To</Label>
-                  <Input
-                    id="end-date-data"
-                    type="date"
-                    value={filters.dateRange[1]}
-                    onChange={(e) =>
-                      handleFilterChange('dateRange', [filters.dateRange[0], e.target.value])
-                    }
-                    className="text-sm"
-                    aria-label="End date"
-                  />
-                </div>
-              </div>
-            </div>
-
 
             <div>
               <Label className="text-sm font-medium mb-2 block">Brand/Farm Name</Label>
@@ -699,30 +661,84 @@ const DataTable: React.FC = () => {
                 </PopoverContent>
               </Popover>
             </div>
-
-            <div>
-              <Label className="text-sm font-medium">Has Image</Label>
-              <Switch
-                checked={filters.hasImage}
-                onCheckedChange={(val) => handleFilterChange('hasImage', val)}
-                aria-checked={filters.hasImage}
-                role="switch"
-                aria-label="Filter by measurements with images"
-              />
             </div>
 
-            {isAdmin && (
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Verified Only</Label>
-                <Switch
-                  checked={filters.verifiedOnly}
-                  onCheckedChange={(val) => handleFilterChange('verifiedOnly', val)}
-                  aria-checked={filters.verifiedOnly}
-                  role="switch"
-                  aria-label="Show only verified measurements"
+            {/* Row 2 — wider controls: slider + date pair */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium mb-2 block">BRIX Range</Label>
+                <BrixRangeSlider
+                  brixRange={filters.brixRange}
+                  onChange={(newRange) => {
+                    if (newRange[0] <= newRange[1]) {
+                      handleFilterChange('brixRange', newRange);
+                    }
+                  }}
                 />
               </div>
-            )}
+
+              <div>
+                <Label className="text-sm font-medium mb-2 block flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  Date Range
+                </Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label htmlFor="start-date-data" className="text-xs">From</Label>
+                    <Input
+                      id="start-date-data"
+                      type="date"
+                      value={filters.dateRange[0]}
+                      onChange={(e) =>
+                        handleFilterChange('dateRange', [e.target.value, filters.dateRange[1]])
+                      }
+                      className="text-sm"
+                      aria-label="Start date"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="end-date-data" className="text-xs">To</Label>
+                    <Input
+                      id="end-date-data"
+                      type="date"
+                      value={filters.dateRange[1]}
+                      onChange={(e) =>
+                        handleFilterChange('dateRange', [filters.dateRange[0], e.target.value])
+                      }
+                      className="text-sm"
+                      aria-label="End date"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Row 3 — toggles, inline pills */}
+            <div className="flex flex-wrap items-center gap-6 pt-1">
+              <div className="flex items-center gap-3">
+                <Label className="text-sm font-medium">Has Image</Label>
+                <Switch
+                  checked={filters.hasImage}
+                  onCheckedChange={(val) => handleFilterChange('hasImage', val)}
+                  aria-checked={filters.hasImage}
+                  role="switch"
+                  aria-label="Filter by measurements with images"
+                />
+              </div>
+
+              {isAdmin && (
+                <div className="flex items-center gap-3">
+                  <Label className="text-sm font-medium">Verified Only</Label>
+                  <Switch
+                    checked={filters.verifiedOnly}
+                    onCheckedChange={(val) => handleFilterChange('verifiedOnly', val)}
+                    aria-checked={filters.verifiedOnly}
+                    role="switch"
+                    aria-label="Show only verified measurements"
+                  />
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -733,8 +749,8 @@ const DataTable: React.FC = () => {
         </p>
       )}
 
-      <Card className="rounded-2xl border border-blue-pale shadow-sm overflow-hidden">
-        <CardContent className="p-0">
+      <Card className="rounded-2xl border border-blue-pale shadow-sm">
+        <CardContent>
           {/* Desktop table */}
           <div className="hidden desktop:block overflow-x-auto">
             <Table>
@@ -746,9 +762,9 @@ const DataTable: React.FC = () => {
                   >
                     Crop {sortBy === 'cropType' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
-                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">
+                  {/* <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">
                     Variety
-                  </TableHead>
+                  </TableHead> */}
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">
                     Brand
                   </TableHead>
@@ -780,7 +796,7 @@ const DataTable: React.FC = () => {
               <TableBody>
                 {currentItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-text-mid">
+                    <TableCell colSpan={8} className="text-center py-8 text-text-mid">
                       No data found for the current filters.
                     </TableCell>
                   </TableRow>
@@ -806,7 +822,7 @@ const DataTable: React.FC = () => {
           </div>
 
           {/* Mobile card list */}
-          <div className="desktop:hidden space-y-3 p-4">
+          <div className="desktop:hidden space-y-3">
             {currentItems.length === 0 ? (
               <p className="text-center py-8 text-text-mid">No data found for the current filters.</p>
             ) : (
@@ -820,7 +836,7 @@ const DataTable: React.FC = () => {
               ))
             )}
           </div>
-          <div className="flex items-center justify-between px-4 py-3 border-t border-blue-pale">
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-blue-pale">
             <Button
               variant="outline"
               size="sm"

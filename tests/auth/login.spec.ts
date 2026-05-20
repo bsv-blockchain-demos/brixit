@@ -25,8 +25,8 @@ test.describe('Login page', () => {
 
   test('FAQ navigates to faq page', async ({ page }) => {
     await page.goto('/login');
-    // "FAQ" is a footer button
-    await page.getByRole('button', { name: /faq/i }).click();
+    // FAQ now appears in both header nav and footer — scope to the footer.
+    await page.getByRole('contentinfo').getByRole('button', { name: /faq/i }).click();
     await expect(page).toHaveURL(/\/faq/);
   });
 });
@@ -43,7 +43,7 @@ test.describe('FAQ page', () => {
   test('back button returns to login', async ({ page }) => {
     // Navigate from /login so history is set correctly
     await page.goto('/login');
-    await page.getByRole('button', { name: /faq/i }).click();
+    await page.getByRole('contentinfo').getByRole('button', { name: /faq/i }).click();
     await expect(page).toHaveURL(/\/faq/);
     await page.getByRole('button', { name: /back/i }).click();
     await expect(page).toHaveURL(/\/login/);

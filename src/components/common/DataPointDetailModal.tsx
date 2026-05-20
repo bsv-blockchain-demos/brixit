@@ -36,7 +36,6 @@ import { formatUsername } from '../../lib/formatUsername';
 import { scoreBrix } from '../../lib/getBrixColor';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
 import Combobox from '../ui/combo-box';
-import LocationSearch from './LocationSearch';
 import { useStaticData } from '../../hooks/useStaticData';
 
 interface DataPointDetailModalProps {
@@ -78,7 +77,6 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imagesLoading, setImagesLoading] = useState(false);
-  const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   // Remove the isLoading state since we're using staticDataLoading
@@ -320,7 +318,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
 
       if (typeof cropIdToSet === 'string') updateData.crop_id = cropIdToSet;
       if (brandIdToSet !== undefined) updateData.brand_id = brandIdToSet;
-      if (locationIdToSet !== undefined) updateData.location_id = locationIdToSet;
+      // Backend stores locations in the venues table — wire `location_id`
+      // selections to the PUT body's `venue_id`.
+      if (locationIdToSet !== undefined) updateData.venue_id = locationIdToSet;
 
       // Only admin can update verification status
       if (isAdmin) {
@@ -379,15 +379,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
     }
   };
 
-  const handlePlaceSelect = (place: { name: string, latitude: number, longitude: number, locationName: string }) => {
-    setPlaceName(place.name);
-    setLocationName(place.locationName);
-    setLatitude(place.latitude);
-    setLongitude(place.longitude);
-  };
-
   if (!initialDataPoint) {
-    console.log('initialDataPoint is null, returning early.');
     return null;
   }
 
@@ -591,21 +583,12 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     </span>
                     <span>Place (Address)</span>
                   </Label>
-                  {isEditing ? (
-                    <LocationSearch
-                      value={placeName}
-                      onLocationSelect={handlePlaceSelect}
-                      onChange={(e) => setPlaceName(e.target.value)}
-                      isLoading={isLocationLoading}
-                    />
-                  ) : (
-                    <>
-                      <p className="font-medium">{initialDataPoint.streetAddress || 'N/A'}</p>
-                      <p className="text-xs text-text-muted-brown">
-                        {initialDataPoint.latitude?.toFixed(4)}, {initialDataPoint.longitude?.toFixed(4)}
-                      </p>
-                    </>
-                  )}
+                  {/* Address is read-only — it lives on the venue, not the submission.
+                      To change "where", pick a different venue from the Location combobox. */}
+                  <p className="font-medium">{initialDataPoint.streetAddress || 'N/A'}</p>
+                  <p className="text-xs text-text-muted-brown">
+                    {initialDataPoint.latitude?.toFixed(4)}, {initialDataPoint.longitude?.toFixed(4)}
+                  </p>
                 </div>
                 <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}>
                   <Label className="text-sm text-text-dark flex items-center space-x-2">

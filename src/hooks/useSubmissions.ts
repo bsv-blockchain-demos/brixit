@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import type { BrixDataPoint } from "@/types";
 import {
   fetchFormattedSubmissions,
@@ -37,6 +37,7 @@ export function useFormattedSubmissionsPageQuery(query: PublicFormattedSubmissio
     gcTime: 2 * ONE_HOUR_MS,
     refetchOnWindowFocus: false,
     retry: 1,
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -50,6 +51,7 @@ export function useFormattedSubmissionsCountQuery(
     gcTime: 2 * ONE_HOUR_MS,
     refetchOnWindowFocus: false,
     retry: 1,
+    placeholderData: keepPreviousData,
   });
 }
 

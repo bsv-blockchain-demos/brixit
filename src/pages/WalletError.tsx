@@ -44,15 +44,19 @@ export default function WalletError() {
               FAQ
             </button>
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate('/mobile-login')}
-              className="w-full gap-2 bg-card"
-            >
-              <Smartphone className="w-4 h-4" />
-              Connect with my phone
-            </Button>
+            {/* On mobile the user can't scan a QR with their own phone, so
+                the only recovery path is to (re-)install Mycelia — link above. */}
+            {!isMobile && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/mobile-login')}
+                className="w-full gap-2 bg-card"
+              >
+                <Smartphone className="w-4 h-4" />
+                Connect with my phone
+              </Button>
+            )}
           </CardContent>
         </Card>
 

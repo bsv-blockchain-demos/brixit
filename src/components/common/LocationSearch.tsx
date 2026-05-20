@@ -274,7 +274,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
               className="p-3 hover:bg-accent cursor-pointer text-sm border-b border-border last:border-b-0 transition-colors"
               onClick={() => handleSelect(suggestion)}
             >
-              <div className="font-medium text-foreground">
+              <div className="font-medium text-card-foreground">
                 {suggestion.name}
               </div>
               {suggestion.full_address && suggestion.full_address !== suggestion.name && (

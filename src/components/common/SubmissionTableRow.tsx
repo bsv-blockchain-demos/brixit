@@ -45,10 +45,11 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
         </div>
       </TableCell>
 
-      {/* Cell 2 — Variety */}
+      {/* Cell 2 — Variety (hidden until cropVariety is actually populated server-side)
       <TableCell className="py-3 px-4 max-w-[120px] truncate text-sm text-text-mid">
         {submission.variety || <span className="text-text-muted-brown">--</span>}
       </TableCell>
+      */}
 
       {/* Cell 3 — Brand */}
       <TableCell className="py-3 px-4 max-w-[120px] truncate text-sm text-text-mid">

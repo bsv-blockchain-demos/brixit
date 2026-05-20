@@ -8,6 +8,20 @@ const router = Router();
 
 const NEARBY_RADIUS_DEG = 0.0009; // ~100m at equator
 
+// GET /api/venues — minimal list for dropdowns. Returns `label` (sorted by name).
+router.get('/', async (_req: Request, res: Response) => {
+  try {
+    const venues = await prisma.venue.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+    res.json(venues.map(v => ({ id: v.id, name: v.name, label: v.name })));
+  } catch (err) {
+    console.error('[venues GET]', err);
+    res.status(500).json({ error: 'Failed to fetch venues' });
+  }
+});
+
 // GET /api/venues/nearby?lat=&lng=
 router.get('/nearby', async (req: Request, res: Response) => {
   try {

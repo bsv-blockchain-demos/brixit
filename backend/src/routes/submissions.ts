@@ -97,6 +97,22 @@ router.get('/', async (req: Request, res: Response) => {
     if (req.query.country) {
       where.venue = { ...where.venue, country: { equals: req.query.country as string, mode: 'insensitive' } };
     }
+    // `place` (point-of-purchase filter) and `location` (back-compat from
+    // leaderboard) both match against venue name.
+    const venueName = (req.query.place as string | undefined) || (req.query.location as string | undefined);
+    if (venueName) {
+      where.venue = { ...where.venue, name: { equals: venueName, mode: 'insensitive' } };
+    }
+    if (req.query.brand) {
+      // Filter value may be the brand name or its label (dropdown / leaderboard differ).
+      const brand = req.query.brand as string;
+      where.brand = {
+        OR: [
+          { name:  { equals: brand, mode: 'insensitive' } },
+          { label: { equals: brand, mode: 'insensitive' } },
+        ],
+      };
+    }
     if (req.query.brixMin) {
       where.brixValue = { ...where.brixValue, gte: Number(req.query.brixMin) };
     }
@@ -200,6 +216,19 @@ router.get('/count', async (req: Request, res: Response) => {
     }
     if (req.query.country) {
       where.venue = { ...where.venue, country: { equals: req.query.country as string, mode: 'insensitive' } };
+    }
+    const venueName = (req.query.place as string | undefined) || (req.query.location as string | undefined);
+    if (venueName) {
+      where.venue = { ...where.venue, name: { equals: venueName, mode: 'insensitive' } };
+    }
+    if (req.query.brand) {
+      const brand = req.query.brand as string;
+      where.brand = {
+        OR: [
+          { name:  { equals: brand, mode: 'insensitive' } },
+          { label: { equals: brand, mode: 'insensitive' } },
+        ],
+      };
     }
     if (req.query.brixMin) {
       where.brixValue = { ...where.brixValue, gte: Number(req.query.brixMin) };

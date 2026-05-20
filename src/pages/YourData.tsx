@@ -349,7 +349,7 @@ const YourData: React.FC = () => {
                         <TableHeader>
                           <TableRow className="border-blue-pale">
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Crop</TableHead>
-                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Variety</TableHead>
+                            {/* <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Variety</TableHead> */}
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Brand</TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Location</TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">BRIX</TableHead>

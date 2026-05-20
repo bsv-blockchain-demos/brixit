@@ -190,6 +190,9 @@ function buildSubmissionsQueryString(query: Partial<PublicFormattedSubmissionsQu
   if (query.sortOrder) params.set('sortOrder', query.sortOrder);
   if (query.cropTypes && query.cropTypes.length > 0) params.set('cropTypes', query.cropTypes.join(','));
   if (query.category) params.set('category', query.category);
+  if (query.brand) params.set('brand', query.brand);
+  if (query.place) params.set('place', query.place);
+  if (query.location) params.set('location', query.location);
   if (query.city) params.set('city', query.city);
   if (query.state) params.set('state', query.state);
   if (query.country) params.set('country', query.country);
