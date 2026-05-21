@@ -17,8 +17,29 @@
  */
 import { Router } from 'express';
 import type { Request, Response } from 'express';
+import { P2PKH, PublicKey, Utils, type WalletInterface, type WalletProtocol } from '@bsv/sdk';
 import prisma from '../db/client.js';
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js';
+import serverWallet, { SERVER_WALLET_CHAIN } from '../serverWallet.js';
+import { createSubmissionTx, type SubmissionEntry } from '../lib/createSubmissionTx.js';
+import { getTransaction } from '../lib/getTransaction.js';
+import { enqueueWalletTask } from '../lib/walletQueue.js';
+import { anyoneWallet } from '../lib/anyoneWallet.js';
+
+// Protocol used to derive a P2PKH that the wallet recognises as its own.
+const RECOVERY_PROTOCOL: WalletProtocol = [2, 'brixit recovery'];
+const USER_SIGNING_PROTOCOL: WalletProtocol = [2, 'brixit submission'];
+
+async function derivePayoutScript(wallet: WalletInterface, submissionUuid: string): Promise<string> {
+  const { publicKey } = await wallet.getPublicKey({
+    protocolID: RECOVERY_PROTOCOL,
+    keyID: submissionUuid,
+    counterparty: 'self',
+  });
+  const network = SERVER_WALLET_CHAIN === 'main' ? 'mainnet' : 'testnet';
+  const address = PublicKey.fromString(publicKey).toAddress(network);
+  return new P2PKH().lock(address).toHex();
+}
 
 const router = Router();
 
@@ -404,7 +425,7 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
 
     const submission = await prisma.submission.findUnique({
       where: { id: req.params.id },
-      select: { userId: true, verified: true },
+      select: { userId: true, verified: true, outpoint: true },
     });
 
     if (!submission) {
@@ -439,11 +460,90 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
       if (body.verified_at !== undefined) data.verifiedAt = body.verified_at ? new Date(body.verified_at) : null;
     }
 
+    // ── On-chain re-anchor (if signing fields present) ─────────────────────
+    const payloadJson      = typeof body.payloadJson      === 'string' ? body.payloadJson      : null;
+    const userSignature    = typeof body.userSignature    === 'string' ? body.userSignature    : null;
+    const userKeyID        = typeof body.userKeyID        === 'string' ? body.userKeyID        : null;
+    const userIdentityKey  = typeof body.userIdentityKey  === 'string' ? body.userIdentityKey  : null;
+    const hasSigningFields = !!(payloadJson && userSignature && userKeyID && userIdentityKey);
+
+    if (hasSigningFields) {
+      const walletIdentity = await prisma.walletIdentity.findUnique({
+        where: { userId: submission.userId! },
+        select: { identityKey: true },
+      });
+      if (!walletIdentity || walletIdentity.identityKey.toLowerCase() !== userIdentityKey!.toLowerCase()) {
+        res.status(403).json({ error: 'userIdentityKey does not match the submission owner.' });
+        return;
+      }
+      // Crypto-verify upfront so the anchor task can't trip on a bad signature.
+      try {
+        await anyoneWallet.verifySignature({
+          data: Utils.toArray(payloadJson!, 'utf8'),
+          signature: Utils.toArray(userSignature!, 'hex'),
+          protocolID: USER_SIGNING_PROTOCOL,
+          keyID: userKeyID!,
+          counterparty: userIdentityKey!,
+        });
+      } catch {
+        res.status(400).json({ error: 'user signature did not verify against payloadJson.' });
+        return;
+      }
+      // Keep the old outpoint while we re-anchor — if the anchor task fails,
+      // a retry or DELETE still has a valid previous UTXO to spend.
+    }
+
     const updated = await prisma.submission.update({
       where: { id: req.params.id },
       data,
       include: FULL_SUBMISSION_INCLUDE,
     });
+
+    if (hasSigningFields) {
+      const submissionUuid = req.params.id;
+      const previousOutpoint = submission.outpoint;
+      const entry: SubmissionEntry = {
+        submissionUuid,
+        userIdentityKey: userIdentityKey!,
+        userKeyID: userKeyID!,
+        payloadJson: payloadJson!,
+        userSignature: userSignature!,
+      };
+
+      void enqueueWalletTask(async () => {
+        try {
+          let outpoint: string | undefined;
+          if (previousOutpoint) {
+            // EDIT — spend the previous PushDrop, produce a new one.
+            const previous = await getTransaction(serverWallet, previousOutpoint);
+            const anchor = await createSubmissionTx({
+              op: 'EDIT',
+              wallet: serverWallet,
+              entry,
+              previousTxid: previousOutpoint.split('.')[0],
+              previous,
+            });
+            outpoint = anchor.results[0].pushDropOutpoint;
+            console.log(`[anchor edit] ${submissionUuid} → ${anchor.txid}`);
+          } else {
+            // First-time anchor — original NEW never landed, treat this edit as the anchor.
+            const anchor = await createSubmissionTx({
+              op: 'NEW',
+              wallet: serverWallet,
+              entries: [entry],
+            });
+            outpoint = anchor.results[0].pushDropOutpoint;
+            console.log(`[anchor edit→new] ${submissionUuid} → ${anchor.txid}`);
+          }
+          await prisma.submission.update({
+            where: { id: submissionUuid },
+            data: { outpoint: outpoint ?? null },
+          });
+        } catch (err) {
+          console.error(`[anchor edit] failed for ${submissionUuid}:`, err);
+        }
+      });
+    }
 
     res.json(formatFullSubmission(updated));
   } catch (err) {
@@ -460,7 +560,7 @@ router.delete('/:id', requireAuth as any, async (req: AuthenticatedRequest, res:
 
     const submission = await prisma.submission.findUnique({
       where: { id: req.params.id },
-      select: { userId: true },
+      select: { userId: true, outpoint: true },
     });
 
     if (!submission) {
@@ -477,6 +577,37 @@ router.delete('/:id', requireAuth as any, async (req: AuthenticatedRequest, res:
     // Delete images first (cascade should handle this, but be explicit)
     await prisma.submissionImage.deleteMany({ where: { submissionId: req.params.id } });
     await prisma.submission.delete({ where: { id: req.params.id } });
+
+    // Spend the previous PushDrop UTXO into a P2PKH back to the server wallet.
+    // Fire-and-forget — the DB row is already gone; failure leaves a stale UTXO
+    // in the basket that admin reconciliation can sweep later.
+    if (submission.outpoint) {
+      const previousOutpoint = submission.outpoint;
+      const submissionUuid = req.params.id;
+      void enqueueWalletTask(async () => {
+        try {
+          const previous = await getTransaction(serverWallet, previousOutpoint);
+          const payoutScript = await derivePayoutScript(serverWallet, submissionUuid);
+          const payoutCustomInstructions = JSON.stringify({
+            protocolID: RECOVERY_PROTOCOL,
+            keyID: submissionUuid,
+          });
+          const anchor = await createSubmissionTx({
+            op: 'DELETE',
+            wallet: serverWallet,
+            submissionUuid,
+            previousTxid: previousOutpoint.split('.')[0],
+            previous,
+            deletionPayoutLockingScriptHex: payoutScript,
+            deletionPayoutSatoshis: previous.sourceSatoshis,
+            deletionPayoutCustomInstructions: payoutCustomInstructions,
+          });
+          console.log(`[anchor delete] ${submissionUuid} → ${anchor.txid}`);
+        } catch (err) {
+          console.error(`[anchor delete] failed for ${submissionUuid}:`, err);
+        }
+      });
+    }
 
     // Decrement user stats
     if (submission.userId) {

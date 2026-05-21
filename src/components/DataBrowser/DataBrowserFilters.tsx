@@ -101,8 +101,7 @@ export default function DataBrowserFilters() {
     fetchCropCategories().then(setAvailableCategories).catch(() => setAvailableCategories([]));
   }, []);
 
-  // Local search input — committed to context after a debounce so every
-  // keystroke doesn't refetch the table.
+  // 300ms debounce on commit so keystrokes don't refetch the table.
   const [searchInput, setSearchInput] = useState(filters.search);
   useEffect(() => { setSearchInput(filters.search); }, [filters.search]);
   useEffect(() => {

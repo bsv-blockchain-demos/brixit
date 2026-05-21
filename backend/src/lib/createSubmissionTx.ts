@@ -11,15 +11,14 @@
  *   [5] payload_json                           (utf8)
  *   [6] op               'NEW' | 'EDIT'        (utf8)
  *   [7] previous_txid    '' on NEW             (utf8)
- *   [8] user_signature                         (hex)
- *   [9] server_signature over sha256(0..8)     (hex)
+ *   [8] user_signature   over payload_json                (hex)
+ *   [9] server_signature over payload_json || user_signature (hex)
  */
 
 import {
   PushDrop,
   Transaction,
   LockingScript,
-  Hash,
   Utils,
   type AtomicBEEF,
   type WalletInterface,
@@ -30,11 +29,15 @@ const PROTOCOL_MARKER = 'brixit-submission';
 const PROTOCOL_VERSION = '1';
 const PUSHDROP_PROTOCOL: WalletProtocol = [2, 'brixit submission'];
 const SERVER_ANCHOR_PROTOCOL: WalletProtocol = [2, 'brixit anchor'];
-// 'anyone' so anyone can recompute the derived pubkey to verify authorship.
-const PUSHDROP_COUNTERPARTY = 'anyone';
+// UTXO control: only the server spends, so the lock key stays private to it.
+const PUSHDROP_COUNTERPARTY = 'self';
+// Data attestation inside field[9]: 'anyone' so anyone can verify the server signed off.
 const SERVER_ANCHOR_COUNTERPARTY = 'anyone';
 const PUSHDROP_SATOSHIS = 1;
 export const BRIXIT_SUBMISSION_BASKET = 'brixit-submissions';
+
+/** Holds 1-sat P2PKH payouts from DELETE ops, awaiting sweep. */
+export const BRIXIT_DELETED_BASKET = 'brixit-deleted';
 
 export type SubmissionOp = 'NEW' | 'EDIT' | 'DELETE';
 
@@ -81,6 +84,8 @@ export type CreateSubmissionTxInput =
       /** P2PKH locking script the spent sats return to, hex. */
       deletionPayoutLockingScriptHex: string;
       deletionPayoutSatoshis: number;
+      /** JSON `{ protocolID, keyID }` — lets a sweep unlock without external state. */
+      deletionPayoutCustomInstructions: string;
       extraLabels?: string[];
     };
 
@@ -107,17 +112,6 @@ function hexField(hex: string): number[] {
   return Utils.toArray(hex, 'hex');
 }
 
-// Length-prefix each field so different field splits can't hash to the same value.
-function buildServerSigPreimage(fields: number[][]): number[] {
-  const out: number[] = [];
-  for (const f of fields) {
-    const len = f.length;
-    out.push((len >>> 24) & 0xff, (len >>> 16) & 0xff, (len >>> 8) & 0xff, len & 0xff);
-    for (const b of f) out.push(b);
-  }
-  return Hash.sha256(out);
-}
-
 interface BuiltPushDropOutput {
   outputDescription: string;
   lockingScript: string;
@@ -138,21 +132,16 @@ async function buildPushDropOutput(args: {
 }): Promise<BuiltPushDropOutput> {
   const { pushDrop, wallet, entry, op, previousTxid } = args;
 
-  const fieldsWithoutServerSig: number[][] = [
-    utf8Field(PROTOCOL_MARKER),
-    utf8Field(PROTOCOL_VERSION),
-    utf8Field(entry.submissionUuid),
-    hexField(entry.userIdentityKey),
-    utf8Field(entry.userKeyID),
-    utf8Field(entry.payloadJson),
-    utf8Field(op),
-    utf8Field(previousTxid),
-    hexField(entry.userSignature),
-  ];
+  const payloadBytes = utf8Field(entry.payloadJson);
+  const userSignatureBytes = hexField(entry.userSignature);
 
-  const preimage = buildServerSigPreimage(fieldsWithoutServerSig);
+  // User signature is verified upstream at the route level — callers must
+  // ensure entries are pre-validated. This module trusts its inputs.
+
+  // Sign payload + user_sig so neither half can be replayed independently.
+  const serverSigInput = [...payloadBytes, ...userSignatureBytes];
   const { signature: serverSigBytes } = await wallet.createSignature({
-    data: preimage,
+    data: serverSigInput,
     protocolID: SERVER_ANCHOR_PROTOCOL,
     keyID: entry.submissionUuid,
     counterparty: SERVER_ANCHOR_COUNTERPARTY,
@@ -160,12 +149,19 @@ async function buildPushDropOutput(args: {
   const serverSignatureHex = Utils.toHex(serverSigBytes as number[]);
 
   const fields: number[][] = [
-    ...fieldsWithoutServerSig,
+    utf8Field(PROTOCOL_MARKER),
+    utf8Field(PROTOCOL_VERSION),
+    utf8Field(entry.submissionUuid),
+    hexField(entry.userIdentityKey),
+    utf8Field(entry.userKeyID),
+    payloadBytes,
+    utf8Field(op),
+    utf8Field(previousTxid),
+    userSignatureBytes,
     hexField(serverSignatureHex),
   ];
 
-  // PushDrop.lock mutates the array — pass a copy so `fields` stays canonical.
-  // Lock keyID = submissionUuid so edits unlock with the same derivation.
+  // Copy because PushDrop.lock mutates; keyID stable across edits.
   const lock = await pushDrop.lock(
     [...fields],
     PUSHDROP_PROTOCOL,
@@ -176,8 +172,6 @@ async function buildPushDropOutput(args: {
   const customInstructions = JSON.stringify({
     protocolID: PUSHDROP_PROTOCOL,
     keyID: entry.submissionUuid,
-    counterparty: PUSHDROP_COUNTERPARTY,
-    submissionUuid: entry.submissionUuid,
     op,
     previousTxid,
   });
@@ -207,6 +201,9 @@ async function spendPreviousPushDrop(args: {
     outputDescription: string;
     lockingScript: string;
     satoshis: number;
+    basket?: string;
+    customInstructions?: string;
+    tags?: string[];
   }>;
   description: string;
   labels: string[];
@@ -368,7 +365,7 @@ export async function createSubmissionTx(
     };
   }
 
-  // DELETE: spend previous PushDrop → P2PKH back to treasury.
+  // DELETE: spend previous PushDrop → basketed P2PKH for later sweep.
   const { txid, tx } = await spendPreviousPushDrop({
     wallet: input.wallet,
     pushDrop,
@@ -378,6 +375,9 @@ export async function createSubmissionTx(
       outputDescription: 'brixit submission delete payout',
       lockingScript: input.deletionPayoutLockingScriptHex,
       satoshis: input.deletionPayoutSatoshis,
+      basket: BRIXIT_DELETED_BASKET,
+      customInstructions: input.deletionPayoutCustomInstructions,
+      tags: [`uuid_${input.submissionUuid}`],
     }],
     description: `BRIXit submission delete (${input.submissionUuid})`,
     labels: ['brixit-delete', ...(input.extraLabels ?? [])],

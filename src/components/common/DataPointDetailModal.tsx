@@ -26,6 +26,8 @@ import {
   Building,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useWallet } from '../../contexts/WalletContext';
+import { signSubmissionPayload } from '../../lib/signSubmissionPayload';
 import { deleteSubmission } from '../../lib/fetchSubmissions';
 import { useToast } from '../ui/use-toast';
 import { Input } from '../ui/input';
@@ -56,6 +58,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   initialEditMode = false,
 }) => {
   const { isAdmin, user } = useAuth();
+  const { userWallet, userPubKey } = useWallet();
   const { toast } = useToast();
   const { getThresholds } = useCropThresholds();
 
@@ -331,8 +334,38 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
         }
       }
 
-      console.log('Final update data:', updateData);
-      console.log('Updating submission with ID:', initialDataPoint.id);
+      // Re-sign the new payload so the backend can spend the previous PushDrop
+      // and anchor a fresh one. Skipped if the user isn't the owner (admin
+      // edits don't re-anchor — they just patch DB fields).
+      const isOwner = user?.id === initialDataPoint.userId;
+      if (isOwner && userWallet && userPubKey) {
+        const payload = {
+          cropName: cropType,
+          brixValue: brixToSave,
+          brandName: brand || null,
+          notes: outlierNotes || null,
+          assessmentDate: toISODateOrExisting(measurementDate, initialDataPoint.submittedAt),
+          purchaseDate: purchaseDate || null,
+          latitude: initialDataPoint.latitude,
+          longitude: initialDataPoint.longitude,
+          locationName: locationName || null,
+        };
+        try {
+          const sig = await signSubmissionPayload(userWallet, userPubKey, payload);
+          updateData.payloadJson = sig.payloadJson;
+          updateData.userSignature = sig.userSignature;
+          updateData.userKeyID = sig.userKeyID;
+          updateData.userIdentityKey = sig.userIdentityKey;
+        } catch (sigErr: any) {
+          toast({
+            title: 'Signing failed',
+            description: sigErr?.message || 'Please approve the signature in your wallet and try again.',
+            variant: 'destructive',
+          });
+          setSaving(false);
+          return;
+        }
+      }
 
       await apiPut(`/api/submissions/${initialDataPoint.id}`, updateData);
 

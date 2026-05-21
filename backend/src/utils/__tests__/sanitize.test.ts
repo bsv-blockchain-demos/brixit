@@ -23,7 +23,9 @@ describe('sanitizeInput', () => {
     expect(sanitizeInput('<script>alert(1)</script>')).toBe('scriptalert(1)/script');
   });
   it('strips < and > but preserves quotes in mixed input', () => {
-    expect(sanitizeInput('<b>O\'Brien\'s</b>')).toBe("O'Brien's");
+    // sanitizeInput strips only angle brackets, not tag letters — same as the
+    // `<script>…</script>` case above. The point of this test is the apostrophes.
+    expect(sanitizeInput('<b>O\'Brien\'s</b>')).toBe("bO'Brien's/b");
   });
   it('preserves double quotes (legitimate in text, Prisma parameterises)', () => expect(sanitizeInput('"quoted"')).toBe('"quoted"'));
   it("preserves single quotes (e.g. O'Brien's Farm)", () => expect(sanitizeInput("O'Brien's Farm")).toBe("O'Brien's Farm"));

@@ -15,10 +15,14 @@ import {
   parseAddressString,
   type ParsedAddress,
 } from '../utils/sanitize.js';
+import { Utils, type WalletProtocol } from '@bsv/sdk';
 import prisma from '../db/client.js';
 import serverWallet from '../serverWallet.js';
 import { createSubmissionTx } from '../lib/createSubmissionTx.js';
 import { enqueueWalletTask } from '../lib/walletQueue.js';
+import { anyoneWallet } from '../lib/anyoneWallet.js';
+
+const USER_SIGNING_PROTOCOL: WalletProtocol = [2, 'brixit submission'];
 
 const router = Router();
 
@@ -161,6 +165,22 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       if (claimedIdentityKey.toLowerCase() !== userIdentityKey.toLowerCase()) {
         res.status(403).json({
           error: `Reading ${i + 1}: userIdentityKey does not match authenticated user.`,
+        });
+        return;
+      }
+
+      // Crypto-verify the signature now so bad data never reaches the DB.
+      try {
+        await anyoneWallet.verifySignature({
+          data: Utils.toArray(payloadJson, 'utf8'),
+          signature: Utils.toArray(userSignature, 'hex'),
+          protocolID: USER_SIGNING_PROTOCOL,
+          keyID: userKeyID,
+          counterparty: claimedIdentityKey,
+        });
+      } catch (err) {
+        res.status(400).json({
+          error: `Reading ${i + 1}: user signature did not verify against payloadJson.`,
         });
         return;
       }

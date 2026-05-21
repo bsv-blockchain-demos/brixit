@@ -1,7 +1,6 @@
 /**
- * Data browser page orchestrator: header, URL-filter bootstrap, and the
- * two big children (filters card and results table). The children own
- * their own state so filter twiddling doesn't re-render the table rows.
+ * Page orchestrator — header, URL-filter bootstrap, and the two children.
+ * Children own their own state so the table doesn't re-render on filter twiddles.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';

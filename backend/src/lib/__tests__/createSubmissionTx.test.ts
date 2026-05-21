@@ -1,16 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
-import { PrivateKey, type WalletInterface } from '@bsv/sdk';
+import { PrivateKey, ProtoWallet, Utils, type WalletInterface, type WalletProtocol } from '@bsv/sdk';
 import {
   createSubmissionTx,
   BRIXIT_SUBMISSION_BASKET,
   type SubmissionEntry,
 } from '../createSubmissionTx.js';
 
-// ─── Mock wallet ─────────────────────────────────────────────────────────────
-//
-// PushDrop.lock calls wallet.getPublicKey + wallet.createSignature internally.
-// We return a real pubkey (so the SDK can build a valid LockingScript) and a
-// stub signature. createAction/signAction are pure vi.fn spies we control.
+// PushDrop.lock + the real anyoneWallet verify path both require valid
+// crypto. createAction/signAction stay as vi.fn spies we control.
 
 interface MockWallet {
   getPublicKey: ReturnType<typeof vi.fn>;
@@ -37,13 +34,30 @@ function asWallet(m: MockWallet): WalletInterface {
   return m as unknown as WalletInterface;
 }
 
-function makeEntry(submissionUuid: string, identityKey?: string): SubmissionEntry {
+const SIGNING_PROTOCOL: WalletProtocol = [2, 'brixit submission'];
+
+// Produces a real counterparty='anyone' signature so anyoneWallet.verifySignature
+// inside createSubmissionTx accepts the entry.
+async function makeEntry(submissionUuid: string): Promise<SubmissionEntry> {
+  const userPriv = PrivateKey.fromRandom();
+  const userIdentityKey = userPriv.toPublicKey().toString();
+  const userKeyID = `keyid-${submissionUuid}`;
+  const payloadJson = JSON.stringify({ cropName: 'tomato', brixValue: 12.5 });
+
+  const userWallet = new ProtoWallet(userPriv);
+  const { signature } = await userWallet.createSignature({
+    data: Utils.toArray(payloadJson, 'utf8'),
+    protocolID: SIGNING_PROTOCOL,
+    keyID: userKeyID,
+    counterparty: 'anyone',
+  });
+
   return {
     submissionUuid,
-    userIdentityKey: identityKey ?? '02' + '11'.repeat(32),
-    userKeyID: `keyid-${submissionUuid}`,
-    payloadJson: JSON.stringify({ cropName: 'tomato', brixValue: 12.5 }),
-    userSignature: 'aa'.repeat(70),
+    userIdentityKey,
+    userKeyID,
+    payloadJson,
+    userSignature: Utils.toHex(signature),
   };
 }
 
@@ -52,7 +66,7 @@ function makeEntry(submissionUuid: string, identityKey?: string): SubmissionEntr
 describe('createSubmissionTx — NEW', () => {
   it('builds one PushDrop output per entry in a single createAction call', async () => {
     const wallet = makeMockWallet();
-    const entries = [makeEntry('uuid-1'), makeEntry('uuid-2'), makeEntry('uuid-3')];
+    const entries = [await makeEntry('uuid-1'), await makeEntry('uuid-2'), await makeEntry('uuid-3')];
 
     const result = await createSubmissionTx({
       op: 'NEW',
@@ -72,7 +86,7 @@ describe('createSubmissionTx — NEW', () => {
     await createSubmissionTx({
       op: 'NEW',
       wallet: asWallet(wallet),
-      entries: [makeEntry('a'), makeEntry('b')],
+      entries: [await makeEntry('a'), await makeEntry('b')],
     });
     const outputs = wallet.createAction.mock.calls[0][0].outputs;
     for (const o of outputs) {
@@ -86,14 +100,12 @@ describe('createSubmissionTx — NEW', () => {
     await createSubmissionTx({
       op: 'NEW',
       wallet: asWallet(wallet),
-      entries: [makeEntry('uuid-x')],
+      entries: [await makeEntry('uuid-x')],
     });
     const out = wallet.createAction.mock.calls[0][0].outputs[0];
     const ci = JSON.parse(out.customInstructions);
     expect(ci).toMatchObject({
       keyID: 'uuid-x',
-      counterparty: 'anyone',
-      submissionUuid: 'uuid-x',
       op: 'NEW',
       previousTxid: '',
     });
@@ -102,7 +114,7 @@ describe('createSubmissionTx — NEW', () => {
 
   it('tags each output with uuid_<id> and user_<identityKey>', async () => {
     const wallet = makeMockWallet();
-    const entry = makeEntry('uuid-z');
+    const entry = await makeEntry('uuid-z');
     await createSubmissionTx({
       op: 'NEW',
       wallet: asWallet(wallet),
@@ -117,7 +129,7 @@ describe('createSubmissionTx — NEW', () => {
     await createSubmissionTx({
       op: 'NEW',
       wallet: asWallet(wallet),
-      entries: [makeEntry('uuid-1')],
+      entries: [await makeEntry('uuid-1')],
       extraLabels: ['migration-test'],
     });
     const call = wallet.createAction.mock.calls[0][0];
@@ -129,7 +141,7 @@ describe('createSubmissionTx — NEW', () => {
     await createSubmissionTx({
       op: 'NEW',
       wallet: asWallet(wallet),
-      entries: [makeEntry('uuid-1')],
+      entries: [await makeEntry('uuid-1')],
     });
     const call = wallet.createAction.mock.calls[0][0];
     expect(call.options).toMatchObject({
@@ -143,7 +155,7 @@ describe('createSubmissionTx — NEW', () => {
     await createSubmissionTx({
       op: 'NEW',
       wallet: asWallet(wallet),
-      entries: [makeEntry('u1'), makeEntry('u2'), makeEntry('u3')],
+      entries: [await makeEntry('u1'), await makeEntry('u2'), await makeEntry('u3')],
     });
     // PushDrop.lock also calls createSignature once per output (its own auto-signature).
     // So total = 2 × entries. Server-anchor signatures use the SERVER_ANCHOR_PROTOCOL.
@@ -165,7 +177,7 @@ describe('createSubmissionTx — NEW', () => {
     const result = await createSubmissionTx({
       op: 'NEW',
       wallet: asWallet(wallet),
-      entries: [makeEntry('u1'), makeEntry('u2')],
+      entries: [await makeEntry('u1'), await makeEntry('u2')],
     });
     expect(result.txid).toBe(fakeTxid);
     expect(result.results[0].pushDropOutpoint).toBe(`${fakeTxid}.0`);
@@ -187,7 +199,7 @@ describe('createSubmissionTx — NEW', () => {
       createSubmissionTx({
         op: 'NEW',
         wallet: asWallet(wallet),
-        entries: [makeEntry('u1')],
+        entries: [await makeEntry('u1')],
       }),
     ).rejects.toThrow();
   });
@@ -197,7 +209,7 @@ describe('createSubmissionTx — NEW', () => {
     const result = await createSubmissionTx({
       op: 'NEW',
       wallet: asWallet(wallet),
-      entries: [makeEntry('u1')],
+      entries: [await makeEntry('u1')],
     });
     expect(result.results[0].fields).toHaveLength(10);
     // Field [0] is 'brixit-submission' utf8-encoded → hex of those bytes
@@ -210,7 +222,7 @@ describe('createSubmissionTx — NEW', () => {
     const result = await createSubmissionTx({
       op: 'NEW',
       wallet: asWallet(wallet),
-      entries: [makeEntry('u1')],
+      entries: [await makeEntry('u1')],
     });
     expect(result.results[0].serverSignature).toMatch(/^[0-9a-f]+$/);
     // Our stub returns 70 zero bytes → 140 hex chars
