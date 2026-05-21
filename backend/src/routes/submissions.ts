@@ -25,6 +25,7 @@ import { createSubmissionTx, type SubmissionEntry } from '../lib/createSubmissio
 import { getTransaction } from '../lib/getTransaction.js';
 import { enqueueWalletTask } from '../lib/walletQueue.js';
 import { anyoneWallet } from '../lib/anyoneWallet.js';
+import { FIELD_LIMITS, exceedsLimit } from '../utils/limits.js';
 
 // Protocol used to derive a P2PKH that the wallet recognises as its own.
 const RECOVERY_PROTOCOL: WalletProtocol = [2, 'brixit recovery'];
@@ -443,6 +444,20 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
     // Build Prisma update data from request body
     const body = req.body;
     const data: any = {};
+
+    // Enforce length caps on free-form strings before persisting.
+    const lengthErrors = [
+      exceedsLimit(body.outlier_notes, FIELD_LIMITS.NOTES, 'outlier_notes'),
+      exceedsLimit(body.crop_variety, FIELD_LIMITS.CROP_VARIETY, 'crop_variety'),
+      exceedsLimit(body.payloadJson, FIELD_LIMITS.PAYLOAD_JSON, 'payloadJson'),
+      exceedsLimit(body.userSignature, FIELD_LIMITS.USER_SIGNATURE, 'userSignature'),
+      exceedsLimit(body.userKeyID, FIELD_LIMITS.USER_KEY_ID, 'userKeyID'),
+      exceedsLimit(body.userIdentityKey, FIELD_LIMITS.USER_IDENTITY_KEY, 'userIdentityKey'),
+    ].filter((e): e is string => e !== null);
+    if (lengthErrors.length > 0) {
+      res.status(400).json({ error: lengthErrors[0] });
+      return;
+    }
 
     if (body.brix_value !== undefined) data.brixValue = body.brix_value;
     if (body.crop_variety !== undefined) data.cropVariety = body.crop_variety;

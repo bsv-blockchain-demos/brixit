@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X, Package, Droplets, Camera, FileText, Building2, Trash2, ChevronDown } from 'lucide-react';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
+import { CountedTextarea } from '../ui/counted-textarea';
 import { Slider } from '../ui/slider';
 import ComboBoxAddable from '../ui/combo-box-addable';
 import Combobox from '../ui/combo-box';
@@ -206,10 +206,11 @@ const ReadingCard: React.FC<{
                   Notes
                   <span className="font-normal ml-1" style={{ color: 'var(--text-muted)' }}>(optional)</span>
                 </Label>
-                <Textarea
+                <CountedTextarea
                   placeholder="Variety, observations, or anomalies — e.g. Red Delicious, grown outdoors, unusually sweet..."
                   value={reading.notes}
-                  onChange={e => onChange(reading.id, 'notes', e.target.value)}
+                  onChange={(v) => onChange(reading.id, 'notes', v)}
+                  max={500}
                   rows={2}
                   className={`w-full border-2 rounded-xl px-3 py-2 text-sm transition-all hover:border-blue-light focus:outline-none focus:ring-4 focus:ring-blue-pale ${errors[`reading_${reading.id}_notes`] ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh bg-card'}`}
                   style={{ color: 'var(--text-dark)' }}

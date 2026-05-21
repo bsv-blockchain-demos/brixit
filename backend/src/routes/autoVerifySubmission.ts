@@ -21,6 +21,7 @@ import serverWallet from '../serverWallet.js';
 import { createSubmissionTx } from '../lib/createSubmissionTx.js';
 import { enqueueWalletTask } from '../lib/walletQueue.js';
 import { anyoneWallet } from '../lib/anyoneWallet.js';
+import { FIELD_LIMITS, exceedsLimit } from '../utils/limits.js';
 
 const USER_SIGNING_PROTOCOL: WalletProtocol = [2, 'brixit submission'];
 
@@ -124,6 +125,23 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 
     const sessionBrandName = sanitizeInput(body.brandName);
     const sessionNotes = sanitizeInput(body.outlierNotes);
+
+    // ── Session-level length caps ──────────────────────────────────────────
+    const sessionLengthErrors = [
+      exceedsLimit(sessionBrandName, FIELD_LIMITS.BRAND_NAME, 'brandName'),
+      exceedsLimit(sessionNotes, FIELD_LIMITS.NOTES, 'outlierNotes'),
+      exceedsLimit(sanitizeInput(body.locationName), FIELD_LIMITS.LOCATION_NAME, 'locationName'),
+      exceedsLimit(sanitizeInput(body.street_address), FIELD_LIMITS.STREET_ADDRESS, 'street_address'),
+      exceedsLimit(sanitizeInput(body.city), FIELD_LIMITS.CITY, 'city'),
+      exceedsLimit(sanitizeInput(body.state), FIELD_LIMITS.STATE, 'state'),
+      exceedsLimit(sanitizeInput(body.country), FIELD_LIMITS.COUNTRY, 'country'),
+      exceedsLimit(sanitizeInput(body.pos_type), FIELD_LIMITS.POS_TYPE, 'pos_type'),
+    ].filter((e): e is string => e !== null);
+    if (sessionLengthErrors.length > 0) {
+      res.status(400).json({ error: sessionLengthErrors[0] });
+      return;
+    }
+
     const resolvedReadings: ResolvedReading[] = [];
 
     for (let i = 0; i < rawReadings.length; i++) {
@@ -166,6 +184,21 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
         res.status(403).json({
           error: `Reading ${i + 1}: userIdentityKey does not match authenticated user.`,
         });
+        return;
+      }
+
+      // Per-reading length caps.
+      const readingLengthErrors = [
+        exceedsLimit(sanitizedCropName, FIELD_LIMITS.CROP_NAME, 'cropName'),
+        exceedsLimit(sanitizeInput(r.brandName), FIELD_LIMITS.BRAND_NAME, 'brandName'),
+        exceedsLimit(sanitizeInput(r.notes), FIELD_LIMITS.NOTES, 'notes'),
+        exceedsLimit(payloadJson, FIELD_LIMITS.PAYLOAD_JSON, 'payloadJson'),
+        exceedsLimit(userSignature, FIELD_LIMITS.USER_SIGNATURE, 'userSignature'),
+        exceedsLimit(userKeyID, FIELD_LIMITS.USER_KEY_ID, 'userKeyID'),
+        exceedsLimit(claimedIdentityKey, FIELD_LIMITS.USER_IDENTITY_KEY, 'userIdentityKey'),
+      ].filter((e): e is string => e !== null);
+      if (readingLengthErrors.length > 0) {
+        res.status(400).json({ error: `Reading ${i + 1}: ${readingLengthErrors[0]}` });
         return;
       }
 
