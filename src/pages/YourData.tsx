@@ -185,6 +185,12 @@ const YourData: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  const handleUpdateSuccess = useCallback((updated: BrixDataPoint) => {
+    queryClient.invalidateQueries({ queryKey: ['submissions'] });
+    setSelectedDataPoint(updated);
+    setOpenInEditMode(false);
+  }, [queryClient]);
+
   // Handler for deletion, now that it's in the modal
   const handleDelete = async (id: string) => {
     try {
@@ -444,6 +450,7 @@ const YourData: React.FC = () => {
           onDeleteSuccess={(id) => {
             handleDelete(id);
           }}
+          onUpdateSuccess={handleUpdateSuccess}
           initialEditMode={openInEditMode}
         />
 

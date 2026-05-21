@@ -150,12 +150,12 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
   }, []);
 
   const handleUpdateSuccess = useCallback((updated: BrixDataPoint) => {
-    queryClient.invalidateQueries({ queryKey: ['submissions', 'public_formatted'] });
+    queryClient.invalidateQueries({ queryKey: ['submissions'] });
     setSelectedDataPoint(updated);
   }, [queryClient]);
 
   const handleDeleteSuccess = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['submissions', 'public_formatted'] });
+    queryClient.invalidateQueries({ queryKey: ['submissions'] });
     handleCloseModal();
   }, [queryClient, handleCloseModal]);
 
