@@ -31,6 +31,26 @@ export const submissionLimiter = rateLimit({
   message: { error: 'Submission limit reached. Please try again later.' },
 });
 
+/** 60 requests per minute — protects bandwidth and S3 cost on the presigned-URL endpoints */
+export const uploadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many upload requests. Please slow down.' },
+});
+
+/** 120 requests per minute — lenient cap on image-URL batch endpoint. Each
+ *  request can fetch up to 50 keys, so sustained throughput is ample for
+ *  normal browsing. React Query cache absorbs repeat views. */
+export const imagesLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many image requests. Please slow down.' },
+});
+
 /** 60 requests per minute — protects GeoNames third-party API quota */
 export const geonamesLimiter = rateLimit({
   windowMs: 60 * 1000,

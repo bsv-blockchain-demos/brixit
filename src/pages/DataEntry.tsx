@@ -19,9 +19,10 @@ import {
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../hooks/use-toast';
-import { apiPost, apiFetch } from '@/lib/api';
+import { apiPost } from '@/lib/api';
 import { useWallet } from '@/contexts/WalletContext';
 import { signSubmissionPayload } from '@/lib/signSubmissionPayload';
+import { getPresignedUploadUrl, uploadFileToS3, finalizeUpload } from '@/lib/uploadApi';
 import LocationSearch from '../components/common/LocationSearch';
 import VenuePrompt, { type VenueChoice } from '../components/common/VenuePrompt';
 import { useStaticData } from '../hooks/useStaticData';
@@ -358,16 +359,18 @@ const DataEntry = () => {
       for (let i = 0; i < filledReadings.length; i++) {
         const reading = filledReadings[i];
         const subId = submissions[i]?.submission_id;
-        if (reading.images.length > 0 && subId) {
-          const fd = new FormData();
-          fd.append('submission_id', subId);
-          reading.images.forEach(f => fd.append('images', f));
-          try {
-            const res = await apiFetch('/api/upload', { method: 'POST', body: fd });
-            if (!res.ok) console.error('Image upload failed for reading', i + 1);
-          } catch (err) {
-            console.error('Image upload error for reading', i + 1, err);
+        if (reading.images.length === 0 || !subId) continue;
+        try {
+          // For each file: presigned URL → S3 PUT → collect the resulting key.
+          const keys: string[] = [];
+          for (const file of reading.images) {
+            const { uploadUrl, key } = await getPresignedUploadUrl(subId, file.name, file.type, file.size);
+            await uploadFileToS3(uploadUrl, file);
+            keys.push(key);
           }
+          await finalizeUpload(subId, keys);
+        } catch (err) {
+          console.error('Image upload error for reading', i + 1, err);
         }
       }
 

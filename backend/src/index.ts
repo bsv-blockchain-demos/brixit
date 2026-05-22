@@ -5,7 +5,6 @@
  */
 import http from 'http';
 import express from 'express';
-import path from 'path';
 import { config } from './config.js';
 import serverWallet from './serverWallet.js';
 import { WalletRelayService } from '@bsv/wallet-relay';
@@ -15,7 +14,7 @@ import { corsMiddleware } from './middleware/cors.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
 import { requireAuth, requireContributor } from './middleware/auth.js';
-import { authLimiter, submissionLimiter, geonamesLimiter, generalLimiter } from './utils/rateLimiter.js';
+import { authLimiter, submissionLimiter, uploadLimiter, imagesLimiter, geonamesLimiter, generalLimiter } from './utils/rateLimiter.js';
 
 // Probe imports
 import { healthProbe } from './routes/health.js';
@@ -38,6 +37,7 @@ import adminRoutes from './routes/admin.js';
 import adminCrudRoutes from './routes/adminCrud.js';
 import adminWalletRoutes from './routes/adminWallet.js';
 import uploadRoutes from './routes/upload.js';
+import imagesRoutes from './routes/images.js';
 import mapPreviewRoutes from './routes/mapPreview.js';
 
 const app = express();
@@ -60,10 +60,9 @@ app.use('/api/auth/refresh', authLimiter);
 app.use('/api/auth/send-otp', authLimiter);
 app.use('/api/auth/verify-otp', authLimiter);
 app.use('/api/submissions/create', submissionLimiter);
+app.use('/api/upload', uploadLimiter);
+app.use('/api/images', imagesLimiter);
 app.use('/api/geonames', geonamesLimiter);
-
-// --- Static file serving for uploads ---
-app.use('/uploads', express.static(path.resolve(config.uploadDir)));
 
 // --- Health / readiness probes  ---
 app.get('/health', healthProbe);
@@ -111,6 +110,7 @@ app.use('/api/admin/wallet', adminWalletRoutes);
 
 // --- File upload (authenticated) ---
 app.use('/api/upload', uploadRoutes);
+app.use('/api/images', imagesRoutes);
 
 // --- Error handler (must be last) ---
 app.use(errorHandler);
@@ -161,7 +161,10 @@ server.listen(config.port, '0.0.0.0', () => {
   console.log(`   GET/POST/PUT/DELETE /api/admin/crud/brands`);
   console.log(`   GET/POST/PUT/DELETE /api/admin/crud/venues`);
   console.log(`   GET/POST/PUT/DELETE /api/admin/crud/categories`);
-  console.log(`   POST   /api/upload`);
+  console.log(`   POST   /api/upload/presigned-url`);
+  console.log(`   POST   /api/upload/finalize`);
+  console.log(`   DELETE /api/upload/delete`);
+  console.log(`   POST   /api/images`);
   console.log('');
 });
 

@@ -23,6 +23,5 @@ COPY prisma.config.ts ./
 COPY --from=build /app/dist dist/
 COPY entrypoint.sh ./
 RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
-RUN mkdir -p /app/uploads
 EXPOSE 3001
 ENTRYPOINT ["./entrypoint.sh"]

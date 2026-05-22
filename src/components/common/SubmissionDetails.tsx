@@ -7,7 +7,7 @@ import { getBrixColor } from '../../lib/getBrixColor';
 import { getBrixQuality } from '../../lib/getBrixQuality';
 import { formatUsername } from '../../lib/formatUsername';
 import { BrixDataPoint } from '../../types';
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { useImageUrls } from '../../hooks/useImageUrls';
 
 interface SubmissionDetailsProps {
   dataPoint: BrixDataPoint;
@@ -28,39 +28,17 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
   const colorClass = getBrixColor(dataPoint.brixLevel, cropThresholds, 'bg');
   const qualityText = getBrixQuality(dataPoint.brixLevel, cropThresholds);
 
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [imagesLoading, setImagesLoading] = useState(false);
-  const [imagesError, setImagesError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchImageUrls = async () => {
-      if (!showImages || !dataPoint.images || !Array.isArray(dataPoint.images) || dataPoint.images.length === 0) {
-        setImageUrls([]);
-        setImagesLoading(false);
-        return;
-      }
-
-      setImagesLoading(true);
-      setImagesError(null);
-      const urls: string[] = [];
-
-      for (const imagePath of dataPoint.images) {
-        if (typeof imagePath !== 'string' || imagePath === '') {
-          console.warn('Invalid image path found:', imagePath);
-          continue;
-        }
-
-        // Images are served from the Express backend's static uploads directory
-        const publicUrl = `${API_BASE}${imagePath}`;
-        urls.push(publicUrl);
-      }
-
-      setImageUrls(urls);
-      setImagesLoading(false);
-    };
-
-    fetchImageUrls();
-  }, [dataPoint.images, showImages]);
+  const imageKeys = React.useMemo(
+    () =>
+      showImages && Array.isArray(dataPoint.images)
+        ? dataPoint.images.filter((k): k is string => typeof k === 'string' && k.length > 0)
+        : [],
+    [dataPoint.images, showImages],
+  );
+  const imageUrlsQuery = useImageUrls(dataPoint.id, imageKeys);
+  const imageUrls = imageUrlsQuery.data ?? [];
+  const imagesLoading = imageUrlsQuery.isLoading;
+  const imagesError = imageUrlsQuery.error ? 'Failed to load images' : null;
 
   return (
     <Card>

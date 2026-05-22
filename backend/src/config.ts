@@ -68,7 +68,6 @@ export const config = {
   // GeoNames
   geonamesUsername: process.env.GEONAMES_USERNAME || '',
 
-  // Storage
-  uploadDir: process.env.UPLOAD_DIR || './uploads',
+  // Storage — client-side hint only; backend doesn't read the actual file.
   maxFileSizeMb: parseInt(process.env.MAX_FILE_SIZE_MB || '10', 10),
 } as const;

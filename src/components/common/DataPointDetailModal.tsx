@@ -33,7 +33,8 @@ import { useToast } from '../ui/use-toast';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
-import { apiPut, API_BASE } from '../../lib/api';
+import { apiPut } from '../../lib/api';
+import { useImageUrls } from '../../hooks/useImageUrls';
 import { formatUsername } from '../../lib/formatUsername';
 import { scoreBrix } from '../../lib/getBrixColor';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
@@ -79,8 +80,18 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [imagesLoading, setImagesLoading] = useState(false);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  // Image URLs come from a React Query cache keyed by submission id so the
+  // same submission viewed from different surfaces reuses the same fetch.
+  const imageKeys = React.useMemo(
+    () =>
+      Array.isArray(initialDataPoint?.images)
+        ? initialDataPoint!.images.filter((k): k is string => typeof k === 'string' && k.length > 0)
+        : [],
+    [initialDataPoint],
+  );
+  const imageUrlsQuery = useImageUrls(initialDataPoint?.id, imageKeys);
+  const imageUrls = imageUrlsQuery.data ?? [];
+  const imagesLoading = imageUrlsQuery.isLoading;
 
   // Remove the isLoading state since we're using staticDataLoading
   const [isInitializing, setIsInitializing] = useState(true);
@@ -120,8 +131,6 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
         setVerified(false);
         setVerifiedBy('');
         setVerifiedAt('');
-        setImageUrls([]);
-        setImagesLoading(false);
         setError(null);
         setIsEditing(false);
         return;
@@ -161,25 +170,6 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
     }
     initializeModalData();
   }, [isOpen, initialDataPoint, initialEditMode, staticDataError, staticDataLoading, crops, brands, locations]);
-
-  useEffect(() => {
-    // Separate image fetching into its own effect to prevent state reset race conditions
-    const fetchImages = async () => {
-      if (!isOpen || !initialDataPoint) return;
-      setImagesLoading(true);
-
-      const urls = Array.isArray(initialDataPoint.images)
-        ? initialDataPoint.images
-            .filter((imagePath): imagePath is string => typeof imagePath === 'string' && imagePath.length > 0)
-            .map((imagePath) => `${API_BASE}${imagePath}`)
-        : [];
-
-      setImageUrls(urls);
-      setImagesLoading(false);
-    };
-
-    fetchImages();
-  }, [isOpen, initialDataPoint]);
 
   const handleDelete = async () => {
     if (!initialDataPoint) return;
