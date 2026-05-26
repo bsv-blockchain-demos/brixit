@@ -3,6 +3,7 @@ import { Input } from '../ui/input';
 import { Loader2, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getMapboxToken } from '@/lib/getMapboxToken';
+import { useToast } from '@/hooks/use-toast';
 
 interface LocationSuggestion {
   mapbox_id: string;
@@ -50,6 +51,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [hasSelected, setHasSelected] = useState(false);
+  const { toast } = useToast();
 
   const sessionRef = useRef<string | null>(null);
   const selectedValueRef = useRef<string | null>(null);
@@ -222,26 +224,29 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       if (data.features && data.features.length > 0) {
         const feature = data.features[0];
         const detailedInfo = extractDetailedLocationInfo(feature);
-
         onLocationSelect(detailedInfo);
       } else {
-        // Fallback if no detailed data
-        onLocationSelect({
-          name: locationName,
-          latitude: 0,
-          longitude: 0
-        });
+        // Mapbox returned OK but no feature — treat as a retrieve failure
+        handleRetrieveFailure();
       }
     } catch (e) {
       console.error('Failed to get location coordinates:', e);
-      onLocationSelect({
-        name: locationName,
-        latitude: 0,
-        longitude: 0
-      });
+      handleRetrieveFailure();
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const handleRetrieveFailure = () => {
+    // Reset selection state so the user can pick again
+    selectedValueRef.current = null;
+    setHasSelected(false);
+    onChange({ target: { value: '' } } as React.ChangeEvent<HTMLInputElement>);
+    toast({
+      title: "Couldn't fetch coordinates",
+      description: 'Please pick a different result or try again.',
+      variant: 'destructive',
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

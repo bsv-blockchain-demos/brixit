@@ -65,6 +65,7 @@ function buildSubmissionsGeoJSON(
     const lat = point.latitude ?? (point as any).lat;
     const lng = point.longitude ?? (point as any).lng;
     if (lat == null || lng == null) continue;
+    if (lat === 0 && lng === 0) continue;
     const cropKey = (point.cropType ?? point.cropLabel ?? (point as any).crop_name ?? 'unknown').toString();
     const thresholds =
       (typeof point.poorBrix === 'number' && typeof point.excellentBrix === 'number')
