@@ -7,7 +7,7 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -195,6 +195,9 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
       )}
 
       <Card className="rounded-2xl border border-blue-pale shadow-sm">
+        <CardHeader>
+          <CardTitle>{totalCount} {totalCount === 1 ? 'Result' : 'Results'}</CardTitle>
+        </CardHeader>
         <CardContent>
           {/* Desktop table */}
           <div className="hidden desktop:block overflow-x-auto">
@@ -231,6 +234,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
                     Date {sortBy === 'submittedAt' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Verified?</TableHead>
+                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Blockchain</TableHead>
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>

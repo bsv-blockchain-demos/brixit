@@ -362,6 +362,7 @@ const YourData: React.FC = () => {
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Notes</TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Date</TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Verified?</TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Blockchain</TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Actions</TableHead>
                           </TableRow>
                         </TableHeader>

@@ -85,6 +85,7 @@ function formatFullSubmission(s: any) {
     country: s.venue?.country ?? null,
     pos_type: s.venue?.posType ?? null,
     skip_venue_prompt: s.skipVenuePrompt ?? false,
+    outpoint: s.outpoint ?? null,
     user_id: s.user?.id ?? null,
     user_display_name: s.user?.displayName ?? null,
     verified_by_display_name: s.verifier?.displayName ?? null,
@@ -210,6 +211,7 @@ router.get('/', async (req: Request, res: Response) => {
       country: s.venue?.country ?? null,
       pos_type: s.venue?.posType ?? null,
       skip_venue_prompt: s.skipVenuePrompt ?? false,
+      outpoint: s.outpoint ?? null,
     }));
 
     res.json(result);
@@ -328,6 +330,7 @@ router.get('/bounds', async (req: Request, res: Response) => {
       country: s.venue?.country ?? null,
       pos_type: s.venue?.posType ?? null,
       skip_venue_prompt: s.skipVenuePrompt ?? false,
+      outpoint: s.outpoint ?? null,
     }));
 
     res.json(result);

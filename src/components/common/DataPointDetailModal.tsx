@@ -24,6 +24,9 @@ import {
   MapIcon,
   FileText,
   Building,
+  Anchor,
+  XCircle,
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWallet } from '../../contexts/WalletContext';
@@ -698,6 +701,37 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                   <span>Verified by: {verifiedBy ? formatUsername(verifiedBy) : 'N/A'}</span>
                 </div>
               )}
+
+              <div className="rounded-2xl border shadow-sm p-4 mt-4 flex items-center justify-between" style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}>
+                <div className="flex items-center space-x-2 min-w-0">
+                  <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--blue-deep)' }}>
+                    {initialDataPoint.outpoint ? (
+                      <Anchor className="w-3.5 h-3.5 text-white" />
+                    ) : (
+                      <XCircle className="w-3.5 h-3.5 text-white" />
+                    )}
+                  </span>
+                  <Label className="text-sm font-semibold text-text-mid">Blockchain Anchor</Label>
+                </div>
+                {initialDataPoint.outpoint ? (() => {
+                  const txid = initialDataPoint.outpoint.split('.')[0];
+                  return (
+                    <a
+                      href={`https://whatsonchain.com/tx/${txid}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 text-green-mid hover:text-green-fresh font-mono text-xs min-w-0"
+                      title={`View transaction on WhatsOnChain: ${txid}`}
+                    >
+                      <span className="truncate">{txid.slice(0, 10)}…{txid.slice(-8)}</span>
+                      <ExternalLink className="w-3 h-3 shrink-0" />
+                    </a>
+                  );
+                })() : (
+                  <span className="text-sm font-medium text-text-muted-brown">Not anchored</span>
+                )}
+              </div>
             </div>
 
             <div className="pt-4 border-t border-blue-pale">

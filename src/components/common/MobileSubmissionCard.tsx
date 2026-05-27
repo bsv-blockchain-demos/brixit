@@ -1,7 +1,7 @@
 ﻿import React from 'react';
 import { BrixDataPoint } from '../../types';
 import { scoreBrix } from '../../lib/getBrixColor';
-import { CheckCircle, Clock, MapPin, User, MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { CheckCircle, Clock, MapPin, User, MoreVertical, Edit, Trash2, XCircle, Anchor } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import {
   DropdownMenu,
@@ -83,9 +83,10 @@ const MobileSubmissionCard: React.FC<{
         </div>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-mid">
-        <span>{new Date(submission.submittedAt).toLocaleDateString()}</span>
-        <span>·</span>
+      <div className="mt-2 text-xs text-text-mid">
+        {new Date(submission.submittedAt).toLocaleDateString()}
+      </div>
+      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-mid">
         {submission.verified ? (
           <span className="inline-flex items-center gap-1 bg-green-pale text-green-mid px-1.5 py-0.5 rounded-full">
             <CheckCircle className="w-3 h-3" /> Verified
@@ -93,6 +94,16 @@ const MobileSubmissionCard: React.FC<{
         ) : (
           <span className="inline-flex items-center gap-1 text-action-primary">
             <Clock className="w-3 h-3" /> Pending
+          </span>
+        )}
+        <span>·</span>
+        {submission.outpoint ? (
+          <span className="inline-flex items-center gap-1 bg-badge-neutral-bg text-green-mid px-1.5 py-0.5 rounded-full">
+            <Anchor className="w-3 h-3" /> Anchored
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 bg-badge-neutral-bg text-badge-neutral-text px-1.5 py-0.5 rounded-full">
+            <XCircle className="w-3 h-3" /> No Anchor
           </span>
         )}
       </div>

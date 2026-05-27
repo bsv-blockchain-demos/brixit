@@ -37,6 +37,8 @@ export interface BrixDataPoint {
 
   cropLabel: string | null;
   brandLabel: string | null;
+
+  outpoint: string | null;
 }
 
 // Data format returned from API, aligned with BrixDataPoint

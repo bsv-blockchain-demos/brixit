@@ -3,7 +3,7 @@ import { TableCell, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { BrixDataPoint } from '../../types';
-import { MapPin, Calendar, CheckCircle, Edit, Trash2, Eye, MessageSquare, Clock, Lock, User } from 'lucide-react';
+import { MapPin, Calendar, CheckCircle, Edit, Trash2, Eye, MessageSquare, Clock, Lock, User, XCircle, Anchor } from 'lucide-react';
 import { scoreBrix } from '../../lib/getBrixColor';
 import { formatCityState } from '../../lib/formatAddress';
 
@@ -106,9 +106,9 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       {/* Cell 6 — Notes */}
       <TableCell className="py-3 px-4 max-w-[150px]">
         {submission.outlier_notes ? (
-          <div className="flex items-start space-x-1 text-sm text-text-mid line-clamp-2">
+          <div className="flex items-start space-x-1 text-sm text-text-mid min-w-0">
             <MessageSquare className="w-3 h-3 flex-shrink-0 text-text-muted-brown mt-0.5" />
-            <span>{submission.outlier_notes}</span>
+            <span className="line-clamp-2 min-w-0" title={submission.outlier_notes}>{submission.outlier_notes}</span>
           </div>
         ) : (
           <span className="text-text-muted-brown text-sm">--</span>
@@ -124,16 +124,35 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       </TableCell>
 
       {/* Cell 8 — Verified? */}
-      <TableCell className="text-center py-3 px-4">
+      <TableCell className="text-center py-3 px-2">
         {submission.verified ? (
-          <Badge className="flex items-center space-x-1 px-3 py-1 rounded-full bg-green-pale text-green-mid font-medium text-sm shadow-sm">
+          <Badge className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-green-pale text-green-mid font-medium text-sm shadow-sm whitespace-nowrap">
             <CheckCircle className="w-4 h-4" />
             <span>Verified</span>
           </Badge>
         ) : (
-          <Badge className="flex items-center space-x-1 px-3 py-1 rounded-full bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)] font-semibold text-sm shadow-sm">
+          <Badge className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)] font-semibold text-sm shadow-sm whitespace-nowrap">
             <Clock className="w-4 h-4" />
             <span>Pending</span>
+          </Badge>
+        )}
+      </TableCell>
+
+      {/* Cell 9 — On-chain */}
+      <TableCell className="text-center py-3 px-2">
+        {submission.outpoint ? (
+          <Badge className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-badge-neutral-bg text-green-mid font-medium text-sm shadow-sm whitespace-nowrap">
+            <Anchor className="w-4 h-4" />
+            <span>Anchored</span>
+          </Badge>
+        ) : (
+          <Badge
+            className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-badge-neutral-bg text-badge-neutral-text font-medium text-sm shadow-sm whitespace-nowrap"
+            title="Not anchored"
+            aria-label="Not anchored"
+          >
+            <XCircle className="w-4 h-4" />
+            <span>No Anchor</span>
           </Badge>
         )}
       </TableCell>

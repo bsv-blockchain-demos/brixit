@@ -36,6 +36,7 @@ interface ApiSubmissionRow {
   user_display_name?: string | null;
   verified_by_display_name?: string | null;
   images?: string[];
+  outpoint?: string | null;
 }
 
 function formatApiRow(r: ApiSubmissionRow): BrixDataPoint {
@@ -75,6 +76,7 @@ function formatApiRow(r: ApiSubmissionRow): BrixDataPoint {
     verifiedByUserId: '',
     cropLabel: r.crop_label ?? null,
     brandLabel: r.brand_label ?? null,
+    outpoint: r.outpoint ?? null,
   };
 }
 

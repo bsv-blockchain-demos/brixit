@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { MapPin, Calendar, User, CheckCircle, AlertCircle, MessageSquare, Image as ImageIcon, Loader2, Tag, Building } from 'lucide-react';
+import { MapPin, Calendar, User, CheckCircle, AlertCircle, MessageSquare, Image as ImageIcon, Loader2, Tag, Building, Anchor, XCircle, ExternalLink } from 'lucide-react';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
 import { getBrixColor } from '../../lib/getBrixColor';
 import { getBrixQuality } from '../../lib/getBrixQuality';
@@ -109,6 +109,34 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
               </div>
             </div>
           )}
+          <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+            {dataPoint.outpoint ? (
+              <Anchor className="w-5 h-5 text-green-mid" />
+            ) : (
+              <XCircle className="w-5 h-5 text-text-muted-brown" />
+            )}
+            <div className="min-w-0">
+              <p className="text-sm text-gray-600">Blockchain Anchor</p>
+              {dataPoint.outpoint ? (() => {
+                const txid = dataPoint.outpoint.split('.')[0];
+                return (
+                  <a
+                    href={`https://whatsonchain.com/tx/${txid}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 text-green-mid hover:text-green-fresh font-mono text-xs break-all"
+                    title={`View transaction on WhatsOnChain: ${txid}`}
+                  >
+                    <span className="truncate">{txid.slice(0, 12)}…{txid.slice(-8)}</span>
+                    <ExternalLink className="w-3 h-3 shrink-0" />
+                  </a>
+                );
+              })() : (
+                <p className="font-medium text-text-muted-brown">Not anchored</p>
+              )}
+            </div>
+          </div>
           <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
             <MapPin className="w-5 h-5 text-gray-600" />
             <div>
