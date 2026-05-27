@@ -40,7 +40,7 @@ router.get('/users', async (req: AuthenticatedRequest, res: Response) => {
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
-        include: { roles: true },
+        include: { roles: true, walletIdentity: { select: { identityKey: true } } },
         orderBy: { createdAt: 'desc' },
         take: limit,
         skip: offset,
@@ -51,6 +51,7 @@ router.get('/users', async (req: AuthenticatedRequest, res: Response) => {
     const data = users.map((u: any) => ({
       id: u.id,
       display_name: u.displayName,
+      identity_key: u.walletIdentity?.identityKey ?? null,
       country: u.country,
       state: u.state,
       city: u.city,
@@ -76,6 +77,7 @@ router.get('/users/:id', async (req: AuthenticatedRequest, res: Response) => {
       where: { id: userId },
       include: {
         roles: true,
+        walletIdentity: { select: { identityKey: true } },
         submissions: {
           include: {
             crop: { select: { name: true, label: true, poorBrix: true, excellentBrix: true } },
@@ -96,6 +98,7 @@ router.get('/users/:id', async (req: AuthenticatedRequest, res: Response) => {
     res.json({
       id: user.id,
       display_name: (user as any).displayName,
+      identity_key: (user as any).walletIdentity?.identityKey ?? null,
       country: (user as any).country,
       state: (user as any).state,
       city: (user as any).city,

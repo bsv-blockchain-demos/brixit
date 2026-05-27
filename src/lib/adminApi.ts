@@ -11,6 +11,7 @@ export interface AdminResponse {
 export interface UserWithRoles {
   id: string;
   display_name: string | null;
+  identity_key: string | null;
   country: string | null;
   state: string | null;
   city: string | null;

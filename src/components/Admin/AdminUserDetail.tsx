@@ -247,9 +247,12 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
 
       <div className="border rounded-lg p-4 space-y-3 bg-card text-card-foreground">
         <div className="flex items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <h2 className="text-xl font-semibold">{user.display_name ?? user.id}</h2>
-            <p className="text-xs text-muted-foreground font-mono mt-0.5">{user.id}</p>
+            <p className="text-xs text-muted-foreground font-mono mt-0.5 break-all">
+              Wallet identity: {user.identity_key ?? <span className="italic">no wallet identity</span>}
+            </p>
+            <p className="text-xs text-muted-foreground font-mono mt-0.5 break-all">UUID: {user.id}</p>
           </div>
           <Badge variant={getRoleBadgeVariant(topRole)}>{topRole}</Badge>
         </div>

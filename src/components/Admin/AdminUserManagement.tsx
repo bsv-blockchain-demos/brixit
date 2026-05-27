@@ -134,14 +134,17 @@ export default function AdminUserManagement() {
                 className="border rounded p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-card text-card-foreground cursor-pointer hover:bg-accent transition-colors"
                 onClick={() => setSelectedUserId(u.id)}
               >
-                <div className="text-sm flex-1">
-                  <div className="font-medium text-base mb-1 flex items-center gap-2">
+                <div className="text-sm flex-1 min-w-0">
+                  <div className="font-medium text-base mb-0.5 flex items-center gap-2">
                     {u.display_name ?? u.id}
                     {isSelf && (
                       <Badge className="bg-action-primary hover:bg-action-primary text-white text-xs px-1.5 py-0">
                         You
                       </Badge>
                     )}
+                  </div>
+                  <div className="font-mono text-xs text-muted-foreground mb-1 truncate" title={u.identity_key ?? 'no wallet identity'}>
+                    Wallet identity: {u.identity_key ?? <span className="italic">no wallet identity</span>}
                   </div>
                   <div className="text-muted-foreground flex items-center gap-2">
                     <span>Current role:</span>
