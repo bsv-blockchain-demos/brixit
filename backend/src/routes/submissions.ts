@@ -23,6 +23,7 @@ import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js';
 import serverWallet, { SERVER_WALLET_CHAIN } from '../serverWallet.js';
 import { createSubmissionTx, type SubmissionEntry } from '../lib/createSubmissionTx.js';
 import { getTransaction } from '../lib/getTransaction.js';
+import { buildSubmissionFilters } from '../lib/buildSubmissionFilters.js';
 import { enqueueWalletTask } from '../lib/walletQueue.js';
 import { anyoneWallet } from '../lib/anyoneWallet.js';
 import { FIELD_LIMITS, exceedsLimit } from '../utils/limits.js';
@@ -101,64 +102,7 @@ router.get('/', async (req: Request, res: Response) => {
     const sortBy = (req.query.sortBy as string) || 'assessment_date';
     const sortOrder = req.query.sortOrder === 'asc' ? 'asc' : 'desc';
 
-    // Build where clause from query params
-    const where: any = { verified: true };
-
-    if (req.query.cropTypes) {
-      const cropNames = (req.query.cropTypes as string).split(',');
-      where.crop = { name: { in: cropNames } };
-    }
-    if (req.query.category) {
-      where.crop = { ...where.crop, category: req.query.category as string };
-    }
-    if (req.query.city) {
-      where.venue = { ...where.venue, city: { equals: req.query.city as string, mode: 'insensitive' } };
-    }
-    if (req.query.state) {
-      where.venue = { ...where.venue, state: { equals: req.query.state as string, mode: 'insensitive' } };
-    }
-    if (req.query.country) {
-      where.venue = { ...where.venue, country: { equals: req.query.country as string, mode: 'insensitive' } };
-    }
-    // `place` (point-of-purchase filter) and `location` (back-compat from
-    // leaderboard) both match against venue name.
-    const venueName = (req.query.place as string | undefined) || (req.query.location as string | undefined);
-    if (venueName) {
-      where.venue = { ...where.venue, name: { equals: venueName, mode: 'insensitive' } };
-    }
-    if (req.query.brand) {
-      // Filter value may be the brand name or its label (dropdown / leaderboard differ).
-      const brand = req.query.brand as string;
-      where.brand = {
-        OR: [
-          { name:  { equals: brand, mode: 'insensitive' } },
-          { label: { equals: brand, mode: 'insensitive' } },
-        ],
-      };
-    }
-    if (req.query.brixMin) {
-      where.brixValue = { ...where.brixValue, gte: Number(req.query.brixMin) };
-    }
-    if (req.query.brixMax) {
-      where.brixValue = { ...where.brixValue, lte: Number(req.query.brixMax) };
-    }
-    if (req.query.dateStart) {
-      where.assessmentDate = { ...where.assessmentDate, gte: new Date(req.query.dateStart as string) };
-    }
-    if (req.query.dateEnd) {
-      where.assessmentDate = { ...where.assessmentDate, lte: new Date(req.query.dateEnd as string) };
-    }
-    if (req.query.search) {
-      const s = (req.query.search as string).trim();
-      where.OR = [
-        { crop: { name: { contains: s, mode: 'insensitive' } } },
-        { crop: { label: { contains: s, mode: 'insensitive' } } },
-        { brand: { name: { contains: s, mode: 'insensitive' } } },
-        { brand: { label: { contains: s, mode: 'insensitive' } } },
-        { venue: { name: { contains: s, mode: 'insensitive' } } },
-        { outlierNotes: { contains: s, mode: 'insensitive' } },
-      ];
-    }
+    const where = buildSubmissionFilters(req.query as Record<string, string | undefined>);
 
     // Map sortBy to Prisma orderBy
     const orderByMap: Record<string, any> = {
@@ -224,43 +168,7 @@ router.get('/', async (req: Request, res: Response) => {
 // --- Public: GET /api/submissions/count ---
 router.get('/count', async (req: Request, res: Response) => {
   try {
-    const where: any = { verified: true };
-
-    if (req.query.cropTypes) {
-      where.crop = { name: { in: (req.query.cropTypes as string).split(',') } };
-    }
-    if (req.query.category) {
-      where.crop = { ...where.crop, category: req.query.category as string };
-    }
-    if (req.query.city) {
-      where.venue = { ...where.venue, city: { equals: req.query.city as string, mode: 'insensitive' } };
-    }
-    if (req.query.state) {
-      where.venue = { ...where.venue, state: { equals: req.query.state as string, mode: 'insensitive' } };
-    }
-    if (req.query.country) {
-      where.venue = { ...where.venue, country: { equals: req.query.country as string, mode: 'insensitive' } };
-    }
-    const venueName = (req.query.place as string | undefined) || (req.query.location as string | undefined);
-    if (venueName) {
-      where.venue = { ...where.venue, name: { equals: venueName, mode: 'insensitive' } };
-    }
-    if (req.query.brand) {
-      const brand = req.query.brand as string;
-      where.brand = {
-        OR: [
-          { name:  { equals: brand, mode: 'insensitive' } },
-          { label: { equals: brand, mode: 'insensitive' } },
-        ],
-      };
-    }
-    if (req.query.brixMin) {
-      where.brixValue = { ...where.brixValue, gte: Number(req.query.brixMin) };
-    }
-    if (req.query.brixMax) {
-      where.brixValue = { ...where.brixValue, lte: Number(req.query.brixMax) };
-    }
-
+    const where = buildSubmissionFilters(req.query as Record<string, string | undefined>);
     const count = await prisma.submission.count({ where });
     res.json({ count });
   } catch (err) {

@@ -204,28 +204,6 @@ const MapFilters: React.FC = () => {
         {/* Crop Types */}
         <div>
           <Label className="text-sm font-medium mb-2 block">Crop Types</Label>
-          {filters.cropTypes.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3" aria-label="Selected crop types">
-              {filters.cropTypes.map((crop) => (
-                <Badge
-                  key={crop}
-                  variant="secondary"
-                  className="flex items-center gap-1 px-2 py-1 text-xs rounded-full"
-                >
-                  <span>{crop}</span>
-                  <X
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Remove crop type ${crop}`}
-                    className="w-3 h-3 cursor-pointer"
-                    onClick={() => removeCropType(crop)}
-                    onKeyDown={(e) => e.key === 'Enter' && removeCropType(crop)}
-                  />
-                </Badge>
-              ))}
-            </div>
-          )}
-
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="w-full justify-between text-sm" aria-haspopup="listbox">
@@ -267,6 +245,27 @@ const MapFilters: React.FC = () => {
               </Command>
             </PopoverContent>
           </Popover>
+          {filters.cropTypes.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3" aria-label="Selected crop types">
+              {filters.cropTypes.map((crop) => (
+                <Badge
+                  key={crop}
+                  variant="secondary"
+                  className="flex items-center gap-1 px-2 py-1 text-xs rounded-full"
+                >
+                  <span>{crop}</span>
+                  <X
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Remove crop type ${crop}`}
+                    className="w-3 h-3 cursor-pointer"
+                    onClick={() => removeCropType(crop)}
+                    onKeyDown={(e) => e.key === 'Enter' && removeCropType(crop)}
+                  />
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>
