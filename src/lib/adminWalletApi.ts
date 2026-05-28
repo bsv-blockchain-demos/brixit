@@ -1,4 +1,4 @@
-import { apiGet } from '@/lib/api';
+import { apiGet, apiPost } from '@/lib/api';
 
 export interface WalletBalance {
   satoshis: number;
@@ -16,10 +16,16 @@ export interface WalletInfo {
   addressKeyID: string;
   /** ISO timestamp of the next UTC midnight (when a fresh derivation will be used). */
   addressRotatesAt: string;
+  /** UTC date the current derivation maps to (YYYY-MM-DD). */
+  addressDate: string;
   /** Base64 prefix — pass through to `internalizeAction({ paymentRemittance })` on top-up. */
   derivationPrefix: string;
   /** Base64 suffix — pass through to `internalizeAction({ paymentRemittance })` on top-up. */
   derivationSuffix: string;
+  /** BRC-29 protocol tuple — `[securityLevel, protocolName]`. Public, not a secret. */
+  protocolID: [number, string];
+  /** Counterparty used when deriving the top-up key. Public, not a secret. */
+  counterparty: 'self' | 'anyone' | string;
 }
 
 export interface WalletActionOutput {
@@ -85,6 +91,36 @@ export const fetchPendingSubmissions = (params: { limit?: number; offset?: numbe
   if (params.offset) qs.set('offset', String(params.offset));
   const suffix = qs.toString() ? `?${qs}` : '';
   return apiGet<PendingSubmissions>(`/api/admin/wallet/pending${suffix}`);
+};
+
+export interface TopupInternalizeArgs {
+  tx: number[];
+  outputIndex: number;
+  derivationPrefix: string;
+  derivationSuffix: string;
+  senderIdentityKey: string;
+  description?: string;
+}
+
+export interface TopupInternalizeResult {
+  accepted: boolean;
+}
+
+export const topupInternalize = (args: TopupInternalizeArgs) =>
+  apiPost<TopupInternalizeResult>('/api/admin/wallet/topup/internalize', args);
+
+export interface TopupSweepResult {
+  address: string;
+  swept: number;
+  satoshis: number;
+  skipped: number;
+  failed?: number;
+  message?: string;
+}
+
+export const topupSweep = (date?: string) => {
+  const qs = date ? `?date=${encodeURIComponent(date)}` : '';
+  return apiPost<TopupSweepResult>(`/api/admin/wallet/topup/sweep${qs}`, {});
 };
 
 export function whatsOnChainTxUrl(chain: 'main' | 'test', txid: string): string {

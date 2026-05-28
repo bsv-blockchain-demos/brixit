@@ -1,14 +1,16 @@
 /**
  * Admin treasury wallet endpoints (admin role required).
  *
- *   GET /balance   — spendable change in satoshis
- *   GET /info      — chain, identity key, daily-rotating BRC-29 top-up address
- *   GET /activity  — recent on-chain actions, filterable by label
- *   GET /pending   — submission rows whose anchor never broadcast
+ *   GET  /balance            — spendable change in satoshis
+ *   GET  /info               — chain, identity key, daily-rotating BRC-29 top-up address
+ *   GET  /activity           — recent on-chain actions, filterable by label
+ *   GET  /pending            — submission rows whose anchor never broadcast
+ *   POST /topup/internalize  — internalize a wallet-payment tx built by an admin's local wallet
+ *   POST /topup/sweep        — pull external P2PKH payments sent to the rotating address into the treasury
  */
 import { Router } from 'express';
 import type { Response } from 'express';
-import { PublicKey, Utils, type WalletProtocol } from '@bsv/sdk';
+import { Beef, P2PKH, PrivateKey, PublicKey, Utils, type WalletProtocol } from '@bsv/sdk';
 import prisma from '../db/client.js';
 import { requireAuth, requireAdmin, type AuthenticatedRequest } from '../middleware/auth.js';
 import serverWallet, {
@@ -55,6 +57,7 @@ function currentTopupDerivation(now: Date = new Date()): {
   derivationPrefix: string;
   derivationSuffix: string;
   keyID: string;
+  date: string;
   rotatesAt: string;
 } {
   const day = now.toISOString().slice(0, 10);
@@ -66,9 +69,13 @@ function currentTopupDerivation(now: Date = new Date()): {
     derivationPrefix,
     derivationSuffix,
     keyID: `${derivationPrefix} ${derivationSuffix}`,
+    date: day,
     rotatesAt: tomorrow.toISOString(),
   };
 }
+
+// Counterparty for the top-up derivation
+const BRC29_COUNTERPARTY = 'self' as const;
 
 router.get('/info', async (_req: AuthenticatedRequest, res: Response) => {
   try {
@@ -82,7 +89,7 @@ router.get('/info', async (_req: AuthenticatedRequest, res: Response) => {
       serverWallet.getPublicKey({
         protocolID: BRC29_PROTOCOL,
         keyID: derivation.keyID,
-        counterparty: 'self',
+        counterparty: BRC29_COUNTERPARTY,
       }),
     ]);
 
@@ -96,12 +103,229 @@ router.get('/info', async (_req: AuthenticatedRequest, res: Response) => {
       address,
       addressKeyID:        derivation.keyID,
       addressRotatesAt:    derivation.rotatesAt,
+      addressDate:         derivation.date,
       derivationPrefix:    derivation.derivationPrefix,
       derivationSuffix:    derivation.derivationSuffix,
+      // Public derivation params
+      protocolID:          BRC29_PROTOCOL,
+      counterparty:        BRC29_COUNTERPARTY,
     });
   } catch (err: any) {
     console.error('[admin-wallet] /info failed:', err);
     res.status(500).json({ error: err?.message || 'Failed to fetch wallet info' });
+  }
+});
+
+// ── Top-up flows ─────────────────────────────────────────────────────────────
+
+// WhatsOnChain endpoints by chain. Each pair: UTXO list + per-tx BEEF.
+const WOC_BY_CHAIN = {
+  main: 'https://api.whatsonchain.com/v1/bsv/main',
+  test: 'https://api.whatsonchain.com/v1/bsv/test',
+} as const;
+
+// Placeholder for paymentRemittance.senderIdentityKey when funds came from an
+// arbitrary external wallet with no known BRC-29 peer
+const EXTERNAL_SENDER_PLACEHOLDER = new PrivateKey(1).toPublicKey().toString();
+
+/**
+ * Local-wallet top-up. The admin's browser built a wallet-payment tx targeting
+ * the treasury and POSTs the resulting BEEF + remittance here so the treasury
+ * wallet can claim the outputs.
+ */
+router.post('/topup/internalize', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const {
+      tx,
+      outputIndex,
+      derivationPrefix,
+      derivationSuffix,
+      senderIdentityKey,
+      description,
+    } = req.body as {
+      tx?: number[];
+      outputIndex?: number;
+      derivationPrefix?: string;
+      derivationSuffix?: string;
+      senderIdentityKey?: string;
+      description?: string;
+    };
+
+    if (!Array.isArray(tx) || tx.length === 0) {
+      res.status(400).json({ error: 'tx (BEEF byte array) is required' });
+      return;
+    }
+    if (typeof outputIndex !== 'number' || outputIndex < 0) {
+      res.status(400).json({ error: 'outputIndex must be a non-negative number' });
+      return;
+    }
+    if (!derivationPrefix || !derivationSuffix || !senderIdentityKey) {
+      res.status(400).json({ error: 'derivationPrefix, derivationSuffix, and senderIdentityKey are required' });
+      return;
+    }
+
+    const result = await enqueueWalletTask(() =>
+      serverWallet.internalizeAction({
+        tx,
+        outputs: [
+          {
+            outputIndex,
+            protocol: 'wallet payment',
+            paymentRemittance: {
+              derivationPrefix,
+              derivationSuffix,
+              senderIdentityKey,
+            },
+          },
+        ],
+        description: description || 'BRIXit treasury top-up from local wallet',
+        labels: ['brixit-topup', 'inbound', 'local-wallet'],
+      }),
+    );
+
+    res.json({ accepted: result?.accepted ?? false });
+  } catch (err: any) {
+    console.error('[admin-wallet] /topup/internalize failed:', err);
+    res.status(500).json({ error: err?.message || 'Failed to internalize top-up payment' });
+  }
+});
+
+/**
+ * External-address top-up. Polls WhatsOnChain for UTXOs at the rotating address
+ * (today by default; pass ?date=YYYY-MM-DD to sweep a past day's address) and
+ * internalizes each into the treasury wallet. Idempotent — UTXOs already
+ * internalized are skipped via the address label.
+ */
+router.post('/topup/sweep', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const dateParam = (req.query.date as string | undefined)?.trim();
+    if (dateParam && !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      res.status(400).json({ error: 'date must be YYYY-MM-DD' });
+      return;
+    }
+    const baseDate = dateParam ? new Date(`${dateParam}T00:00:00.000Z`) : new Date();
+    if (isNaN(baseDate.getTime())) {
+      res.status(400).json({ error: 'date is not a valid calendar date' });
+      return;
+    }
+
+    const derivation = currentTopupDerivation(baseDate);
+
+    // Re-derive the address (same call /info uses).
+    const { publicKey: topupPubKey } = await enqueueWalletTask(() =>
+      serverWallet.getPublicKey({
+        protocolID: BRC29_PROTOCOL,
+        keyID: derivation.keyID,
+        counterparty: BRC29_COUNTERPARTY,
+      }),
+    );
+    const network = SERVER_WALLET_CHAIN === 'main' ? 'mainnet' : 'testnet';
+    const address = PublicKey.fromString(topupPubKey).toAddress(network);
+
+    // Pull UTXOs at the address from WhatsOnChain.
+    const wocBase = WOC_BY_CHAIN[SERVER_WALLET_CHAIN as 'main' | 'test'];
+    const utxoResp = await fetch(`${wocBase}/address/${address}/unspent/all`);
+    if (!utxoResp.ok) {
+      res.status(502).json({ error: `WhatsOnChain UTXO lookup failed: ${utxoResp.status}` });
+      return;
+    }
+    const utxoJson = await utxoResp.json() as { result?: Array<{ tx_hash: string; tx_pos: number; value: number; isSpentInMempoolTx?: boolean }> };
+    const utxos = (utxoJson.result ?? [])
+      .filter((u) => !u.isSpentInMempoolTx)
+      .map((u) => ({ txid: u.tx_hash, vout: u.tx_pos, satoshis: u.value }));
+
+    if (utxos.length === 0) {
+      res.json({ address, swept: 0, satoshis: 0, skipped: 0, message: 'No UTXOs found at this address' });
+      return;
+    }
+
+    // Skip UTXOs we've already internalized — labelled by the address itself.
+    const seen = new Set<string>();
+    const prior = await enqueueWalletTask(() =>
+      serverWallet.listActions({
+        labels: [address],
+        labelQueryMode: 'all',
+        includeOutputs: true,
+        limit: 1000,
+      }),
+    );
+    for (const a of prior.actions ?? []) {
+      for (const o of a.outputs ?? []) {
+        if (a.txid) seen.add(`${a.txid}.${o.outputIndex}`);
+      }
+    }
+    const fresh = utxos.filter((u) => !seen.has(`${u.txid}.${u.vout}`));
+    const skipped = utxos.length - fresh.length;
+
+    if (fresh.length === 0) {
+      res.json({ address, swept: 0, satoshis: 0, skipped, message: 'All UTXOs already internalized' });
+      return;
+    }
+
+    // Fetch BEEF per txid (txids may repeat across outputs).
+    const beef = new Beef();
+    const uniqueTxids = Array.from(new Set(fresh.map((u) => u.txid)));
+    for (const txid of uniqueTxids) {
+      if (beef.findTxid(txid)) continue;
+      const beefResp = await fetch(`${wocBase}/tx/${txid}/beef`);
+      if (!beefResp.ok) {
+        res.status(502).json({ error: `WhatsOnChain BEEF fetch failed for ${txid}: ${beefResp.status}` });
+        return;
+      }
+      const beefHex = await beefResp.text();
+      beef.mergeBeef(Utils.toArray(beefHex.trim(), 'hex'));
+    }
+
+    // Group UTXOs by txid and internalize one tx at a time.
+    let totalSats = 0;
+    let internalizedCount = 0;
+    let failureCount = 0;
+    for (const txid of uniqueTxids) {
+      const atomic = beef.findAtomicTransaction(txid);
+      if (!atomic) {
+        failureCount++;
+        continue;
+      }
+      const outputsForTx = fresh.filter((u) => u.txid === txid);
+      try {
+        const result = await enqueueWalletTask(() =>
+          serverWallet.internalizeAction({
+            tx: atomic.toAtomicBEEF(),
+            outputs: outputsForTx.map((u) => ({
+              outputIndex: u.vout,
+              protocol: 'wallet payment' as const,
+              paymentRemittance: {
+                derivationPrefix: derivation.derivationPrefix,
+                derivationSuffix: derivation.derivationSuffix,
+                senderIdentityKey: EXTERNAL_SENDER_PLACEHOLDER,
+              },
+            })),
+            description: `BRIXit treasury sweep from ${address}`,
+            labels: ['brixit-topup', 'inbound', 'address-sweep', address, `ts:${Math.floor(Date.now() / 1000)}`],
+          }),
+        );
+        if (result?.accepted) {
+          internalizedCount += outputsForTx.length;
+          totalSats += outputsForTx.reduce((s, u) => s + u.satoshis, 0);
+        } else {
+          failureCount += outputsForTx.length;
+        }
+      } catch (err: any) {
+        console.error(`[admin-wallet] internalize ${txid} failed:`, err?.message);
+        failureCount += outputsForTx.length;
+      }
+    }
+
+    res.json({
+      address,
+      swept: internalizedCount,
+      satoshis: totalSats,
+      skipped,
+      failed: failureCount,
+    });
+  } catch (err: any) {
+    console.error('[admin-wallet] /topup/sweep failed:', err);
+    res.status(500).json({ error: err?.message || 'Failed to sweep top-up address' });
   }
 });
 
@@ -111,7 +335,7 @@ router.get('/activity', async (req: AuthenticatedRequest, res: Response) => {
     const labelParam = (req.query.label as string | undefined)?.trim();
     const labels = labelParam
       ? labelParam.split(',').map((l) => l.trim()).filter(Boolean)
-      : ['brixit-submission', 'brixit-edit', 'brixit-delete'];
+      : ['brixit-submission', 'brixit-edit', 'brixit-delete', 'brixit-topup'];
 
     const limit = Math.max(1, Math.min(Number(req.query.limit) || 25, 100));
     const offset = Math.max(0, Number(req.query.offset) || 0);
