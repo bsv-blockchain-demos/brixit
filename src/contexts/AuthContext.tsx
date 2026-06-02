@@ -14,6 +14,7 @@ import {
   clearAccessToken,
   refreshAccessToken,
 } from "@/lib/api";
+import type { AuthProof } from "@/lib/authProof";
 
 interface UserProfile {
   id: string;
@@ -52,7 +53,7 @@ interface AuthContextType {
   ) => Promise<boolean>;
   updateUsername: (newUsername: string) => Promise<boolean>;
   updateLocation: (location: LocationData) => Promise<boolean>;
-  walletLogin: (identityKey: string, certificate: unknown, userData: unknown, nonce: string) => Promise<{ success: boolean; error?: string }>;
+  walletLogin: (identityKey: string, certificate: unknown, userData: unknown, proof: AuthProof) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -222,7 +223,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     identityKey: string,
     certificate: unknown,
     userData: unknown,
-    nonce: string
+    proof: AuthProof
   ): Promise<{ success: boolean; error?: string }> => {
     setAuthError(null);
 
@@ -237,7 +238,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         certificateSerialNumber: (certificate as { serialNumber: string }).serialNumber,
         certificate,
         userData,
-        nonce,
+        proof,
       }, { skipAuth: true });
 
       if (!data.success) {

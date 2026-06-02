@@ -21,12 +21,14 @@
  *       These will be implemented once the database layer is decided.
  */
 import { Router } from 'express';
-import { Certificate as BsvCertificate, verifyNonce } from '@bsv/sdk';
+import { Certificate as BsvCertificate } from '@bsv/sdk';
 import * as jose from 'jose';
 import { config } from '../config.js';
 import { reverseGeocode } from '../utils/geocode.js';
 import prisma from '../db/client.js';
 import serverWallet from '../serverWallet.js';
+import { verifyAuthProof } from '../lib/verifyAuthProof.js';
+import type { AuthProof } from '../lib/authProof.js';
 
 const router = Router();
 
@@ -57,7 +59,7 @@ interface WalletAuthRequest {
   certificateSerialNumber: string;
   certificate: CertificateDTO;
   userData: UserData;
-  nonce: string;
+  proof: AuthProof;
 }
 
 // --- JWT helper ---
@@ -93,18 +95,18 @@ async function generateTokens(userId: string, email: string, displayName: string
 router.post('/', async (req, res) => {
   try {
     const body = req.body as WalletAuthRequest;
-    const { identityKey, certificateSerialNumber, certificate, userData, nonce } = body;
+    const { identityKey, certificateSerialNumber, certificate, userData, proof } = body;
 
     // 1. Validate input
-    if (!identityKey || !certificateSerialNumber || !certificate || !userData || !nonce) {
+    if (!identityKey || !certificateSerialNumber || !certificate || !userData || !proof) {
       res.status(400).json({ success: false, error: 'Missing required fields' });
       return;
     }
 
-    // 1b. Verify nonce — proves the request came from the wallet that owns certificate.subject
-    const nonceValid = await verifyNonce(nonce, serverWallet as any, certificate.subject);
-    if (!nonceValid) {
-      res.status(401).json({ success: false, error: 'Invalid nonce' });
+    // 1b. Verify the signed proof — expiry-bound, single-use proof of key ownership
+    const proofResult = await verifyAuthProof(serverWallet as any, proof, 'login');
+    if (!proofResult.valid || proofResult.identityKey !== identityKey) {
+      res.status(401).json({ success: false, error: proofResult.error ?? 'Proof identity mismatch' });
       return;
     }
 

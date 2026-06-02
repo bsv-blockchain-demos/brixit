@@ -2,7 +2,8 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useWallet } from '@/contexts/WalletContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Utils, createNonce, WalletClient } from '@bsv/sdk';
+import { Utils, WalletClient } from '@bsv/sdk';
+import { createAuthProof } from '@/lib/authProof';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Smartphone, ArrowRight, ShieldCheck, KeyRound, MonitorSmartphone } from 'lucide-react';
@@ -153,8 +154,8 @@ export default function WalletLogin() {
         return;
       }
 
-      const nonce = await createNonce(userWallet, BACKEND_PUBLIC_KEY);
-      const result = await walletLogin(userPubKey, certificate, userData, nonce);
+      const proof = await createAuthProof(userWallet, BACKEND_PUBLIC_KEY, 'login');
+      const result = await walletLogin(userPubKey, certificate, userData, proof);
 
       if (result.success) {
         navigate('/leaderboard');

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useWalletRelay } from '@/contexts/WalletRelayContext';
-import { Utils, createNonce } from '@bsv/sdk';
+import { Utils } from '@bsv/sdk';
+import { createAuthProof } from '@/lib/authProof';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/contexts/WalletContext';
 import { getDataFromWallet } from '@/utils/getDataFromWallet';
@@ -81,8 +82,8 @@ export function useMobileWalletLogin() {
           throw new Error('Unable to retrieve wallet profile data.');
         }
 
-        const nonce = await createNonce(wallet as any, BACKEND_PUBLIC_KEY!);
-        const success = await walletLogin(identityKey, certificate, userData, nonce);
+        const proof = await createAuthProof(wallet as any, BACKEND_PUBLIC_KEY!, 'login');
+        const success = await walletLogin(identityKey, certificate, userData, proof);
         if (!success) throw new Error('Authentication failed. Please try again.');
 
         setLoginStatus('done');
