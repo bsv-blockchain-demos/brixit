@@ -410,7 +410,7 @@ const DataEntry = () => {
       <Header />
       <main
         className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8"
-        style={{ paddingBottom: 'calc(7rem + env(safe-area-inset-bottom, 1rem))' }}
+        style={{ paddingBottom: 'calc(7rem + var(--safe-bottom))' }}
       >
         <motion.div className="text-center mb-8 md:mb-12" {...fadeUp}>
           <p className="uppercase tracking-[0.2em] text-sm font-medium mb-2 text-white">
@@ -656,7 +656,7 @@ const DataEntry = () => {
           backgroundColor: 'hsl(var(--card))',
           borderColor: 'var(--blue-pale)',
           padding: '0.75rem 1rem',
-          paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0.5rem))',
+          paddingBottom: 'calc(0.75rem + var(--safe-bottom))',
         }}
       >
         <div className="max-w-5xl mx-auto flex justify-end">

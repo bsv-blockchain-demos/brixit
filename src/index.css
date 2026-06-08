@@ -29,6 +29,13 @@
      * Score — Excellent: #1f6b3f
      * ─────────────────────────────────────────────────── */
 
+    /* Safe-area insets — env() fallback; Mycelia overrides these inline on
+       <html> for the Android case where env() returns 0. */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+
     /* Blue structural family (formerly blue-deep / blue-mist) */
     --blue-deep:  #2c4a5c;   /* dark blue — hero, footer, nav backgrounds   */
     --blue-mid:    #5787a1;   /* mid blue — header fill, cards on dark bg     */
@@ -215,6 +222,9 @@
 
   html {
     scroll-behavior: smooth;
+    /* Brand-blue root backdrop so safe-area/overscroll regions blend with the
+       header instead of showing the webview's black default. */
+    @apply bg-background;
   }
 }
 

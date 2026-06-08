@@ -769,7 +769,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-between items-center pt-4 border-t border-blue-pale pb-[env(safe-area-inset-bottom,1rem)]">
+        <div className="flex justify-between items-center pt-4 border-t border-blue-pale pb-[var(--safe-bottom)]">
           {isEditing ? (
             <>
               <Button
