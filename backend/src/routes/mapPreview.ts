@@ -25,6 +25,7 @@ router.get('/', async (_req: Request, res: Response) => {
       WHERE s.verified = true
         AND v.latitude  IS NOT NULL
         AND v.longitude IS NOT NULL
+        AND NOT (v.latitude = 0 AND v.longitude = 0)
       GROUP BY
         ROUND(v.latitude::numeric  / 2) * 2,
         ROUND(v.longitude::numeric / 2) * 2
@@ -78,13 +79,13 @@ router.get('/', async (_req: Request, res: Response) => {
       }),
     );
 
-    const allLats = clusters.map(c => c.lat);
-    const allLngs = clusters.map(c => c.lng);
-    const centerLat = (Math.max(...allLats) + Math.min(...allLats)) / 2;
-    const centerLng = (Math.max(...allLngs) + Math.min(...allLngs)) / 2;
+    // Center on the largest cluster so the featured marker lands dead-center,
+    // where its score bubble can't be clipped by the panel edges.
+    const centerLat = clusters[0].lat;
+    const centerLng = clusters[0].lng;
     const spread = Math.max(
-      Math.max(...allLats) - Math.min(...allLats),
-      Math.max(...allLngs) - Math.min(...allLngs),
+      Math.max(...clusters.map(c => c.lat)) - Math.min(...clusters.map(c => c.lat)),
+      Math.max(...clusters.map(c => c.lng)) - Math.min(...clusters.map(c => c.lng)),
     );
 
     const zoom = Math.max(2, Math.min(

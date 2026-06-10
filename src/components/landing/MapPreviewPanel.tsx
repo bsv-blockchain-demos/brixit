@@ -105,13 +105,19 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
                     const productName = s
                       ? (s.cropVariety ? `${s.cropVariety} ${s.cropLabel}` : s.cropLabel)
                       : 'Banana';
-                    const location = s ? (s.venueName || s.venueCity || '') : 'Aldi · Zurich';
+                    const location = s ? (s.venueName || s.venueCity || '') : 'Unknown · Location';
+                    // Clamp horizontally + flip below a high marker so the
+                    // bubble never clips the panel edges.
+                    const bubbleX = Math.max(28, Math.min(72, largestPct.x));
+                    const placeBelow = largestPct.y < 38;
                     return (
                       <div
                         className="absolute pointer-events-none"
                         style={{
-                          bottom: `calc(${100 - largestPct.y}% + 20px)`,
-                          left: `${largestPct.x}%`,
+                          ...(placeBelow
+                            ? { top: `calc(${largestPct.y}% + 20px)` }
+                            : { bottom: `calc(${100 - largestPct.y}% + 20px)` }),
+                          left: `${bubbleX}%`,
                           transform: 'translateX(-50%)',
                         }}
                       >
@@ -135,10 +141,10 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
                           <p className="leading-snug mt-1 pt-1 border-t" style={{ color: 'var(--text-muted)', borderColor: 'var(--blue-pale)', fontSize: '10px' }}>
                             {largest.count - 1} other submissions on this location
                           </p>
-                          {/* Arrow tip pointing down toward the cluster circle */}
+                          {/* Arrow tip — flips to the top edge when below. */}
                           <div
-                            className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white rotate-45"
-                            style={{ boxShadow: '2px 2px 3px rgba(0,0,0,0.06)' }}
+                            className={`absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-white rotate-45 ${placeBelow ? '-top-1.5' : '-bottom-1.5'}`}
+                            style={{ boxShadow: placeBelow ? '-1px -1px 2px rgba(0,0,0,0.04)' : '2px 2px 3px rgba(0,0,0,0.06)' }}
                           />
                         </div>
                       </div>

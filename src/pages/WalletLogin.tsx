@@ -63,7 +63,7 @@ export default function WalletLogin() {
     let cancelled = false;
     const FALLBACK: Omit<MapPreview, 'url'> = {
       center: { lat: 47.5, lng: 8.0 },
-      zoom: 3,
+      zoom: 2.5,
       clusters: [
         { lat: 47.5, lng: 8.0, count: 8 },   // Switzerland / Central Europe
         { lat: 48.8, lng: 2.3, count: 5 },   // Paris / France
@@ -83,7 +83,7 @@ export default function WalletLogin() {
           console.log('[map-preview] Data received:', data);
           if (cancelled) return;
           if (!data?.clusters?.length) { console.warn('[map-preview] No clusters in response, staying on fallback'); return; }
-          const live = { ...data, zoom: 3 };
+          const live = { ...data, zoom: 2.5 };
           setMapPreview({ ...live, url: buildUrl(token, live) });
           console.log('[map-preview] Upgraded to live data, clusters:', live.clusters.length);
         })
