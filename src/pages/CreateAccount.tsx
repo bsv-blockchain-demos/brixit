@@ -127,7 +127,7 @@ export default function CreateAccount() {
           <h1 className="text-2xl font-bold font-display text-foreground">Create your BRIX account</h1>
         </div>
 
-        <Card className="border border-blue-pale">
+        <Card className="border border-hairline">
           <CardHeader className="pb-3">
             {step === 'checking' && <CardTitle className="font-display text-text-dark">Checking your wallet…</CardTitle>}
             {(step === 'details' || step === 'acquiring') && (

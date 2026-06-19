@@ -46,12 +46,19 @@ const MAP_QUERY_LIMIT = 2000;
 
 const safeStr = (v?: any) => (v === null || v === undefined ? '' : String(v));
 
+// Read live --score-* tokens so map markers share ONE palette with badges,
+// table and inline scores (theme-correct; falls back to literals if unresolved).
+const tierVar = (t: 'poor' | 'average' | 'good' | 'excellent', fallback: string): string => {
+  if (typeof window === 'undefined') return fallback;
+  return getComputedStyle(document.documentElement).getPropertyValue(`--score-${t}`).trim() || fallback;
+};
+
 const tierColorExpr = (scoreExpr: any): any => [
   'case',
-  ['>=', scoreExpr, 1.75], '#2d6a4f',  // excellent — green-mid
-  ['>=', scoreExpr, 1.5],  '#40916c',  // good      — green-fresh
-  ['>=', scoreExpr, 1.25], '#c9a84c',  // average   — gold
-  '#c0392b',                           // poor      — score-poor
+  ['>=', scoreExpr, 1.75], tierVar('excellent', '#1f6b3f'),  // excellent
+  ['>=', scoreExpr, 1.5],  tierVar('good', '#6fae3f'),       // good
+  ['>=', scoreExpr, 1.25], tierVar('average', '#e1b12c'),    // average
+  tierVar('poor', '#c0392b'),                                // poor — red
 ];
 
 function buildSubmissionsGeoJSON(
@@ -643,7 +650,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     return (
       <div
         key={key}
-        className={`flex justify-between items-start py-3 border-b border-blue-pale last:border-b-0 ${canNavigate ? 'cursor-pointer hover:bg-blue-mist rounded-lg px-2 -mx-2 transition-colors' : ''}`}
+        className={`flex justify-between items-start py-3 border-b border-hairline last:border-b-0 ${canNavigate ? 'cursor-pointer hover:bg-surface-canvas rounded-lg px-2 -mx-2 transition-colors' : ''}`}
         onClick={canNavigate ? () => setModalSubmission(sub) : undefined}
       >
         <div className="flex flex-col min-w-0 flex-1">
@@ -752,7 +759,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                       return (
                         <div
                           key={label}
-                          className="p-3 cursor-pointer hover:bg-blue-mist active:bg-blue-pale rounded-lg flex justify-between items-center transition-colors"
+                          className="p-3 cursor-pointer hover:bg-surface-canvas active:bg-blue-pale rounded-lg flex justify-between items-center transition-colors"
                           onClick={() => setSelectedEntry({ type: 'crop', id: label, label })}
                         >
                           <div className="min-w-0 flex-1">
@@ -786,7 +793,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                       return (
                         <div
                           key={label}
-                          className="p-3 cursor-pointer hover:bg-blue-mist active:bg-blue-pale rounded-lg flex justify-between items-center transition-colors"
+                          className="p-3 cursor-pointer hover:bg-surface-canvas active:bg-blue-pale rounded-lg flex justify-between items-center transition-colors"
                           onClick={() => setSelectedEntry({ type: 'brand', id: label, label })}
                         >
                           <div className="min-w-0 flex-1">

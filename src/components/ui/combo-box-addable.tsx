@@ -128,16 +128,16 @@ const ComboBoxAddable: React.FC<ComboBoxAddableProps> = ({
             )}
             <CommandEmpty>
               {isNewEntry ? (
-                <div className="flex items-center justify-between px-2 py-1 text-sm text-gray-600">
+                <div className="flex items-center justify-between px-2 py-1 text-sm text-text-mid">
                   <span>
-                    Press <kbd className="px-1 py-0.5 text-xs bg-gray-100">Ctrl</kbd>
-                    +<kbd className="px-1 py-0.5 text-xs bg-gray-100">Enter</kbd> or use{" "}
+                    Press <kbd className="px-1 py-0.5 text-xs bg-surface-canvas">Ctrl</kbd>
+                    +<kbd className="px-1 py-0.5 text-xs bg-surface-canvas">Enter</kbd> or use{" "}
                     <PlusCircle className="inline w-4 h-4 text-blue-600" /> below to
                     add "{query.trim()}"
                   </span>
                 </div>
               ) : (
-                <div className="p-2 text-sm text-gray-600">No results found</div>
+                <div className="p-2 text-sm text-text-mid">No results found</div>
               )}
             </CommandEmpty>
           </CommandList>

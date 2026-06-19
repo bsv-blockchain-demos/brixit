@@ -53,7 +53,7 @@ const ReadingCard: React.FC<{
   return (
     <div
       className="rounded-xl border overflow-hidden"
-      style={{ borderColor: hasError ? 'var(--score-poor)' : 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}
+      style={{ borderColor: hasError ? 'var(--score-poor)' : 'var(--field-border)', backgroundColor: 'hsl(var(--card))' }}
     >
       {/* Accordion header */}
       <div
@@ -61,12 +61,12 @@ const ReadingCard: React.FC<{
         tabIndex={0}
         onClick={() => onToggle(reading.id)}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(reading.id); } }}
-        className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-blue-mist transition-colors"
+        className="flex items-center justify-between p-4 cursor-pointer select-none hover:bg-surface-canvas transition-colors"
       >
         <div className="flex items-center gap-2 min-w-0">
           <span
             className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-            style={{ backgroundColor: hasError ? 'var(--score-poor)' : 'var(--green-fresh)' }}
+            style={{ backgroundColor: hasError ? 'var(--score-poor)' : 'var(--select-strong)' }}
           >
             {index + 1}
           </span>
@@ -110,7 +110,7 @@ const ReadingCard: React.FC<{
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             style={{ overflow: 'hidden' }}
           >
-            <div className="px-4 pb-5 border-t space-y-4" style={{ borderColor: 'var(--blue-pale)' }}>
+            <div className="px-4 pb-5 border-t space-y-4" style={{ borderColor: 'var(--hairline)' }}>
               {/* Crop Type */}
               <div className="pt-4">
                 <Label

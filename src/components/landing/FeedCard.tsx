@@ -10,7 +10,7 @@ export function FeedCard({ product, location, pct, score, user, rating }: {
 }) {
   const color = rating === 'Excellent' ? 'var(--green-mid)' : rating === 'Good' ? 'var(--gold)' : 'var(--score-poor)';
   return (
-    <Card className="overflow-hidden border" style={{ borderColor: 'var(--blue-pale)' }}>
+    <Card className="overflow-hidden border" style={{ borderColor: 'var(--hairline)' }}>
       <CardContent className="p-5">
         <p className="font-display font-bold text-4xl leading-none" style={{ color }} aria-label={`Score ${pct}, rated ${rating}`}>{pct}</p>
         <p className="text-xs font-medium mt-1" style={{ color }}>{rating}</p>

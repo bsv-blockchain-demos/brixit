@@ -134,7 +134,7 @@ const Profile = () => {
 
           {/* Profile Hero Card */}
           <motion.div {...fadeUp}>
-            <Card className="border border-blue-pale rounded-2xl shadow-sm">
+            <Card className="border border-hairline rounded-2xl shadow-sm">
               <CardContent className="p-6 space-y-5">
                 <div className="flex flex-col items-center text-center gap-3">
                   <Avatar className="h-20 w-20">
@@ -158,7 +158,7 @@ const Profile = () => {
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-text-muted-brown mb-1.5">Public Identity Key</p>
                 </div>
-                <div className="flex items-center gap-2 border border-blue-pale rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2 border border-hairline rounded-lg px-3 py-2">
                   <code className="flex-1 text-xs break-all font-mono text-text-mid">
                     {user.identity_key}
                   </code>
@@ -176,7 +176,7 @@ const Profile = () => {
                 </div>
 
                 {/* Stats row */}
-                <div className="grid grid-cols-3 divide-x divide-blue-pale">
+                <div className="grid grid-cols-3 divide-x divide-hairline">
                   <div className="p-3 text-center">
                     <div className="text-2xl font-bold font-display text-text-dark">{level}</div>
                     <div className="text-xs text-text-muted-brown">Level</div>
@@ -198,7 +198,7 @@ const Profile = () => {
           <motion.div className="space-y-6" {...stagger}>
             {/* Display Name Card */}
             <motion.div {...staggerChild}>
-              <Card className="border border-blue-pale rounded-2xl shadow-sm">
+              <Card className="border border-hairline rounded-2xl shadow-sm">
                 <CardHeader>
                   <CardTitle className="font-display text-text-dark">Display Name</CardTitle>
                 </CardHeader>
@@ -229,7 +229,7 @@ const Profile = () => {
 
             {/* Progress Card */}
             <motion.div {...staggerChild}>
-              <Card className="border border-blue-pale rounded-2xl shadow-sm">
+              <Card className="border border-hairline rounded-2xl shadow-sm">
                 <CardHeader>
                   <CardTitle className="font-display font-semibold text-text-dark">Progress</CardTitle>
                 </CardHeader>
@@ -253,7 +253,7 @@ const Profile = () => {
 
             {/* Location Card */}
             <motion.div {...staggerChild}>
-              <Card className="border border-blue-pale rounded-2xl shadow-sm">
+              <Card className="border border-hairline rounded-2xl shadow-sm">
                 <CardHeader>
                   <CardTitle className="font-display text-text-dark">Location</CardTitle>
                 </CardHeader>

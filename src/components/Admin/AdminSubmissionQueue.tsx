@@ -103,7 +103,7 @@ function SubmissionCard({
               <CheckCircle className="w-3 h-3" /> Verified
             </Badge>
           ) : (
-            <Badge variant="outline" className="bg-blue-mist text-gold border-blue-pale flex items-center gap-1">
+            <Badge variant="outline" className="bg-surface-canvas text-gold border-hairline flex items-center gap-1">
               <Clock className="w-3 h-3" /> Awaiting Verification
             </Badge>
           )}

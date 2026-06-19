@@ -30,7 +30,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
   return (
     <TableRow
       key={submission.id}
-      className="border-blue-pale odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors cursor-pointer"
+      className="border-hairline odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors cursor-pointer"
       onClick={() => onOpenModal(submission)} // Make the whole row clickable
     >
       {/* Cell 1 — Crop */}

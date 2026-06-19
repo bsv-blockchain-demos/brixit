@@ -414,12 +414,12 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
   if (isNarrow) {
     return (
       <>
-        <div className="p-3 border-b border-blue-pale flex gap-2 items-center">
+        <div className="p-3 border-b border-hairline flex gap-2 items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted-brown" />
             <Input
               placeholder="Search crop, location..."
-              className="pl-9 pr-3 py-2 rounded-md border border-blue-pale focus-visible:ring-green-fresh/30"
+              className="pl-9 pr-3 py-2 rounded-md border border-hairline focus-visible:ring-green-fresh/30"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
@@ -427,7 +427,7 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
           <Button
             variant="outline"
             onClick={() => setSheetOpen(true)}
-            className="shrink-0 flex items-center gap-2 border-blue-pale text-text-dark hover:bg-blue-mist"
+            className="shrink-0 flex items-center gap-2 border-hairline text-text-dark hover:bg-surface-canvas"
           >
             <Filter className="w-4 h-4" />
             <span>Filters</span>
@@ -455,7 +455,7 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
             <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-5">
               {renderFilterFields()}
             </div>
-            <div className="shrink-0 p-4 border-t border-blue-pale">
+            <div className="shrink-0 p-4 border-t border-hairline">
               <Button onClick={() => setSheetOpen(false)} className="w-full" size="lg">
                 Show {filteredCount} {filteredCount === 1 ? 'result' : 'results'}
               </Button>
@@ -474,7 +474,7 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted-brown" />
           <Input
             placeholder="Search by crop, submitter, location, notes..."
-            className="pl-9 pr-3 py-2 rounded-md border border-blue-pale focus-visible:ring-green-fresh/30"
+            className="pl-9 pr-3 py-2 rounded-md border border-hairline focus-visible:ring-green-fresh/30"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
@@ -482,7 +482,7 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
         <Button
           variant="outline"
           onClick={() => setShowFilters(s => !s)}
-          className="flex items-center space-x-2 border-blue-pale text-blue-deep hover:bg-blue-mist"
+          className="flex items-center space-x-2 border-hairline text-blue-deep hover:bg-surface-canvas"
         >
           <Filter className="w-4 h-4" />
           <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
@@ -499,7 +499,7 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
       </div>
 
       {showFilters && (
-        <Card className="mb-6 rounded-2xl border border-blue-pale shadow-sm">
+        <Card className="mb-6 rounded-2xl border border-hairline shadow-sm">
           <CardContent className="p-6 space-y-5">
             {renderFilterFields()}
           </CardContent>

@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import Header from "../components/Layout/Header";
 import { PageBackground } from '../components/ui/PageBackground';
 import LocationSelector from "../components/common/LocationSelector";
@@ -73,8 +73,8 @@ const LeaderboardPage: React.FC = () => {
   // Initializing location codes — we handle this silently (no spinner)
   const [isInitializing, setIsInitializing] = useState(!!user?.country);
 
-  const [lastRefreshAt, setLastRefreshAt] = useState(0);
-  const canRefresh = Date.now() - lastRefreshAt >= 15_000;
+  // Allow refresh whenever a fetch isn't already in flight (no fixed cooldown).
+  const canRefresh = !isFetching && !isFirstLoad;
   const [refreshNonce, setRefreshNonce] = useState(0);
 
   // Init location codes from GeoNames
@@ -257,9 +257,15 @@ const LeaderboardPage: React.FC = () => {
 
   const handleRefresh = () => {
     if (!canRefresh) return;
-    setLastRefreshAt(Date.now());
     queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
     setRefreshNonce((n) => n + 1);
+  };
+
+  // Restore the personalized default view (my location, all crops). Showing all
+  // countries is reachable directly via the Country dropdown, so one reset suffices.
+  const resetFilters = () => {
+    setLocation({ ...emptyLocation, country: user?.country || ALL_COUNTRIES, state: user?.state || "", city: user?.city || "" });
+    setCrop("");
   };
 
   const loadMore = async (type: 'location' | 'brand' | 'user') => {
@@ -343,12 +349,12 @@ const LeaderboardPage: React.FC = () => {
 
   // One merged surface: a single bordered/rounded/shadowed panel whose internal
   // regions are split by hairline dividers (no gaps with background showing).
-  const PANEL = "bg-card text-card-foreground border border-blue-pale rounded-2xl shadow-sm overflow-hidden";
+  const PANEL = "bg-card text-card-foreground border border-hairline rounded-2xl shadow-sm overflow-hidden";
 
   const boardConfigs = [
-    { key: 'location' as const, title: 'Top Locations', data: locationData, hasMore: locationHasMore, isLoadingMore: loadingMore.location, onLoadMore: () => loadMore('location') },
-    { key: 'brand' as const, title: 'Top Brands', data: brandData, hasMore: brandHasMore, isLoadingMore: loadingMore.brand, onLoadMore: () => loadMore('brand') },
-    { key: 'user' as const, title: 'Most Submissions', data: userData, hasMore: userHasMore, isLoadingMore: loadingMore.user, onLoadMore: () => loadMore('user') },
+    { key: 'location' as const, title: 'Top Locations', subtitle: 'Where the highest-scoring produce is being found', data: locationData, hasMore: locationHasMore, isLoadingMore: loadingMore.location, onLoadMore: () => loadMore('location') },
+    { key: 'brand' as const, title: 'Top Brands', subtitle: 'Farms and brands with the best average scores', data: brandData, hasMore: brandHasMore, isLoadingMore: loadingMore.brand, onLoadMore: () => loadMore('brand') },
+    { key: 'user' as const, title: 'Most Submissions', subtitle: 'The community’s most active contributors', data: userData, hasMore: userHasMore, isLoadingMore: loadingMore.user, onLoadMore: () => loadMore('user') },
   ];
   const filterTabs = ([
     { key: 'location', label: 'Locations' },
@@ -358,6 +364,7 @@ const LeaderboardPage: React.FC = () => {
   const renderBoard = (cfg: typeof boardConfigs[number]) => (
     <LeaderboardCard
       title={cfg.title}
+      subtitle={cfg.subtitle}
       data={cfg.data}
       labelKey={cfg.key}
       loadMoreType={cfg.key}
@@ -382,14 +389,29 @@ const LeaderboardPage: React.FC = () => {
       )}
       <Header />
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 pb-20 md:p-6 lg:p-8">
-        {/* Mobile-only page identity — desktop shows the active nav tab instead. */}
-        <div className="lb-mobile-only mb-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-on-bg-subtle">
-            Community Rankings
-          </p>
-          <h1 className="font-display text-3xl font-bold leading-tight text-on-bg-text">
-            Leaderboard
-          </h1>
+        {/* Page identity, shown on both mobile and desktop. Refresh lives here
+            (data freshness, not a filter) so it sits with the section, not the filters. */}
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-widest text-on-bg-subtle">
+              Community Rankings
+            </p>
+            <h1 className="font-display text-3xl desktop:text-4xl font-bold leading-tight text-on-bg-text">
+              Leaderboard
+            </h1>
+            <p className="mt-1.5 text-sm desktop:text-base text-on-bg-body max-w-xl">
+              See where the community is finding the most nutritious produce, ranked by location, brand, and contributor.
+            </p>
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={!canRefresh}
+            aria-label="Refresh leaderboards"
+            className={`shrink-0 inline-flex items-center gap-1.5 text-sm font-medium ${canRefresh ? 'text-on-bg-body hover:text-on-bg-text' : 'text-on-bg-muted'}`}
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
         </div>
         {/* ── Mobile (≤640px): one merged panel — filters · tabs · active board ── */}
         <div className={`lb-mobile-only -mx-2 mb-4 ${PANEL}`}>
@@ -402,7 +424,7 @@ const LeaderboardPage: React.FC = () => {
                 <select
                   value={crop}
                   onChange={(e) => setCrop(e.target.value)}
-                  className="w-full rounded-lg border border-blue-pale bg-card text-text-dark text-sm px-2 py-2"
+                  className="w-full rounded-lg border border-hairline bg-card text-text-dark text-sm px-2 py-2"
                 >
                   <option value="">All crops</option>
                   {allCrops.map((c) => (
@@ -414,27 +436,14 @@ const LeaderboardPage: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-4 mt-3 text-sm">
-              <button onClick={handleRefresh} disabled={!canRefresh} className={canRefresh ? 'text-green-fresh' : 'text-text-muted-brown'}>Refresh</button>
-              <button
-                onClick={() => {
-                  setLocation({ ...emptyLocation, country: user?.country || ALL_COUNTRIES, state: user?.state || "", city: user?.city || "" });
-                  setCrop("");
-                }}
-                className="text-green-fresh"
-              >
-                Reset
-              </button>
-              <button
-                onClick={() => { setLocation({ ...emptyLocation, country: ALL_COUNTRIES }); setCrop(""); }}
-                className="text-text-mid"
-              >
-                Clear
+              <button onClick={resetFilters} className="text-text-mid hover:text-text-dark">
+                Reset filters
               </button>
             </div>
           </div>
           {/* Tabs region */}
-          <div className="px-3 py-3 border-t border-blue-pale">
-            <div className="flex gap-1 p-1 bg-blue-mist border border-blue-pale rounded-xl">
+          <div className="px-3 py-3 border-t border-hairline">
+            <div className="flex gap-1 p-1 bg-surface-canvas border border-hairline rounded-xl">
               {filterTabs.map((t) => (
                 <button
                   key={t.key}
@@ -452,11 +461,11 @@ const LeaderboardPage: React.FC = () => {
             </div>
           </div>
           {dataScopeMessage && (
-            <div className="px-3 py-2 border-t border-blue-pale bg-blue-mist text-sm text-text-mid">{dataScopeMessage}</div>
+            <div className="px-3 py-2 border-t border-hairline bg-surface-canvas text-sm text-text-mid">{dataScopeMessage}</div>
           )}
           {/* Active board region (others hidden by .lb-board) */}
           {boardConfigs.map((cfg) => (
-            <div key={cfg.key} className={`border-t border-blue-pale lb-board ${mobileTab === cfg.key ? 'lb-board--active' : ''}`}>
+            <div key={cfg.key} className={`border-t border-hairline lb-board ${mobileTab === cfg.key ? 'lb-board--active' : ''}`}>
               {renderBoard(cfg)}
             </div>
           ))}
@@ -465,16 +474,9 @@ const LeaderboardPage: React.FC = () => {
         {/* ── Desktop (≥641px): filters sidebar + merged boards panel ── */}
         <div className="lb-desktop-only flex flex-col md:flex-row gap-6">
           <aside className="w-full md:w-72">
-            <div className="bg-card text-card-foreground border border-blue-pale rounded-2xl shadow-sm p-4">
+            <div className="bg-card text-card-foreground border border-hairline rounded-2xl shadow-sm p-4">
             <h2 className="text-lg font-semibold font-display text-text-dark mb-4">Filters</h2>
             <div className="space-y-4">
-              <button
-                onClick={handleRefresh}
-                disabled={!canRefresh}
-                className={`text-sm ${canRefresh ? 'text-green-fresh hover:text-green-mid' : 'text-text-muted-brown'} text-left`}
-              >
-                Refresh Leaderboards
-              </button>
               <LocationSelector
                 value={location}
                 onChange={setLocation}
@@ -486,7 +488,7 @@ const LeaderboardPage: React.FC = () => {
                 <select
                   value={crop}
                   onChange={(e) => setCrop(e.target.value)}
-                  className="w-full rounded-lg border border-blue-pale bg-card text-text-dark px-2 py-2"
+                  className="w-full rounded-lg border border-hairline bg-card text-text-dark px-2 py-2"
                 >
                   <option value="">All crops</option>
                   {allCrops.map((c) => (
@@ -498,27 +500,10 @@ const LeaderboardPage: React.FC = () => {
               </div>
               <div className="flex flex-col space-y-2">
                 <button
-                  onClick={() => {
-                    setLocation({
-                      ...emptyLocation,
-                      country: user?.country || ALL_COUNTRIES,
-                      state: user?.state || "",
-                      city: user?.city || "",
-                    });
-                    setCrop("");
-                  }}
-                  className="text-sm text-green-fresh hover:text-green-mid text-left"
-                >
-                  Reset to My Location
-                </button>
-                <button
-                  onClick={() => {
-                    setLocation({ ...emptyLocation, country: ALL_COUNTRIES });
-                    setCrop("");
-                  }}
+                  onClick={resetFilters}
                   className="text-sm text-text-mid hover:text-text-dark text-left"
                 >
-                  Clear Filters
+                  Reset filters
                 </button>
               </div>
             </div>
@@ -528,13 +513,13 @@ const LeaderboardPage: React.FC = () => {
           {/* Leaderboard grid — one merged panel, boards split by hairline dividers */}
           <section className="flex-1 min-w-0">
             {dataScopeMessage && (
-              <div className="mb-4 p-3 bg-blue-mist border border-blue-pale rounded-lg text-sm text-text-mid">
+              <div className="mb-4 p-3 bg-surface-canvas border border-hairline rounded-lg text-sm text-text-mid">
                 {dataScopeMessage}
               </div>
             )}
             <div className={PANEL}>
               {boardConfigs.map((cfg, i) => (
-                <div key={cfg.key} className={i > 0 ? 'border-t border-blue-pale' : ''}>
+                <div key={cfg.key} className={i > 0 ? 'border-t border-hairline' : ''}>
                   {renderBoard(cfg)}
                 </div>
               ))}

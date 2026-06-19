@@ -361,7 +361,7 @@ export default function WalletLogin() {
               {/* Right column — score guide card */}
               <motion.div
                 className="rounded-2xl p-6 desktop:p-8 bg-white border shadow-sm"
-                style={{ borderColor: 'var(--blue-pale)' }}
+                style={{ borderColor: 'var(--hairline)' }}
                 {...fadeUp}
               >
                 <p className="uppercase tracking-[0.15em] text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>
@@ -462,21 +462,21 @@ export default function WalletLogin() {
             </motion.div>
 
             <motion.div {...stagger} className="grid desktop:grid-cols-3 gap-6 mb-12">
-              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--blue-pale)' }}>
+              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--hairline)' }}>
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--blue-mid)' }}>
                   <KeyRound className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>No password to forget</h3>
                 <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>Your wallet handles authentication. No emails, no resets, no breaches.</p>
               </motion.div>
-              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--blue-pale)' }}>
+              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--hairline)' }}>
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--blue-mid)' }}>
                   <ShieldCheck className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>Your data is never sold</h3>
                 <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>Scores are public, but your identity stays private unless you choose otherwise.</p>
               </motion.div>
-              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--blue-pale)' }}>
+              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--hairline)' }}>
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--blue-mid)' }}>
                   <MonitorSmartphone className="w-5 h-5 text-white" />
                 </div>

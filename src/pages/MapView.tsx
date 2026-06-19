@@ -101,12 +101,12 @@ const MapView = () => {
 
         {/* Steel-50 canvas frame separates the white map box from the page background */}
         <div className="bg-surface-canvas rounded-2xl p-2">
-          <Card className="rounded-xl border border-blue-pale overflow-hidden shadow-sm">
-            <div className="flex justify-start p-3 border-b border-blue-pale">
+          <Card className="rounded-xl border border-hairline overflow-hidden shadow-sm">
+            <div className="flex justify-start p-3 border-b border-hairline">
               <Button
                 variant="outline"
                 onClick={handleLocationSearch}
-                className="flex items-center space-x-2 border-blue-pale text-green-fresh hover:bg-blue-mist"
+                className="flex items-center space-x-2 border-hairline text-green-fresh hover:bg-surface-canvas"
               >
                 <Locate className="w-4 h-4" />
                 <span>Near Me</span>

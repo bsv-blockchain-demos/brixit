@@ -31,7 +31,7 @@ const MobileSubmissionCard: React.FC<{
       tabIndex={0}
       onClick={onOpenModal}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenModal(); } }}
-      className="w-full text-left rounded-xl border border-blue-pale bg-card text-card-foreground p-4 shadow-sm active:shadow-md transition-shadow cursor-pointer"
+      className="w-full text-left rounded-xl border border-hairline bg-card text-card-foreground p-4 shadow-sm active:shadow-md transition-shadow cursor-pointer"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
@@ -43,7 +43,7 @@ const MobileSubmissionCard: React.FC<{
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="p-1.5 -m-1 rounded-lg hover:bg-blue-mist transition-colors"
+                  className="p-1.5 -m-1 rounded-lg hover:bg-surface-canvas transition-colors"
                   onClick={(e) => e.stopPropagation()}
                   aria-label="Submission actions"
                 >

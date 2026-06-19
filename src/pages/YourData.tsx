@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Header from '../components/Layout/Header';
 import { PageBackground } from '../components/ui/PageBackground';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -132,25 +132,13 @@ const YourData: React.FC = () => {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [openInEditMode, setOpenInEditMode] = useState(false);
 
-  const REFRESH_COOLDOWN_S = 15;
-  const [cooldownSeconds, setCooldownSeconds] = useState(0);
-  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Disable refresh only while a fetch is in flight (no fixed cooldown).
+  const isRefreshing = submissionsPageQuery.isFetching;
 
   const handleRefresh = useCallback(() => {
-    if (cooldownSeconds > 0) return;
+    if (isRefreshing) return;
     queryClient.invalidateQueries({ queryKey: ['submissions', 'mine'] });
-    setCooldownSeconds(REFRESH_COOLDOWN_S);
-    cooldownRef.current = setInterval(() => {
-      setCooldownSeconds((s) => {
-        if (s <= 1) {
-          clearInterval(cooldownRef.current!);
-          cooldownRef.current = null;
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
-  }, [cooldownSeconds, queryClient]);
+  }, [isRefreshing, queryClient]);
 
   const isLoading =
     submissionsPageQuery.isLoading ||
@@ -275,11 +263,11 @@ const YourData: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={handleRefresh}
-              disabled={cooldownSeconds > 0 || submissionsPageQuery.isFetching}
+              disabled={isRefreshing}
               className="flex items-center gap-2 text-sm"
             >
-              <RefreshCw className={`w-4 h-4 ${submissionsPageQuery.isFetching ? 'animate-spin' : ''}`} />
-              {cooldownSeconds > 0 ? `Refresh (${cooldownSeconds}s)` : 'Refresh'}
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing' : 'Refresh'}
             </Button>
             {canSubmit ? (
               <Link to="/data-entry">
@@ -302,10 +290,10 @@ const YourData: React.FC = () => {
         </div>
 
         <Tabs defaultValue="submissions">
-          <div className="bg-card text-card-foreground border border-blue-pale rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-card text-card-foreground border border-hairline rounded-2xl shadow-sm overflow-hidden">
             {/* Segmented tab bar — blended into the widget, leaderboard-style pills */}
-            <div className="p-3 border-b border-blue-pale">
-              <TabsList className="flex w-full gap-1 p-1 h-auto bg-blue-mist border border-blue-pale rounded-xl">
+            <div className="p-3 border-b border-hairline">
+              <TabsList className="flex w-full gap-1 p-1 h-auto bg-surface-canvas border border-hairline rounded-xl">
                 <TabsTrigger
                   value="submissions"
                   className="flex-1 py-2 rounded-lg border-b-0 mb-0 text-blue-mid data-[state=active]:bg-card data-[state=active]:text-card-foreground data-[state=active]:border data-[state=active]:border-blue-light data-[state=active]:shadow-sm"
@@ -366,7 +354,7 @@ const YourData: React.FC = () => {
                     <div className="hidden desktop:block overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow className="border-blue-pale">
+                          <TableRow className="border-hairline">
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Crop</TableHead>
                             {/* <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Variety</TableHead> */}
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Brand</TableHead>
@@ -418,11 +406,11 @@ const YourData: React.FC = () => {
                       })}
                     </div>
 
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-blue-pale">
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-hairline">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-blue-pale hover:bg-blue-mist gap-1"
+                        className="border-hairline hover:bg-surface-canvas gap-1"
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         disabled={currentPage === 1}
                       >
@@ -434,7 +422,7 @@ const YourData: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-blue-pale hover:bg-blue-mist gap-1"
+                        className="border-hairline hover:bg-surface-canvas gap-1"
                         onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                         disabled={currentPage === totalPages}
                       >

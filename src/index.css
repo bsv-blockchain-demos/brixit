@@ -41,7 +41,6 @@
     --blue-mid:    #5787a1;   /* mid blue — header fill, cards on dark bg     */
     --blue-light: #8cb3c9;   /* lighter blue accent                          */
     --blue-pale:  #dde8f0;   /* pale blue — borders, badge fills             */
-    --blue-mist:  #eef4f8;   /* near-white blue — section backgrounds        */
 
     /* Brand & score greens */
     --green-fresh:    #639647;  /* brand green — links, secondary actions      */
@@ -49,21 +48,18 @@
     --score-excellent: #1f6b3f;
     --score-good:      #6fae3f;
 
-    /* CTA / action */
-    --orange: #eb6e24;
+    /* CTA / action — --action-primary is canonical; --orange/--primary alias it */
+    --orange: var(--action-primary);
 
     /* Score palette */
     --gold:          #e1b12c;   /* average score                               */
     --score-average: #e1b12c;
-    --score-poor:    #d9772c;   /* poor score                                  */
+    --score-poor:    #c0392b;   /* poor score — RED (distinct from action orange) */
 
     /* Text — warm brown family from style guide */
     --text-dark:  #524d40;   /* primary body text                             */
     --text-mid:   #6b6057;   /* secondary text                                */
     --text-muted: #9e9289;   /* labels, placeholders                          */
-
-    /* Page background — keep warm off-white */
-    --cream: #faf8f3;
 
     /* ── UI action tokens ─────────────────────────────── */
     --action-primary:       #eb6e24;   /* orange CTA                          */
@@ -71,11 +67,8 @@
     --action-danger: var(--score-poor);
 
     /* ── Badge tiers ──────────────────────────────────── */
-    --badge-gold-bg:    #fef6e4;
-    --badge-gold-text:  #96720e;
     --badge-amber-bg:   #fdf0d8;
     --badge-amber-text: #a06a10;
-    --badge-poor-bg:    #fdeee3;
 
     /* ── Table surfaces ───────────────────────────────── */
     --table-header: #f2f6f9;
@@ -86,9 +79,10 @@
     --badge-neutral-text: #7a7268;
 
     /* ── Rank medals (leaderboard 1st/2nd/3rd; 4th+ uses neutral badge) ── */
-    --rank-1-bg: #fbbf24;  --rank-1-fg: #78350f;   /* gold   */
-    --rank-2-bg: #94a3b8;  --rank-2-fg: #0f172a;   /* silver */
-    --rank-3-bg: #c2763a;  --rank-3-fg: #ffffff;   /* bronze */
+    /* Steel ramp (not score colours) so rank never reads as a score tier. */
+    --rank-1-bg: #2c4a5c;  --rank-1-fg: #ffffff;   /* deep steel  */
+    --rank-2-bg: #5787a1;  --rank-2-fg: #ffffff;   /* mid steel   */
+    --rank-3-bg: #8cb3c9;  --rank-3-fg: #142733;   /* light steel */
 
     /* ── Mobile menu account panel — elevated surface on the steel header ── */
     --menu-surface:        rgba(255,255,255,0.10);
@@ -97,6 +91,27 @@
 
     /* ── Canvas backdrop behind listed cards (steel-50). Cards sit raised on it. ── */
     --surface-canvas: #eef3f6;
+
+    /* ── Selection / active — steel-based (replaces green-for-selection) ── */
+    --select-bg: #eef4f8;          /* selected pill/chip fill            */
+    --select-border: #5787a1;      /* selected outline                   */
+    --select-fg: #2c4a5c;          /* selected text                      */
+    --select-strong: #5787a1;      /* filled active node / toggle ON     */
+    --select-strong-fg: #ffffff;
+
+    /* ── Outcome green — defines the previously-undefined --green-pale ── */
+    --green-pale: #e8f1e0;
+
+    /* ── Neutral structure — grey, not steel ── */
+    --hairline: #e7e3dc;           /* plain dividers                     */
+    --field-border: #d8d3ca;       /* input borders                      */
+
+    /* ── Score tier solid-bg companions (for pills/labels) ── */
+    --score-poor-bg: #fbe9e7;
+    --score-average-bg: #fcf3da;
+    --score-good-bg: #e8f1e0;
+    --score-excellent-bg: #dfeee6;
+    --score-ink: #2a2118;          /* text on amber average              */
 
     /* ── On-background text hierarchy ────────────────── *
      * White-at-opacity scale for text sitting on the blue
@@ -134,7 +149,7 @@
     --accent: 204 43% 95%;            /* blue-mist — hover on white surfaces  */
     --accent-foreground: 43 12% 29%;  /* dark text on light hover             */
 
-    --destructive: 26 70% 51%;        /* score-poor #d9772c                   */
+    --destructive: 6 64% 46%;         /* red — matches --score-poor #c0392b   */
     --destructive-foreground: 0 0% 100%;
 
     --border: 205 39% 90%;            /* blue-pale — card/input borders       */
@@ -159,18 +174,16 @@
     --blue-mid:    #4a7a94;   /* slightly dimmed structural blue              */
     --blue-light: #6a9ab5;
     --blue-pale:  #1e3347;   /* dark blue border / subtle bg                 */
-    --blue-mist:  #132130;   /* dark section bg                              */
-    --cream:       #0d1a24;   /* dark page bg                                 */
 
     --green-fresh:     #7ab35b;   /* brighter brand green for dark            */
     --green-mid:       #2a9460;   /* brighter excellent for dark              */
     --score-excellent: #2a9460;
     --score-good:      #7fc850;
 
-    --orange: #f07830;
+    --orange: var(--action-primary);
     --gold:          #f0c040;
     --score-average: #f0c040;
-    --score-poor:    #f08040;
+    --score-poor:    #e0584a;
 
     --text-dark:  #e8e0d8;
     --text-mid:   #b0a898;
@@ -182,11 +195,8 @@
     --action-danger: var(--score-poor);
 
     /* ── Badge tiers (dark) ───────────────────────────── */
-    --badge-gold-bg:    #2e2208;
-    --badge-gold-text:  #f0c040;
     --badge-amber-bg:   #2a1e06;
     --badge-amber-text: #d4a830;
-    --badge-poor-bg:    #2e1a0a;
 
     /* ── Table surfaces (dark) ────────────────────────── */
     --table-header: #1a2a38;
@@ -195,9 +205,10 @@
     --badge-neutral-text: #9e9890;
 
     /* ── Rank medals (dark) ───────────────────────────── */
-    --rank-1-bg: #f0c040;  --rank-1-fg: #2e2208;   /* gold   */
-    --rank-2-bg: #8aa0b4;  --rank-2-fg: #0d1620;   /* silver */
-    --rank-3-bg: #c2763a;  --rank-3-fg: #ffffff;   /* bronze */
+    /* Steel ramp (lighter = higher rank, for contrast on dark cards). */
+    --rank-1-bg: #6a9ab5;  --rank-1-fg: #0d1620;   /* bright steel */
+    --rank-2-bg: #4a7a94;  --rank-2-fg: #ffffff;   /* mid steel    */
+    --rank-3-bg: #34526a;  --rank-3-fg: #cfe0ea;   /* deep steel   */
 
     /* ── Mobile menu account panel (dark) ─────────────── */
     --menu-surface:        rgba(255,255,255,0.06);
@@ -206,6 +217,19 @@
 
     /* ── Canvas backdrop behind listed cards (deep steel) ── */
     --surface-canvas: #0d1a24;
+
+    /* ── Selection / structure / outcome (dark) ── */
+    --select-bg: rgba(74,122,148,0.22);
+    --select-border: #4a7a94;
+    --select-fg: #cfe0ea;
+    --select-strong: #4a7a94;
+    --green-pale: #18301d;
+    --hairline: rgba(255,255,255,0.10);
+    --field-border: rgba(255,255,255,0.14);
+    --score-poor-bg: #3a1714;
+    --score-average-bg: #2e2408;
+    --score-good-bg: #18301d;
+    --score-excellent-bg: #10271a;
 
     /* ── shadcn semantic tokens ──────────────────────── */
     --background: 210 40% 10%;
@@ -229,7 +253,7 @@
     --accent: 210 30% 18%;
     --accent-foreground: 30 20% 90%;
 
-    --destructive: 26 65% 45%;
+    --destructive: 6 70% 58%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 210 30% 22%;

@@ -75,7 +75,7 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
     return (
       <div
         className="mt-3 rounded-xl border overflow-hidden"
-        style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'var(--blue-mist)' }}
+        style={{ borderColor: 'var(--hairline)', backgroundColor: 'var(--surface-canvas)' }}
       >
         <div className="flex items-center gap-3 p-4">
           <div
@@ -123,10 +123,10 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
   return (
     <div
       className="mt-3 rounded-xl border overflow-hidden"
-      style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'var(--blue-mist)' }}
+      style={{ borderColor: 'var(--hairline)', backgroundColor: 'var(--surface-canvas)' }}
     >
       {/* Header */}
-      <div className="flex gap-3 p-4 border-b" style={{ borderColor: 'var(--blue-pale)' }}>
+      <div className="flex gap-3 p-4 border-b" style={{ borderColor: 'var(--hairline)' }}>
         <div
           className="shrink-0 w-16 h-16 rounded-lg flex items-center justify-center"
           style={{ backgroundColor: 'var(--blue-pale)' }}
@@ -152,7 +152,7 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
       </div>
 
       {/* Options */}
-      <div className="divide-y" style={{ borderColor: 'var(--blue-pale)' }}>
+      <div className="divide-y" style={{ borderColor: 'var(--hairline)' }}>
         {loading && (
           <div className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>
             Searching nearby places&hellip;
@@ -226,7 +226,7 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
                 value={regName}
                 onChange={e => setRegName(e.target.value)}
                 className="border-2 rounded-xl"
-                style={{ borderColor: 'var(--blue-pale)' }}
+                style={{ borderColor: 'var(--hairline)' }}
               />
             </div>
           )}

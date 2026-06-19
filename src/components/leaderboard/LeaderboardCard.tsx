@@ -9,6 +9,7 @@ import { formatVenueLocation } from "../../lib/formatAddress";
 
 interface LeaderboardCardProps {
   title: string;
+  subtitle?: string;
   data: LeaderboardEntry[];
   labelKey: 'location' | 'brand' | 'user';
   loadMoreType: 'location' | 'brand' | 'user';
@@ -82,7 +83,7 @@ function LeaderboardMobileList({
           <div
             key={(entry as any)[`${labelKey}_id`] ?? label ?? idx}
             onClick={clickable ? () => onNavigate(entry, labelKey) : undefined}
-            className={`flex items-center gap-3 px-4 py-3 border-b border-blue-pale last:border-b-0 ${
+            className={`flex items-center gap-3 px-4 py-3 border-b border-hairline last:border-b-0 ${
               clickable ? 'cursor-pointer' : ''
             }`}
           >
@@ -138,6 +139,7 @@ function LeaderboardMobileList({
 
 export function LeaderboardCard({
   title,
+  subtitle,
   data,
   labelKey,
   hasMore,
@@ -151,6 +153,9 @@ export function LeaderboardCard({
     <div className="w-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold font-display text-text-dark text-center">{title}</CardTitle>
+        {subtitle && (
+          <p className="text-sm text-text-mid text-center mt-1">{subtitle}</p>
+        )}
         {labelKey === "user" && (
           <p className="text-sm text-muted-foreground text-center mt-1">
             Global rankings • All users
@@ -164,7 +169,7 @@ export function LeaderboardCard({
           ) : (
             <>
             <div className="lb-desktop-only">
-              <div className="grid grid-cols-3 text-xs font-medium text-text-muted-brown uppercase tracking-wider border-b border-blue-pale px-4 py-2 bg-table-header">
+              <div className="grid grid-cols-3 text-xs font-medium text-text-muted-brown uppercase tracking-wider border-b border-hairline px-4 py-2 bg-table-header">
                 <span className="text-left">
                   {labelKey === "location" ? "Store" : "Name"}
                 </span>
@@ -209,7 +214,7 @@ export function LeaderboardCard({
                       <div
                         key={(entry as any)[`${labelKey}_id`] ?? label ?? idx}
                         onClick={() => onNavigate(entry, labelKey)}
-                        className={`grid grid-cols-3 items-center px-4 py-2 border-b border-blue-pale last:border-0 odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors text-sm ${
+                        className={`grid grid-cols-3 items-center px-4 py-2 border-b border-hairline last:border-0 odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors text-sm ${
                           labelKey !== "user" ? "cursor-pointer" : ""
                         }`}
                       >
@@ -253,7 +258,7 @@ export function LeaderboardCard({
               </div>
 
               {hasMore && (
-                <div className="p-3 border-t border-blue-pale">
+                <div className="p-3 border-t border-hairline">
                   <button
                     onClick={onLoadMore}
                     disabled={isLoadingMore}

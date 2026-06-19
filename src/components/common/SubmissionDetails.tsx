@@ -50,18 +50,18 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
           )}
         </CardTitle>
         {dataPoint.variety && (
-          <p className="text-gray-600 mt-1">{dataPoint.variety}</p>
+          <p className="text-text-mid mt-1">{dataPoint.variety}</p>
         )}
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="bg-gray-50 rounded-lg p-6 text-center">
+        <div className="bg-surface-canvas rounded-lg p-6 text-center">
           <div className="flex items-center justify-center space-x-4 mb-4">
             <div className={`${colorClass} w-16 h-16 rounded-full flex items-center justify-center`}>
               <span className="text-white font-bold text-xl">{dataPoint.brixLevel}</span>
             </div>
             <div className="text-left">
-              <p className="text-2xl font-bold text-gray-900">{dataPoint.brixLevel} BRIX</p>
-              <p className="text-sm text-gray-600">Refractometer Reading</p>
+              <p className="text-2xl font-bold text-text-dark">{dataPoint.brixLevel} BRIX</p>
+              <p className="text-sm text-text-mid">Refractometer Reading</p>
               <Badge className={`${colorClass} mt-1 text-white`}>
                 {qualityText} Quality
               </Badge>
@@ -69,28 +69,28 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-            <Calendar className="w-5 h-5 text-gray-600" />
+          <div className="flex items-center space-x-3 p-4 bg-surface-canvas rounded-lg">
+            <Calendar className="w-5 h-5 text-text-mid" />
             <div>
-              <p className="text-sm text-gray-600">Assessment Date</p>
+              <p className="text-sm text-text-mid">Assessment Date</p>
               <p className="font-medium">{new Date(dataPoint.submittedAt).toLocaleDateString()}</p>
             </div>
           </div>
-          <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-            <User className="w-5 h-5 text-gray-600" />
+          <div className="flex items-center space-x-3 p-4 bg-surface-canvas rounded-lg">
+            <User className="w-5 h-5 text-text-mid" />
             <div>
-              <p className="text-sm text-gray-600">Submitted By</p>
+              <p className="text-sm text-text-mid">Submitted By</p>
               <p className="font-medium">{formatUsername(dataPoint.submittedBy)}</p>
             </div>
           </div>
-          <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center space-x-3 p-4 bg-surface-canvas rounded-lg">
             {dataPoint.verified ? (
               <CheckCircle className="w-5 h-5 text-green-mid" />
             ) : (
               <AlertCircle className="w-5 h-5 text-gold" />
             )}
             <div>
-              <p className="text-sm text-gray-600">Verification Status</p>
+              <p className="text-sm text-text-mid">Verification Status</p>
               {dataPoint.verified ? (
                 <span className="inline-flex items-center gap-1 bg-green-pale text-green-mid px-1.5 py-0.5 rounded-full text-sm font-medium">
                   <CheckCircle className="w-3 h-3" /> Verified
@@ -101,22 +101,22 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
             </div>
           </div>
           {dataPoint.verified && dataPoint.verifiedBy && (
-            <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-              <User className="w-5 h-5 text-gray-600" />
+            <div className="flex items-center space-x-3 p-4 bg-surface-canvas rounded-lg">
+              <User className="w-5 h-5 text-text-mid" />
               <div>
-                <p className="text-sm text-gray-600">Verified By</p>
+                <p className="text-sm text-text-mid">Verified By</p>
                 <p className="font-medium">{formatUsername(dataPoint.verifiedBy)}</p>
               </div>
             </div>
           )}
-          <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center space-x-3 p-4 bg-surface-canvas rounded-lg">
             {dataPoint.outpoint ? (
               <Anchor className="w-5 h-5 text-green-mid" />
             ) : (
               <XCircle className="w-5 h-5 text-text-muted-brown" />
             )}
             <div className="min-w-0">
-              <p className="text-sm text-gray-600">Blockchain Anchor</p>
+              <p className="text-sm text-text-mid">Blockchain Anchor</p>
               {dataPoint.outpoint ? (() => {
                 const txid = dataPoint.outpoint.split('.')[0];
                 return (
@@ -137,57 +137,57 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
               )}
             </div>
           </div>
-          <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-            <MapPin className="w-5 h-5 text-gray-600" />
+          <div className="flex items-center space-x-3 p-4 bg-surface-canvas rounded-lg">
+            <MapPin className="w-5 h-5 text-text-mid" />
             <div>
-              <p className="text-sm text-gray-600">Place</p>
+              <p className="text-sm text-text-mid">Place</p>
               <p className="font-medium">{dataPoint.placeName || 'N/A'}</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-text-muted-brown">
                 {dataPoint.latitude?.toFixed(4)}, {dataPoint.longitude?.toFixed(4)}
               </p>
             </div>
           </div>
           {dataPoint.locationName && (
-            <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-              <Building className="w-5 h-5 text-gray-600" />
+            <div className="flex items-center space-x-3 p-4 bg-surface-canvas rounded-lg">
+              <Building className="w-5 h-5 text-text-mid" />
               <div>
-                <p className="text-sm text-gray-600">Store</p>
+                <p className="text-sm text-text-mid">Store</p>
                 <p className="font-medium">{dataPoint.locationName}</p>
               </div>
             </div>
           )}
           {dataPoint.brandName && (
-            <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-              <Tag className="w-5 h-5 text-gray-600" />
+            <div className="flex items-center space-x-3 p-4 bg-surface-canvas rounded-lg">
+              <Tag className="w-5 h-5 text-text-mid" />
               <div>
-                <p className="text-sm text-gray-600">Brand</p>
+                <p className="text-sm text-text-mid">Brand</p>
                 <p className="font-medium">{dataPoint.brandName}</p>
               </div>
             </div>
           )}
         </div>
         {dataPoint.outlier_notes && (
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2 flex items-center space-x-2">
-              <MessageSquare className="w-5 h-5 text-gray-600" />
+          <div className="bg-surface-canvas rounded-lg p-4">
+            <h3 className="font-semibold text-text-dark mb-2 flex items-center space-x-2">
+              <MessageSquare className="w-5 h-5 text-text-mid" />
               <span>Outlier Notes</span>
             </h3>
-            <p className="text-gray-700">{dataPoint.outlier_notes}</p>
+            <p className="text-text-mid">{dataPoint.outlier_notes}</p>
           </div>
         )}
         {showImages && (
-          <div className="pt-4 border-t border-gray-100">
-            <h3 className="flex items-center space-x-2 text-lg font-bold text-gray-900 mb-4">
-              <ImageIcon className="w-6 h-6 text-gray-600" />
+          <div className="pt-4 border-t border-hairline">
+            <h3 className="flex items-center space-x-2 text-lg font-bold text-text-dark mb-4">
+              <ImageIcon className="w-6 h-6 text-text-mid" />
               <span>Reference Images ({imageUrls.length})</span>
             </h3>
             {imagesLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin text-green-mid" />
-                <span className="ml-3 text-gray-600">Loading images...</span>
+                <span className="ml-3 text-text-mid">Loading images...</span>
               </div>
             ) : imageUrls.length === 0 ? (
-              <p className="text-gray-500 italic">No images available for this submission.</p>
+              <p className="text-text-muted-brown italic">No images available for this submission.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {imageUrls.map((url: string, index: number) => (
