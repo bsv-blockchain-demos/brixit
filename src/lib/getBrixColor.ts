@@ -3,20 +3,31 @@ import { BrixThresholds } from './getBrixQuality';
 
 type ColorMode = 'bg' | 'hex';
 
+// Read a live CSS custom property so hex consumers (Leaflet markers, inline
+// styles, charts) stay theme-correct and resolve to the SAME --score-* tokens
+// the Tailwind bg classes use — one source of truth, no parallel palette.
+const readVar = (name: string): string =>
+  typeof window === 'undefined'
+    ? ''
+    : getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const tierHex = (t: 'poor' | 'average' | 'good' | 'excellent'): string =>
+  readVar(`--score-${t}`);
+
 const colorMap = {
   bg: {
     poor: 'bg-score-poor',
-    average: 'bg-gold',
-    good: 'bg-green-fresh',
-    excellent: 'bg-green-mid',
-    fallback: 'bg-gray-300',
+    average: 'bg-score-average',
+    good: 'bg-score-good',
+    excellent: 'bg-score-excellent',
+    fallback: 'bg-badge-neutral',
   },
+  // Getters resolve at call time against the live theme.
   hex: {
-    poor: '#c0392b',
-    average: '#c9a84c',
-    good: '#40916c',
-    excellent: '#2d6a4f',
-    fallback: '#d1d5db',
+    get poor() { return tierHex('poor'); },
+    get average() { return tierHex('average'); },
+    get good() { return tierHex('good'); },
+    get excellent() { return tierHex('excellent'); },
+    get fallback() { return readVar('--badge-neutral-bg') || '#d1d5db'; },
   },
 };
 
@@ -101,7 +112,7 @@ export function useBrixColorFromContext(
   const { getThresholds, loading } = useCropThresholds();
 
   if (loading) {
-    return mode === 'bg' ? 'bg-gray-300' : '#d1d5db';
+    return mode === 'bg' ? 'bg-badge-neutral' : (readVar('--badge-neutral-bg') || '#d1d5db');
   }
 
   return getBrixColor(brixLevel, getThresholds(cropName), mode);

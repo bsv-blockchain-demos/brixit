@@ -192,7 +192,7 @@ export default function Help() {
               key={value}
               value={value}
               id={value}
-              className="border border-blue-pale rounded-xl bg-card overflow-hidden px-4"
+              className="border border-hairline rounded-xl bg-card overflow-hidden px-4"
             >
               <AccordionTrigger className="hover:no-underline py-4 gap-3 text-left">
                 <span className="flex items-center gap-3">
@@ -208,7 +208,7 @@ export default function Help() {
         </Accordion>
 
         {/* Getting started */}
-        <Card className="border-blue-pale bg-blue-mist">
+        <Card className="border-hairline bg-surface-canvas">
           <CardHeader className="pb-2">
             <CardTitle className="text-base text-green-mid">Getting started</CardTitle>
           </CardHeader>

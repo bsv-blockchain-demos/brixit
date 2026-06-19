@@ -2,9 +2,9 @@
  * Page orchestrator — header, URL-filter bootstrap, and the two children.
  * Children own their own state so the table doesn't re-render on filter twiddles.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useIsFetching } from '@tanstack/react-query';
 import { Button } from '../ui/button';
 import { RefreshCw } from 'lucide-react';
 import { useFilters } from '../../contexts/FilterContext';
@@ -12,34 +12,19 @@ import { parseURLSearchParams, mergeFiltersWithDefaults } from '../../lib/urlFil
 import DataBrowserFilters from './DataBrowserFilters';
 import DataBrowserResults from './DataBrowserResults';
 
-const REFRESH_COOLDOWN_S = 15;
-
 const DataTable: React.FC = () => {
   const { setFilters } = useFilters();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [cooldownSeconds, setCooldownSeconds] = useState(0);
-  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Disable refresh only while a submissions fetch is in flight (no fixed cooldown).
+  const isRefreshing = useIsFetching({ queryKey: ['submissions'] }) > 0;
 
   const handleRefresh = useCallback(() => {
-    if (cooldownSeconds > 0) return;
+    if (isRefreshing) return;
     queryClient.invalidateQueries({ queryKey: ['submissions'] });
-    setCooldownSeconds(REFRESH_COOLDOWN_S);
-    cooldownRef.current = setInterval(() => {
-      setCooldownSeconds((s) => {
-        if (s <= 1) {
-          clearInterval(cooldownRef.current!);
-          cooldownRef.current = null;
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
-  }, [queryClient, cooldownSeconds]);
-
-  useEffect(() => () => { if (cooldownRef.current) clearInterval(cooldownRef.current); }, []);
+  }, [queryClient, isRefreshing]);
 
   // Apply URL search params to filters once on mount (e.g. from leaderboard).
   const [urlFiltersApplied, setUrlFiltersApplied] = useState(false);
@@ -69,17 +54,17 @@ const DataTable: React.FC = () => {
           variant="ghost"
           size="sm"
           onClick={handleRefresh}
-          disabled={cooldownSeconds > 0}
+          disabled={isRefreshing}
           className="flex items-center gap-2 text-sm"
         >
-          <RefreshCw className="w-4 h-4" />
-          {cooldownSeconds > 0 ? `Refresh (${cooldownSeconds}s)` : 'Refresh'}
+          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Refreshing' : 'Refresh'}
         </Button>
       </div>
 
       {/* Merge wrapper: one continuous panel ≤640px (filters · context · results);
           display:contents ≥641px so the desktop layout renders byte-for-byte as before. */}
-      <div className="bg-surface-canvas text-card-foreground border border-blue-pale rounded-2xl overflow-hidden sm:contents">
+      <div className="bg-surface-canvas text-card-foreground border border-hairline rounded-2xl overflow-hidden sm:contents">
         <DataBrowserFilters fromLeaderboard={fromLeaderboard} />
         <DataBrowserResults
           fromLeaderboard={fromLeaderboard}

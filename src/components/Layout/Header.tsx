@@ -228,7 +228,7 @@ const Header = () => {
                     Identity Key
                   </DropdownMenuLabel>
                   <div className="px-2 pb-2">
-                    <div className="flex items-center gap-2 rounded-md bg-blue-mist px-3 py-2">
+                    <div className="flex items-center gap-2 rounded-md bg-surface-canvas px-3 py-2">
                       <code className="flex-1 text-xs break-all font-mono text-card-foreground">
                         {user.identity_key}
                       </code>

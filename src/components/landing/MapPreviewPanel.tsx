@@ -79,7 +79,7 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
                           top: `${pct.y}%`, left: `${pct.x}%`,
                           width: d, height: d,
                           transform: 'translate(-50%, -50%)',
-                          backgroundColor: '#2d6a4f',
+                          backgroundColor: 'var(--score-excellent)',
                           border: '2px solid rgba(255,255,255,0.6)',
                           boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
                           fontSize: d < 36 ? 11 : 13,
@@ -138,7 +138,7 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
                               {location}
                             </p>
                           )}
-                          <p className="leading-snug mt-1 pt-1 border-t" style={{ color: 'var(--text-muted)', borderColor: 'var(--blue-pale)', fontSize: '10px' }}>
+                          <p className="leading-snug mt-1 pt-1 border-t" style={{ color: 'var(--text-muted)', borderColor: 'var(--hairline)', fontSize: '10px' }}>
                             {largest.count - 1} other submissions on this location
                           </p>
                           {/* Arrow tip — flips to the top edge when below. */}

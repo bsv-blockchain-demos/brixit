@@ -11,7 +11,7 @@ export function IconStatGrid({ stats }: { stats: StatItem[] }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {stats.map(({ icon: Icon, value, label }, i) => (
-        <Card key={i} className="rounded-2xl border border-blue-pale shadow-sm">
+        <Card key={i} className="rounded-2xl border border-hairline shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center space-x-3">
               <div className="bg-blue-deep rounded-xl p-2">

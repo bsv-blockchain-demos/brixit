@@ -375,12 +375,12 @@ export default function AdminTreasury() {
 
                 <Collapsible
                   className="rounded-xl border overflow-hidden"
-                  style={{ borderColor: 'var(--blue-pale)' }}
+                  style={{ borderColor: 'var(--hairline)' }}
                 >
                   <CollapsibleTrigger asChild>
                     <button
                       type="button"
-                      className="group flex w-full items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-blue-mist transition-colors"
+                      className="group flex w-full items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-surface-canvas transition-colors"
                       style={{ color: 'var(--text-mid)' }}
                     >
                       <span>Derivation info</span>
@@ -392,7 +392,7 @@ export default function AdminTreasury() {
                   </CollapsibleTrigger>
                   <CollapsibleContent
                     className="border-t px-3 py-3 space-y-2.5"
-                    style={{ borderColor: 'var(--blue-pale)' }}
+                    style={{ borderColor: 'var(--hairline)' }}
                   >
                     <p className="text-[10px] text-muted-foreground italic">
                       Public parameters. Not secrets — anyone with these can derive the address, but spending still requires the server wallet's master key. Use only if the automated top-up sweep fails and funds need manual recovery.

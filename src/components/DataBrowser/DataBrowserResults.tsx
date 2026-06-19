@@ -176,7 +176,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
     <>
       {/* Desktop banner — unchanged; hidden ≤640px (mobile uses the merged card region below) */}
       {fromLeaderboard && (
-        <div className="lb-desktop-only mb-4 p-3 bg-blue-mist border border-blue-pale rounded-md">
+        <div className="lb-desktop-only mb-4 p-3 bg-surface-canvas border border-hairline rounded-md">
           <div className="flex items-center justify-between">
             <p className="text-text-dark text-sm">Showing filtered results from leaderboard selection</p>
             <Button
@@ -203,7 +203,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
           The enclosing panel is provided by DataTable (merges filters + results). */}
       <>
         {fromLeaderboard && (
-          <div className="lb-mobile-only p-3.5 border-b border-blue-pale">
+          <div className="lb-mobile-only p-3.5 border-b border-hairline">
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted-brown">From Leaderboard</span>
               {activeFilterChips.length > 0 && (
@@ -217,14 +217,14 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
                 ))}
               </div>
             )}
-            <div className="mt-3 pt-3 border-t border-blue-pale">
+            <div className="mt-3 pt-3 border-t border-hairline">
               <button onClick={onBackToLeaderboard} className="flex items-center gap-1.5 min-h-[44px] text-sm font-medium text-blue-mid hover:text-blue-deep">
                 <span aria-hidden>←</span> Back to Leaderboard
               </button>
             </div>
           </div>
         )}
-      <Card className="border-0 shadow-none rounded-none bg-transparent sm:border sm:border-blue-pale sm:shadow-sm sm:rounded-2xl sm:bg-card">
+      <Card className="border-0 shadow-none rounded-none bg-transparent sm:border sm:border-hairline sm:shadow-sm sm:rounded-2xl sm:bg-card">
         <CardHeader className="px-3 sm:px-6">
           <CardTitle>{totalCount} {totalCount === 1 ? 'Result' : 'Results'}</CardTitle>
         </CardHeader>
@@ -233,7 +233,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
           <div className="hidden desktop:block overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-blue-pale">
+                <TableRow className="border-hairline">
                   <TableHead
                     className="text-xs text-text-muted-brown uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('cropType')}
@@ -311,13 +311,13 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
             )}
           </div>
 
-          <div className="flex items-center justify-between mt-4 pt-3 border-t border-blue-pale">
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-hairline">
             <Button
               variant="outline"
               size="sm"
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="border-blue-pale hover:bg-blue-mist gap-1"
+              className="border-hairline hover:bg-surface-canvas gap-1"
             >
               <ChevronLeft className="w-3.5 h-3.5" /> Previous
             </Button>
@@ -329,7 +329,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
               size="sm"
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="border-blue-pale hover:bg-blue-mist gap-1"
+              className="border-hairline hover:bg-surface-canvas gap-1"
             >
               Next <ChevronRight className="w-3.5 h-3.5" />
             </Button>

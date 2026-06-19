@@ -477,10 +477,10 @@ const DataEntry = () => {
         </div>
 
         <motion.div {...fadeUp}>
-          <Card className="rounded-2xl border shadow-sm" style={{ borderColor: 'var(--blue-pale)' }}>
+          <Card className="rounded-2xl border shadow-sm" style={{ borderColor: 'var(--hairline)' }}>
             <CardHeader
               className="rounded-t-2xl border-b lb-desktop-only"
-              style={{ backgroundColor: 'var(--blue-mist)', borderColor: 'var(--blue-pale)' }}
+              style={{ backgroundColor: 'var(--surface-canvas)', borderColor: 'var(--hairline)' }}
             >
               <CardTitle
                 className="flex items-center space-x-3 text-xl font-display font-bold"
@@ -495,21 +495,21 @@ const DataEntry = () => {
 
             <CardContent className="p-5 sm:p-8 md:p-10">
               {/* Mobile-only step indicator — inside the white widget */}
-              <div className="lb-mobile-only mb-6 pb-5 border-b border-blue-pale">
+              <div className="lb-mobile-only mb-6 pb-5 border-b border-hairline">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold uppercase tracking-widest text-text-muted-brown">New Entry</p>
                   <p className="text-xs font-medium text-text-muted-brown">Step {step} of 2</p>
                 </div>
                 <div className="flex items-center gap-2 mt-2">
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${step >= 1 ? 'bg-green-fresh text-white' : 'bg-blue-mist text-text-mid'}`}>
+                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${step >= 1 ? 'bg-select-strong text-white' : 'bg-surface-canvas text-text-mid'}`}>
                       {step > 1 ? '✓' : '1'}
                     </span>
                     <span className="text-sm font-medium text-text-dark">Shop</span>
                   </div>
-                  <div className="flex-1 h-px bg-blue-pale" />
+                  <div className="flex-1 h-px bg-hairline" />
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${step >= 2 ? 'bg-green-fresh text-white' : 'bg-blue-mist text-text-mid'}`}>
+                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${step >= 2 ? 'bg-select-strong text-white' : 'bg-surface-canvas text-text-mid'}`}>
                       2
                     </span>
                     <span className="text-sm font-medium text-text-dark">Crops</span>
@@ -574,7 +574,7 @@ const DataEntry = () => {
                           <div className="flex flex-wrap gap-2">
                             <span
                               className="px-4 py-2 rounded-full text-sm font-medium border"
-                              style={{ borderColor: 'var(--green-fresh)', backgroundColor: 'var(--green-fresh)', color: '#fff' }}
+                              style={{ borderColor: 'var(--select-border)', backgroundColor: 'var(--select-bg)', color: 'var(--select-fg)' }}
                             >
                               {lockedPosType}
                             </span>
@@ -592,8 +592,8 @@ const DataEntry = () => {
                               className="px-4 py-2 rounded-full text-sm font-medium border transition-colors"
                               style={
                                 session.posType === opt.value
-                                  ? { borderColor: 'var(--green-fresh)', backgroundColor: 'var(--green-fresh)', color: '#fff' }
-                                  : { borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))', color: 'var(--text-mid)' }
+                                  ? { borderColor: 'var(--select-border)', backgroundColor: 'var(--select-bg)', color: 'var(--select-fg)' }
+                                  : { borderColor: 'var(--field-border)', backgroundColor: 'hsl(var(--card))', color: 'var(--text-mid)' }
                               }
                             >
                               {opt.label}
@@ -638,12 +638,12 @@ const DataEntry = () => {
                   </div>
                 </motion.div>
 
-                <div className="border-t lb-desktop-only" style={{ borderColor: 'var(--blue-pale)' }} />
+                <div className="border-t lb-desktop-only" style={{ borderColor: 'var(--hairline)' }} />
 
                 {/* ── Section 2: Crop readings (mobile Step 2) ── */}
                 <motion.div {...staggerChild} className={step !== 2 ? 'lb-desktop-only' : ''}>
                   {/* Mobile-only trip summary chip — Edit returns to Step 1 */}
-                  <div className="lb-mobile-only mb-4 flex items-center justify-between gap-2 rounded-lg bg-blue-mist border border-blue-pale px-3 py-2 text-sm">
+                  <div className="lb-mobile-only mb-4 flex items-center justify-between gap-2 rounded-lg bg-surface-canvas border border-hairline px-3 py-2 text-sm">
                     <span className="min-w-0 truncate text-text-mid">
                       <MapPin className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />
                       {session.posType || 'Shop'}{session.purchaseDate ? ` · ${session.purchaseDate}` : ''}
@@ -682,7 +682,7 @@ const DataEntry = () => {
                     <button
                       type="button"
                       onClick={addReading}
-                      className="mt-3 w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed text-sm font-medium transition-colors text-text-muted border-blue-pale hover:border-green-fresh hover:text-green-fresh"
+                      className="mt-3 w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed text-sm font-medium transition-colors text-text-muted border-hairline hover:border-green-fresh hover:text-green-fresh"
                     >
                       <Plus className="w-4 h-4" />
                       Add another crop
@@ -690,11 +690,11 @@ const DataEntry = () => {
                   </div>
                 </motion.div>
 
-                <div className="border-t lb-desktop-only" style={{ borderColor: 'var(--blue-pale)' }} />
+                <div className="border-t lb-desktop-only" style={{ borderColor: 'var(--hairline)' }} />
 
                 {/* ── Section 3: Optional (mobile Step 2) ── */}
                 <motion.div {...staggerChild} className={step !== 2 ? 'lb-desktop-only' : ''}>
-                  <div className="border-l-4 pl-5 sm:pl-8 max-[640px]:border-l-0 max-[640px]:pl-0" style={{ borderColor: 'var(--blue-pale)' }}>
+                  <div className="border-l-4 pl-5 sm:pl-8 max-[640px]:border-l-0 max-[640px]:pl-0" style={{ borderColor: 'var(--hairline)' }}>
                     <h3 className="text-xl font-display font-bold mb-6" style={{ color: 'var(--text-dark)' }}>
                       Additional Information
                     </h3>
@@ -736,7 +736,7 @@ const DataEntry = () => {
         className="fixed bottom-0 left-0 right-0 border-t shadow-lg"
         style={{
           backgroundColor: 'hsl(var(--card))',
-          borderColor: 'var(--blue-pale)',
+          borderColor: 'var(--hairline)',
           padding: '0.75rem 1rem',
           paddingBottom: 'calc(0.75rem + var(--safe-bottom))',
         }}
