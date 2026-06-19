@@ -44,6 +44,23 @@ import { useCropThresholds } from '../../contexts/CropThresholdContext';
 import Combobox from '../ui/combo-box';
 import { useStaticData } from '../../hooks/useStaticData';
 
+// Mobile detail breakpoint: ≤640px renders a full-screen page (no modal/overlay);
+// ≥641px keeps the desktop modal exactly as before.
+function useMaxWidth(px: number): boolean {
+  const query = `(max-width: ${px}px)`;
+  const [matches, setMatches] = React.useState(
+    () => typeof window !== 'undefined' && window.matchMedia(query).matches,
+  );
+  React.useEffect(() => {
+    const mql = window.matchMedia(query);
+    const onChange = () => setMatches(mql.matches);
+    mql.addEventListener('change', onChange);
+    onChange();
+    return () => mql.removeEventListener('change', onChange);
+  }, [query]);
+  return matches;
+}
+
 interface DataPointDetailModalProps {
   dataPoint: BrixDataPoint | null;
   isOpen: boolean;
@@ -65,6 +82,15 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   const { userWallet, userPubKey } = useWallet();
   const { toast } = useToast();
   const { getThresholds } = useCropThresholds();
+  const isMobilePage = useMaxWidth(640);
+
+  // Lock background scroll while the mobile full-page detail is open.
+  useEffect(() => {
+    if (!isMobilePage || !isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isMobilePage, isOpen]);
 
   // Use the shared static data hook and destructure the new 'locations' property
   const { crops, brands, locations, isLoading: staticDataLoading, error: staticDataError } = useStaticData();
@@ -74,9 +100,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
     if (!name) return 'N/A';
     const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, '');
     const match = items.find(i => normalize(i.name) === normalize(name));
-    if (match?.label) return match.label;
-    if (match) return match.name;
-    return name.replace(/\b\w/g, c => c.toUpperCase());
+    const raw = match?.label || match?.name || name;
+    // Labels are stored lowercase — always render with a capital first letter.
+    return raw.replace(/\b\w/g, c => c.toUpperCase());
   };
 
   const [isEditing, setIsEditing] = useState(false);
@@ -413,6 +439,15 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   const isLoading = staticDataLoading || isInitializing;
 
   if (isLoading) {
+    if (isMobilePage) {
+      if (!isOpen) return null;
+      return (
+        <div className="fixed inset-0 z-50 bg-surface-canvas flex flex-col items-center justify-center pt-[var(--safe-top)]">
+          <Loader2 className="w-12 h-12 animate-spin text-green-mid" />
+          <p className="mt-4 text-text-muted-brown">Loading data...</p>
+        </div>
+      );
+    }
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md md:max-w-3xl rounded-2xl flex flex-col items-center justify-center h-64">
@@ -448,41 +483,8 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
     }
   })();
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md md:max-w-3xl rounded-2xl">
-        <DialogHeader className="pr-8">
-        <DialogTitle className="flex items-center justify-between text-2xl font-bold font-display">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="shrink-0 hover:bg-blue-mist -ml-2"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="sr-only">Back</span>
-            </Button>
-            <span>{isEditing ? 'Edit Submission' : `Details for ${getDisplayLabel(crops, initialDataPoint.cropType)}`}</span>
-          </div>
-          {!isEditing && canEdit && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsEditing(true)}
-              className="hover:bg-blue-mist"
-            >
-              <Edit className="w-5 h-5" />
-              <span className="sr-only">Edit</span>
-            </Button>
-          )}
-        </DialogTitle>
-          <DialogDescription className="sr-only">
-            View and edit a BRIX measurement submission.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="max-h-[80vh] overflow-y-auto px-1">
+  const detailContent = (
+    <>
           {(error || staticDataError) && (
             <div className="flex items-center p-4 bg-destructive/10 text-destructive rounded-2xl">
               <AlertCircle className="w-5 h-5 mr-3" />
@@ -528,7 +530,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
             <div className="pt-4 border-t border-blue-pale">
               <h3 className="text-lg font-bold font-display text-text-dark mb-4">Submission Details</h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className={`grid ${isMobilePage ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2'} gap-4`}>
                 <div className="flex flex-col space-y-2 rounded-2xl border shadow-sm p-4" style={{ borderColor: 'var(--blue-pale)', backgroundColor: 'hsl(var(--card))' }}>
                   <Label className="text-sm text-text-dark flex items-center space-x-2">
                     <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--blue-deep)' }}>
@@ -767,9 +769,11 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               )}
             </div>
           </div>
-        </div>
+    </>
+  );
 
-        <div className="flex justify-between items-center pt-4 border-t border-blue-pale pb-[var(--safe-bottom)]">
+  const detailFooter = (
+    <div className="flex justify-between items-center pt-4 border-t border-blue-pale pb-[var(--safe-bottom)]">
           {isEditing ? (
             <>
               <Button
@@ -793,7 +797,72 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               </Button>
             )
           )}
+    </div>
+  );
+
+  // ── Mobile (≤640px): full-screen page, not a modal/overlay ──
+  if (isMobilePage) {
+    if (!isOpen) return null;
+    return (
+      <div className="fixed inset-0 z-50 bg-surface-canvas flex flex-col pt-[var(--safe-top)]">
+        <div className="flex items-center gap-1 h-14 px-2 shrink-0 border-b border-blue-pale bg-card text-card-foreground">
+          <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0">
+            <ArrowLeft className="w-5 h-5" />
+            <span className="sr-only">Back</span>
+          </Button>
+          <span className="flex-1 min-w-0 truncate text-base font-bold font-display text-text-dark">
+            {isEditing ? 'Edit Submission' : `Details · ${getDisplayLabel(crops, initialDataPoint.cropType)}`}
+          </span>
+          {!isEditing && canEdit && (
+            <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)} className="shrink-0">
+              <Edit className="w-5 h-5" />
+              <span className="sr-only">Edit</span>
+            </Button>
+          )}
         </div>
+        <div className="flex-1 overflow-y-auto px-3 py-4">{detailContent}</div>
+        <div className="shrink-0 px-3 bg-card">{detailFooter}</div>
+      </div>
+    );
+  }
+
+  // ── Desktop (≥641px): unchanged modal ──
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md md:max-w-3xl rounded-2xl">
+        <DialogHeader className="pr-8">
+        <DialogTitle className="flex items-center justify-between text-2xl font-bold font-display">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="shrink-0 hover:bg-blue-mist -ml-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="sr-only">Back</span>
+            </Button>
+            <span>{isEditing ? 'Edit Submission' : `Details for ${getDisplayLabel(crops, initialDataPoint.cropType)}`}</span>
+          </div>
+          {!isEditing && canEdit && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsEditing(true)}
+              className="hover:bg-blue-mist"
+            >
+              <Edit className="w-5 h-5" />
+              <span className="sr-only">Edit</span>
+            </Button>
+          )}
+        </DialogTitle>
+          <DialogDescription className="sr-only">
+            View and edit a BRIX measurement submission.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="max-h-[80vh] overflow-y-auto px-1">{detailContent}</div>
+        {detailFooter}
       </DialogContent>
     </Dialog>
   );

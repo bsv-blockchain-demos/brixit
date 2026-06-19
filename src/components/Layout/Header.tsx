@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback } from "../ui/avatar";
@@ -49,6 +49,16 @@ const Header = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  // Lock background scroll while the full-screen mobile menu is open so the
+  // header's close (X) stays reachable. Mobile-only (menuOpen is only set by the
+  // md:hidden toggle), so desktop is unaffected.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [menuOpen]);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -281,19 +291,108 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation — full-screen overlay below the header bar: nav rows on
+            steel + an elevated account panel (parity with the desktop Profile
+            dropdown). Desktop nav (md:flex) + Profile dropdown are untouched. */}
         {user && menuOpen && (
-          <nav className="md:hidden py-4 space-y-2 border-t border-white/10">
-            <NavLinks />
-            <Button
-              onClick={handleLogout}
-              variant="ghost"
-              size="sm"
-              className="flex items-center space-x-2 w-full justify-start text-destructive"
+          <nav
+            className="md:hidden fixed inset-x-0 bottom-0 z-40 bg-background overflow-y-auto px-2 pt-3 space-y-4"
+            style={{ top: "calc(var(--safe-top) + 4rem)", paddingBottom: "calc(var(--safe-bottom) + 1rem)" }}
+          >
+            {/* Nav rows (on steel) */}
+            <div className="space-y-1">
+              {[
+                { to: "/leaderboard", icon: Trophy, label: "Leaderboard" },
+                { to: "/map", icon: Eye, label: "Explorer" },
+                { to: "/data", icon: Database, label: "Data" },
+                { to: "/your-data", icon: User, label: "Your Data" },
+                ...(hasRole("contributor") ? [{ to: "/data-entry", icon: Plus, label: "Submit", primary: true }] : []),
+                ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : []),
+              ].map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.to);
+                if (item.primary) {
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-3 min-h-[44px] px-3 rounded-lg bg-action-primary text-white hover:bg-action-primary-hover font-medium"
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                }
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setMenuOpen(false)}
+                    aria-current={active ? "page" : undefined}
+                    className="flex items-center gap-3 min-h-[44px] px-3 rounded-lg text-on-bg-text hover:bg-white/10"
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span className={active ? "border-b-2 border-white pb-0.5 font-semibold" : ""}>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Account panel — elevated surface, hairline-separated regions */}
+            <div
+              className="rounded-2xl border overflow-hidden"
+              style={{ backgroundColor: "var(--menu-surface)", borderColor: "var(--menu-surface-border)" }}
             >
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
-            </Button>
+              <div className="flex items-center gap-3 p-3">
+                <Avatar className="h-9 w-9">
+                  <AvatarFallback className="bg-blue-deep text-white">{getUserInitial()}</AvatarFallback>
+                </Avatar>
+                <span className="flex-1 min-w-0 truncate font-mono text-sm text-on-bg-text">{getDisplayName()}</span>
+                {user.role === "admin" && (
+                  <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-destructive text-destructive-foreground">Admin</span>
+                )}
+                {user.role === "contributor" && (
+                  <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-action-primary text-white">Contributor</span>
+                )}
+              </div>
+
+              <div className="px-3 pb-3 pt-3 border-t" style={{ borderColor: "var(--menu-surface-border)" }}>
+                <p className="text-[11px] uppercase tracking-wider text-on-bg-subtle mb-1.5">Identity Key</p>
+                <div className="flex items-center gap-2 rounded-md px-3 py-2" style={{ backgroundColor: "var(--menu-inset)" }}>
+                  <code className="flex-1 min-w-0 truncate text-xs font-mono text-on-bg-text">{user.identity_key}</code>
+                  <button
+                    onClick={handleCopyKey}
+                    className="shrink-0 p-1 rounded hover:bg-white/10 transition-colors"
+                    aria-label="Copy identity key"
+                  >
+                    {copied ? (
+                      <Check className="h-3.5 w-3.5 text-green-fresh" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5 text-on-bg-subtle" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border-t" style={{ borderColor: "var(--menu-surface-border)" }}>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-3 min-h-[44px] text-sm font-medium text-on-bg-text hover:bg-white/10"
+                >
+                  <LogOut className="w-4 h-4 shrink-0" />
+                  <span>Logout</span>
+                </button>
+                <Link
+                  to="/profile"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-2 px-3 min-h-[44px] text-sm font-medium text-on-bg-text hover:bg-white/10"
+                >
+                  <User className="w-4 h-4 shrink-0" />
+                  <span>Edit Profile</span>
+                </Link>
+              </div>
+            </div>
           </nav>
         )}
       </div>

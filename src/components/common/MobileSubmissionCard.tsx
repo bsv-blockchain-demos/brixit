@@ -1,7 +1,8 @@
 ﻿import React from 'react';
 import { BrixDataPoint } from '../../types';
 import { scoreBrix } from '../../lib/getBrixColor';
-import { CheckCircle, Clock, MapPin, User, MoreVertical, Edit, Trash2, XCircle, Anchor } from 'lucide-react';
+import { titleCase } from '../../lib/titleCase';
+import { CheckCircle, Clock, MapPin, User, MoreVertical, Edit, Trash2, XCircle, Shield } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import {
   DropdownMenu,
@@ -30,17 +31,11 @@ const MobileSubmissionCard: React.FC<{
       tabIndex={0}
       onClick={onOpenModal}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenModal(); } }}
-      className="w-full text-left rounded-xl border border-blue-pale bg-white p-4 shadow-sm active:shadow-md transition-shadow cursor-pointer"
+      className="w-full text-left rounded-xl border border-blue-pale bg-card text-card-foreground p-4 shadow-sm active:shadow-md transition-shadow cursor-pointer"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-text-dark truncate">{submission.cropLabel ?? submission.cropType}</p>
-          {submission.variety && (
-            <p className="text-xs text-text-muted-brown">{submission.variety}</p>
-          )}
-          {submission.brandName && (
-            <p className="text-xs text-text-dark mt-0.5">Brand: {submission.brandName}</p>
-          )}
+          <p className="text-lg font-bold text-text-dark truncate">{titleCase(submission.cropLabel ?? submission.cropType)}</p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {hasActions && (
@@ -83,34 +78,34 @@ const MobileSubmissionCard: React.FC<{
         </div>
       </div>
 
-      <div className="mt-2 text-xs text-text-mid">
-        {new Date(submission.submittedAt).toLocaleDateString()}
+      <div className="mt-2 text-sm text-text-mid">
+        {new Date(submission.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
       </div>
-      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-mid">
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
         {submission.verified ? (
-          <span className="inline-flex items-center gap-1 bg-green-pale text-green-mid px-1.5 py-0.5 rounded-full">
-            <CheckCircle className="w-3 h-3" /> Verified
+          <span className="inline-flex items-center gap-1 text-green-mid font-medium">
+            <CheckCircle className="w-3.5 h-3.5" /> Verified
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 text-action-primary">
-            <Clock className="w-3 h-3" /> Pending
+          <span className="inline-flex items-center gap-1 text-action-primary font-medium">
+            <Clock className="w-3.5 h-3.5" /> Pending
           </span>
         )}
-        <span>·</span>
+        <span className="text-text-muted-brown">·</span>
         {submission.outpoint ? (
-          <span className="inline-flex items-center gap-1 bg-badge-neutral-bg text-green-mid px-1.5 py-0.5 rounded-full">
-            <Anchor className="w-3 h-3" /> Anchored
+          <span className="inline-flex items-center gap-1 text-blue-mid font-medium">
+            <Shield className="w-3.5 h-3.5" /> Anchored
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 bg-badge-neutral-bg text-badge-neutral-text px-1.5 py-0.5 rounded-full">
-            <XCircle className="w-3 h-3" /> No Anchor
+          <span className="inline-flex items-center gap-1 text-text-muted-brown">
+            <XCircle className="w-3.5 h-3.5" /> No Anchor
           </span>
         )}
       </div>
 
       {submission.locationName && (
-        <div className="mt-1.5 flex items-center gap-1 text-xs text-text-muted-brown">
-          <MapPin className="w-3 h-3 shrink-0" />
+        <div className="mt-2 flex items-center gap-1.5 text-sm text-text-muted-brown">
+          <MapPin className="w-3.5 h-3.5 shrink-0" />
           <span className="truncate">{submission.locationName}</span>
         </div>
       )}

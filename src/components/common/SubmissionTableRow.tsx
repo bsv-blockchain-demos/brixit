@@ -6,6 +6,7 @@ import { BrixDataPoint } from '../../types';
 import { MapPin, Calendar, CheckCircle, Edit, Trash2, Eye, MessageSquare, Clock, Lock, User, XCircle, Anchor } from 'lucide-react';
 import { scoreBrix } from '../../lib/getBrixColor';
 import { formatCityState } from '../../lib/formatAddress';
+import { titleCase } from '../../lib/titleCase';
 
 interface SubmissionTableRowProps {
   submission: BrixDataPoint;
@@ -35,7 +36,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       {/* Cell 1 — Crop */}
       <TableCell className="py-3 px-4">
         <div>
-          <span className="text-sm text-text-mid">{submission.cropLabel ?? submission.cropType}</span>
+          <span className="text-sm text-text-mid">{titleCase(submission.cropLabel ?? submission.cropType)}</span>
           {showOwnerBadge && isOwner && (
             <Badge className="flex items-center space-x-1 px-2 py-0.5 rounded-md bg-blue-pale text-green-fresh font-medium text-xs mt-1 w-fit">
               <User className="w-3 h-3" />

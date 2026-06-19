@@ -92,37 +92,37 @@ const MapView = () => {
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-display font-bold text-white mb-2">Brix Explorer</h1>
-            <p className="text-on-bg-body">
-              See what your community is discovering near you
-            </p>
-          </div>
-
-          <div className="flex space-x-3 mt-4 md:mt-0">
-            <Button
-              variant="outline"
-              onClick={handleLocationSearch}
-              className="flex items-center space-x-2 border-blue-pale text-green-fresh hover:bg-blue-mist"
-            >
-              <Locate className="w-4 h-4" />
-              <span>Near Me</span>
-            </Button>
-          </div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-display font-bold text-white mb-2">Brix Explorer</h1>
+          <p className="text-on-bg-body">
+            See what your community is discovering near you
+          </p>
         </div>
 
-        <Card className="rounded-2xl border border-blue-pale overflow-hidden shadow-sm">
-          <CardContent className="p-0">
-            <div className="h-[calc(100vh-13rem)] w-full relative">
-              <InteractiveMap
-                userLocation={userLocation}
-                nearMeTriggered={nearMeTriggered}
-                onNearMeHandled={handleNearMeHandled}
-              />
+        {/* Steel-50 canvas frame separates the white map box from the page background */}
+        <div className="bg-surface-canvas rounded-2xl p-2">
+          <Card className="rounded-xl border border-blue-pale overflow-hidden shadow-sm">
+            <div className="flex justify-start p-3 border-b border-blue-pale">
+              <Button
+                variant="outline"
+                onClick={handleLocationSearch}
+                className="flex items-center space-x-2 border-blue-pale text-green-fresh hover:bg-blue-mist"
+              >
+                <Locate className="w-4 h-4" />
+                <span>Near Me</span>
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+            <CardContent className="p-0">
+              <div className="h-[calc(100vh-16rem)] w-full relative">
+                <InteractiveMap
+                  userLocation={userLocation}
+                  nearMeTriggered={nearMeTriggered}
+                  onNearMeHandled={handleNearMeHandled}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </PageBackground>
   );
