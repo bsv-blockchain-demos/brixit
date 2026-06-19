@@ -59,7 +59,7 @@ const DataTable: React.FC = () => {
   }, [navigate]);
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-8">
+    <div className="px-0 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-display font-bold text-white">All Submissions</h2>
@@ -77,11 +77,15 @@ const DataTable: React.FC = () => {
         </Button>
       </div>
 
-      <DataBrowserFilters />
-      <DataBrowserResults
-        fromLeaderboard={fromLeaderboard}
-        onBackToLeaderboard={handleBackToLeaderboard}
-      />
+      {/* Merge wrapper: one continuous panel ≤640px (filters · context · results);
+          display:contents ≥641px so the desktop layout renders byte-for-byte as before. */}
+      <div className="bg-surface-canvas text-card-foreground border border-blue-pale rounded-2xl overflow-hidden sm:contents">
+        <DataBrowserFilters fromLeaderboard={fromLeaderboard} />
+        <DataBrowserResults
+          fromLeaderboard={fromLeaderboard}
+          onBackToLeaderboard={handleBackToLeaderboard}
+        />
+      </div>
     </div>
   );
 };

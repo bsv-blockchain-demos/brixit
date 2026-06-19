@@ -125,9 +125,15 @@ export function applyFilters(data: BrixDataPoint[], filters: MapFilter, isAdmin:
   return filtered;
 }
 
-export function getFilterSummary(filters: MapFilter, isAdmin: boolean): string {
+/**
+ * Returns the active filters as a list of discrete human-readable strings
+ * (one entry per filter). `getFilterSummary` joins this same list, so the two
+ * stay in lockstep — this exists so the UI can render each filter as its own
+ * chip instead of one comma-joined sentence.
+ */
+export function getActiveFilterList(filters: MapFilter, isAdmin: boolean): string[] {
   const activeFilters: string[] = [];
-  
+
   // Compare against DEFAULT_MAP_FILTERS for accuracy
   // Verified filter: only add if admin changed it OR if not admin (it's implicitly always true then)
   if (isAdmin && filters.verifiedOnly !== DEFAULT_MAP_FILTERS.verifiedOnly) {
@@ -189,5 +195,10 @@ export function getFilterSummary(filters: MapFilter, isAdmin: boolean): string {
     activeFilters.push(`location: ${locationParts.join(', ')}`);
   }
 
+  return activeFilters;
+}
+
+export function getFilterSummary(filters: MapFilter, isAdmin: boolean): string {
+  const activeFilters = getActiveFilterList(filters, isAdmin);
   return activeFilters.length > 0 ? activeFilters.join(', ') : 'No active filters';
 }

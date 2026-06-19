@@ -107,6 +107,10 @@ const DataEntry = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pendingBrands, setPendingBrands] = useState<string[]>([]);
 
+  // Mobile-only 2-step presentation (Shop → Crops). Desktop ignores this and
+  // renders the full single-page form. All fields stay mounted regardless.
+  const [step, setStep] = useState<1 | 2>(1);
+
   useEffect(() => {
     if (!user || (user.role !== 'contributor' && user.role !== 'admin')) {
       navigate('/');
@@ -252,6 +256,46 @@ const DataEntry = () => {
 
     return Object.keys(e).length === 0;
   };
+
+  // Step-1 gating for the mobile flow. Reuses the exact same checks/messages as
+  // validateForm() for the trip-level fields only, so "Next" surfaces the same
+  // inline errors. Does NOT touch the submit path — the whole form is still
+  // validated by validateForm() on submit, unchanged.
+  const validateStep1 = (): boolean => {
+    const e: Record<string, string> = {};
+    if (!session.location.trim()) e.location = 'Please enter a location';
+
+    const needsVenuePrompt = session.latitude !== 0 && !session.business_name && !session.poi_name;
+    if (needsVenuePrompt && !session.venueChoice) {
+      e.venueChoice = 'Please select or register a place, or choose Skip';
+    }
+    if (needsVenuePrompt && session.venueChoice?.kind === 'register') {
+      const rc = session.venueChoice as any;
+      if (!rc.name?.trim()) e.venueChoice = 'Please enter a place name';
+    }
+
+    const lockedPosType =
+      session.venueChoice?.kind === 'existing' && (session.venueChoice as any).posType
+        ? (session.venueChoice as any).posType as string
+        : null;
+    if (!lockedPosType && !session.posType) e.posType = 'Please select a purchase type';
+
+    if (!session.purchaseDate) e.purchaseDate = 'Please enter a purchase date';
+    if (session.purchaseDate && new Date(session.purchaseDate) > new Date())
+      e.purchaseDate = 'Purchase date cannot be in the future';
+
+    // Overwrite just the step-1 error keys (empty string = no error shown).
+    setErrors(prev => ({
+      ...prev,
+      location: e.location ?? '',
+      venueChoice: e.venueChoice ?? '',
+      posType: e.posType ?? '',
+      purchaseDate: e.purchaseDate ?? '',
+    }));
+    return Object.keys(e).length === 0;
+  };
+
+  const handleNext = () => { if (validateStep1()) setStep(2); };
 
   const handleSubmit = async (e: React.MouseEvent | React.FormEvent) => {
     e.preventDefault();
@@ -409,10 +453,10 @@ const DataEntry = () => {
     <PageBackground className="min-h-screen">
       <Header />
       <main
-        className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8"
+        className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8 max-[640px]:px-2"
         style={{ paddingBottom: 'calc(7rem + var(--safe-bottom))' }}
       >
-        <motion.div className="text-center mb-8 md:mb-12" {...fadeUp}>
+        <motion.div className="text-center mb-8 md:mb-12 lb-desktop-only" {...fadeUp}>
           <p className="uppercase tracking-[0.2em] text-sm font-medium mb-2 text-white">
             New Entry
           </p>
@@ -424,10 +468,18 @@ const DataEntry = () => {
           </p>
         </motion.div>
 
+        {/* Mobile-only page header on the steel band */}
+        <div className="lb-mobile-only mb-4">
+          <h1 className="text-2xl font-display font-bold text-white">New Measurement Entry</h1>
+          <p className="text-on-bg-body mt-1">
+            Record one or more refractometer readings from a single shopping session
+          </p>
+        </div>
+
         <motion.div {...fadeUp}>
           <Card className="rounded-2xl border shadow-sm" style={{ borderColor: 'var(--blue-pale)' }}>
             <CardHeader
-              className="rounded-t-2xl border-b"
+              className="rounded-t-2xl border-b lb-desktop-only"
               style={{ backgroundColor: 'var(--blue-mist)', borderColor: 'var(--blue-pale)' }}
             >
               <CardTitle
@@ -442,11 +494,33 @@ const DataEntry = () => {
             </CardHeader>
 
             <CardContent className="p-5 sm:p-8 md:p-10">
+              {/* Mobile-only step indicator — inside the white widget */}
+              <div className="lb-mobile-only mb-6 pb-5 border-b border-blue-pale">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-text-muted-brown">New Entry</p>
+                  <p className="text-xs font-medium text-text-muted-brown">Step {step} of 2</p>
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${step >= 1 ? 'bg-green-fresh text-white' : 'bg-blue-mist text-text-mid'}`}>
+                      {step > 1 ? '✓' : '1'}
+                    </span>
+                    <span className="text-sm font-medium text-text-dark">Shop</span>
+                  </div>
+                  <div className="flex-1 h-px bg-blue-pale" />
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${step >= 2 ? 'bg-green-fresh text-white' : 'bg-blue-mist text-text-mid'}`}>
+                      2
+                    </span>
+                    <span className="text-sm font-medium text-text-dark">Crops</span>
+                  </div>
+                </div>
+              </div>
               <motion.div className="space-y-10 sm:space-y-12" {...stagger}>
 
-                {/* ── Section 1: Session context ── */}
-                <motion.div {...staggerChild}>
-                  <div className="border-l-4 pl-5 sm:pl-8" style={{ borderColor: 'var(--green-fresh)' }}>
+                {/* ── Section 1: Session context (mobile Step 1) ── */}
+                <motion.div {...staggerChild} className={step !== 1 ? 'lb-desktop-only' : ''}>
+                  <div className="border-l-4 pl-5 sm:pl-8 max-[640px]:border-l-0 max-[640px]:pl-0" style={{ borderColor: 'var(--green-fresh)' }}>
                     <FormSectionHeader title="Where did you shop?" required />
 
                     <div className="mb-6">
@@ -564,11 +638,19 @@ const DataEntry = () => {
                   </div>
                 </motion.div>
 
-                <div className="border-t" style={{ borderColor: 'var(--blue-pale)' }} />
+                <div className="border-t lb-desktop-only" style={{ borderColor: 'var(--blue-pale)' }} />
 
-                {/* ── Section 2: Crop readings ── */}
-                <motion.div {...staggerChild}>
-                  <div className="border-l-4 pl-5 sm:pl-8" style={{ borderColor: 'var(--blue-light)' }}>
+                {/* ── Section 2: Crop readings (mobile Step 2) ── */}
+                <motion.div {...staggerChild} className={step !== 2 ? 'lb-desktop-only' : ''}>
+                  {/* Mobile-only trip summary chip — Edit returns to Step 1 */}
+                  <div className="lb-mobile-only mb-4 flex items-center justify-between gap-2 rounded-lg bg-blue-mist border border-blue-pale px-3 py-2 text-sm">
+                    <span className="min-w-0 truncate text-text-mid">
+                      <MapPin className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />
+                      {session.posType || 'Shop'}{session.purchaseDate ? ` · ${session.purchaseDate}` : ''}
+                    </span>
+                    <button type="button" onClick={() => setStep(1)} className="shrink-0 font-medium text-green-fresh">Edit</button>
+                  </div>
+                  <div className="border-l-4 pl-5 sm:pl-8 max-[640px]:border-l-0 max-[640px]:pl-0" style={{ borderColor: 'var(--blue-light)' }}>
                     <FormSectionHeader title="What did you measure?" required />
                     {errors.readings_global && (
                       <p className="text-destructive text-sm mb-4 flex items-center gap-1">
@@ -608,11 +690,11 @@ const DataEntry = () => {
                   </div>
                 </motion.div>
 
-                <div className="border-t" style={{ borderColor: 'var(--blue-pale)' }} />
+                <div className="border-t lb-desktop-only" style={{ borderColor: 'var(--blue-pale)' }} />
 
-                {/* ── Section 3: Optional ── */}
-                <motion.div {...staggerChild}>
-                  <div className="border-l-4 pl-5 sm:pl-8" style={{ borderColor: 'var(--blue-pale)' }}>
+                {/* ── Section 3: Optional (mobile Step 2) ── */}
+                <motion.div {...staggerChild} className={step !== 2 ? 'lb-desktop-only' : ''}>
+                  <div className="border-l-4 pl-5 sm:pl-8 max-[640px]:border-l-0 max-[640px]:pl-0" style={{ borderColor: 'var(--blue-pale)' }}>
                     <h3 className="text-xl font-display font-bold mb-6" style={{ color: 'var(--text-dark)' }}>
                       Additional Information
                     </h3>
@@ -659,23 +741,62 @@ const DataEntry = () => {
           paddingBottom: 'calc(0.75rem + var(--safe-bottom))',
         }}
       >
-        <div className="max-w-5xl mx-auto flex justify-end">
-          <Button
-            onClick={handleSubmit}
-            className="w-full sm:w-auto px-12 py-6 text-lg font-semibold rounded-xl hover:text-white"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Submitting...
-              </>
-            ) : readings.length > 1 ? (
-              `Submit ${readings.length} Readings`
+        <div className="max-w-5xl mx-auto">
+          {/* Desktop — unchanged single submit */}
+          <div className="lb-desktop-only flex justify-end">
+            <Button
+              onClick={handleSubmit}
+              className="w-full sm:w-auto px-12 py-6 text-lg font-semibold rounded-xl hover:text-white"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Submitting...
+                </>
+              ) : readings.length > 1 ? (
+                `Submit ${readings.length} Readings`
+              ) : (
+                'Submit Reading'
+              )}
+            </Button>
+          </div>
+
+          {/* Mobile — 2-step controls (same handlers; submit is unchanged) */}
+          <div className="lb-mobile-only">
+            {step === 1 ? (
+              <Button
+                onClick={handleNext}
+                className="w-full py-6 text-base font-semibold rounded-xl hover:text-white"
+              >
+                Next: Crops →
+              </Button>
             ) : (
-              'Submit Reading'
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(1)}
+                  className="py-6 px-5 text-base font-semibold rounded-xl"
+                >
+                  ← Back
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  className="flex-1 py-6 text-base font-semibold rounded-xl hover:text-white"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit Reading →'
+                  )}
+                </Button>
+              </div>
             )}
-          </Button>
+          </div>
         </div>
       </div>
     </PageBackground>

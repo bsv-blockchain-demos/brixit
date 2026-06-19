@@ -77,6 +77,7 @@ export default {
 				'blue-pale': 'var(--blue-pale)',
 				'blue-mist': 'var(--blue-mist)',
 				'blue-mid': 'var(--blue-mid)',
+				'surface-canvas': 'var(--surface-canvas)',
 				cream: 'var(--cream)',
 				gold: 'var(--gold)',
 				'text-dark': 'var(--text-dark)',

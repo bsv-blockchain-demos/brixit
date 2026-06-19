@@ -301,18 +301,31 @@ const YourData: React.FC = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="submissions" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="submissions">My Submissions</TabsTrigger>
-            <TabsTrigger value="stats">Statistics</TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="submissions">
+          <div className="bg-card text-card-foreground border border-blue-pale rounded-2xl shadow-sm overflow-hidden">
+            {/* Segmented tab bar — blended into the widget, leaderboard-style pills */}
+            <div className="p-3 border-b border-blue-pale">
+              <TabsList className="flex w-full gap-1 p-1 h-auto bg-blue-mist border border-blue-pale rounded-xl">
+                <TabsTrigger
+                  value="submissions"
+                  className="flex-1 py-2 rounded-lg border-b-0 mb-0 text-blue-mid data-[state=active]:bg-card data-[state=active]:text-card-foreground data-[state=active]:border data-[state=active]:border-blue-light data-[state=active]:shadow-sm"
+                >
+                  My Submissions
+                </TabsTrigger>
+                <TabsTrigger
+                  value="stats"
+                  className="flex-1 py-2 rounded-lg border-b-0 mb-0 text-blue-mid data-[state=active]:bg-card data-[state=active]:text-card-foreground data-[state=active]:border data-[state=active]:border-blue-light data-[state=active]:shadow-sm"
+                >
+                  Statistics
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-          <TabsContent value="submissions">
-            <Card className="rounded-2xl border border-blue-pale shadow-sm">
-              <CardHeader>
+            <TabsContent value="submissions" className="mt-0">
+              <CardHeader className="px-3 sm:px-6">
                 <CardTitle>Submitted Measurements ({totalCount})</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 sm:px-6">
                 {totalCount === 0 ? (
                   <div className="text-center py-12">
                     {canSubmit ? (
@@ -387,8 +400,8 @@ const YourData: React.FC = () => {
                       </Table>
                     </div>
 
-                    {/* Mobile card list */}
-                    <div className="desktop:hidden space-y-3">
+                    {/* Mobile card list — cards sit raised on the canvas backdrop */}
+                    <div className="desktop:hidden space-y-3 bg-surface-canvas rounded-xl p-2">
                       {currentItems.map((submission) => {
                         const isOwner = user?.id === submission.userId;
                         const canAct = isOwner && !submission.verified;
@@ -431,16 +444,16 @@ const YourData: React.FC = () => {
                   </div>
                 )}
               </CardContent>
-            </Card>
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="stats">
-            <IconStatGrid stats={[
-              { icon: Beaker,        value: totalCount,           label: 'Total Submissions' },
-              { icon: CheckCircle,   value: verifiedCount,        label: 'Verified Measurements' },
-              { icon: MapPin,        value: uniqueCropTypesCount, label: 'Unique Crop Types' },
-            ]} />
-          </TabsContent>
+            <TabsContent value="stats" className="mt-0 p-3">
+              <IconStatGrid stats={[
+                { icon: Beaker,        value: totalCount,           label: 'Total Submissions' },
+                { icon: CheckCircle,   value: verifiedCount,        label: 'Verified Measurements' },
+                { icon: MapPin,        value: uniqueCropTypesCount, label: 'Unique Crop Types' },
+              ]} />
+            </TabsContent>
+          </div>
         </Tabs>
 
         {/* The Modal Component - now handling delete functionality */}

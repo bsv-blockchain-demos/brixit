@@ -85,6 +85,19 @@
     --badge-neutral-bg:   #f2f4f6;
     --badge-neutral-text: #7a7268;
 
+    /* ── Rank medals (leaderboard 1st/2nd/3rd; 4th+ uses neutral badge) ── */
+    --rank-1-bg: #fbbf24;  --rank-1-fg: #78350f;   /* gold   */
+    --rank-2-bg: #94a3b8;  --rank-2-fg: #0f172a;   /* silver */
+    --rank-3-bg: #c2763a;  --rank-3-fg: #ffffff;   /* bronze */
+
+    /* ── Mobile menu account panel — elevated surface on the steel header ── */
+    --menu-surface:        rgba(255,255,255,0.10);
+    --menu-surface-border: rgba(255,255,255,0.16);
+    --menu-inset:          rgba(0,0,0,0.18);
+
+    /* ── Canvas backdrop behind listed cards (steel-50). Cards sit raised on it. ── */
+    --surface-canvas: #eef3f6;
+
     /* ── On-background text hierarchy ────────────────── *
      * White-at-opacity scale for text sitting on the blue
      * page background. Change these to retone all pages.  */
@@ -181,6 +194,19 @@
     --badge-neutral-bg:   #1e2830;
     --badge-neutral-text: #9e9890;
 
+    /* ── Rank medals (dark) ───────────────────────────── */
+    --rank-1-bg: #f0c040;  --rank-1-fg: #2e2208;   /* gold   */
+    --rank-2-bg: #8aa0b4;  --rank-2-fg: #0d1620;   /* silver */
+    --rank-3-bg: #c2763a;  --rank-3-fg: #ffffff;   /* bronze */
+
+    /* ── Mobile menu account panel (dark) ─────────────── */
+    --menu-surface:        rgba(255,255,255,0.06);
+    --menu-surface-border: rgba(255,255,255,0.12);
+    --menu-inset:          rgba(0,0,0,0.28);
+
+    /* ── Canvas backdrop behind listed cards (deep steel) ── */
+    --surface-canvas: #0d1a24;
+
     /* ── shadcn semantic tokens ──────────────────────── */
     --background: 210 40% 10%;
     --foreground: 30 20% 90%;
@@ -261,4 +287,26 @@
 
 *::-webkit-scrollbar-thumb:hover {
   background-color: var(--blue-light);
+}
+
+/* ── Leaderboard mobile responsiveness (additive, mobile-only ≤640px) ──────────
+   New utility classes used only by the Leaderboard. They have zero effect at
+   ≥641px, so the desktop layout renders byte-for-byte unchanged. */
+.lb-mobile-only {
+  display: none;
+}
+@media (max-width: 640px) {
+  .lb-mobile-only {
+    display: block;
+  }
+  .lb-desktop-only {
+    display: none;
+  }
+  /* Tabbed boards: show only the active board on mobile. */
+  .lb-board {
+    display: none;
+  }
+  .lb-board.lb-board--active {
+    display: block;
+  }
 }

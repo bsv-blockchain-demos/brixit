@@ -17,7 +17,7 @@ import {
   useFormattedSubmissionByIdQuery,
 } from '../../hooks/useSubmissions';
 import { useFilters, DEFAULT_MAP_FILTERS } from '../../contexts/FilterContext';
-import { getFilterSummary } from '../../lib/filterUtils';
+import { getFilterSummary, getActiveFilterList } from '../../lib/filterUtils';
 import { fetchFormattedSubmissionsPage, type PublicFormattedSubmissionsQuery } from '../../lib/fetchSubmissions';
 import { BrixDataPoint } from '../../types';
 import SubmissionTableRow from '../common/SubmissionTableRow';
@@ -34,7 +34,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
   fromLeaderboard,
   onBackToLeaderboard,
 }) => {
-  const { filters, isAdmin, setFilteredCount } = useFilters();
+  const { filters, isAdmin, setFilteredCount, setFilters } = useFilters();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const location = useLocation();
@@ -169,11 +169,14 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
   };
 
   const filterSummary = getFilterSummary(filters, isAdmin);
+  const activeFilterChips = getActiveFilterList(filters, isAdmin);
+  const clearAllFilters = useCallback(() => setFilters(DEFAULT_MAP_FILTERS), [setFilters]);
 
   return (
     <>
+      {/* Desktop banner — unchanged; hidden ≤640px (mobile uses the merged card region below) */}
       {fromLeaderboard && (
-        <div className="mb-4 p-3 bg-blue-mist border border-blue-pale rounded-md">
+        <div className="lb-desktop-only mb-4 p-3 bg-blue-mist border border-blue-pale rounded-md">
           <div className="flex items-center justify-between">
             <p className="text-text-dark text-sm">Showing filtered results from leaderboard selection</p>
             <Button
@@ -188,17 +191,44 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
         </div>
       )}
 
+      {/* Summary is styled for the steel background, so it's desktop-only; on mobile
+          the Filters button's count badge conveys active filters instead. */}
       {filterSummary !== 'No active filters' && (
-        <p className="text-sm text-on-bg-body mb-4">
+        <p className="text-sm text-on-bg-body mb-4 lb-desktop-only">
           Applying filters: <span className="font-semibold text-white">{filterSummary}</span>
         </p>
       )}
 
-      <Card className="rounded-2xl border border-blue-pale shadow-sm">
-        <CardHeader>
+      {/* Mobile filter-context region (≤640px) — flat, hairline-divided from results.
+          The enclosing panel is provided by DataTable (merges filters + results). */}
+      <>
+        {fromLeaderboard && (
+          <div className="lb-mobile-only p-3.5 border-b border-blue-pale">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-text-muted-brown">From Leaderboard</span>
+              {activeFilterChips.length > 0 && (
+                <button onClick={clearAllFilters} className="text-sm font-medium text-action-primary">Clear all</button>
+              )}
+            </div>
+            {activeFilterChips.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {activeFilterChips.map((chip, i) => (
+                  <span key={`${chip}-${i}`} className="inline-block max-w-full break-words rounded-full bg-accent text-accent-foreground text-xs px-2.5 py-1">{chip}</span>
+                ))}
+              </div>
+            )}
+            <div className="mt-3 pt-3 border-t border-blue-pale">
+              <button onClick={onBackToLeaderboard} className="flex items-center gap-1.5 min-h-[44px] text-sm font-medium text-blue-mid hover:text-blue-deep">
+                <span aria-hidden>←</span> Back to Leaderboard
+              </button>
+            </div>
+          </div>
+        )}
+      <Card className="border-0 shadow-none rounded-none bg-transparent sm:border sm:border-blue-pale sm:shadow-sm sm:rounded-2xl sm:bg-card">
+        <CardHeader className="px-3 sm:px-6">
           <CardTitle>{totalCount} {totalCount === 1 ? 'Result' : 'Results'}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6">
           {/* Desktop table */}
           <div className="hidden desktop:block overflow-x-auto">
             <Table>
@@ -306,6 +336,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
           </div>
         </CardContent>
       </Card>
+      </>
 
       <DataPointDetailModal
         dataPoint={selectedDataPoint}

@@ -36,7 +36,7 @@ const LeaderboardPage: React.FC = () => {
 
   const [location, setLocation] = useState(() => ({
     ...emptyLocation,
-    country: user?.country || "",
+    country: user?.country || ALL_COUNTRIES,
     state: user?.state || "",
     city: user?.city || "",
   }));
@@ -59,6 +59,10 @@ const LeaderboardPage: React.FC = () => {
 
   const [brandScope, setBrandScope] = useState<'city' | 'state' | 'country' | 'global'>('city');
   const [dataScopeMessage, setDataScopeMessage] = useState("");
+
+  // Mobile-only: which board the segmented control is showing (≤640px).
+  // Desktop renders all three boards regardless of this value.
+  const [mobileTab, setMobileTab] = useState<'location' | 'brand' | 'user'>('location');
 
   // Two distinct loading modes:
   //   isFirstLoad  — no data yet, show skeleton rows
@@ -315,16 +319,16 @@ const LeaderboardPage: React.FC = () => {
       if (crop) filters.crop = crop;
       switch (brandScope) {
         case 'city':
-          if (location?.country) filters.country = location.country;
+          if (location?.country && location.country !== ALL_COUNTRIES) filters.country = location.country;
           if (location?.state) filters.state = location.state;
           if (location?.city) filters.city = location.city;
           break;
         case 'state':
-          if (location?.country) filters.country = location.country;
+          if (location?.country && location.country !== ALL_COUNTRIES) filters.country = location.country;
           if (location?.state) filters.state = location.state;
           break;
         case 'country':
-          if (location?.country) filters.country = location.country;
+          if (location?.country && location.country !== ALL_COUNTRIES) filters.country = location.country;
           break;
       }
     }
@@ -336,6 +340,35 @@ const LeaderboardPage: React.FC = () => {
   };
 
   // Render
+
+  // One merged surface: a single bordered/rounded/shadowed panel whose internal
+  // regions are split by hairline dividers (no gaps with background showing).
+  const PANEL = "bg-card text-card-foreground border border-blue-pale rounded-2xl shadow-sm overflow-hidden";
+
+  const boardConfigs = [
+    { key: 'location' as const, title: 'Top Locations', data: locationData, hasMore: locationHasMore, isLoadingMore: loadingMore.location, onLoadMore: () => loadMore('location') },
+    { key: 'brand' as const, title: 'Top Brands', data: brandData, hasMore: brandHasMore, isLoadingMore: loadingMore.brand, onLoadMore: () => loadMore('brand') },
+    { key: 'user' as const, title: 'Most Submissions', data: userData, hasMore: userHasMore, isLoadingMore: loadingMore.user, onLoadMore: () => loadMore('user') },
+  ];
+  const filterTabs = ([
+    { key: 'location', label: 'Locations' },
+    { key: 'brand', label: 'Brands' },
+    { key: 'user', label: 'Submissions' },
+  ] as const);
+  const renderBoard = (cfg: typeof boardConfigs[number]) => (
+    <LeaderboardCard
+      title={cfg.title}
+      data={cfg.data}
+      labelKey={cfg.key}
+      loadMoreType={cfg.key}
+      hasMore={cfg.hasMore}
+      isFirstLoad={isFirstLoad}
+      isFetching={isFetching}
+      isLoadingMore={cfg.isLoadingMore}
+      onLoadMore={cfg.onLoadMore}
+      onNavigate={handleNavigate}
+    />
+  );
 
   return (
     <PageBackground className="min-h-screen flex flex-col">
@@ -349,8 +382,88 @@ const LeaderboardPage: React.FC = () => {
       )}
       <Header />
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 pb-20 md:p-6 lg:p-8">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Filters sidebar */}
+        {/* Mobile-only page identity — desktop shows the active nav tab instead. */}
+        <div className="lb-mobile-only mb-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-on-bg-subtle">
+            Community Rankings
+          </p>
+          <h1 className="font-display text-3xl font-bold leading-tight text-on-bg-text">
+            Leaderboard
+          </h1>
+        </div>
+        {/* ── Mobile (≤640px): one merged panel — filters · tabs · active board ── */}
+        <div className={`lb-mobile-only -mx-2 mb-4 ${PANEL}`}>
+          {/* Filters region */}
+          <div className="p-3">
+            <div className="grid grid-cols-2 gap-3">
+              <LocationSelector value={location} onChange={setLocation} required={false} showAutoDetect={false} />
+              <div>
+                <label className="block text-sm font-medium text-text-dark mb-1">Crop</label>
+                <select
+                  value={crop}
+                  onChange={(e) => setCrop(e.target.value)}
+                  className="w-full rounded-lg border border-blue-pale bg-card text-text-dark text-sm px-2 py-2"
+                >
+                  <option value="">All crops</option>
+                  {allCrops.map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {(c.label || c.name).replace(/\b\w/g, ch => ch.toUpperCase())}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 mt-3 text-sm">
+              <button onClick={handleRefresh} disabled={!canRefresh} className={canRefresh ? 'text-green-fresh' : 'text-text-muted-brown'}>Refresh</button>
+              <button
+                onClick={() => {
+                  setLocation({ ...emptyLocation, country: user?.country || ALL_COUNTRIES, state: user?.state || "", city: user?.city || "" });
+                  setCrop("");
+                }}
+                className="text-green-fresh"
+              >
+                Reset
+              </button>
+              <button
+                onClick={() => { setLocation({ ...emptyLocation, country: ALL_COUNTRIES }); setCrop(""); }}
+                className="text-text-mid"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+          {/* Tabs region */}
+          <div className="px-3 py-3 border-t border-blue-pale">
+            <div className="flex gap-1 p-1 bg-blue-mist border border-blue-pale rounded-xl">
+              {filterTabs.map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setMobileTab(t.key)}
+                  aria-pressed={mobileTab === t.key}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    mobileTab === t.key
+                      ? 'bg-card text-card-foreground border border-blue-light shadow-sm'
+                      : 'text-blue-mid'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {dataScopeMessage && (
+            <div className="px-3 py-2 border-t border-blue-pale bg-blue-mist text-sm text-text-mid">{dataScopeMessage}</div>
+          )}
+          {/* Active board region (others hidden by .lb-board) */}
+          {boardConfigs.map((cfg) => (
+            <div key={cfg.key} className={`border-t border-blue-pale lb-board ${mobileTab === cfg.key ? 'lb-board--active' : ''}`}>
+              {renderBoard(cfg)}
+            </div>
+          ))}
+        </div>
+
+        {/* ── Desktop (≥641px): filters sidebar + merged boards panel ── */}
+        <div className="lb-desktop-only flex flex-col md:flex-row gap-6">
           <aside className="w-full md:w-72">
             <div className="bg-card text-card-foreground border border-blue-pale rounded-2xl shadow-sm p-4">
             <h2 className="text-lg font-semibold font-display text-text-dark mb-4">Filters</h2>
@@ -388,7 +501,7 @@ const LeaderboardPage: React.FC = () => {
                   onClick={() => {
                     setLocation({
                       ...emptyLocation,
-                      country: user?.country || "",
+                      country: user?.country || ALL_COUNTRIES,
                       state: user?.state || "",
                       city: user?.city || "",
                     });
@@ -412,50 +525,19 @@ const LeaderboardPage: React.FC = () => {
             </div>
           </aside>
 
-          {/* Leaderboard grid */}
-          <section className="flex-1">
+          {/* Leaderboard grid — one merged panel, boards split by hairline dividers */}
+          <section className="flex-1 min-w-0">
             {dataScopeMessage && (
               <div className="mb-4 p-3 bg-blue-mist border border-blue-pale rounded-lg text-sm text-text-mid">
                 {dataScopeMessage}
               </div>
             )}
-            <div className="grid grid-cols-1 gap-6">
-              <LeaderboardCard
-                title="Top Locations"
-                data={locationData}
-                labelKey="location"
-                loadMoreType="location"
-                hasMore={locationHasMore}
-                isFirstLoad={isFirstLoad}
-                isFetching={isFetching}
-                isLoadingMore={loadingMore.location}
-                onLoadMore={() => loadMore('location')}
-                onNavigate={handleNavigate}
-              />
-              <LeaderboardCard
-                title="Top Brands"
-                data={brandData}
-                labelKey="brand"
-                loadMoreType="brand"
-                hasMore={brandHasMore}
-                isFirstLoad={isFirstLoad}
-                isFetching={isFetching}
-                isLoadingMore={loadingMore.brand}
-                onLoadMore={() => loadMore('brand')}
-                onNavigate={handleNavigate}
-              />
-              <LeaderboardCard
-                title="Most Submissions"
-                data={userData}
-                labelKey="user"
-                loadMoreType="user"
-                hasMore={userHasMore}
-                isFirstLoad={isFirstLoad}
-                isFetching={isFetching}
-                isLoadingMore={loadingMore.user}
-                onLoadMore={() => loadMore('user')}
-                onNavigate={handleNavigate}
-              />
+            <div className={PANEL}>
+              {boardConfigs.map((cfg, i) => (
+                <div key={cfg.key} className={i > 0 ? 'border-t border-blue-pale' : ''}>
+                  {renderBoard(cfg)}
+                </div>
+              ))}
             </div>
           </section>
         </div>
