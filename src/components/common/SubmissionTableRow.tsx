@@ -7,6 +7,7 @@ import { MapPin, Calendar, CheckCircle, Edit, Trash2, Eye, MessageSquare, Clock,
 import { scoreBrix } from '../../lib/getBrixColor';
 import { formatCityState } from '../../lib/formatAddress';
 import { titleCase } from '../../lib/titleCase';
+import { formatHumanDate } from '../../lib/formatDate';
 
 interface SubmissionTableRowProps {
   submission: BrixDataPoint;
@@ -120,7 +121,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       <TableCell className="py-3 px-4 whitespace-nowrap">
         <div className="flex items-center space-x-1 text-sm text-text-mid">
           <Calendar className="w-3.5 h-3.5 text-text-muted-brown" />
-          <span>{new Date(submission.submittedAt).toLocaleDateString()}</span>
+          <span>{formatHumanDate(submission.submittedAt)}</span>
         </div>
       </TableCell>
 

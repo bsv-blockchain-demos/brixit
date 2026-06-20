@@ -169,14 +169,14 @@ export function LeaderboardCard({
           ) : (
             <>
             <div className="lb-desktop-only">
-              <div className="grid grid-cols-3 text-xs font-medium text-text-muted-brown uppercase tracking-wider border-b border-hairline px-4 py-2 bg-table-header">
+              <div className="grid grid-cols-[auto_1fr_auto] gap-3 text-xs font-medium text-text-muted-brown uppercase tracking-wider border-b border-hairline px-4 py-2 bg-table-header">
+                <span className="text-center">Rank</span>
                 <span className="text-left">
                   {labelKey === "location" ? "Store" : "Name"}
                 </span>
                 <span className="text-center">
                   {labelKey === "user" ? "Submissions" : "Score"}
                 </span>
-                <span className="text-center">Rank</span>
               </div>
 
               <div>
@@ -214,10 +214,22 @@ export function LeaderboardCard({
                       <div
                         key={(entry as any)[`${labelKey}_id`] ?? label ?? idx}
                         onClick={() => onNavigate(entry, labelKey)}
-                        className={`grid grid-cols-3 items-center px-4 py-2 border-b border-hairline last:border-0 odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors text-sm ${
+                        className={`grid grid-cols-[auto_1fr_auto] gap-3 items-center px-4 py-2 border-b border-hairline last:border-0 odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors text-sm ${
                           labelKey !== "user" ? "cursor-pointer" : ""
                         }`}
                       >
+                        <div className="flex flex-col items-center">
+                          <span
+                            className="px-3 py-1 text-sm font-semibold rounded-full"
+                            style={getRankBadgeStyle(rank)}
+                          >
+                            {rank}
+                          </span>
+                          {isTie && (
+                            <span className="text-xs text-text-muted-brown mt-1">(tie)</span>
+                          )}
+                        </div>
+
                         <div className="flex flex-col min-w-0">
                           <div className="font-medium text-text-dark">{labelKey === 'user' ? formatUsername(label) : label}</div>
                           {labelKey === "location" && (
@@ -237,18 +249,6 @@ export function LeaderboardCard({
                             </span>
                           ) : (
                             <ScoreBadge normalizedScore={normalizedScore} size="sm" />
-                          )}
-                        </div>
-
-                        <div className="flex flex-col items-center">
-                          <span
-                            className="px-3 py-1 text-sm font-semibold rounded-full"
-                            style={getRankBadgeStyle(rank)}
-                          >
-                            {rank}
-                          </span>
-                          {isTie && (
-                            <span className="text-xs text-text-muted-brown mt-1">(tie)</span>
                           )}
                         </div>
                       </div>

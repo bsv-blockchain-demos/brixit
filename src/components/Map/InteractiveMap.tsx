@@ -25,6 +25,7 @@ import {
   type Filter,
 } from '../../lib/fetchLeaderboards';
 import { formatCityState } from '../../lib/formatAddress';
+import { formatHumanDate } from '../../lib/formatDate';
 
 // Types
 
@@ -659,7 +660,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           </span>
           <span className="text-xs text-text-muted-brown mt-1 truncate">
             {safeStr(sub.brandLabel ?? sub.brandName ?? 'Unknown Brand')} —{' '}
-            {sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString() : '-'}
+            {sub.submittedAt ? formatHumanDate(sub.submittedAt) : '-'}
           </span>
         </div>
         <div className={`flex-shrink-0 min-w-[52px] px-3 py-1 text-center font-bold text-sm text-white rounded-full ${score?.bgClass ?? 'bg-gray-300'}`}>

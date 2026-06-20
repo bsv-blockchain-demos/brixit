@@ -186,6 +186,7 @@ const ReadingCard: React.FC<{
                     max={100}
                     step={0.1}
                     className="flex-1"
+                    fillColor={tierColor}
                   />
                 </div>
                 <span className="text-xs font-medium mt-1 inline-block w-20 text-center" style={{ color: tierColor }}>{tierLabel}</span>

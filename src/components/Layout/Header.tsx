@@ -30,6 +30,7 @@ import {
   Copy,
   Check,
   Trash2,
+  ArrowRight,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { BrixLogo } from "@/components/common/BrixLogo";
@@ -291,16 +292,39 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation — full-screen overlay below the header bar: nav rows on
-            steel + an elevated account panel (parity with the desktop Profile
-            dropdown). Desktop nav (md:flex) + Profile dropdown are untouched. */}
+        {/* Mobile Navigation — full-height steel panel with its own header, nav
+            list, and a bottom account card. Desktop nav + dropdown are untouched.
+            The Identity Key & Delete Account live only on the Profile page. */}
         {user && menuOpen && (
-          <nav
-            className="md:hidden fixed inset-x-0 bottom-0 z-40 bg-background overflow-y-auto px-2 pt-3 space-y-4"
-            style={{ top: "calc(var(--safe-top) + 4rem)", paddingBottom: "calc(var(--safe-bottom) + 1rem)" }}
-          >
-            {/* Nav rows (on steel) */}
-            <div className="space-y-1">
+          <div className="md:hidden fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)]">
+            {/* Panel header */}
+            <div className="flex items-center justify-between h-16 px-4 shrink-0 border-b border-white/20">
+              <BrixLogo height="2rem" color="white" />
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  aria-label="Toggle dark mode"
+                  className="relative text-white hover:bg-white/10"
+                >
+                  <Sun className="h-5 w-5 rotate-0 scale-100 transition-transform dark:rotate-90 dark:scale-0" />
+                  <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMenuOpen(false)}
+                  aria-label="Close menu"
+                  className="text-white hover:bg-white/10"
+                >
+                  <X className="w-6 h-6" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Nav list */}
+            <nav className="flex-1 overflow-y-auto px-4 pt-4 space-y-1">
               {[
                 { to: "/leaderboard", icon: Trophy, label: "Leaderboard" },
                 { to: "/map", icon: Eye, label: "Explorer" },
@@ -317,9 +341,9 @@ const Header = () => {
                       key={item.to}
                       to={item.to}
                       onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-3 min-h-[44px] px-3 rounded-lg bg-action-primary text-white hover:bg-action-primary-hover font-medium"
+                      className="flex items-center gap-3 px-4 py-3 my-1 rounded-xl bg-action-primary hover:bg-action-primary-hover text-white font-semibold text-[17px]"
                     >
-                      <Icon className="w-4 h-4 shrink-0" />
+                      <Icon className="w-5 h-5 shrink-0" />
                       <span>{item.label}</span>
                     </Link>
                   );
@@ -330,70 +354,51 @@ const Header = () => {
                     to={item.to}
                     onClick={() => setMenuOpen(false)}
                     aria-current={active ? "page" : undefined}
-                    className="flex items-center gap-3 min-h-[44px] px-3 rounded-lg text-on-bg-text hover:bg-white/10"
+                    className="flex items-center min-h-[48px] text-[17px] text-white"
                   >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span className={active ? "border-b-2 border-white pb-0.5 font-semibold" : ""}>{item.label}</span>
+                    <span className={`inline-flex items-center gap-3 ${active ? "border-b-2 border-white pb-1 pr-3 font-bold" : ""}`}>
+                      <Icon className="w-5 h-5 shrink-0" />
+                      <span>{item.label}</span>
+                    </span>
                   </Link>
                 );
               })}
-            </div>
+            </nav>
 
-            {/* Account panel — elevated surface, hairline-separated regions */}
-            <div
-              className="rounded-2xl border overflow-hidden"
-              style={{ backgroundColor: "var(--menu-surface)", borderColor: "var(--menu-surface-border)" }}
-            >
-              <div className="flex items-center gap-3 p-3">
-                <Avatar className="h-9 w-9">
-                  <AvatarFallback className="bg-blue-deep text-white">{getUserInitial()}</AvatarFallback>
-                </Avatar>
-                <span className="flex-1 min-w-0 truncate font-mono text-sm text-on-bg-text">{getDisplayName()}</span>
-                {user.role === "admin" && (
-                  <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-destructive text-destructive-foreground">Admin</span>
-                )}
-                {user.role === "contributor" && (
-                  <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-action-primary text-white">Contributor</span>
-                )}
-              </div>
-
-              <div className="px-3 pb-3 pt-3 border-t" style={{ borderColor: "var(--menu-surface-border)" }}>
-                <p className="text-[11px] uppercase tracking-wider text-on-bg-subtle mb-1.5">Identity Key</p>
-                <div className="flex items-center gap-2 rounded-md px-3 py-2" style={{ backgroundColor: "var(--menu-inset)" }}>
-                  <code className="flex-1 min-w-0 truncate text-xs font-mono text-on-bg-text">{user.identity_key}</code>
-                  <button
-                    onClick={handleCopyKey}
-                    className="shrink-0 p-1 rounded hover:bg-white/10 transition-colors"
-                    aria-label="Copy identity key"
+            {/* Account card pinned to bottom */}
+            <div className="px-4" style={{ paddingBottom: "calc(1rem + var(--safe-bottom))" }}>
+              <div className="rounded-2xl" style={{ backgroundColor: "var(--menu-surface)" }}>
+                <div className="flex items-center gap-3 p-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback className="bg-blue-deep text-white">{getUserInitial()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-mono font-bold text-white truncate">{getDisplayName()}</div>
+                    <span className="inline-block mt-0.5 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-action-primary text-white">
+                      {user.role === "admin" ? "Admin" : "Contributor"}
+                    </span>
+                  </div>
+                  <Link
+                    to="/profile"
+                    onClick={() => setMenuOpen(false)}
+                    className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white"
+                    style={{ backgroundColor: "rgba(255,255,255,0.14)" }}
                   >
-                    {copied ? (
-                      <Check className="h-3.5 w-3.5 text-green-fresh" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5 text-on-bg-subtle" />
-                    )}
-                  </button>
+                    <User className="w-4 h-4" />
+                    <span>Profile</span>
+                  </Link>
                 </div>
-              </div>
-
-              <div className="flex items-center justify-between border-t" style={{ borderColor: "var(--menu-surface-border)" }}>
+                <div className="border-t" style={{ borderColor: "rgba(255,255,255,0.20)" }} />
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-3 min-h-[44px] text-sm font-medium text-on-bg-text hover:bg-white/10"
+                  className="w-full flex items-center gap-2 px-3 min-h-[44px] text-sm font-medium text-white hover:bg-white/10 rounded-b-2xl"
                 >
-                  <LogOut className="w-4 h-4 shrink-0" />
+                  <ArrowRight className="w-4 h-4 shrink-0" />
                   <span>Logout</span>
                 </button>
-                <Link
-                  to="/profile"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-2 px-3 min-h-[44px] text-sm font-medium text-on-bg-text hover:bg-white/10"
-                >
-                  <User className="w-4 h-4 shrink-0" />
-                  <span>Edit Profile</span>
-                </Link>
               </div>
             </div>
-          </nav>
+          </div>
         )}
       </div>
     </header>

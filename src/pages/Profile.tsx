@@ -1,13 +1,13 @@
-﻿// src/pages/Profile.tsx
+// src/pages/Profile.tsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
-import { Copy, Check, ArrowLeft } from 'lucide-react';
+import { Copy, Check, ArrowLeft, Shield, Eye, Sprout, Leaf, TreePine, Trash2, Pencil } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useToast } from '../hooks/use-toast';
 import LocationSelector from '../components/common/LocationSelector';
@@ -23,11 +23,11 @@ interface LocationData {
 
 const calculateLevel = (points: number) => Math.floor(points / 100) + 1;
 const calculateProgress = (points: number) => points % 100;
-const getBadge = (submissions: number) => {
-  if (submissions >= 100) return { emoji: '🌳', label: 'Expert' };
-  if (submissions >= 10) return { emoji: '🌿', label: 'Contributor' };
-  if (submissions >= 1) return { emoji: '🌱', label: 'Newcomer' };
-  return { emoji: '👀', label: 'Observer' };
+const getRank = (submissions: number) => {
+  if (submissions >= 100) return { Icon: TreePine, label: 'Expert' };
+  if (submissions >= 10) return { Icon: Leaf, label: 'Contributor' };
+  if (submissions >= 1) return { Icon: Sprout, label: 'Newcomer' };
+  return { Icon: Eye, label: 'Observer' };
 };
 
 const Profile = () => {
@@ -37,8 +37,6 @@ const Profile = () => {
 
   const prefersReducedMotion = useReducedMotion();
   const fadeUp = prefersReducedMotion ? {} : { initial: { opacity: 0, y: 24 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5 } };
-  const stagger = prefersReducedMotion ? {} : { initial: 'hidden', animate: 'visible', variants: { hidden: {}, visible: { transition: { staggerChildren: 0.1 } } } };
-  const staggerChild = prefersReducedMotion ? {} : { variants: { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } } };
 
   // Keep local displayName in sync when the profile finishes loading or changes
   useEffect(() => {
@@ -94,7 +92,6 @@ const Profile = () => {
       return;
     }
     setLoading(prev => ({ ...prev, location: true }));
-    // Pass only fields that exist in DB
     const success = await updateLocation({
       country: location.country,
       state: location.state,
@@ -111,43 +108,61 @@ const Profile = () => {
   if (!user) return null;
 
   const isHexKey = (user.display_name?.length ?? 0) > 20;
-  const badge = getBadge(user.submission_count ?? 0);
+  const rank = getRank(user.submission_count ?? 0);
+  const RankIcon = rank.Icon;
   const level = calculateLevel(user.points ?? 0);
   const progress = calculateProgress(user.points ?? 0);
+  const shortKey = user.identity_key
+    ? `${user.identity_key.slice(0, 16)}…${user.identity_key.slice(-16)}`
+    : '';
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-surface-canvas">
       <Header />
-      <div className="pt-8 pb-24 px-4 sm:px-6 sm:pb-8 lg:px-8">
-        <div className="max-w-3xl mx-auto space-y-6">
-          {/* Back Button */}
-          <motion.div {...fadeUp}>
+      <div className="pt-6 px-4 sm:px-6 lg:px-8" style={{ paddingBottom: 'calc(2rem + var(--safe-bottom))' }}>
+        <div className="max-w-3xl mx-auto space-y-4">
+          {/* Back + page title */}
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
+              size="icon"
               onClick={() => navigate(-1)}
-              className="flex items-center gap-2 hover:bg-accent"
+              className="-ml-2 text-text-dark hover:bg-transparent"
+              aria-label="Back"
             >
-              <ArrowLeft className="h-4 w-4" />
-              Back
+              <ArrowLeft className="h-5 w-5" />
             </Button>
-          </motion.div>
+            <span className="font-display font-bold text-xl text-text-dark">Profile</span>
+          </div>
 
-          {/* Profile Hero Card */}
+          {/* Profile hero */}
           <motion.div {...fadeUp}>
             <Card className="border border-hairline rounded-2xl shadow-sm">
               <CardContent className="p-6 space-y-5">
+                {/* Avatar + name + role */}
                 <div className="flex flex-col items-center text-center gap-3">
-                  <Avatar className="h-20 w-20">
-                    <AvatarFallback className="bg-blue-deep text-white text-2xl font-bold">
-                      {displayName?.[0]?.toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
+                  <div className="relative">
+                    <Avatar className="h-[60px] w-[60px]">
+                      <AvatarFallback className="bg-blue-deep text-white text-xl font-bold">
+                        {displayName?.[0]?.toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <button
+                      type="button"
+                      onClick={() => toast({ title: 'Photo upload coming soon' })}
+                      aria-label="Edit photo"
+                      className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-action-primary border-2 border-card flex items-center justify-center"
+                    >
+                      <Pencil className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
                     <h1 className="font-display font-bold text-2xl text-text-dark">
                       {isHexKey ? 'Set your display name' : displayName}
                     </h1>
                     {user.role && (
-                      <span className="inline-block mt-2 px-3 py-1 rounded-full text-sm font-medium bg-blue-pale text-green-mid">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-blue-pale text-blue-deep">
+                        <Shield className="w-3.5 h-3.5" />
                         {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                       </span>
                     )}
@@ -156,108 +171,98 @@ const Profile = () => {
 
                 {/* Identity key */}
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted-brown mb-1.5">Public Identity Key</p>
-                </div>
-                <div className="flex items-center gap-2 border border-hairline rounded-lg px-3 py-2">
-                  <code className="flex-1 text-xs break-all font-mono text-text-mid">
-                    {user.identity_key}
-                  </code>
-                  <button
-                    onClick={handleCopyKey}
-                    className="shrink-0 p-1.5 rounded-md hover:bg-accent transition-colors"
-                    aria-label="Copy identity key"
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4 text-green-fresh" />
-                    ) : (
-                      <Copy className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </button>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-text-muted-brown mb-1.5">
+                    Public Identity Key
+                  </p>
+                  <div className="flex items-center gap-2 rounded-lg px-3 py-2 bg-surface-canvas border border-hairline">
+                    <code className="flex-1 min-w-0 truncate text-xs font-mono text-text-mid">{shortKey}</code>
+                    <button
+                      onClick={handleCopyKey}
+                      className="shrink-0 p-1.5 rounded-md hover:bg-surface-canvas transition-colors"
+                      aria-label="Copy identity key"
+                    >
+                      {copied ? (
+                        <Check className="h-4 w-4 text-green-fresh" />
+                      ) : (
+                        <Copy className="h-4 w-4 text-text-muted-brown" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
-                {/* Stats row */}
-                <div className="grid grid-cols-3 divide-x divide-hairline">
-                  <div className="p-3 text-center">
-                    <div className="text-2xl font-bold font-display text-text-dark">{level}</div>
-                    <div className="text-xs text-text-muted-brown">Level</div>
+                {/* Stats */}
+                <div className="grid grid-cols-3 divide-x divide-hairline border-t border-hairline pt-4">
+                  <div className="flex flex-col items-center justify-center gap-1">
+                    <span className="text-2xl font-bold font-display text-text-dark leading-none">{level}</span>
+                    <span className="text-xs text-text-muted-brown">Level</span>
                   </div>
-                  <div className="p-3 text-center">
-                    <div className="text-2xl">{badge.emoji}</div>
-                    <div className="text-xs text-text-muted-brown">{badge.label}</div>
+                  <div className="flex flex-col items-center justify-center gap-1">
+                    <span className="flex items-center gap-1.5 font-bold font-display text-text-dark leading-none">
+                      <RankIcon className="w-4 h-4 text-blue-mid" />
+                      {rank.label}
+                    </span>
+                    <span className="text-xs text-text-muted-brown">Rank</span>
                   </div>
-                  <div className="p-3 text-center">
-                    <div className="text-2xl font-bold font-display text-text-dark">{user.submission_count ?? 0}</div>
-                    <div className="text-xs text-text-muted-brown">Submissions</div>
+                  <div className="flex flex-col items-center justify-center gap-1">
+                    <span className="text-2xl font-bold font-display text-text-dark leading-none">{user.submission_count ?? 0}</span>
+                    <span className="text-xs text-text-muted-brown">Submissions</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
 
-          {/* Staggered cards */}
-          <motion.div className="space-y-6" {...stagger}>
-            {/* Display Name Card */}
-            <motion.div {...staggerChild}>
-              <Card className="border border-hairline rounded-2xl shadow-sm">
-                <CardHeader>
-                  <CardTitle className="font-display text-text-dark">Display Name</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleUsernameSubmit} className="space-y-4">
-                    {formErrors.username && (
-                      <Alert variant="destructive">
-                        <AlertDescription>{formErrors.username}</AlertDescription>
-                      </Alert>
-                    )}
+          {/* Settings: display name · progress · location */}
+          <motion.div {...fadeUp}>
+            <Card className="border border-hairline rounded-2xl shadow-sm">
+              <CardContent className="p-0">
+                {/* Display Name */}
+                <div className="p-6">
+                  <h3 className="font-display font-bold text-text-dark mb-3">Display Name</h3>
+                  <form onSubmit={handleUsernameSubmit} className="flex items-start gap-3">
                     <Input
                       value={displayName}
                       onChange={e => setDisplayName(e.target.value)}
                       disabled={loading.username}
                       placeholder="Choose a display name"
+                      className="flex-1"
                     />
                     <Button
                       type="submit"
-                      className="w-full bg-green-fresh hover:bg-green-mid text-white"
+                      className="shrink-0 bg-action-primary hover:bg-action-primary-hover text-white"
                       disabled={loading.username || displayName === user.display_name}
                     >
-                      {loading.username ? 'Saving...' : 'Update Name'}
+                      {loading.username ? 'Saving…' : 'Update'}
                     </Button>
                   </form>
-                </CardContent>
-              </Card>
-            </motion.div>
+                  {formErrors.username && (
+                    <Alert variant="destructive" className="mt-3">
+                      <AlertDescription>{formErrors.username}</AlertDescription>
+                    </Alert>
+                  )}
+                </div>
 
-            {/* Progress Card */}
-            <motion.div {...staggerChild}>
-              <Card className="border border-hairline rounded-2xl shadow-sm">
-                <CardHeader>
-                  <CardTitle className="font-display font-semibold text-text-dark">Progress</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-text-mid">Level {level}</span>
-                    <span className="text-sm text-text-muted-brown">{progress} / 100 pts</span>
+                <div className="border-t border-hairline" />
+
+                {/* Progress */}
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-display font-bold text-text-dark">Progress</h3>
+                    <span className="text-sm text-text-muted-brown">Level {level} · {progress} / 100 pts</span>
                   </div>
-                  <div className="w-full h-3 rounded-full" style={{ background: 'var(--blue-pale)' }}>
+                  <div className="w-full h-2 rounded-full bg-blue-pale overflow-hidden">
                     <div
-                      className="h-3 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${progress}%`,
-                        background: 'var(--green-fresh)',
-                      }}
+                      className="h-full rounded-full bg-blue-mid transition-all duration-500"
+                      style={{ width: `${progress}%` }}
                     />
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                </div>
 
-            {/* Location Card */}
-            <motion.div {...staggerChild}>
-              <Card className="border border-hairline rounded-2xl shadow-sm">
-                <CardHeader>
-                  <CardTitle className="font-display text-text-dark">Location</CardTitle>
-                </CardHeader>
-                <CardContent>
+                <div className="border-t border-hairline" />
+
+                {/* Location */}
+                <div className="p-6">
+                  <h3 className="font-display font-bold text-text-dark mb-3">Location</h3>
                   <form onSubmit={handleLocationSubmit} className="space-y-4">
                     <LocationSelector
                       value={location}
@@ -269,30 +274,36 @@ const Profile = () => {
                     )}
                     <Button
                       type="submit"
-                      className="w-full bg-green-fresh hover:bg-green-mid text-white"
+                      className="w-full bg-action-primary hover:bg-action-primary-hover text-white"
                       disabled={loading.location}
                     >
-                      {loading.location ? 'Saving...' : 'Update Location'}
+                      {loading.location ? 'Saving…' : 'Update'}
                     </Button>
                   </form>
-                </CardContent>
-              </Card>
-            </motion.div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-            {/* Danger Zone */}
-            <motion.div {...staggerChild}>
-              <Card className="border-destructive/30 bg-destructive/5 rounded-2xl">
-                <CardContent className="p-6">
-                  <p className="text-sm font-medium text-destructive mb-1">Danger Zone</p>
-                  <p className="text-sm text-text-muted-brown mb-3">
-                    Account deletion is not available at this time.
-                  </p>
-                  <Button variant="destructive" disabled className="opacity-50">
-                    Delete Account
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
+          {/* Danger Zone */}
+          <motion.div {...fadeUp}>
+            <Card className="border border-hairline rounded-2xl shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 mb-1">
+                  <Trash2 className="w-4 h-4 text-destructive" />
+                  <p className="text-sm font-semibold text-destructive">Danger Zone</p>
+                </div>
+                <p className="text-sm text-text-muted-brown mb-4">
+                  Account deletion is not available at this time.
+                </p>
+                <Button
+                  disabled
+                  className="w-full bg-surface-canvas text-text-muted-brown border border-hairline hover:bg-surface-canvas"
+                >
+                  Delete Account
+                </Button>
+              </CardContent>
+            </Card>
           </motion.div>
         </div>
       </div>

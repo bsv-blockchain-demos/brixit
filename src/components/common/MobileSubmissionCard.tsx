@@ -2,6 +2,7 @@
 import { BrixDataPoint } from '../../types';
 import { scoreBrix } from '../../lib/getBrixColor';
 import { titleCase } from '../../lib/titleCase';
+import { formatHumanDate } from '../../lib/formatDate';
 import { CheckCircle, Clock, MapPin, User, MoreVertical, Edit, Trash2, XCircle, Shield } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import {
@@ -79,7 +80,7 @@ const MobileSubmissionCard: React.FC<{
       </div>
 
       <div className="mt-2 text-sm text-text-mid">
-        {new Date(submission.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+        {formatHumanDate(submission.submittedAt)}
       </div>
       <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
         {submission.verified ? (
