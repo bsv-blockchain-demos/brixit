@@ -1,7 +1,4 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Users, ClipboardList, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { fetchAllUsers, fetchUnverifiedSubmissions, type UserWithRoles } from '@/lib/adminApi';
 import { apiGet } from '@/lib/api';
@@ -27,7 +24,21 @@ async function fetchOverviewStats() {
   };
 }
 
-export default function AdminOverview() {
+// Single stat surface — white card on the canvas, big display number in deep steel.
+function StatCard({ label, icon, value, children }: { label: string; icon: React.ReactNode; value: React.ReactNode; children?: React.ReactNode }) {
+  return (
+    <div className="bg-card border border-hairline rounded-2xl shadow-sm p-5">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-mono uppercase tracking-wider text-text-muted">{label}</span>
+        {icon}
+      </div>
+      <div className="text-3xl font-display font-bold text-blue-deep leading-none">{value}</div>
+      {children}
+    </div>
+  );
+}
+
+export default function AdminOverview({ onReviewPending }: { onReviewPending?: () => void }) {
   const queryClient = useQueryClient();
 
   const { data: stats, isLoading, isFetching, error } = useQuery({
@@ -40,23 +51,23 @@ export default function AdminOverview() {
     queryClient.invalidateQueries({ queryKey: ['admin-overview'] });
   };
 
+  const pending = stats?.pendingVerifications ?? 0;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Overview</h2>
-          <p className="text-sm text-muted-foreground">Live snapshot of platform data</p>
+          <h2 className="text-xl font-display font-bold text-text-dark">Overview</h2>
+          <p className="text-sm text-text-mid">Live snapshot of platform data</p>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
           onClick={handleRefresh}
           disabled={isFetching}
-          className="flex items-center gap-2"
+          className="inline-flex items-center gap-2 text-sm font-medium text-text-mid hover:text-text-dark disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
           Refresh
-        </Button>
+        </button>
       </div>
 
       {error && (
@@ -64,56 +75,43 @@ export default function AdminOverview() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
-            <Users className="w-4 h-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{isLoading ? '—' : stats?.totalUsers}</div>
-            {stats && (
-              <div className="flex gap-2 mt-2">
-                <Badge variant="default" className="text-xs">
-                  {stats.adminCount} admin{stats.adminCount !== 1 ? 's' : ''}
-                </Badge>
-                <Badge variant="secondary" className="text-xs">
-                  {stats.contributorCount} contributor{stats.contributorCount !== 1 ? 's' : ''}
-                </Badge>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <StatCard label="Total Users" icon={<Users className="w-4 h-4 text-text-muted" />} value={isLoading ? '—' : stats?.totalUsers}>
+          {stats && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-select-bg text-select-fg">
+                {stats.adminCount} admin{stats.adminCount !== 1 ? 's' : ''}
+              </span>
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-surface-canvas text-text-mid border border-hairline">
+                {stats.contributorCount} contributor{stats.contributorCount !== 1 ? 's' : ''}
+              </span>
+            </div>
+          )}
+        </StatCard>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Submissions</CardTitle>
-            <ClipboardList className="w-4 h-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{isLoading ? '—' : stats?.totalSubmissions}</div>
-            <p className="text-xs text-muted-foreground mt-2">Verified &amp; publicly visible</p>
-          </CardContent>
-        </Card>
+        <StatCard label="Total Submissions" icon={<ClipboardList className="w-4 h-4 text-text-muted" />} value={isLoading ? '—' : stats?.totalSubmissions}>
+          <p className="text-xs text-text-mid mt-2">Verified &amp; publicly visible</p>
+        </StatCard>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pending Review</CardTitle>
-            {stats?.pendingVerifications ? (
-              <AlertCircle className="w-4 h-4 text-gold" />
-            ) : (
-              <CheckCircle className="w-4 h-4 text-action-primary" />
-            )}
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{isLoading ? '—' : stats?.pendingVerifications}</div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {stats?.pendingVerifications
-                ? 'Submissions awaiting verification'
-                : 'All submissions verified'}
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard
+          label="Pending Review"
+          icon={pending ? <AlertCircle className="w-4 h-4 text-score-average" /> : <CheckCircle className="w-4 h-4 text-green-mid" />}
+          value={isLoading ? '—' : pending}
+        >
+          <p className="text-xs text-text-mid mt-2">
+            {pending ? 'Awaiting verification' : 'All submissions verified'}
+          </p>
+        </StatCard>
       </div>
+
+      {/* Mobile: single orange CTA to the review queue */}
+      {pending > 0 && (
+        <button
+          onClick={onReviewPending}
+          className="sm:hidden w-full min-h-[44px] rounded-xl bg-action-primary hover:bg-action-primary-hover text-white font-semibold"
+        >
+          Review {pending} pending submission{pending !== 1 ? 's' : ''}
+        </button>
+      )}
     </div>
   );
 }
