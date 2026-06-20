@@ -290,8 +290,8 @@ const Profile = () => {
             <Card className="border border-hairline rounded-2xl shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center gap-2 mb-1">
-                  <Trash2 className="w-4 h-4 text-destructive" />
-                  <p className="text-sm font-semibold text-destructive">Danger Zone</p>
+                  <Trash2 className="w-4 h-4 text-action-primary" />
+                  <p className="text-sm font-semibold text-action-primary">Danger Zone</p>
                 </div>
                 <p className="text-sm text-text-muted-brown mb-4">
                   Account deletion is not available at this time.

@@ -29,7 +29,6 @@ import {
   Moon,
   Copy,
   Check,
-  Trash2,
   ArrowRight,
 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -225,13 +224,13 @@ const Header = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+                  <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Identity Key
                   </DropdownMenuLabel>
                   <div className="px-2 pb-2">
-                    <div className="flex items-center gap-2 rounded-md bg-surface-canvas px-3 py-2">
-                      <code className="flex-1 text-xs break-all font-mono text-card-foreground">
-                        {user.identity_key}
+                    <div className="flex items-center gap-2 rounded-md bg-surface-canvas border border-hairline px-3 py-2">
+                      <code className="flex-1 min-w-0 truncate text-xs font-mono text-card-foreground">
+                        {user.identity_key?.slice(0, 16)}…{user.identity_key?.slice(-16)}
                       </code>
                       <button
                         onClick={handleCopyKey}
@@ -247,16 +246,7 @@ const Header = () => {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <a href="/delete-account.html" target="_blank" rel="noopener noreferrer" className="text-destructive focus:text-destructive cursor-pointer">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete Account
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    className="text-destructive focus:text-destructive cursor-pointer"
-                  >
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
                   </DropdownMenuItem>
