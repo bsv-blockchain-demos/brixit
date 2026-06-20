@@ -13,6 +13,7 @@ import { fetchMySubmissionsPage } from '../lib/fetchSubmissions';
 import { useMySubmissionsCountQuery, useMySubmissionsCropIdsQuery, useMySubmissionsPageQuery } from '../hooks/useSubmissions';
 
 import SubmissionTableRow from '../components/common/SubmissionTableRow';
+import { ColumnHint } from '../components/common/StatusBadges';
 import MobileSubmissionCard from '../components/common/MobileSubmissionCard';
 import { BrixDataPoint } from '../types';
 import { useToast } from '../hooks/use-toast';
@@ -361,8 +362,12 @@ const YourData: React.FC = () => {
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">BRIX</TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Notes</TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Date</TableHead>
-                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Verified?</TableHead>
-                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Blockchain</TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
+                              <ColumnHint help="Whether this reading is approved for public display. Most are approved automatically; outliers are reviewed by an admin.">Verified?</ColumnHint>
+                            </TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
+                              <ColumnHint help="Whether this reading is recorded on the BSV blockchain. 'Timestamped' means it has a permanent, tamper-evident record; 'Pending' means that record is still in progress.">Blockchain</ColumnHint>
+                            </TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Actions</TableHead>
                           </TableRow>
                         </TableHeader>

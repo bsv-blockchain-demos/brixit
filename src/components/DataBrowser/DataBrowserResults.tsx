@@ -21,6 +21,7 @@ import { getFilterSummary, getActiveFilterList } from '../../lib/filterUtils';
 import { fetchFormattedSubmissionsPage, type PublicFormattedSubmissionsQuery } from '../../lib/fetchSubmissions';
 import { BrixDataPoint } from '../../types';
 import SubmissionTableRow from '../common/SubmissionTableRow';
+import { ColumnHint } from '../common/StatusBadges';
 import MobileSubmissionCard from '../common/MobileSubmissionCard';
 import DataPointDetailModal from '../common/DataPointDetailModal';
 import { useAuth } from '../../contexts/AuthContext';
@@ -263,8 +264,12 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
                   >
                     Date {sortBy === 'submittedAt' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
-                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Verified?</TableHead>
-                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Blockchain</TableHead>
+                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
+                    <ColumnHint help="Whether this reading is approved for public display. Most are approved automatically; outliers are reviewed by an admin.">Verified?</ColumnHint>
+                  </TableHead>
+                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
+                    <ColumnHint help="Whether this reading is recorded on the BSV blockchain. 'Timestamped' means it has a permanent, tamper-evident record; 'Pending' means that record is still in progress.">Blockchain</ColumnHint>
+                  </TableHead>
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>

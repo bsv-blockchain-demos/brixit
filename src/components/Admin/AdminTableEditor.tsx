@@ -39,7 +39,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Search, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, RefreshCw, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { PaginatedResult } from '@/lib/adminApi';
 
@@ -53,6 +54,10 @@ export interface FieldDef {
   options?: { value: string; label: string }[];
   step?: string;
   placeholder?: string;
+  /** When true, the value is constrained to a DB slug: lowercase, no spaces, [a-z0-9_] only. */
+  slug?: boolean;
+  /** Optional guidance shown in a tooltip beside the field label. */
+  help?: string;
 }
 
 export interface ColumnDef {
@@ -63,6 +68,10 @@ export interface ColumnDef {
 
 interface Props {
   title: string;
+  /** Section heading shown above the toolbar. Defaults to `title`. */
+  heading?: string;
+  /** Small subtext under the heading. */
+  description?: string;
   singular?: string;
   queryKey: string;
   columns: ColumnDef[];
@@ -72,15 +81,24 @@ interface Props {
   updateFn: (id: string, data: Record<string, any>) => Promise<any>;
   deleteFn: (id: string) => Promise<any>;
   extraRowActions?: (row: any, invalidate: () => void) => React.ReactNode;
+  /** Optional mobile (<sm) card renderer. When set, the table is desktop-only and rows render as cards on mobile. */
+  renderMobileCard?: (row: any, actions: { onEdit: () => void; onDelete: () => void }) => React.ReactNode;
 }
 
 // Component
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE_OPTIONS = [20, 100, 200];
 const emptyForm = (fields: FieldDef[]) => Object.fromEntries(fields.map(f => [f.key, '']));
+
+// Constrain free text to a DB slug: lowercase, spaces/hyphens → underscore, strip the rest.
+const sanitizeSlug = (s: string) =>
+  s.toLowerCase().replace(/[\s-]+/g, '_').replace(/[^a-z0-9_]/g, '');
+const SLUG_RE = /^[a-z0-9_]+$/;
 
 export default function AdminTableEditor({
   title,
+  heading,
+  description,
   singular,
   queryKey,
   columns,
@@ -90,6 +108,7 @@ export default function AdminTableEditor({
   updateFn,
   deleteFn,
   extraRowActions,
+  renderMobileCard,
 }: Props) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -98,6 +117,7 @@ export default function AdminTableEditor({
   const [search, setSearch] = useState('');
   const [committedSearch, setCommittedSearch] = useState('');
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
 
   // Create / edit dialog
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -111,14 +131,14 @@ export default function AdminTableEditor({
   const [deleting, setDeleting] = useState(false);
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: [queryKey, committedSearch, page],
+    queryKey: [queryKey, committedSearch, page, pageSize],
     queryFn: () =>
-      fetchFn({ search: committedSearch || undefined, limit: PAGE_SIZE, offset: page * PAGE_SIZE }),
+      fetchFn({ search: committedSearch || undefined, limit: pageSize, offset: page * pageSize }),
     placeholderData: (prev) => prev,
     staleTime: Infinity,
   });
 
-  const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
+  const totalPages = data ? Math.ceil(data.total / pageSize) : 0;
 
   const openCreate = () => {
     setFormValues(emptyForm(formFields));
@@ -134,8 +154,13 @@ export default function AdminTableEditor({
 
   const handleSave = async () => {
     for (const f of formFields) {
-      if (f.required && !String(formValues[f.key] ?? '').trim()) {
+      const val = String(formValues[f.key] ?? '').trim();
+      if (f.required && !val) {
         toast({ title: `"${f.label}" is required`, variant: 'destructive' });
+        return;
+      }
+      if (f.slug && val && !SLUG_RE.test(val)) {
+        toast({ title: `"${f.label}" must be lowercase letters, numbers or underscores — no spaces`, variant: 'destructive' });
         return;
       }
     }
@@ -180,6 +205,12 @@ export default function AdminTableEditor({
 
   return (
     <div className="space-y-4">
+      {/* Section header */}
+      <div>
+        <h2 className="text-xl font-display font-bold text-text-dark">{heading ?? title}</h2>
+        {description && <p className="text-sm text-text-mid">{description}</p>}
+      </div>
+
       {/* Toolbar */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-sm">
@@ -213,16 +244,16 @@ export default function AdminTableEditor({
         </button>
       </div>
 
-      {/* Table — one surface, hairline rows, canvas header (scrolls on mobile) */}
+      {/* Table — one surface, hairline rows, canvas header. Desktop table + optional mobile cards. */}
       <div className="rounded-2xl border border-hairline bg-card shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className={`overflow-x-auto ${renderMobileCard ? 'hidden sm:block' : ''}`}>
           <Table>
             <TableHeader>
-              <TableRow className="bg-surface-canvas hover:bg-surface-canvas border-hairline">
+              <TableRow className="bg-table-header hover:bg-table-header border-hairline">
                 {columns.map(col => (
-                  <TableHead key={col.key} className="text-xs font-mono uppercase tracking-wider text-text-muted">{col.label}</TableHead>
+                  <TableHead key={col.key} className="text-xs font-medium uppercase tracking-wider text-text-muted-brown">{col.label}</TableHead>
                 ))}
-                <TableHead className="w-20 text-right text-xs font-mono uppercase tracking-wider text-text-muted">Actions</TableHead>
+                <TableHead className="w-20 text-right text-xs font-medium uppercase tracking-wider text-text-muted-brown">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -277,14 +308,51 @@ export default function AdminTableEditor({
             </TableBody>
           </Table>
         </div>
+
+        {/* Mobile cards (<sm) */}
+        {renderMobileCard && (
+          <div className="sm:hidden divide-y divide-hairline">
+            {isLoading ? (
+              <p className="text-center text-text-mid py-10 text-sm">Loading...</p>
+            ) : data?.data.length === 0 ? (
+              <p className="text-center text-text-mid py-10 text-sm">
+                {committedSearch ? `No results for "${committedSearch}"` : 'No records yet'}
+              </p>
+            ) : (
+              data?.data.map((row: any) => (
+                <div key={row.id} className={isFetching ? 'opacity-60' : ''}>
+                  {renderMobileCard(row, {
+                    onEdit: () => openEdit(row),
+                    onDelete: () => { setDeleteTarget(row); setDeleteError(''); },
+                  })}
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       {/* Pagination / total */}
       <div className="flex items-center justify-between text-sm text-text-mid">
-        <span>
-          {data?.total ?? 0} total
-          {committedSearch && ` for "${committedSearch}"`}
-        </span>
+        <div className="flex items-center gap-3">
+          <Select
+            value={String(pageSize)}
+            onValueChange={val => { setPageSize(Number(val)); setPage(0); }}
+          >
+            <SelectTrigger className="h-8 w-[110px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PAGE_SIZE_OPTIONS.map(n => (
+                <SelectItem key={n} value={String(n)}>Show {n}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span>
+            {data?.total ?? 0} total
+            {committedSearch && ` for "${committedSearch}"`}
+          </span>
+        </div>
         {totalPages > 1 && (
           <div className="flex items-center gap-2">
             <Button
@@ -319,9 +387,23 @@ export default function AdminTableEditor({
           <div className="space-y-4 py-2">
             {formFields.map(field => (
               <div key={field.key} className="space-y-1.5">
-                <Label htmlFor={field.key}>
+                <Label htmlFor={field.key} className="flex items-center gap-1.5">
                   {field.label}
-                  {field.required && <span className="text-destructive ml-1">*</span>}
+                  {field.required && <span className="text-destructive">*</span>}
+                  {field.help && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label={`About ${field.label}`}
+                          className="text-text-muted hover:text-text-mid"
+                        >
+                          <Info className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">{field.help}</TooltipContent>
+                    </Tooltip>
+                  )}
                 </Label>
                 {field.type === 'checkbox' ? (
                   <div className="flex items-center gap-2 pt-1">
@@ -356,14 +438,29 @@ export default function AdminTableEditor({
                     </SelectContent>
                   </Select>
                 ) : (
-                  <Input
-                    id={field.key}
-                    type={field.type}
-                    step={field.step}
-                    value={formValues[field.key] ?? ''}
-                    onChange={e => setFormValues(v => ({ ...v, [field.key]: e.target.value }))}
-                    placeholder={field.placeholder ?? field.label}
-                  />
+                  <>
+                    <Input
+                      id={field.key}
+                      type={field.type}
+                      step={field.step}
+                      value={formValues[field.key] ?? ''}
+                      onChange={e =>
+                        setFormValues(v => ({
+                          ...v,
+                          [field.key]: field.slug ? sanitizeSlug(e.target.value) : e.target.value,
+                        }))
+                      }
+                      placeholder={field.placeholder ?? field.label}
+                      {...(field.slug
+                        ? { autoCapitalize: 'off', autoCorrect: 'off', spellCheck: false }
+                        : {})}
+                    />
+                    {field.slug && (
+                      <p className="text-xs text-text-muted-brown">
+                        Lowercase letters, numbers and underscores only — no spaces.
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             ))}

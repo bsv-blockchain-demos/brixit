@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,12 +16,23 @@ import {
   ChevronDown,
   Download,
   Loader2,
+  Eye,
+  Calendar,
+  MapPin,
+  User,
+  Anchor,
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 import { useWallet } from '@/contexts/WalletContext';
 import { Random, Utils } from '@bsv/sdk';
 import { buildTopupOutput } from '@/lib/buildTopupOutput';
+import { titleCase } from '@/lib/titleCase';
+import { scoreBrix } from '@/lib/getBrixColor';
+import { ScoreBadge } from '@/components/common/ScoreBadge';
+import { formatVenueLocation } from '@/lib/formatAddress';
+import { fetchSubmissionById } from '@/lib/fetchSubmissions';
+import { BlockchainBadge } from '@/components/common/StatusBadges';
 import {
   fetchWalletBalance,
   fetchWalletInfo,
@@ -41,6 +50,114 @@ function shortHex(hex: string, head = 8, tail = 8): string {
   return `${hex.slice(0, head)}…${hex.slice(-tail)}`;
 }
 
+const fmtDate = (v: string | number | Date | null | undefined) =>
+  v ? new Date(v).toLocaleDateString() : '—';
+
+// Small uppercase section label, optionally with a leading icon.
+function Eyebrow({ icon: Icon, children, className = '' }: {
+  icon?: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted-brown ${className}`}>
+      {Icon ? <Icon className="w-3.5 h-3.5" /> : null}
+      {children}
+    </span>
+  );
+}
+
+// Mono value in a soft field with a copy affordance.
+function CopyField({ value, display, onCopy }: { value: string; display?: string; onCopy: () => void }) {
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-hairline bg-surface-canvas px-3 py-2">
+      <code className="flex-1 min-w-0 break-all font-mono text-xs text-text-dark">{display ?? value}</code>
+      <button
+        onClick={onCopy}
+        aria-label="Copy"
+        className="shrink-0 inline-flex items-center justify-center h-6 w-6 rounded text-text-mid hover:text-text-dark hover:bg-card"
+      >
+        <Copy className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
+
+// Read-only submission viewer for a pending-anchor row.
+function PendingViewModal({ id, onClose, onCopy }: { id: string; onClose: () => void; onCopy: (v: string, l: string) => void }) {
+  const { data: dp, isLoading } = useQuery({
+    queryKey: ['submission-detail', id],
+    queryFn: () => fetchSubmissionById(id),
+    staleTime: 30_000,
+  });
+
+  const thresholds = dp && dp.poorBrix != null && dp.excellentBrix != null
+    ? { poor: dp.poorBrix, average: 0, good: 0, excellent: dp.excellentBrix }
+    : undefined;
+  const score = dp ? scoreBrix(dp.brixLevel, thresholds) : null;
+  const brand = dp ? (dp.brandLabel ?? dp.brandName) : null;
+  const loc = dp ? formatVenueLocation(dp.streetAddress, dp.city, dp.state) : '';
+  const place = dp ? [dp.placeName, loc].filter(Boolean).join(' · ') || '—' : '—';
+
+  const Row = ({ icon: Icon, label, children }: { icon?: React.ComponentType<{ className?: string }>; label: string; children: React.ReactNode }) => (
+    <div className="flex gap-3">
+      <span className="w-20 shrink-0 text-text-muted-brown inline-flex items-center gap-1.5">
+        {Icon ? <Icon className="w-3.5 h-3.5" /> : null}{label}
+      </span>
+      <span className="text-text-dark min-w-0">{children}</span>
+    </div>
+  );
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-display text-text-dark">
+            {dp ? (titleCase(dp.cropLabel ?? dp.cropType) || 'Submission') : 'Submission'}
+          </DialogTitle>
+        </DialogHeader>
+
+        {isLoading ? (
+          <p className="text-sm text-text-mid">Loading…</p>
+        ) : !dp || !score ? (
+          <p className="text-sm text-destructive">Couldn't load this submission.</p>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <ScoreBadge normalizedScore={score.normalized} size="lg" />
+              <div>
+                <div className="font-semibold text-base text-text-dark">{score.quality}</div>
+                <div className="text-sm text-text-mid">{dp.brixLevel} BRIX</div>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-sm border-t border-hairline pt-3">
+              {brand && <Row label="Brand">{brand}</Row>}
+              <Row icon={MapPin} label="Place">{place}</Row>
+              <Row icon={Calendar} label="Date">{dp.submittedAt ? new Date(dp.submittedAt).toLocaleDateString() : '—'}</Row>
+              <Row icon={User} label="By">{dp.submittedBy || '—'}</Row>
+              <Row icon={Anchor} label="Blockchain">
+                <BlockchainBadge secured={!!dp.outpoint} />
+              </Row>
+              <Row label="ID">
+                <button
+                  onClick={() => onCopy(dp.id, 'Submission ID')}
+                  className="inline-flex items-center gap-1 font-mono text-xs text-text-muted-brown hover:text-text-mid break-all text-left"
+                >
+                  {dp.id}
+                  <Copy className="w-3 h-3 shrink-0" />
+                </button>
+              </Row>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const ACTIVITY_FILTERS = ['', 'brixit-submission', 'brixit-edit', 'brixit-delete', 'brixit-topup'] as const;
+
 export default function AdminTreasury() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -52,6 +169,7 @@ export default function AdminTreasury() {
   const [sweepBusy, setSweepBusy] = useState(false);
   const [sweepPopoverOpen, setSweepPopoverOpen] = useState(false);
   const [sweepDate, setSweepDate] = useState('');
+  const [viewId, setViewId] = useState<string | null>(null);
 
   const balanceQ = useQuery({
     queryKey: ['admin-wallet', 'balance'],
@@ -124,7 +242,7 @@ export default function AdminTreasury() {
             outputDescription: 'BRIXit treasury top-up',
           },
         ],
-        options: { 
+        options: {
           randomizeOutputs: false,
           acceptDelayedBroadcast: false,
         },
@@ -175,7 +293,7 @@ export default function AdminTreasury() {
       } else {
         toast({
           title: `No new funds${dateSuffix}`,
-          description: result.message || `Address checked — ${result.skipped} already internalized.`,
+          description: result.message || `Address checked. ${result.skipped} already internalized.`,
         });
       }
       queryClient.invalidateQueries({ queryKey: ['admin-wallet'] });
@@ -197,410 +315,416 @@ export default function AdminTreasury() {
   };
 
   const chain = infoQ.data?.chain ?? 'main';
+  const networkPill = (
+    <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full bg-select-bg text-select-fg">
+      <span className="relative flex h-2 w-2">
+        <span className="absolute inline-flex h-full w-full rounded-full bg-green-mid opacity-75 animate-ping motion-reduce:hidden" />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-green-mid" />
+      </span>
+      {chain === 'main' ? 'mainnet' : 'testnet'}
+    </span>
+  );
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-display font-bold text-text-dark">Treasury Wallet</h2>
           <p className="text-sm text-text-mid">
-            Balance, identity and recent on-chain activity for the wallet that anchors submissions.
+            Balance, identity and on-chain activity for the wallet that anchors submissions.
           </p>
         </div>
         <button
           onClick={handleRefresh}
           disabled={balanceQ.isFetching || activityQ.isFetching}
           aria-label="Refresh treasury"
-          className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-text-mid hover:text-text-dark hover:bg-surface-canvas disabled:opacity-50"
+          className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-text-mid hover:text-text-dark hover:bg-surface-canvas disabled:opacity-50 shrink-0"
         >
           <RefreshCw className={`w-4 h-4 ${balanceQ.isFetching || activityQ.isFetching ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
-      {/* ── Balance + Info row ──────────────────────────────────────────────── */}
+      {/* ── Balance + Identity ─────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-text-mid">Balance</CardTitle>
-            <Wallet className="w-4 h-4 text-text-mid" />
-          </CardHeader>
-          <CardContent>
-            {balanceQ.isLoading ? (
-              <div className="text-3xl font-bold">—</div>
-            ) : balanceQ.error ? (
-              <p className="text-sm text-destructive">
-                {(balanceQ.error as any)?.message ?? 'Failed to load balance'}
-              </p>
-            ) : balanceQ.data ? (
-              <>
-                <div className="text-3xl font-bold tabular-nums">
-                  {formatSatoshis(balanceQ.data.satoshis)}{' '}
-                  <span className="text-base font-medium text-text-mid">sats</span>
-                </div>
-                <p className="text-xs text-text-mid mt-1">
-                  ≈ {satoshisToBsv(balanceQ.data.satoshis)} BSV
-                </p>
-                {balanceQ.data.lowBalanceWarning && (
-                  <div className="flex items-center gap-2 mt-3 p-2 rounded-md bg-score-average-bg text-text-dark text-xs">
-                    <AlertTriangle className="w-4 h-4 shrink-0" />
-                    <span>
-                      Below {formatSatoshis(balanceQ.data.threshold)} sats — top up to keep
-                      anchoring submissions.
-                    </span>
-                  </div>
-                )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
-                  <Button
-                    size="sm"
-                    onClick={() => setTopupModalOpen(true)}
-                    disabled={!userWallet || !infoQ.data}
-                    className="flex items-center gap-2 bg-action-primary hover:bg-action-primary-hover text-white"
-                    title={!userWallet ? 'Connect a local wallet first' : 'Send funds from your connected wallet'}
-                  >
-                    <ArrowUpCircle className="w-4 h-4" />
-                    From local wallet
-                  </Button>
-                  <div className="flex items-stretch gap-px">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSweepAddress()}
-                      disabled={sweepBusy || !infoQ.data}
-                      className="flex-1 flex items-center gap-2 rounded-r-none"
-                      title="Pull any external payments sent to today's address into the treasury"
-                    >
-                      {sweepBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                      Sweep address
-                    </Button>
-                    <Popover open={sweepPopoverOpen} onOpenChange={setSweepPopoverOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={sweepBusy || !infoQ.data}
-                          className="px-2 rounded-l-none border-l-0"
-                          aria-label="Sweep a past date's address"
-                          title="Sweep a past day's address (for recovery)"
-                        >
-                          <ChevronDown className="w-4 h-4" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent align="end" className="w-64 space-y-3">
-                        <div>
-                          <p className="text-xs font-semibold mb-1" style={{ color: 'var(--text-mid)' }}>
-                            Sweep past date
-                          </p>
-                          <p className="text-[10px] text-text-mid">
-                            Funds sent to an older day's rotating address. UTC dates.
-                          </p>
-                        </div>
-                        <Input
-                          type="date"
-                          value={sweepDate}
-                          onChange={(e) => setSweepDate(e.target.value)}
-                          max={new Date().toISOString().slice(0, 10)}
-                          className="text-sm"
-                        />
-                        <Button
-                          size="sm"
-                          className="w-full"
-                          disabled={sweepBusy || !sweepDate}
-                          onClick={async () => {
-                            const ok = await handleSweepAddress(sweepDate);
-                            if (ok) {
-                              setSweepPopoverOpen(false);
-                              setSweepDate('');
-                            }
-                          }}
-                        >
-                          {sweepBusy ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                          Sweep this date
-                        </Button>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
-              </>
-            ) : null}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-text-mid">Wallet Identity</CardTitle>
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-select-bg text-select-fg">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-mid" />
-              {chain === 'main' ? 'mainnet' : 'testnet'}
-            </span>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {infoQ.isLoading ? (
-              <p className="text-sm text-text-mid">Loading…</p>
-            ) : infoQ.error ? (
-              <p className="text-sm text-destructive">
-                {(infoQ.error as any)?.message ?? 'Failed to load wallet info'}
-              </p>
-            ) : infoQ.data ? (
-              <>
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-xs uppercase tracking-wide text-text-mid">
-                      Top-up Address
-                    </p>
-                    <p className="text-[10px] text-text-mid">
-                      rotates {new Date(infoQ.data.addressRotatesAt).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <code className="text-xs font-mono break-all flex-1">{infoQ.data.address}</code>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 shrink-0"
-                      onClick={() => copy(infoQ.data!.address, 'Address')}
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                  <p className="text-[10px] text-text-mid mt-1">
-                    Derived fresh each UTC day. Funds sent to older addresses remain spendable.
-                  </p>
-                </div>
-
-                <Collapsible
-                  className="rounded-xl border overflow-hidden"
-                  style={{ borderColor: 'var(--hairline)' }}
-                >
-                  <CollapsibleTrigger asChild>
-                    <button
-                      type="button"
-                      className="group flex w-full items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-surface-canvas transition-colors"
-                      style={{ color: 'var(--text-mid)' }}
-                    >
-                      <span>Derivation info</span>
-                      <ChevronDown
-                        className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-180"
-                        style={{ color: 'var(--text-muted)' }}
-                      />
-                    </button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent
-                    className="border-t px-3 py-3 space-y-2.5"
-                    style={{ borderColor: 'var(--hairline)' }}
-                  >
-                    <p className="text-[10px] text-text-mid italic">
-                      Public parameters. Not secrets — anyone with these can derive the address, but spending still requires the server wallet's master key. Use only if the automated top-up sweep fails and funds need manual recovery.
-                    </p>
-                    {([
-                      ['Date (UTC)', infoQ.data.addressDate],
-                      ['Protocol ID', JSON.stringify(infoQ.data.protocolID)],
-                      ['Counterparty', infoQ.data.counterparty],
-                      ['Key ID', infoQ.data.addressKeyID],
-                      ['Derivation prefix', infoQ.data.derivationPrefix],
-                      ['Derivation suffix', infoQ.data.derivationSuffix],
-                    ] as const).map(([label, value]) => (
-                      <div key={label}>
-                        <p className="text-[10px] uppercase tracking-wide text-text-mid mb-0.5">
-                          {label}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <code className="text-xs font-mono break-all flex-1" style={{ color: 'var(--text-dark)' }}>
-                            {value}
-                          </code>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 shrink-0"
-                            onClick={() => copy(value, label)}
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </CollapsibleContent>
-                </Collapsible>
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-text-mid mb-1">
-                    Identity Public Key
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <code className="text-xs font-mono flex-1">
-                      {shortHex(infoQ.data.identityKey, 12, 12)}
-                    </code>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 shrink-0"
-                      onClick={() => copy(infoQ.data!.identityKey, 'Identity key')}
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-xs text-text-mid pt-1 border-t">
-                  Storage: <code className="font-mono">{infoQ.data.storageUrl}</code>
-                </p>
-              </>
-            ) : null}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ── Pending submissions ─────────────────────────────────────────────── */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <div>
-            <CardTitle className="text-base">Pending Anchors</CardTitle>
-            <p className="text-xs text-text-mid mt-1">
-              Submission rows whose on-chain anchor never completed (outpoint is NULL).
-            </p>
+        {/* Balance */}
+        <div className="bg-card border border-hairline rounded-2xl shadow-sm p-5">
+          <div className="flex items-center justify-between">
+            <Eyebrow icon={Wallet}>Balance</Eyebrow>
+            <span className="lg:hidden">{networkPill}</span>
           </div>
-          <Clock className="w-4 h-4 text-text-mid" />
-        </CardHeader>
-        <CardContent>
-          {pendingQ.isLoading ? (
-            <p className="text-sm text-text-mid">Loading…</p>
-          ) : pendingQ.error ? (
-            <p className="text-sm text-destructive">
-              {(pendingQ.error as any)?.message ?? 'Failed to load pending submissions'}
+
+          {balanceQ.isLoading ? (
+            <div className="mt-2 text-4xl font-display font-bold text-text-muted-brown">—</div>
+          ) : balanceQ.error ? (
+            <p className="mt-2 text-sm text-destructive">
+              {(balanceQ.error as any)?.message ?? 'Failed to load balance'}
             </p>
-          ) : pendingQ.data?.total === 0 ? (
-            <p className="text-sm text-text-mid">No pending anchors — all submissions are on chain.</p>
-          ) : pendingQ.data ? (
+          ) : balanceQ.data ? (
             <>
-              <p className="text-xs text-text-mid mb-3">
-                Showing {pendingQ.data.rows.length} of {pendingQ.data.total}
-              </p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-xs text-text-mid border-b">
-                      <th className="py-2 pr-3">Submitted</th>
-                      <th className="py-2 pr-3">Crop</th>
-                      <th className="py-2 pr-3">BRIX</th>
-                      <th className="py-2 pr-3">Contributor</th>
-                      <th className="py-2 pr-3">Venue</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pendingQ.data.rows.map((r) => (
-                      <tr key={r.id} className="border-b last:border-0">
-                        <td className="py-2 pr-3 text-xs text-text-mid tabular-nums">
-                          {r.assessmentDate ? new Date(r.assessmentDate).toLocaleString() : '—'}
-                        </td>
-                        <td className="py-2 pr-3">{r.crop.name}</td>
-                        <td className="py-2 pr-3 tabular-nums">{r.brixValue}</td>
-                        <td className="py-2 pr-3">{r.contributorName ?? '—'}</td>
-                        <td className="py-2 pr-3">
-                          {r.venue ? `${r.venue.name}${r.venue.city ? ` · ${r.venue.city}` : ''}` : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="font-display font-bold text-4xl text-text-dark tabular-nums leading-none">
+                  {formatSatoshis(balanceQ.data.satoshis)}
+                </span>
+                <span className="text-base font-medium text-text-mid">sats</span>
+              </div>
+              <p className="text-xs text-text-muted-brown mt-1.5">≈ {satoshisToBsv(balanceQ.data.satoshis)} BSV</p>
+
+              {balanceQ.data.lowBalanceWarning && (
+                <div className="flex items-start gap-2 mt-4 rounded-lg bg-score-average-bg px-3 py-2.5 text-xs text-text-dark">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-score-average mt-0.5" />
+                  <span>
+                    Below {formatSatoshis(balanceQ.data.threshold)} sats. Top up to keep timestamping submissions on the blockchain.
+                  </span>
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                <Button
+                  onClick={() => setTopupModalOpen(true)}
+                  disabled={!userWallet || !infoQ.data}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-action-primary hover:bg-action-primary-hover text-primary-foreground font-semibold"
+                  title={!userWallet ? 'Connect a local wallet first' : 'Send funds from your connected wallet'}
+                >
+                  <ArrowUpCircle className="w-4 h-4" />
+                  Top up from local wallet
+                </Button>
+                <div className="flex items-stretch">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleSweepAddress()}
+                    disabled={sweepBusy || !infoQ.data}
+                    className="flex items-center gap-2 rounded-lg rounded-r-none border-hairline text-text-dark"
+                    title="Pull any external payments sent to today's address into the treasury"
+                  >
+                    {sweepBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    Sweep
+                  </Button>
+                  <Popover open={sweepPopoverOpen} onOpenChange={setSweepPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        disabled={sweepBusy || !infoQ.data}
+                        className="px-2 rounded-lg rounded-l-none border-l-0 border-hairline text-text-dark"
+                        aria-label="Sweep a past date's address"
+                        title="Sweep a past day's address (for recovery)"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-64 space-y-3">
+                      <div>
+                        <p className="text-xs font-semibold mb-1 text-text-mid">Sweep past date</p>
+                        <p className="text-[10px] text-text-muted-brown">
+                          Funds sent to an older day's rotating address. UTC dates.
+                        </p>
+                      </div>
+                      <Input
+                        type="date"
+                        value={sweepDate}
+                        onChange={(e) => setSweepDate(e.target.value)}
+                        max={new Date().toISOString().slice(0, 10)}
+                        className="text-sm"
+                      />
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        disabled={sweepBusy || !sweepDate}
+                        onClick={async () => {
+                          const ok = await handleSweepAddress(sweepDate);
+                          if (ok) {
+                            setSweepPopoverOpen(false);
+                            setSweepDate('');
+                          }
+                        }}
+                      >
+                        {sweepBusy ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                        Sweep this date
+                      </Button>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
             </>
           ) : null}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* ── Activity ────────────────────────────────────────────────────────── */}
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Recent Activity</CardTitle>
-            <div className="flex gap-1">
-              {(['', 'brixit-submission', 'brixit-edit', 'brixit-delete', 'brixit-topup'] as const).map((l) => (
-                <Button
-                  key={l || 'all'}
-                  size="sm"
-                  variant={labelFilter === l ? 'default' : 'outline'}
-                  onClick={() => setLabelFilter(l)}
-                  className="text-xs h-7"
-                >
-                  {l || 'all'}
-                </Button>
-              ))}
-            </div>
+        {/* Identity */}
+        <div className="bg-card border border-hairline rounded-2xl shadow-sm p-5">
+          <div className="flex items-center justify-between">
+            <Eyebrow>Wallet Identity</Eyebrow>
+            <span className="hidden lg:inline-flex">{networkPill}</span>
           </div>
-          <p className="text-xs text-text-mid mt-1">
-            Last 25 wallet actions, filtered by label. Source: <code>wallet.listActions</code>.
-          </p>
-        </CardHeader>
-        <CardContent>
-          {activityQ.isLoading ? (
-            <p className="text-sm text-text-mid">Loading…</p>
-          ) : activityQ.error ? (
-            <p className="text-sm text-destructive">
-              {(activityQ.error as any)?.message ?? 'Failed to load activity'}
+
+          {infoQ.isLoading ? (
+            <p className="mt-3 text-sm text-text-mid">Loading…</p>
+          ) : infoQ.error ? (
+            <p className="mt-3 text-sm text-destructive">
+              {(infoQ.error as any)?.message ?? 'Failed to load wallet info'}
             </p>
-          ) : activityQ.data?.actions.length === 0 ? (
-            <p className="text-sm text-text-mid">No actions found for this filter.</p>
-          ) : activityQ.data ? (
-            <div className="overflow-x-auto">
+          ) : infoQ.data ? (
+            <div className="mt-4 space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <Eyebrow>Top-up Address</Eyebrow>
+                  <span className="text-[11px] text-text-muted-brown">rotates {fmtDate(infoQ.data.addressRotatesAt)}</span>
+                </div>
+                <CopyField value={infoQ.data.address} onCopy={() => copy(infoQ.data!.address, 'Address')} />
+                <p className="text-[10px] text-text-muted-brown mt-1.5">
+                  Derived fresh each UTC day. Funds sent to older addresses remain spendable.
+                </p>
+              </div>
+
+              <div>
+                <Eyebrow className="mb-1.5">Identity Public Key</Eyebrow>
+                <CopyField
+                  value={infoQ.data.identityKey}
+                  display={shortHex(infoQ.data.identityKey, 12, 12)}
+                  onCopy={() => copy(infoQ.data!.identityKey, 'Identity key')}
+                />
+              </div>
+
+              <Collapsible>
+                <div className="flex items-center justify-between gap-2 border-t border-hairline pt-3">
+                  <p className="text-xs text-text-muted-brown min-w-0 truncate">
+                    Storage: <code className="font-mono">{infoQ.data.storageUrl}</code>
+                  </p>
+                  <CollapsibleTrigger asChild>
+                    <button
+                      type="button"
+                      className="group inline-flex items-center gap-1 text-xs font-medium text-green-fresh hover:text-green-mid shrink-0"
+                    >
+                      Derivation info
+                      <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                    </button>
+                  </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent className="pt-3 space-y-2.5">
+                  <p className="text-[10px] text-text-muted-brown italic">
+                    Public parameters, not secrets. Anyone with these can derive the address, but spending still requires the
+                    server wallet's master key. Use only if the automated top-up sweep fails and funds need manual recovery.
+                  </p>
+                  {([
+                    ['Date (UTC)', infoQ.data.addressDate],
+                    ['Protocol ID', JSON.stringify(infoQ.data.protocolID)],
+                    ['Counterparty', infoQ.data.counterparty],
+                    ['Key ID', infoQ.data.addressKeyID],
+                    ['Derivation prefix', infoQ.data.derivationPrefix],
+                    ['Derivation suffix', infoQ.data.derivationSuffix],
+                  ] as const).map(([label, value]) => (
+                    <div key={label}>
+                      <Eyebrow className="mb-1">{label}</Eyebrow>
+                      <CopyField value={String(value)} onCopy={() => copy(String(value), label)} />
+                    </div>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Pending blockchain records */}
+      <div className="bg-card border border-hairline rounded-2xl shadow-sm overflow-hidden">
+        <div className="flex items-start justify-between gap-3 p-5 pb-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="font-display font-bold text-base text-text-dark">Pending Blockchain Records</h3>
+              {pendingQ.data && pendingQ.data.total > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-score-average-bg text-score-average">
+                  <Clock className="w-3 h-3" /> {pendingQ.data.total} pending
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-text-mid mt-0.5">Submissions not yet timestamped on the blockchain</p>
+          </div>
+          {pendingQ.data && pendingQ.data.total > 0 && (
+            <p className="text-xs text-text-muted-brown shrink-0 whitespace-nowrap">
+              Showing {pendingQ.data.rows.length} of {pendingQ.data.total}
+            </p>
+          )}
+        </div>
+
+        {pendingQ.isLoading ? (
+          <p className="px-5 pb-5 text-sm text-text-mid">Loading…</p>
+        ) : pendingQ.error ? (
+          <p className="px-5 pb-5 text-sm text-destructive">
+            {(pendingQ.error as any)?.message ?? 'Failed to load pending submissions'}
+          </p>
+        ) : pendingQ.data?.total === 0 ? (
+          <p className="px-5 pb-5 text-sm text-text-mid">No pending records. Every submission is timestamped on the blockchain.</p>
+        ) : pendingQ.data ? (
+          <>
+            {/* Desktop table */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs text-text-mid border-b">
-                    <th className="py-2 pr-3">Status</th>
-                    <th className="py-2 pr-3">Labels</th>
-                    <th className="py-2 pr-3">Description</th>
-                    <th className="py-2 pr-3">Sats</th>
-                    <th className="py-2 pr-3">TXID</th>
+                  <tr className="text-left text-xs font-medium uppercase tracking-wider text-text-muted-brown border-y border-hairline bg-table-header">
+                    <th className="py-2 px-5">Submitted</th>
+                    <th className="py-2 pr-3">Crop</th>
+                    <th className="py-2 pr-3">BRIX</th>
+                    <th className="py-2 pr-3">Contributor</th>
+                    <th className="py-2 pr-3">Venue</th>
+                    <th className="py-2 pr-5 text-right">View</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {activityQ.data.actions.map((a) => (
-                    <tr key={a.txid} className="border-b last:border-0">
-                      <td className="py-2 pr-3">
-                        <Badge variant="secondary" className="text-xs">{a.status}</Badge>
+                  {pendingQ.data.rows.map((r) => (
+                    <tr
+                      key={r.id}
+                      onClick={() => setViewId(r.id)}
+                      className="border-b border-hairline last:border-0 cursor-pointer hover:bg-surface-canvas transition-colors"
+                    >
+                      <td className="py-2.5 px-5 text-text-mid tabular-nums whitespace-nowrap">{fmtDate(r.assessmentDate)}</td>
+                      <td className="py-2.5 pr-3 font-semibold text-text-dark">{titleCase(r.crop.name.replace(/_/g, ' '))}</td>
+                      <td className="py-2.5 pr-3 tabular-nums text-text-dark">{r.brixValue}</td>
+                      <td className="py-2.5 pr-3 text-text-mid">{r.contributorName ?? '—'}</td>
+                      <td className="py-2.5 pr-3 text-text-mid">
+                        {r.venue ? `${r.venue.name}${r.venue.city ? ` · ${r.venue.city}` : ''}` : '—'}
                       </td>
-                      <td className="py-2 pr-3">
-                        <div className="flex flex-wrap gap-1">
-                          {(a.labels ?? []).map((l) => (
-                            <Badge key={l} variant="outline" className="text-xs font-mono">
-                              {l}
-                            </Badge>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="py-2 pr-3 text-xs">{a.description}</td>
-                      <td className={`py-2 pr-3 tabular-nums text-xs ${a.satoshis < 0 ? 'text-destructive' : a.satoshis > 0 ? 'text-green-mid' : ''}`}>
-                        {a.satoshis > 0 ? '+' : ''}
-                        {formatSatoshis(a.satoshis)}
-                      </td>
-                      <td className="py-2 pr-3">
-                        <a
-                          href={whatsOnChainTxUrl(chain, a.txid)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-mono underline-offset-2 hover:underline"
+                      <td className="py-2.5 pr-5 text-right">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setViewId(r.id); }}
+                          aria-label="View submission"
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-text-mid hover:text-text-dark hover:bg-card"
                         >
-                          {shortHex(a.txid, 6, 6)}
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
+                          <Eye className="w-4 h-4" />
+                        </button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          ) : null}
-        </CardContent>
-      </Card>
+
+            {/* Mobile cards */}
+            <div className="sm:hidden divide-y divide-hairline border-t border-hairline">
+              {pendingQ.data.rows.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => setViewId(r.id)}
+                  className="w-full flex items-center justify-between gap-3 px-5 py-3 text-left hover:bg-surface-canvas transition-colors"
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-semibold text-text-dark">{titleCase(r.crop.name.replace(/_/g, ' '))}</span>
+                      <span className="text-xs text-text-mid tabular-nums">{r.brixValue} BRIX</span>
+                    </div>
+                    <p className="text-xs text-text-muted-brown mt-0.5 truncate">
+                      {r.venue ? `${r.venue.name}${r.venue.city ? ` · ${r.venue.city}` : ''}` : '—'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="text-right">
+                      <p className="text-sm text-text-mid truncate max-w-[7rem]">{r.contributorName ?? '—'}</p>
+                      <p className="text-[11px] text-text-muted-brown tabular-nums mt-0.5">{fmtDate(r.assessmentDate)}</p>
+                    </div>
+                    <Eye className="w-4 h-4 text-text-muted-brown shrink-0" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : null}
+      </div>
+
+      {/* ── Recent Activity ─────────────────────────────────────────────────── */}
+      <div className="bg-card border border-hairline rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-5 pb-3 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="font-display font-bold text-base text-text-dark">Recent Activity</h3>
+            <div className="flex flex-wrap gap-1">
+              {ACTIVITY_FILTERS.map((l) => (
+                <button
+                  key={l || 'all'}
+                  onClick={() => setLabelFilter(l)}
+                  className={`text-xs px-2.5 h-7 rounded-lg border capitalize ${
+                    labelFilter === l
+                      ? 'bg-select-bg text-select-fg border-select-border'
+                      : 'border-hairline text-text-mid hover:bg-surface-canvas'
+                  }`}
+                >
+                  {l ? l.replace('brixit-', '') : 'all'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="text-xs text-text-muted-brown">Last 25 wallet actions, filtered by label.</p>
+        </div>
+
+        {activityQ.isLoading ? (
+          <p className="px-5 pb-5 text-sm text-text-mid">Loading…</p>
+        ) : activityQ.error ? (
+          <p className="px-5 pb-5 text-sm text-destructive">
+            {(activityQ.error as any)?.message ?? 'Failed to load activity'}
+          </p>
+        ) : activityQ.data?.actions.length === 0 ? (
+          <p className="px-5 pb-5 text-sm text-text-mid">No actions found for this filter.</p>
+        ) : activityQ.data ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs font-medium uppercase tracking-wider text-text-muted-brown border-y border-hairline bg-table-header">
+                  <th className="py-2 px-5">Status</th>
+                  <th className="py-2 pr-3">Labels</th>
+                  <th className="py-2 pr-3">Description</th>
+                  <th className="py-2 pr-3">Sats</th>
+                  <th className="py-2 pr-5">TXID</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activityQ.data.actions.map((a) => (
+                  <tr key={a.txid} className="border-b border-hairline last:border-0">
+                    <td className="py-2.5 px-5">
+                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-surface-canvas text-text-mid border border-hairline capitalize">
+                        {a.status}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-3">
+                      <div className="flex flex-wrap gap-1">
+                        {(a.labels ?? []).map((l) => (
+                          <span key={l} className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-mono text-text-muted-brown border border-hairline">
+                            {l}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="py-2.5 pr-3 text-xs text-text-mid">{a.description}</td>
+                    <td className={`py-2.5 pr-3 tabular-nums text-xs ${a.satoshis < 0 ? 'text-destructive' : a.satoshis > 0 ? 'text-score-good' : 'text-text-mid'}`}>
+                      {a.satoshis > 0 ? '+' : ''}
+                      {formatSatoshis(a.satoshis)}
+                    </td>
+                    <td className="py-2.5 pr-5">
+                      <a
+                        href={whatsOnChainTxUrl(chain, a.txid)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-mono text-green-fresh hover:text-green-mid underline-offset-2 hover:underline"
+                      >
+                        {shortHex(a.txid, 6, 6)}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </div>
 
       {/* ── Local-wallet top-up modal ────────────────────────────────────────── */}
       <Dialog open={topupModalOpen} onOpenChange={(open) => { if (!topupBusy) setTopupModalOpen(open); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Top up from local wallet</DialogTitle>
+            <DialogTitle className="font-display text-text-dark">Top up from local wallet</DialogTitle>
             <DialogDescription>
               Sends funds from your connected wallet directly into the treasury wallet using a BRC-29 wallet payment.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label htmlFor="topup-amount" className="text-xs uppercase tracking-wide text-text-mid">
+              <Label htmlFor="topup-amount" className="text-xs uppercase tracking-wide text-text-muted-brown">
                 Amount (satoshis)
               </Label>
               <Input
@@ -616,9 +740,7 @@ export default function AdminTreasury() {
                 className="mt-1"
               />
               {topupAmount && Number(topupAmount) > 0 && (
-                <p className="text-xs text-text-mid mt-1">
-                  ≈ {satoshisToBsv(Number(topupAmount))} BSV
-                </p>
+                <p className="text-xs text-text-muted-brown mt-1">≈ {satoshisToBsv(Number(topupAmount))} BSV</p>
               )}
             </div>
             <p className="text-xs text-text-mid">
@@ -629,7 +751,11 @@ export default function AdminTreasury() {
             <Button variant="ghost" onClick={() => setTopupModalOpen(false)} disabled={topupBusy}>
               Cancel
             </Button>
-            <Button onClick={handleLocalWalletTopup} disabled={topupBusy || !topupAmount || Number(topupAmount) <= 0}>
+            <Button
+              onClick={handleLocalWalletTopup}
+              disabled={topupBusy || !topupAmount || Number(topupAmount) <= 0}
+              className="bg-action-primary hover:bg-action-primary-hover text-primary-foreground"
+            >
               {topupBusy ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending…</>
               ) : (

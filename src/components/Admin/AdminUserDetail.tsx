@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ChevronLeft, Calendar, MapPin, CheckCircle, Clock, Trash2 } from 'lucide-react';
+import { ChevronLeft, Calendar, MapPin, CheckCircle, Clock, Trash2, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   fetchUserDetail,
@@ -12,18 +11,16 @@ import {
   type AppRole,
   type AdminUserDetailSubmission,
 } from '@/lib/adminApi';
-import { scoreBrix } from '@/lib/getBrixColor';
+import { scoreBrix, computeNormalizedScore } from '@/lib/getBrixColor';
 import { formatVenueLocation } from '@/lib/formatAddress';
+import { titleCase } from '@/lib/titleCase';
+import { RoleChip } from '@/components/common/RoleChip';
+import { ScoreBadge } from '@/components/common/ScoreBadge';
+import { VerifiedBadge } from '@/components/common/StatusBadges';
 
 interface Props {
   userId: string;
   onBack: () => void;
-}
-
-function getRoleBadgeVariant(role: string) {
-  if (role === 'admin') return 'default' as const;
-  if (role === 'contributor') return 'secondary' as const;
-  return 'outline' as const;
 }
 
 function getTopRole(roles: AppRole[] | null | undefined): string {
@@ -32,6 +29,17 @@ function getTopRole(roles: AppRole[] | null | undefined): string {
   if (roles.includes('contributor')) return 'contributor';
   return 'user';
 }
+
+// Verification status chip — shared badge so it matches everywhere.
+function StatusChip({ verified }: { verified: boolean }) {
+  return <VerifiedBadge verified={verified} />;
+}
+
+// Thresholds for crop-relative scoring (poor/excellent are all computeNormalizedScore needs).
+const thresholdsOf = (s: AdminUserDetailSubmission) =>
+  s.poor_brix != null && s.excellent_brix != null
+    ? { poor: s.poor_brix, average: 0, good: 0, excellent: s.excellent_brix }
+    : undefined;
 
 function SubmissionModal({
   submission,
@@ -48,11 +56,10 @@ function SubmissionModal({
   const [verified, setVerified] = useState(submission.verified);
   const [loading, setLoading] = useState(false);
 
-  const thresholds = (submission.poor_brix != null && submission.excellent_brix != null)
-    ? { poor: submission.poor_brix, average: 0, good: 0, excellent: submission.excellent_brix }
-    : undefined;
-  const { display: displayScore, bgClass, quality } = scoreBrix(submission.brix_value, thresholds);
+  const thresholds = thresholdsOf(submission);
+  const { normalized, quality } = scoreBrix(submission.brix_value, thresholds);
   const locationStr = formatVenueLocation(submission.place_street_address, submission.place_city, submission.place_state);
+  const brand = submission.brand_label ?? submission.brand_name;
 
   const handleVerify = async (verify: boolean) => {
     setLoading(true);
@@ -85,24 +92,31 @@ function SubmissionModal({
     }
   };
 
+  const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
+    <div className="flex gap-3">
+      <span className="text-text-muted-brown w-16 shrink-0">{label}</span>
+      <span className="text-text-dark min-w-0">{children}</span>
+    </div>
+  );
+
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{submission.crop_label ?? submission.crop_name ?? 'Unknown crop'}</DialogTitle>
+          <DialogTitle className="font-display text-text-dark">
+            {titleCase(submission.crop_label ?? submission.crop_name) || 'Unknown crop'}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Score */}
           <div className="flex items-center gap-4">
-            <div className={`px-4 py-2 rounded-xl text-white text-2xl font-bold ${bgClass}`}>
-              {displayScore}
-            </div>
+            <ScoreBadge normalizedScore={normalized} size="lg" />
             <div>
-              <div className="font-semibold text-base">{quality}</div>
-              <div className="text-sm text-muted-foreground">{submission.brix_value} Brix</div>
+              <div className="font-semibold text-base text-text-dark">{quality}</div>
+              <div className="text-sm text-text-mid">{submission.brix_value} BRIX</div>
               {thresholds && (
-                <div className="text-xs text-muted-foreground mt-0.5">
+                <div className="text-xs text-text-muted-brown mt-0.5">
                   Range: {submission.poor_brix}–{submission.excellent_brix}
                 </div>
               )}
@@ -110,46 +124,23 @@ function SubmissionModal({
           </div>
 
           {/* Details */}
-          <div className="space-y-2 text-sm border-t pt-3">
-            {(submission.brand_label ?? submission.brand_name) && (
-              <div className="flex gap-2">
-                <span className="text-muted-foreground w-16 shrink-0">Brand</span>
-                <span>{submission.brand_label ?? submission.brand_name}</span>
-              </div>
-            )}
+          <div className="space-y-2 text-sm border-t border-hairline pt-3">
+            {brand && <Row label="Brand">{brand}</Row>}
             {(submission.place_label || locationStr) && (
-              <div className="flex gap-2">
-                <span className="text-muted-foreground w-16 shrink-0">Place</span>
-                <span>
-                  {submission.place_label
-                    ? <>{submission.place_label}{locationStr && <span className="text-muted-foreground ml-1">({locationStr})</span>}</>
-                    : locationStr}
-                </span>
-              </div>
+              <Row label="Place">
+                {submission.place_label
+                  ? <>{submission.place_label}{locationStr && <span className="text-text-muted-brown ml-1">({locationStr})</span>}</>
+                  : locationStr}
+              </Row>
             )}
-            <div className="flex gap-2">
-              <span className="text-muted-foreground w-16 shrink-0">Date</span>
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
+            <Row label="Date">
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-text-muted-brown" />
                 {new Date(submission.assessment_date).toLocaleDateString()}
               </span>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-muted-foreground w-16 shrink-0">Status</span>
-              {verified ? (
-                <span className="inline-flex items-center gap-1 bg-green-pale text-green-mid px-1.5 py-0.5 rounded-full text-xs">
-                  <CheckCircle className="w-3 h-3" /> Verified
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-gold">
-                  <Clock className="w-3 h-3" /> Pending
-                </span>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <span className="text-muted-foreground w-16 shrink-0">ID</span>
-              <span className="font-mono text-xs text-muted-foreground break-all">{submission.id}</span>
-            </div>
+            </Row>
+            <Row label="Status"><StatusChip verified={verified} /></Row>
+            <Row label="ID"><span className="font-mono text-xs text-text-muted-brown break-all">{submission.id}</span></Row>
           </div>
 
           {/* Actions */}
@@ -159,9 +150,9 @@ function SubmissionModal({
                 size="sm"
                 disabled={loading}
                 onClick={() => handleVerify(true)}
-                className="flex-1 bg-action-primary hover:bg-action-primary-hover text-white"
+                className="flex-1 bg-action-primary hover:bg-action-primary-hover text-primary-foreground"
               >
-                Verify
+                <Check className="w-4 h-4 mr-1" /> Verify
               </Button>
             ) : (
               <Button size="sm" variant="outline" disabled={loading} onClick={() => handleVerify(false)} className="flex-1">
@@ -206,7 +197,7 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
   };
 
   const backButton = (
-    <Button variant="ghost" size="sm" onClick={onBack} className="-ml-2">
+    <Button variant="ghost" size="sm" onClick={onBack} className="-ml-2 text-text-mid hover:text-text-dark hover:bg-surface-canvas">
       <ChevronLeft className="w-4 h-4 mr-1" /> All Users
     </Button>
   );
@@ -215,7 +206,7 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
     return (
       <div className="space-y-4">
         {backButton}
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <p className="text-sm text-text-mid">Loading...</p>
       </div>
     );
   }
@@ -224,7 +215,7 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
     return (
       <div className="space-y-4">
         {backButton}
-        <p className="text-sm text-muted-foreground">User not found.</p>
+        <p className="text-sm text-text-mid">User not found.</p>
       </div>
     );
   }
@@ -245,85 +236,72 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
         />
       )}
 
-      <div className="border rounded-lg p-4 space-y-3 bg-card text-card-foreground">
+      {/* Identity card */}
+      <div className="bg-card border border-hairline rounded-2xl shadow-sm p-4 sm:p-5 space-y-3">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h2 className="text-xl font-semibold">{user.display_name ?? user.id}</h2>
-            <p className="text-xs text-muted-foreground font-mono mt-0.5 break-all">
+            <h2 className="font-display font-bold text-xl text-text-dark">{user.display_name ?? user.id}</h2>
+            <p className="text-xs font-mono text-text-muted-brown mt-1 break-all">
               Wallet identity: {user.identity_key ?? <span className="italic">no wallet identity</span>}
             </p>
-            <p className="text-xs text-muted-foreground font-mono mt-0.5 break-all">UUID: {user.id}</p>
+            <p className="text-xs font-mono text-text-muted-brown mt-0.5 break-all">UUID: {user.id}</p>
           </div>
-          <Badge variant={getRoleBadgeVariant(topRole)}>{topRole}</Badge>
+          <RoleChip role={topRole} />
         </div>
-        <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
-          <span>{user.points ?? 0} points</span>
-          <span>{user.submission_count ?? 0} submissions</span>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-text-mid border-t border-hairline pt-3">
+          <span><strong className="font-semibold text-text-dark">{user.points ?? 0}</strong> points</span>
+          <span><strong className="font-semibold text-text-dark">{user.submission_count ?? 0}</strong> submissions</span>
           {user.created_at && (
-            <span className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-text-muted-brown" />
               Joined {new Date(user.created_at).toLocaleDateString()}
             </span>
           )}
           {locationParts.length > 0 && (
-            <span className="flex items-center gap-1">
-              <MapPin className="w-3 h-3" />
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-text-muted-brown" />
               {locationParts.join(', ')}
             </span>
           )}
         </div>
       </div>
 
+      {/* Recent submissions */}
       <div>
-        <h3 className="text-base font-semibold mb-3">
+        <h3 className="font-display font-bold text-base text-text-dark mb-3">
           Recent Submissions ({user.submissions.length}{user.submissions.length === 50 ? '+' : ''})
         </h3>
         {user.submissions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No submissions yet.</p>
+          <p className="text-sm text-text-mid">No submissions yet.</p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {user.submissions.map((s) => {
-              const thresholds = (s.poor_brix != null && s.excellent_brix != null)
-                ? { poor: s.poor_brix, average: 0, good: 0, excellent: s.excellent_brix }
-                : undefined;
-              const { display: displayScore, bgClass } = scoreBrix(s.brix_value, thresholds);
+              const normalized = computeNormalizedScore(s.brix_value, thresholdsOf(s));
+              const loc = formatVenueLocation(s.place_street_address, s.place_city, s.place_state);
+              const locationText = [s.place_label, loc].filter(Boolean).join(' · ') || '—';
+              const brand = s.brand_label ?? s.brand_name;
               return (
                 <div
                   key={s.id}
-                  className="border rounded p-3 flex items-start justify-between gap-3 bg-card text-card-foreground cursor-pointer hover:bg-accent transition-colors"
+                  className="bg-card border border-hairline rounded-2xl shadow-sm p-4 flex items-center justify-between gap-4 cursor-pointer hover:bg-surface-canvas transition-colors"
                   onClick={() => setSelected(s)}
                 >
-                  <div className="flex-1 min-w-0 text-sm">
-                    <div className="font-medium">{s.crop_label ?? s.crop_name ?? 'Unknown crop'}</div>
-                    <div className="text-muted-foreground text-xs mt-0.5">
-                      {(() => {
-                        const loc = formatVenueLocation(s.place_street_address, s.place_city, s.place_state);
-                        const label = s.place_label;
-                        if (loc && label) return <>{label} <span>({loc})</span></>;
-                        if (loc) return loc;
-                        if (label) return label;
-                        return '—';
-                      })()}
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-semibold text-text-dark">{titleCase(s.crop_label ?? s.crop_name) || 'Unknown crop'}</span>
+                      {brand && <span className="text-text-mid text-sm">· {brand}</span>}
+                      <StatusChip verified={s.verified} />
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {new Date(s.assessment_date).toLocaleDateString()}
-                      </span>
-                      {s.verified ? (
-                        <span className="inline-flex items-center gap-1 text-action-primary">
-                          <CheckCircle className="w-3 h-3" /> Verified
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-gold">
-                          <Clock className="w-3 h-3" /> Pending
-                        </span>
-                      )}
+                    <div className="flex items-start gap-1.5 text-sm text-text-mid">
+                      <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0 text-text-muted-brown" />
+                      <span className="min-w-0">{locationText}</span>
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 text-sm text-text-muted-brown">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {new Date(s.assessment_date).toLocaleDateString()}
                     </div>
                   </div>
-                  <div className={`shrink-0 px-2.5 py-1 rounded-lg text-white text-sm font-bold ${bgClass}`}>
-                    {displayScore}
-                  </div>
+                  <ScoreBadge normalizedScore={normalized} size="sm" className="shrink-0" />
                 </div>
               );
             })}

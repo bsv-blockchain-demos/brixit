@@ -1,6 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Users, ClipboardList, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { motion, useMotionValue, useSpring, useReducedMotion } from 'framer-motion';
+import { Users, ClipboardList, CheckCircle, AlertCircle, RefreshCw, Anchor } from 'lucide-react';
 import { fetchAllUsers, fetchUnverifiedSubmissions, type UserWithRoles } from '@/lib/adminApi';
+import { fetchPendingSubmissions } from '@/lib/adminWalletApi';
 import { apiGet } from '@/lib/api';
 
 async function fetchOverviewStats() {
@@ -15,26 +17,78 @@ async function fetchOverviewStats() {
     (u: UserWithRoles) => u.roles?.includes('contributor') && !u.roles?.includes('admin')
   ).length;
 
+  // Optional — the wallet endpoint shouldn't break the whole overview if it fails.
+  let pendingAnchors = 0;
+  try {
+    pendingAnchors = (await fetchPendingSubmissions({ limit: 1 })).total;
+  } catch {
+    pendingAnchors = 0;
+  }
+
   return {
     totalUsers: usersResult.total,
     adminCount,
     contributorCount,
     totalSubmissions: countData.count,
     pendingVerifications: pendingResult.total,
+    pendingAnchors,
   };
 }
 
-// Single stat surface — white card on the canvas, big display number in deep steel.
-function StatCard({ label, icon, value, children }: { label: string; icon: React.ReactNode; value: React.ReactNode; children?: React.ReactNode }) {
+// Animated stat surface: staggered entrance, pointer-tilt 3D, hover lift.
+function StatCard({
+  index,
+  label,
+  icon: Icon,
+  tint,
+  value,
+  children,
+}: {
+  index: number;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tint: string;
+  value: React.ReactNode;
+  children?: React.ReactNode;
+}) {
+  const reduce = useReducedMotion();
+  const rx = useMotionValue(0);
+  const ry = useMotionValue(0);
+  const rotateX = useSpring(rx, { stiffness: 220, damping: 18 });
+  const rotateY = useSpring(ry, { stiffness: 220, damping: 18 });
+
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (reduce) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    ry.set(px * 8);
+    rx.set(-py * 8);
+  };
+  const reset = () => { rx.set(0); ry.set(0); };
+
   return (
-    <div className="bg-card border border-hairline rounded-2xl shadow-sm p-5">
+    <motion.div
+      initial={reduce ? false : { opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.07, ease: [0.22, 1, 0.36, 1] }}
+      onMouseMove={handleMove}
+      onMouseLeave={reset}
+      whileHover={reduce ? undefined : { y: -4 }}
+      style={{ rotateX, rotateY, transformPerspective: 900 }}
+      className="group relative overflow-hidden bg-card border border-hairline rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 p-5 will-change-transform"
+    >
+      {/* soft sheen that lifts on hover */}
+      <div className="pointer-events-none absolute -top-16 -right-16 h-32 w-32 rounded-full bg-blue-light/0 group-hover:bg-blue-light/10 blur-2xl transition-colors duration-500" />
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs font-mono uppercase tracking-wider text-text-muted">{label}</span>
-        {icon}
+        <span className={`inline-flex items-center justify-center w-9 h-9 rounded-xl ${tint}`}>
+          <Icon className="w-4 h-4" />
+        </span>
       </div>
-      <div className="text-3xl font-display font-bold text-blue-deep leading-none">{value}</div>
+      <div className="text-3xl font-display font-bold text-blue-deep leading-none tabular-nums">{value}</div>
       {children}
-    </div>
+    </motion.div>
   );
 }
 
@@ -52,6 +106,7 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
   };
 
   const pending = stats?.pendingVerifications ?? 0;
+  const anchors = stats?.pendingAnchors ?? 0;
 
   return (
     <div className="space-y-5">
@@ -74,8 +129,8 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
         <p className="text-sm text-destructive">{(error as any)?.message ?? 'Failed to load stats'}</p>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard label="Total Users" icon={<Users className="w-4 h-4 text-text-muted" />} value={isLoading ? '—' : stats?.totalUsers}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard index={0} label="Total Users" icon={Users} tint="bg-select-bg text-select-fg" value={isLoading ? '—' : stats?.totalUsers}>
           {stats && (
             <div className="flex flex-wrap gap-2 mt-3">
               <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-select-bg text-select-fg">
@@ -88,17 +143,31 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
           )}
         </StatCard>
 
-        <StatCard label="Total Submissions" icon={<ClipboardList className="w-4 h-4 text-text-muted" />} value={isLoading ? '—' : stats?.totalSubmissions}>
+        <StatCard index={1} label="Total Submissions" icon={ClipboardList} tint="bg-green-pale text-green-mid" value={isLoading ? '—' : stats?.totalSubmissions}>
           <p className="text-xs text-text-mid mt-2">Verified &amp; publicly visible</p>
         </StatCard>
 
         <StatCard
+          index={2}
           label="Pending Review"
-          icon={pending ? <AlertCircle className="w-4 h-4 text-score-average" /> : <CheckCircle className="w-4 h-4 text-green-mid" />}
+          icon={pending ? AlertCircle : CheckCircle}
+          tint={pending ? 'bg-score-average-bg text-score-average' : 'bg-score-excellent-bg text-score-excellent'}
           value={isLoading ? '—' : pending}
         >
           <p className="text-xs text-text-mid mt-2">
             {pending ? 'Awaiting verification' : 'All submissions verified'}
+          </p>
+        </StatCard>
+
+        <StatCard
+          index={3}
+          label="Pending Blockchain Records"
+          icon={Anchor}
+          tint={anchors ? 'bg-score-average-bg text-score-average' : 'bg-score-excellent-bg text-score-excellent'}
+          value={isLoading ? '—' : anchors}
+        >
+          <p className="text-xs text-text-mid mt-2">
+            {anchors ? 'Awaiting blockchain confirmation' : 'All submissions timestamped'}
           </p>
         </StatCard>
       </div>

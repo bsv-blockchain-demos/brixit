@@ -11,16 +11,18 @@ BRIXIT is a citizen science platform for collecting and visualizing BRIX (sugar 
 
 Derived from UX handoff research. Nature/agriculture green palette with gold accent — replaces the generic shadcn gray HSL defaults during uplift. Implement as CSS custom properties in `src/index.css`.
 
+> **Note:** these are the original handoff *targets*; several hexes were tuned during the uplift. The live values in `src/index.css` (and `.dark`) are authoritative. For scoring specifically, use the dedicated `--score-*` tokens (see [Score Visualization](#score-visualization)), not the green/gold tokens below.
+
 | Token | Hex | Role |
 |-------|-----|------|
 | `--green-deep` | `#1a3a2a` | Dark backgrounds (hero, mission, footer), headings |
-| `--green-mid` | `#2d6a4f` | Excellent score color, hover states |
+| `--green-mid` | `#1f6b3f` | Hover states, deep-green accents (Excellent **score** uses `--score-excellent`) |
 | `--green-fresh` | `#40916c` | Primary buttons, links, eyebrow text |
 | `--green-light` | `#74c69d` | Accent on dark backgrounds |
 | `--green-pale` | `#d8f3dc` | Badge backgrounds, benefit icon backgrounds |
 | `--green-mist` | `#f0faf2` | Section backgrounds, subtle fills |
 | `--cream` | `#faf8f3` | Page background |
-| `--gold` | `#c9a84c` | Mid/good score color |
+| `--gold` | `#e1b12c` | Gold accent (Average **score** uses `--score-average`) |
 | `--text-dark` | `#1a2e1f` | Primary body text |
 | `--text-mid` | `#3d5a47` | Secondary body text |
 | `--text-muted` | `#7a9b82` | Labels, placeholders |
@@ -43,11 +45,13 @@ Derived from UX handoff research. Nature/agriculture green palette with gold acc
 
 Scores are **crop-relative**, not absolute. Each crop has its own poor/excellent thresholds stored in the DB. The raw BRIX value is normalized to a 0–100%+ scale via `computeNormalizedScore` in `src/lib/getBrixColor.ts`, then colored via `rankColorFromNormalized`. Never compare raw BRIX values across different crops.
 
+Score colors are their own dedicated `--score-*` tokens (not `--green-mid`/`--green-fresh`/`--gold`). These are the single source of truth — `rankColorFromNormalized` maps to the `bg-score-*` classes, and the hex getters resolve the same vars for markers/charts. Hexes below are the light-theme values; `.dark` defines brighter variants.
+
 | Rating | Normalized range | Display | Color token |
 |--------|-----------------|---------|-------------|
-| Excellent | ≥ 1.75 | 75%+ | `--green-mid` (`#2d6a4f`) |
-| Good | 1.50–1.74 | 50–74% | `--green-fresh` (`#40916c`) |
-| Average | 1.25–1.49 | 25–49% | `--gold` (`#c9a84c`) |
+| Excellent | ≥ 1.75 | 75%+ | `--score-excellent` (`#1f6b3f`) |
+| Good | 1.50–1.74 | 50–74% | `--score-good` (`#6fae3f`) |
+| Average | 1.25–1.49 | 25–49% | `--score-average` (`#e1b12c`) |
 | Poor | < 1.25 | 0–24% | `--score-poor` (`#c0392b`) |
 
 Use `rankColorFromNormalized(n)` for color and `toDisplayScore(n)` for the displayed %. Do **not** use `getBrixColor` or `getBrixQuality` for user-facing score badges — those compare raw BRIX against absolute thresholds and will diverge from the % display.
