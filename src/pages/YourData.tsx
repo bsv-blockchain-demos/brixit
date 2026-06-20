@@ -200,7 +200,7 @@ const YourData: React.FC = () => {
     return (
       <PageBackground className="min-h-screen">
         <Header />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-20">
           <Card>
             <CardContent className="text-center py-12">
               <h2 className="text-2xl font-bold text-text-dark mb-2">Please Log In</h2>
@@ -222,7 +222,7 @@ const YourData: React.FC = () => {
     return (
       <PageBackground className="min-h-screen">
         <Header />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 text-center">
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-20 text-center">
           <div className="flex items-center justify-center gap-2">
             <Loader2 className="w-5 h-5 text-green-mid animate-spin" />
             <p className="text-on-bg-body">Loading your submissions...</p>
@@ -236,7 +236,7 @@ const YourData: React.FC = () => {
     return (
       <PageBackground className="min-h-screen">
         <Header />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 text-center">
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-20 text-center">
           <p className="text-red-600">Error: Failed to load your submissions.</p>
         </main>
       </PageBackground>
@@ -247,7 +247,7 @@ const YourData: React.FC = () => {
     <PageBackground className="min-h-screen">
       <Header />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-20">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-display font-bold text-on-bg-text">

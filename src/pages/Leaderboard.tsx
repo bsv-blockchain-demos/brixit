@@ -411,7 +411,7 @@ const LeaderboardPage: React.FC = () => {
           </button>
         </div>
         {/* ── Mobile (≤640px): one merged panel — filters · tabs · active board ── */}
-        <div className={`lb-mobile-only -mx-2 mb-4 ${PANEL}`}>
+        <div className={`lb-mobile-only -mx-1 mb-4 ${PANEL}`}>
           {/* Filters region */}
           <div className="p-3">
             <div className="grid grid-cols-2 gap-3">

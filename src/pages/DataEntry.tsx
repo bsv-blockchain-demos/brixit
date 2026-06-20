@@ -16,6 +16,7 @@ import {
   Calendar,
   Clock,
   Plus,
+  Check,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../hooks/use-toast';
@@ -453,7 +454,7 @@ const DataEntry = () => {
     <PageBackground className="min-h-screen">
       <Header />
       <main
-        className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8 max-[640px]:px-2"
+        className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8 max-[640px]:px-3"
         style={{ paddingBottom: 'calc(7rem + var(--safe-bottom))' }}
       >
         <div className="mb-6">
@@ -466,7 +467,7 @@ const DataEntry = () => {
         <motion.div {...fadeUp}>
           <Card className="rounded-2xl border shadow-sm" style={{ borderColor: 'var(--hairline)' }}>
             <CardHeader
-              className="rounded-t-2xl border-b lb-desktop-only"
+              className="rounded-t-2xl border-b hidden"
               style={{ backgroundColor: 'var(--surface-canvas)', borderColor: 'var(--hairline)' }}
             >
               <CardTitle
@@ -482,31 +483,39 @@ const DataEntry = () => {
 
             <CardContent className="p-5 sm:p-8 md:p-10">
               {/* Mobile-only step indicator — inside the white widget */}
-              <div className="lb-mobile-only mb-6 pb-5 border-b border-hairline">
-                <div className="flex items-center justify-between">
+              <div className="mb-6 pb-5 border-b border-hairline">
+                <div className="flex items-center justify-between mb-3">
                   <p className="text-xs font-semibold uppercase tracking-widest text-text-muted-brown">New Entry</p>
                   <p className="text-xs font-medium text-text-muted-brown">Step {step} of 2</p>
                 </div>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-3">
+                  {/* Step 1 — Shop */}
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${step >= 1 ? 'bg-select-strong text-white' : 'bg-surface-canvas text-text-mid'}`}>
-                      {step > 1 ? '✓' : '1'}
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step > 1 ? 'bg-select-strong text-select-strong-fg' : 'bg-select-strong text-select-strong-fg ring-4 ring-blue-pale'}`}>
+                      {step > 1 ? <Check className="w-4 h-4" strokeWidth={3} /> : '1'}
                     </span>
-                    <span className="text-sm font-medium text-text-dark">Shop</span>
+                    <span className={`text-sm ${step === 1 ? 'font-semibold text-text-dark' : 'font-medium text-text-mid'}`}>Shop</span>
                   </div>
-                  <div className="flex-1 h-px bg-hairline" />
+                  {/* Progress connector */}
+                  <div className="relative flex-1 h-1.5 rounded-full bg-hairline overflow-hidden">
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-full bg-select-strong transition-all duration-300"
+                      style={{ width: step >= 2 ? '100%' : '0%' }}
+                    />
+                  </div>
+                  {/* Step 2 — Crops */}
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${step >= 2 ? 'bg-select-strong text-white' : 'bg-surface-canvas text-text-mid'}`}>
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step >= 2 ? 'bg-select-strong text-select-strong-fg ring-4 ring-blue-pale' : 'border-2 border-hairline bg-card text-text-muted-brown'}`}>
                       2
                     </span>
-                    <span className="text-sm font-medium text-text-dark">Crops</span>
+                    <span className={`text-sm ${step === 2 ? 'font-semibold text-text-dark' : 'font-medium text-text-muted-brown'}`}>Crops</span>
                   </div>
                 </div>
               </div>
               <motion.div className="space-y-10 sm:space-y-12" {...stagger}>
 
                 {/* ── Section 1: Session context (mobile Step 1) ── */}
-                <motion.div {...staggerChild} className={step !== 1 ? 'lb-desktop-only' : ''}>
+                <motion.div {...staggerChild} className={step !== 1 ? 'hidden' : ''}>
                   <div className="border-l-4 pl-5 sm:pl-8 max-[640px]:border-l-0 max-[640px]:pl-0" style={{ borderColor: 'var(--green-fresh)' }}>
                     <FormSectionHeader title="Where did you shop?" required />
 
@@ -610,7 +619,7 @@ const DataEntry = () => {
                           value={session.purchaseDate}
                           onChange={e => setSessionField('purchaseDate', e.target.value)}
                           max={new Date().toISOString().split('T')[0]}
-                          className={`w-full border-2 rounded-xl px-4 py-3 bg-card transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${errors.purchaseDate ? 'border-destructive bg-red-50' : 'border-input'}`}
+                          className={`w-full border-2 rounded-xl px-4 py-3 bg-card transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-light focus-visible:ring-offset-2 ${errors.purchaseDate ? 'border-destructive bg-red-50' : 'border-input'}`}
                           style={{ color: 'var(--text-dark)' }}
                         />
                         {errors.purchaseDate && (
@@ -625,17 +634,17 @@ const DataEntry = () => {
                   </div>
                 </motion.div>
 
-                <div className="border-t lb-desktop-only" style={{ borderColor: 'var(--hairline)' }} />
+                <div className="hidden" style={{ borderColor: 'var(--hairline)' }} />
 
                 {/* ── Section 2: Crop readings (mobile Step 2) ── */}
-                <motion.div {...staggerChild} className={step !== 2 ? 'lb-desktop-only' : ''}>
+                <motion.div {...staggerChild} className={step !== 2 ? 'hidden' : ''}>
                   {/* Mobile-only trip summary chip — Edit returns to Step 1 */}
-                  <div className="lb-mobile-only mb-4 flex items-center justify-between gap-2 rounded-lg bg-surface-canvas border border-hairline px-3 py-2 text-sm">
-                    <span className="min-w-0 truncate text-text-mid">
+                  <div className="mb-4 flex items-center gap-4 rounded-lg bg-surface-canvas border border-hairline px-3 py-2 text-sm">
+                    <span className="flex-1 min-w-0 truncate text-text-mid">
                       <MapPin className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />
                       {session.posType || 'Shop'}{session.purchaseDate ? ` · ${session.purchaseDate}` : ''}
                     </span>
-                    <button type="button" onClick={() => setStep(1)} className="shrink-0 font-medium text-green-fresh">Edit</button>
+                    <button type="button" onClick={() => setStep(1)} className="shrink-0 font-medium text-action-primary hover:text-action-primary-hover">Edit</button>
                   </div>
                   <div className="border-l-4 pl-5 sm:pl-8 max-[640px]:border-l-0 max-[640px]:pl-0" style={{ borderColor: 'var(--blue-light)' }}>
                     <FormSectionHeader title="What did you measure?" required />
@@ -677,10 +686,10 @@ const DataEntry = () => {
                   </div>
                 </motion.div>
 
-                <div className="border-t lb-desktop-only" style={{ borderColor: 'var(--hairline)' }} />
+                <div className="hidden" style={{ borderColor: 'var(--hairline)' }} />
 
                 {/* ── Section 3: Optional (mobile Step 2) ── */}
-                <motion.div {...staggerChild} className={step !== 2 ? 'lb-desktop-only' : ''}>
+                <motion.div {...staggerChild} className={step !== 2 ? 'hidden' : ''}>
                   <div className="border-l-4 pl-5 sm:pl-8 max-[640px]:border-l-0 max-[640px]:pl-0" style={{ borderColor: 'var(--hairline)' }}>
                     <h3 className="text-xl font-display font-bold mb-6" style={{ color: 'var(--text-dark)' }}>
                       Additional Information
@@ -700,7 +709,7 @@ const DataEntry = () => {
                         value={session.measurementDate}
                         onChange={e => setSessionField('measurementDate', e.target.value)}
                         max={new Date().toISOString().split('T')[0]}
-                        className={`w-full border-2 rounded-xl px-4 py-3 bg-card transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${errors.measurementDate ? 'border-destructive bg-red-50' : 'border-input'}`}
+                        className={`w-full border-2 rounded-xl px-4 py-3 bg-card transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-light focus-visible:ring-offset-2 ${errors.measurementDate ? 'border-destructive bg-red-50' : 'border-input'}`}
                         style={{ color: 'var(--text-dark)' }}
                       />
                       {errors.measurementDate && (
@@ -730,7 +739,7 @@ const DataEntry = () => {
       >
         <div className="max-w-5xl mx-auto">
           {/* Desktop — unchanged single submit */}
-          <div className="lb-desktop-only flex justify-end">
+          <div className="hidden">
             <Button
               onClick={handleSubmit}
               className="w-full sm:w-auto px-12 py-6 text-lg font-semibold rounded-xl hover:text-white"
@@ -750,7 +759,7 @@ const DataEntry = () => {
           </div>
 
           {/* Mobile — 2-step controls (same handlers; submit is unchanged) */}
-          <div className="lb-mobile-only">
+          <div>
             {step === 1 ? (
               <Button
                 onClick={handleNext}

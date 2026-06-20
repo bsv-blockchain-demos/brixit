@@ -6,6 +6,7 @@ import { useCropThresholds } from '../../contexts/CropThresholdContext';
 import { getBrixColor } from '../../lib/getBrixColor';
 import { getBrixQuality } from '../../lib/getBrixQuality';
 import { formatUsername } from '../../lib/formatUsername';
+import { formatHumanDate } from '../../lib/formatDate';
 import { BrixDataPoint } from '../../types';
 import { useImageUrls } from '../../hooks/useImageUrls';
 
@@ -73,7 +74,7 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
             <Calendar className="w-5 h-5 text-text-mid" />
             <div>
               <p className="text-sm text-text-mid">Assessment Date</p>
-              <p className="font-medium">{new Date(dataPoint.submittedAt).toLocaleDateString()}</p>
+              <p className="font-medium">{formatHumanDate(dataPoint.submittedAt)}</p>
             </div>
           </div>
           <div className="flex items-center space-x-3 p-4 bg-surface-canvas rounded-lg">
