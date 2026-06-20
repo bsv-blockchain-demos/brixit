@@ -202,33 +202,27 @@ export default function AdminTreasury() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Treasury Wallet</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-xl font-display font-bold text-text-dark">Treasury Wallet</h2>
+          <p className="text-sm text-text-mid">
             Balance, identity and recent on-chain activity for the wallet that anchors submissions.
           </p>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
           onClick={handleRefresh}
           disabled={balanceQ.isFetching || activityQ.isFetching}
-          className="flex items-center gap-2"
+          aria-label="Refresh treasury"
+          className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-text-mid hover:text-text-dark hover:bg-surface-canvas disabled:opacity-50"
         >
-          <RefreshCw
-            className={`w-4 h-4 ${
-              balanceQ.isFetching || activityQ.isFetching ? 'animate-spin' : ''
-            }`}
-          />
-          Refresh
-        </Button>
+          <RefreshCw className={`w-4 h-4 ${balanceQ.isFetching || activityQ.isFetching ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
       {/* ── Balance + Info row ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Balance</CardTitle>
-            <Wallet className="w-4 h-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-text-mid">Balance</CardTitle>
+            <Wallet className="w-4 h-4 text-text-mid" />
           </CardHeader>
           <CardContent>
             {balanceQ.isLoading ? (
@@ -241,13 +235,13 @@ export default function AdminTreasury() {
               <>
                 <div className="text-3xl font-bold tabular-nums">
                   {formatSatoshis(balanceQ.data.satoshis)}{' '}
-                  <span className="text-base font-medium text-muted-foreground">sats</span>
+                  <span className="text-base font-medium text-text-mid">sats</span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-text-mid mt-1">
                   ≈ {satoshisToBsv(balanceQ.data.satoshis)} BSV
                 </p>
                 {balanceQ.data.lowBalanceWarning && (
-                  <div className="flex items-center gap-2 mt-3 p-2 rounded-md bg-destructive/10 text-destructive text-xs">
+                  <div className="flex items-center gap-2 mt-3 p-2 rounded-md bg-score-average-bg text-text-dark text-xs">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
                     <span>
                       Below {formatSatoshis(balanceQ.data.threshold)} sats — top up to keep
@@ -257,11 +251,10 @@ export default function AdminTreasury() {
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
                   <Button
-                    variant="outline"
                     size="sm"
                     onClick={() => setTopupModalOpen(true)}
                     disabled={!userWallet || !infoQ.data}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 bg-action-primary hover:bg-action-primary-hover text-white"
                     title={!userWallet ? 'Connect a local wallet first' : 'Send funds from your connected wallet'}
                   >
                     <ArrowUpCircle className="w-4 h-4" />
@@ -297,7 +290,7 @@ export default function AdminTreasury() {
                           <p className="text-xs font-semibold mb-1" style={{ color: 'var(--text-mid)' }}>
                             Sweep past date
                           </p>
-                          <p className="text-[10px] text-muted-foreground">
+                          <p className="text-[10px] text-text-mid">
                             Funds sent to an older day's rotating address. UTC dates.
                           </p>
                         </div>
@@ -334,14 +327,15 @@ export default function AdminTreasury() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Wallet Identity</CardTitle>
-            <Badge variant={chain === 'main' ? 'default' : 'secondary'} className="text-xs">
+            <CardTitle className="text-sm font-medium text-text-mid">Wallet Identity</CardTitle>
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full bg-select-bg text-select-fg">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-mid" />
               {chain === 'main' ? 'mainnet' : 'testnet'}
-            </Badge>
+            </span>
           </CardHeader>
           <CardContent className="space-y-3">
             {infoQ.isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading…</p>
+              <p className="text-sm text-text-mid">Loading…</p>
             ) : infoQ.error ? (
               <p className="text-sm text-destructive">
                 {(infoQ.error as any)?.message ?? 'Failed to load wallet info'}
@@ -350,10 +344,10 @@ export default function AdminTreasury() {
               <>
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    <p className="text-xs uppercase tracking-wide text-text-mid">
                       Top-up Address
                     </p>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-[10px] text-text-mid">
                       rotates {new Date(infoQ.data.addressRotatesAt).toLocaleString()}
                     </p>
                   </div>
@@ -368,7 +362,7 @@ export default function AdminTreasury() {
                       <Copy className="w-3.5 h-3.5" />
                     </Button>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-1">
+                  <p className="text-[10px] text-text-mid mt-1">
                     Derived fresh each UTC day. Funds sent to older addresses remain spendable.
                   </p>
                 </div>
@@ -394,7 +388,7 @@ export default function AdminTreasury() {
                     className="border-t px-3 py-3 space-y-2.5"
                     style={{ borderColor: 'var(--hairline)' }}
                   >
-                    <p className="text-[10px] text-muted-foreground italic">
+                    <p className="text-[10px] text-text-mid italic">
                       Public parameters. Not secrets — anyone with these can derive the address, but spending still requires the server wallet's master key. Use only if the automated top-up sweep fails and funds need manual recovery.
                     </p>
                     {([
@@ -406,7 +400,7 @@ export default function AdminTreasury() {
                       ['Derivation suffix', infoQ.data.derivationSuffix],
                     ] as const).map(([label, value]) => (
                       <div key={label}>
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">
+                        <p className="text-[10px] uppercase tracking-wide text-text-mid mb-0.5">
                           {label}
                         </p>
                         <div className="flex items-center gap-2">
@@ -427,7 +421,7 @@ export default function AdminTreasury() {
                   </CollapsibleContent>
                 </Collapsible>
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+                  <p className="text-xs uppercase tracking-wide text-text-mid mb-1">
                     Identity Public Key
                   </p>
                   <div className="flex items-center gap-2">
@@ -444,7 +438,7 @@ export default function AdminTreasury() {
                     </Button>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground pt-1 border-t">
+                <p className="text-xs text-text-mid pt-1 border-t">
                   Storage: <code className="font-mono">{infoQ.data.storageUrl}</code>
                 </p>
               </>
@@ -458,30 +452,30 @@ export default function AdminTreasury() {
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
             <CardTitle className="text-base">Pending Anchors</CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-text-mid mt-1">
               Submission rows whose on-chain anchor never completed (outpoint is NULL).
             </p>
           </div>
-          <Clock className="w-4 h-4 text-muted-foreground" />
+          <Clock className="w-4 h-4 text-text-mid" />
         </CardHeader>
         <CardContent>
           {pendingQ.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <p className="text-sm text-text-mid">Loading…</p>
           ) : pendingQ.error ? (
             <p className="text-sm text-destructive">
               {(pendingQ.error as any)?.message ?? 'Failed to load pending submissions'}
             </p>
           ) : pendingQ.data?.total === 0 ? (
-            <p className="text-sm text-muted-foreground">No pending anchors — all submissions are on chain.</p>
+            <p className="text-sm text-text-mid">No pending anchors — all submissions are on chain.</p>
           ) : pendingQ.data ? (
             <>
-              <p className="text-xs text-muted-foreground mb-3">
+              <p className="text-xs text-text-mid mb-3">
                 Showing {pendingQ.data.rows.length} of {pendingQ.data.total}
               </p>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-left text-xs text-muted-foreground border-b">
+                    <tr className="text-left text-xs text-text-mid border-b">
                       <th className="py-2 pr-3">Submitted</th>
                       <th className="py-2 pr-3">Crop</th>
                       <th className="py-2 pr-3">BRIX</th>
@@ -492,7 +486,7 @@ export default function AdminTreasury() {
                   <tbody>
                     {pendingQ.data.rows.map((r) => (
                       <tr key={r.id} className="border-b last:border-0">
-                        <td className="py-2 pr-3 text-xs text-muted-foreground tabular-nums">
+                        <td className="py-2 pr-3 text-xs text-text-mid tabular-nums">
                           {r.assessmentDate ? new Date(r.assessmentDate).toLocaleString() : '—'}
                         </td>
                         <td className="py-2 pr-3">{r.crop.name}</td>
@@ -530,24 +524,24 @@ export default function AdminTreasury() {
               ))}
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-text-mid mt-1">
             Last 25 wallet actions, filtered by label. Source: <code>wallet.listActions</code>.
           </p>
         </CardHeader>
         <CardContent>
           {activityQ.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <p className="text-sm text-text-mid">Loading…</p>
           ) : activityQ.error ? (
             <p className="text-sm text-destructive">
               {(activityQ.error as any)?.message ?? 'Failed to load activity'}
             </p>
           ) : activityQ.data?.actions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No actions found for this filter.</p>
+            <p className="text-sm text-text-mid">No actions found for this filter.</p>
           ) : activityQ.data ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs text-muted-foreground border-b">
+                  <tr className="text-left text-xs text-text-mid border-b">
                     <th className="py-2 pr-3">Status</th>
                     <th className="py-2 pr-3">Labels</th>
                     <th className="py-2 pr-3">Description</th>
@@ -606,7 +600,7 @@ export default function AdminTreasury() {
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label htmlFor="topup-amount" className="text-xs uppercase tracking-wide text-muted-foreground">
+              <Label htmlFor="topup-amount" className="text-xs uppercase tracking-wide text-text-mid">
                 Amount (satoshis)
               </Label>
               <Input
@@ -622,12 +616,12 @@ export default function AdminTreasury() {
                 className="mt-1"
               />
               {topupAmount && Number(topupAmount) > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-text-mid mt-1">
                   ≈ {satoshisToBsv(Number(topupAmount))} BSV
                 </p>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-mid">
               Your wallet will prompt you to approve the transaction. The treasury internalizes it server-side once you confirm.
             </p>
           </div>
