@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { ShieldCheck, GitMerge } from 'lucide-react';
+import { ShieldCheck, GitMerge, MapPin, Check } from 'lucide-react';
 import AdminTableEditor from './AdminTableEditor';
 import type { ColumnDef, FieldDef } from './AdminTableEditor';
 import { fetchAdminVenues, createAdminVenue, updateAdminVenue, deleteAdminVenue } from '@/lib/adminApi';
 import { formatFullLocation } from '@/lib/formatAddress';
-import { Button } from '@/components/ui/button';
 import VenueVerifyModal from './VenueVerifyModal';
 
 const POS_TYPE_OPTIONS = [
@@ -16,22 +15,44 @@ const POS_TYPE_OPTIONS = [
 ];
 
 const COLUMNS: ColumnDef[] = [
-  { key: 'name',     label: 'Name' },
-  { key: 'posType',  label: 'Type' },
   {
-    key: 'city',
-    label: 'Location',
+    key: 'name',
+    label: 'Venue',
     render: (_val, row) => {
       const loc = formatFullLocation(row.streetAddress, row.city, row.state, row.country);
-      return loc || <span className="text-muted-foreground text-xs">—</span>;
+      return (
+        <div>
+          <div className="font-medium text-text-dark">{row.name}</div>
+          {loc && (
+            <div className="flex items-center gap-1 text-xs text-text-muted mt-0.5">
+              <MapPin className="w-3 h-3 shrink-0" />
+              <span>{loc}</span>
+            </div>
+          )}
+        </div>
+      );
     },
+  },
+  {
+    key: 'posType',
+    label: 'Type',
+    render: (v) => (
+      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-surface-canvas text-text-mid border border-hairline">
+        {v || 'Unspecified'}
+      </span>
+    ),
   },
   {
     key: 'verified',
     label: 'Verified',
-    render: (val) => val
-      ? <span className="text-xs font-medium text-action-primary">Yes</span>
-      : <span className="text-xs text-muted-foreground">No</span>,
+    render: (val) =>
+      val ? (
+        <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-green-pale text-green-mid">
+          <Check className="w-3 h-3" /> Verified
+        </span>
+      ) : (
+        <span className="text-xs text-text-muted">No</span>
+      ),
   },
 ];
 
@@ -57,30 +78,29 @@ interface ModalState {
 export default function AdminVenues() {
   const [modal, setModal] = useState<ModalState | null>(null);
 
+  // Merge (verified, for de-duplication) and Verify (unverified) — both steel structural actions.
   const extraRowActions = (row: any, invalidate: () => void) => {
     if (row.verified) {
       return (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+        <button
+          className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-select-fg hover:bg-surface-canvas"
           title="Merge nearby unverified venues"
+          aria-label="Merge nearby unverified venues"
           onClick={() => setModal({ venueId: row.id, venueName: row.name, mergeOnly: true, invalidate })}
         >
           <GitMerge className="h-3.5 w-3.5" />
-        </Button>
+        </button>
       );
     }
     return (
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-7 w-7 text-muted-foreground hover:text-action-primary"
+      <button
+        className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-select-fg hover:bg-surface-canvas"
         title="Verify venue"
+        aria-label="Verify venue"
         onClick={() => setModal({ venueId: row.id, venueName: row.name, mergeOnly: false, invalidate })}
       >
         <ShieldCheck className="h-3.5 w-3.5" />
-      </Button>
+      </button>
     );
   };
 

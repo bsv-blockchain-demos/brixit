@@ -3,8 +3,13 @@ import type { ColumnDef, FieldDef } from './AdminTableEditor';
 import { fetchAdminBrands, createAdminBrand, updateAdminBrand, deleteAdminBrand } from '@/lib/adminApi';
 
 const COLUMNS: ColumnDef[] = [
-  { key: 'name', label: 'Name' },
-  { key: 'label', label: 'Label' },
+  { key: 'name', label: 'Slug', render: (v) => <span className="font-mono text-sm text-text-dark">{v}</span> },
+  {
+    key: 'label',
+    label: 'Display Label',
+    render: (v) =>
+      v ? <span className="text-text-dark">{v}</span> : <span className="italic text-text-muted">No display label</span>,
+  },
 ];
 
 const FORM_FIELDS: FieldDef[] = [

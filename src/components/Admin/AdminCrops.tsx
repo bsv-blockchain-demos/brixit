@@ -9,14 +9,51 @@ import {
   fetchAdminCategories,
 } from '@/lib/adminApi';
 
+const TIERS: { key: string; label: string; bg: string; ink?: boolean }[] = [
+  { key: 'poor_brix', label: 'Poor', bg: 'bg-score-poor' },
+  { key: 'average_brix', label: 'Avg', bg: 'bg-score-average', ink: true },
+  { key: 'good_brix', label: 'Good', bg: 'bg-score-good' },
+  { key: 'excellent_brix', label: 'Excellent', bg: 'bg-score-excellent' },
+];
+
 const COLUMNS: ColumnDef[] = [
-  { key: 'name', label: 'Name' },
-  { key: 'label', label: 'Label' },
-  { key: 'category', label: 'Category' },
-  { key: 'poor_brix', label: 'Poor' },
-  { key: 'average_brix', label: 'Average' },
-  { key: 'good_brix', label: 'Good' },
-  { key: 'excellent_brix', label: 'Excellent' },
+  {
+    key: 'label',
+    label: 'Crop',
+    render: (_v, row) => (
+      <div>
+        <div className="font-medium text-text-dark">{row.label ?? row.name}</div>
+        <div className="font-mono text-xs text-text-muted">{row.name}</div>
+      </div>
+    ),
+  },
+  {
+    key: 'category',
+    label: 'Category',
+    render: (v) =>
+      v ? (
+        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-surface-canvas text-text-mid border border-hairline capitalize">{v}</span>
+      ) : (
+        <span className="text-text-muted text-xs">—</span>
+      ),
+  },
+  {
+    key: 'poor_brix',
+    label: 'Score thresholds',
+    render: (_v, row) => (
+      <div className="flex items-center gap-px rounded-md overflow-hidden w-fit">
+        {TIERS.map((t) => (
+          <span
+            key={t.key}
+            className={`flex flex-col items-center justify-center min-w-[3rem] px-2 py-1 ${t.bg} ${t.ink ? 'text-text-dark' : 'text-white'}`}
+          >
+            <span className="text-[9px] leading-none uppercase tracking-wide opacity-90">{t.label}</span>
+            <span className="font-mono text-xs leading-tight">{row[t.key] ?? '—'}</span>
+          </span>
+        ))}
+      </div>
+    ),
+  },
 ];
 
 export default function AdminCrops() {
