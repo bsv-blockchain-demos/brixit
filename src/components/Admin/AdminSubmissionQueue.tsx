@@ -1,8 +1,6 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, CheckCircle, ChevronLeft, ChevronRight, Clock, RefreshCw, Search } from 'lucide-react';
@@ -15,6 +13,10 @@ import {
   type AdminSubmission,
 } from '@/lib/adminApi';
 import { formatVenueLocation } from '@/lib/formatAddress';
+import { formatHumanDate } from '@/lib/formatDate';
+import { useCropThresholds } from '@/contexts/CropThresholdContext';
+import { computeNormalizedScore } from '@/lib/getBrixColor';
+import { ScoreBadge } from '@/components/common/ScoreBadge';
 
 const PAGE_SIZE = 20;
 
@@ -60,6 +62,21 @@ function useSubmissionActions(invalidateKeys: string[]) {
   return { handleVerify, handleDelete, invalidate };
 }
 
+// Icon-only refresh
+
+function RefreshButton({ onClick, busy }: { onClick: () => void; busy: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={busy}
+      aria-label="Refresh"
+      className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-text-mid hover:text-text-dark hover:bg-surface-canvas disabled:opacity-50"
+    >
+      <RefreshCw className={`w-4 h-4 ${busy ? 'animate-spin' : ''}`} />
+    </button>
+  );
+}
+
 // Pagination bar
 
 function Pagination({ page, totalPages, isFetching, onPage }: {
@@ -68,14 +85,36 @@ function Pagination({ page, totalPages, isFetching, onPage }: {
   if (totalPages <= 1) return null;
   return (
     <div className="flex items-center justify-between pt-2">
-      <Button variant="outline" size="sm" onClick={() => onPage(page - 1)} disabled={page === 1 || isFetching}>
-        <ChevronLeft className="w-4 h-4 mr-1" /> Previous
-      </Button>
-      <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
-      <Button variant="outline" size="sm" onClick={() => onPage(page + 1)} disabled={page === totalPages || isFetching}>
-        Next <ChevronRight className="w-4 h-4 ml-1" />
-      </Button>
+      <button
+        onClick={() => onPage(page - 1)}
+        disabled={page === 1 || isFetching}
+        className="inline-flex items-center gap-1 min-h-[40px] px-3 rounded-lg border border-hairline text-sm text-text-dark hover:bg-surface-canvas disabled:opacity-50"
+      >
+        <ChevronLeft className="w-4 h-4" /> Previous
+      </button>
+      <span className="text-sm text-text-mid">Page {page} of {totalPages}</span>
+      <button
+        onClick={() => onPage(page + 1)}
+        disabled={page === totalPages || isFetching}
+        className="inline-flex items-center gap-1 min-h-[40px] px-3 rounded-lg border border-hairline text-sm text-text-dark hover:bg-surface-canvas disabled:opacity-50"
+      >
+        Next <ChevronRight className="w-4 h-4" />
+      </button>
     </div>
+  );
+}
+
+// BRIX value + score-tier pill (display only — reuses crop thresholds + normalized score)
+
+function BrixTier({ brix, crop }: { brix: number; crop?: string | null }) {
+  const { getThresholds } = useCropThresholds();
+  const thresholds = crop ? getThresholds(crop) : null;
+  const normalized = computeNormalizedScore(brix, thresholds);
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className="font-mono text-sm text-text-dark">{brix} BRIX</span>
+      <ScoreBadge normalizedScore={normalized} size="sm" />
+    </span>
   );
 }
 
@@ -83,75 +122,83 @@ function Pagination({ page, totalPages, isFetching, onPage }: {
 
 function SubmissionCard({
   s,
-  showVerifyToggle,
   onVerify,
   onDelete,
 }: {
   s: AdminSubmission | UnverifiedSubmission;
-  showVerifyToggle: boolean;
   onVerify: (id: string, verify: boolean) => void;
   onDelete: (id: string) => void;
 }) {
   const verified = 'verified' in s ? s.verified : false;
 
   return (
-    <div className="border rounded-lg p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 bg-card text-card-foreground">
-      <div className="flex-1 space-y-1.5">
+    <div className="bg-card border border-hairline rounded-2xl shadow-sm p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+      <div className="flex-1 space-y-2 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           {verified ? (
-            <Badge variant="outline" className="bg-green-pale text-green-mid border-green-pale flex items-center gap-1">
+            <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-green-pale text-green-mid">
               <CheckCircle className="w-3 h-3" /> Verified
-            </Badge>
+            </span>
           ) : (
-            <Badge variant="outline" className="bg-surface-canvas text-gold border-hairline flex items-center gap-1">
+            <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-score-average-bg text-text-dark">
               <Clock className="w-3 h-3" /> Awaiting Verification
-            </Badge>
+            </span>
           )}
           {s.assessment_date && (
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <span className="text-xs text-text-muted flex items-center gap-1">
               <Calendar className="w-3 h-3" />
-              {new Date(s.assessment_date).toLocaleDateString()}
+              {formatHumanDate(s.assessment_date)}
             </span>
           )}
         </div>
         <div className="text-sm">
-          <div className="font-medium text-base">
+          <div className="font-medium text-base text-text-dark">
             {s.crop_label ?? s.crop_name ?? 'Unknown crop'}{(s.brand_label ?? s.brand_name) ? ` • ${s.brand_label ?? s.brand_name}` : ''}
           </div>
-          <div className="text-muted-foreground mt-0.5">
+          <div className="text-text-mid mt-0.5">
             {(() => {
               const loc = formatVenueLocation(s.place_street_address, s.place_city, s.place_state);
               const label = s.place_label;
-              if (loc && label) return <>{label} <span className="text-muted-foreground">({loc})</span></>;
+              if (loc && label) return <>{label} <span className="text-text-muted">({loc})</span></>;
               if (loc) return loc;
               if (label) return label;
               return '—';
             })()}
           </div>
-          <div className="mt-0.5">
-            <span className="font-medium">Brix:</span> {s.brix_value}
+          <div className="mt-1.5">
+            <BrixTier brix={s.brix_value} crop={s.crop_name} />
           </div>
           {'user_display_name' in s && (
-            <div className="text-muted-foreground mt-0.5">
+            <div className="text-text-mid mt-1">
               <span className="font-medium">Submitted by:</span> {s.user_display_name ?? s.user_id}
             </div>
           )}
         </div>
       </div>
-      <div className="flex gap-2 sm:flex-col sm:min-w-[180px]">
-        {showVerifyToggle && !verified && (
-          <Button size="sm" onClick={() => onVerify(s.id, true)} className="flex-1 sm:flex-none bg-action-primary hover:bg-action-primary-hover text-white">
+
+      {/* Actions: Verify = orange primary, Delete = red destructive (split by hairline on mobile) */}
+      <div className="flex flex-col gap-2 sm:min-w-[180px]">
+        {!verified ? (
+          <button
+            onClick={() => onVerify(s.id, true)}
+            className="w-full min-h-[44px] rounded-xl bg-action-primary hover:bg-action-primary-hover text-white text-sm font-semibold"
+          >
             Verify
-          </Button>
-        )}
-        {showVerifyToggle && verified && (
-          <Button size="sm" variant="outline" onClick={() => onVerify(s.id, false)} className="flex-1 sm:flex-none">
+          </button>
+        ) : (
+          <button
+            onClick={() => onVerify(s.id, false)}
+            className="w-full min-h-[44px] rounded-xl border border-hairline text-text-dark text-sm font-medium hover:bg-surface-canvas"
+          >
             Unverify
-          </Button>
+          </button>
         )}
-        <Button size="sm" variant="destructive" onClick={() => onDelete(s.id)} className="flex-1 sm:flex-none">
+        <button
+          onClick={() => onDelete(s.id)}
+          className="w-full min-h-[44px] rounded-xl border border-destructive/40 text-destructive text-sm font-medium hover:bg-destructive/10"
+        >
           Delete
-        </Button>
+        </button>
       </div>
     </div>
   );
@@ -183,20 +230,17 @@ function AllSubmissionsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-text-mid">
           {committedSearch
             ? `${total} result${total !== 1 ? 's' : ''} for "${committedSearch}"`
             : `${total} total submission${total !== 1 ? 's' : ''}`}
         </p>
-        <Button variant="ghost" onClick={invalidate} disabled={isFetching} className="flex items-center gap-2">
-          <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <RefreshButton onClick={invalidate} busy={isFetching} />
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
         <Input
           placeholder="Search by crop, place, brand or user — press Enter"
           value={search}
@@ -207,9 +251,9 @@ function AllSubmissionsTab() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <p className="text-sm text-text-mid">Loading...</p>
       ) : submissions.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-text-mid">
           {committedSearch ? 'No submissions match your search.' : 'No submissions found.'}
         </p>
       ) : (
@@ -218,7 +262,6 @@ function AllSubmissionsTab() {
             <SubmissionCard
               key={s.id}
               s={s}
-              showVerifyToggle
               onVerify={(id, verify) => handleVerify(id, verify, total, page, setPage)}
               onDelete={(id) => handleDelete(id, total, page, setPage)}
             />
@@ -251,27 +294,23 @@ function PendingTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-text-mid">
           {total} submission{total !== 1 ? 's' : ''} awaiting review
         </p>
-        <Button variant="ghost" onClick={invalidate} disabled={isFetching} className="flex items-center gap-2">
-          <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <RefreshButton onClick={invalidate} busy={isFetching} />
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <p className="text-sm text-text-mid">Loading...</p>
       ) : submissions.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No pending submissions to review.</p>
+        <p className="text-sm text-text-mid">No pending submissions to review.</p>
       ) : (
         <div className={`space-y-3 ${isFetching ? 'opacity-60 pointer-events-none' : ''}`}>
           {submissions.map((s) => (
             <SubmissionCard
               key={s.id}
               s={{ ...s, verified: false } as AdminSubmission}
-              showVerifyToggle
               onVerify={(id, verify) => handleVerify(id, verify, total, page, setPage)}
               onDelete={(id) => handleDelete(id, total, page, setPage)}
             />
@@ -288,22 +327,28 @@ function PendingTab() {
 
 export default function AdminSubmissionQueue() {
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-xl font-semibold">Submissions</h2>
-      </div>
-      <Tabs defaultValue="pending">
-        <TabsList>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="all">All Submissions</TabsTrigger>
-        </TabsList>
-        <TabsContent value="pending" className="mt-4">
-          <PendingTab />
-        </TabsContent>
-        <TabsContent value="all" className="mt-4">
-          <AllSubmissionsTab />
-        </TabsContent>
-      </Tabs>
-    </div>
+    <Tabs defaultValue="pending" className="space-y-4">
+      {/* Steel segmented control */}
+      <TabsList className="inline-flex gap-1 p-1 h-auto bg-surface-canvas border border-hairline rounded-xl">
+        <TabsTrigger
+          value="pending"
+          className="rounded-lg px-4 py-1.5 text-sm font-medium text-text-mid data-[state=active]:bg-card data-[state=active]:text-text-dark data-[state=active]:shadow-sm"
+        >
+          Pending
+        </TabsTrigger>
+        <TabsTrigger
+          value="all"
+          className="rounded-lg px-4 py-1.5 text-sm font-medium text-text-mid data-[state=active]:bg-card data-[state=active]:text-text-dark data-[state=active]:shadow-sm"
+        >
+          All Submissions
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="pending" className="mt-0">
+        <PendingTab />
+      </TabsContent>
+      <TabsContent value="all" className="mt-0">
+        <AllSubmissionsTab />
+      </TabsContent>
+    </Tabs>
   );
 }

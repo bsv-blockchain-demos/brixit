@@ -60,21 +60,25 @@ export default function Admin() {
             </div>
 
             {/* Tabs: desktop = cut-out strip connecting to the canvas; mobile = scrolling pills */}
-            <TabsList className="flex w-full justify-start gap-1 h-auto p-0 bg-transparent rounded-none overflow-x-auto sm:overflow-visible scrollbar-none">
-              {TABS.map((t) => (
-                <TabsTrigger
-                  key={t.value}
-                  value={t.value}
-                  className="shrink-0 whitespace-nowrap px-4 py-2 text-sm font-medium rounded-lg sm:rounded-b-none border border-transparent
-                    text-white/80 hover:bg-white/10
-                    data-[state=active]:shadow-none
-                    data-[state=active]:bg-select-bg data-[state=active]:text-select-fg data-[state=active]:border-select-border
-                    sm:data-[state=active]:bg-surface-canvas sm:data-[state=active]:text-blue-deep sm:data-[state=active]:border-transparent"
-                >
-                  {t.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            <div className="relative">
+              <TabsList className="flex w-full justify-start gap-1.5 sm:gap-1 h-auto p-0 pb-2 sm:pb-0 pr-8 sm:pr-0 bg-transparent rounded-none overflow-x-auto sm:overflow-visible scroll-smooth snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {TABS.map((t) => (
+                  <TabsTrigger
+                    key={t.value}
+                    value={t.value}
+                    className="shrink-0 snap-start whitespace-nowrap px-4 py-2 min-h-[40px] text-sm font-medium rounded-full sm:rounded-full sm:rounded-b-none border border-transparent
+                      text-white/80 hover:bg-white/10
+                      data-[state=active]:shadow-none
+                      data-[state=active]:bg-select-bg data-[state=active]:text-select-fg data-[state=active]:border-select-border
+                      sm:data-[state=active]:bg-surface-canvas sm:data-[state=active]:text-blue-deep sm:data-[state=active]:border-transparent"
+                  >
+                    {t.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {/* Mobile-only "more →" fade affordance at the right edge */}
+              <div aria-hidden className="sm:hidden pointer-events-none absolute right-0 top-0 bottom-2 w-10 bg-gradient-to-l from-background to-transparent" />
+            </div>
           </div>
         </div>
 

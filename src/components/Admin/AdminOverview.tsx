@@ -63,10 +63,10 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
         <button
           onClick={handleRefresh}
           disabled={isFetching}
-          className="inline-flex items-center gap-2 text-sm font-medium text-text-mid hover:text-text-dark disabled:opacity-50"
+          aria-label="Refresh overview"
+          className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-text-mid hover:text-text-dark hover:bg-surface-canvas disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
-          Refresh
         </button>
       </div>
 
