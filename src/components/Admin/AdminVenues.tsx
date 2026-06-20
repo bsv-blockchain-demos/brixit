@@ -120,6 +120,7 @@ export default function AdminVenues() {
       )}
       <AdminTableEditor
         title="Venues"
+        description="Manage venues and their locations"
         queryKey="admin-venues"
         columns={COLUMNS}
         formFields={FORM_FIELDS}

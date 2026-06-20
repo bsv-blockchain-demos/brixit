@@ -2,8 +2,9 @@
 import { BrixDataPoint } from '../../types';
 import { scoreBrix } from '../../lib/getBrixColor';
 import { titleCase } from '../../lib/titleCase';
+import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
 import { formatHumanDate } from '../../lib/formatDate';
-import { CheckCircle, Clock, MapPin, User, MoreVertical, Edit, Trash2, XCircle, Shield } from 'lucide-react';
+import { CheckCircle, Clock, MapPin, User, MoreVertical, Edit, Trash2, Anchor } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import {
   DropdownMenu,
@@ -82,26 +83,9 @@ const MobileSubmissionCard: React.FC<{
       <div className="mt-2 text-sm text-text-mid">
         {formatHumanDate(submission.submittedAt)}
       </div>
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-        {submission.verified ? (
-          <span className="inline-flex items-center gap-1 text-green-mid font-medium">
-            <CheckCircle className="w-3.5 h-3.5" /> Verified
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 text-action-primary font-medium">
-            <Clock className="w-3.5 h-3.5" /> Pending
-          </span>
-        )}
-        <span className="text-text-muted-brown">·</span>
-        {submission.outpoint ? (
-          <span className="inline-flex items-center gap-1 text-blue-mid font-medium">
-            <Shield className="w-3.5 h-3.5" /> Anchored
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 text-text-muted-brown">
-            <XCircle className="w-3.5 h-3.5" /> No Anchor
-          </span>
-        )}
+      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+        <VerifiedBadge verified={!!submission.verified} />
+        <BlockchainBadge secured={!!submission.outpoint} />
       </div>
 
       {submission.locationName && (

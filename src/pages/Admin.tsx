@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminUserManagement from '@/components/Admin/AdminUserManagement';
 import AdminSubmissionQueue from '@/components/Admin/AdminSubmissionQueue';
@@ -28,7 +28,52 @@ const TABS = [
 export default function Admin() {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview');
+
+  // Persist the active tab in the URL (?tab=…) so it survives a hard refresh and is shareable.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const activeTab = TABS.some((t) => t.value === tabParam) ? (tabParam as string) : 'overview';
+  const setActiveTab = useCallback(
+    (value: string) => {
+      const next = new URLSearchParams(searchParams);
+      next.set('tab', value);
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
+
+  // Mobile tab strip: keep the active tab visible and show edge fades only when scrollable.
+  const listRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateFades = useCallback(() => {
+    const el = listRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  // Center the active tab in view whenever it changes (e.g. deep tabs like Treasury).
+  useEffect(() => {
+    const list = listRef.current;
+    const tab = list?.querySelector<HTMLElement>('[data-state="active"]');
+    if (list && tab) {
+      const tabCenter = tab.getBoundingClientRect().left - list.getBoundingClientRect().left;
+      const delta = tabCenter - (list.clientWidth - tab.clientWidth) / 2;
+      const behavior: ScrollBehavior =
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+      list.scrollTo({ left: list.scrollLeft + delta, behavior });
+    }
+    updateFades();
+  }, [activeTab, updateFades]);
+
+  // Track scrollability on mount and resize.
+  useEffect(() => {
+    updateFades();
+    window.addEventListener('resize', updateFades);
+    return () => window.removeEventListener('resize', updateFades);
+  }, [updateFades]);
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -61,23 +106,34 @@ export default function Admin() {
 
             {/* Tabs: desktop = cut-out strip connecting to the canvas; mobile = scrolling pills */}
             <div className="relative">
-              <TabsList className="flex w-full justify-start gap-1.5 sm:gap-1 h-auto p-0 pb-2 sm:pb-0 pr-8 sm:pr-0 bg-transparent rounded-none overflow-x-auto sm:overflow-visible scroll-smooth snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <TabsList
+                ref={listRef}
+                onScroll={updateFades}
+                className="flex w-full justify-start gap-1.5 sm:gap-1 h-auto p-0 pb-2 sm:pb-0 pr-8 sm:pr-0 bg-transparent rounded-none overflow-x-auto sm:overflow-visible scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+              >
                 {TABS.map((t) => (
                   <TabsTrigger
                     key={t.value}
                     value={t.value}
-                    className="shrink-0 snap-start whitespace-nowrap px-4 py-2 min-h-[40px] text-sm font-medium rounded-full sm:rounded-full sm:rounded-b-none border border-transparent
+                    className="shrink-0 whitespace-nowrap px-4 py-2 min-h-[40px] text-sm font-medium rounded-full sm:rounded-t-md sm:rounded-b-none border border-transparent
                       text-white/80 hover:bg-white/10
                       data-[state=active]:shadow-none
                       data-[state=active]:bg-select-bg data-[state=active]:text-select-fg data-[state=active]:border-select-border
-                      sm:data-[state=active]:bg-surface-canvas sm:data-[state=active]:text-blue-deep sm:data-[state=active]:border-transparent"
+                      sm:data-[state=active]:bg-surface-canvas sm:data-[state=active]:text-text-dark sm:data-[state=active]:border-transparent"
                   >
                     {t.label}
                   </TabsTrigger>
                 ))}
               </TabsList>
-              {/* Mobile-only "more →" fade affordance at the right edge */}
-              <div aria-hidden className="sm:hidden pointer-events-none absolute right-0 top-0 bottom-2 w-10 bg-gradient-to-l from-background to-transparent" />
+              {/* Mobile-only "more" fade affordances — shown only when there's more to scroll */}
+              <div
+                aria-hidden
+                className={`sm:hidden pointer-events-none absolute left-0 top-0 bottom-2 w-10 bg-gradient-to-r from-background to-transparent transition-opacity duration-200 ${canScrollLeft ? 'opacity-100' : 'opacity-0'}`}
+              />
+              <div
+                aria-hidden
+                className={`sm:hidden pointer-events-none absolute right-0 top-0 bottom-2 w-10 bg-gradient-to-l from-background to-transparent transition-opacity duration-200 ${canScrollRight ? 'opacity-100' : 'opacity-0'}`}
+              />
             </div>
           </div>
         </div>

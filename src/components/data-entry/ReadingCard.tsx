@@ -9,6 +9,7 @@ import ComboBoxAddable from '../ui/combo-box-addable';
 import Combobox from '../ui/combo-box';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
 import { scoreBrix } from '../../lib/getBrixColor';
+import { titleCase } from '../../lib/titleCase';
 
 export interface CropReading {
   id: string;
@@ -47,7 +48,7 @@ const ReadingCard: React.FC<{
   const score = scoreBrix(reading.brixLevel, thresholds);
   const tierColor = QUALITY_COLOR[score.quality] ?? 'var(--score-poor)';
   const tierLabel = score.quality;
-  const cropLabel = crops.find(c => c.name === reading.cropType)?.label || reading.cropType;
+  const cropLabel = titleCase(crops.find(c => c.name === reading.cropType)?.label || reading.cropType);
   const hasError = !!(errors[`reading_${reading.id}_cropType`] || errors[`reading_${reading.id}_brixLevel`]);
 
   return (

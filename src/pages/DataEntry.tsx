@@ -516,7 +516,7 @@ const DataEntry = () => {
 
                 {/* ── Section 1: Session context (mobile Step 1) ── */}
                 <motion.div {...staggerChild} className={step !== 1 ? 'hidden' : ''}>
-                  <div className="border-l-4 pl-5 sm:pl-8 max-[640px]:border-l-0 max-[640px]:pl-0" style={{ borderColor: 'var(--green-fresh)' }}>
+                  <div>
                     <FormSectionHeader title="Where did you shop?" required />
 
                     <div className="mb-6">
@@ -646,7 +646,7 @@ const DataEntry = () => {
                     </span>
                     <button type="button" onClick={() => setStep(1)} className="shrink-0 font-medium text-action-primary hover:text-action-primary-hover">Edit</button>
                   </div>
-                  <div className="border-l-4 pl-5 sm:pl-8 max-[640px]:border-l-0 max-[640px]:pl-0" style={{ borderColor: 'var(--blue-light)' }}>
+                  <div>
                     <FormSectionHeader title="What did you measure?" required />
                     {errors.readings_global && (
                       <p className="text-destructive text-sm mb-4 flex items-center gap-1">
@@ -690,7 +690,7 @@ const DataEntry = () => {
 
                 {/* ── Section 3: Optional (mobile Step 2) ── */}
                 <motion.div {...staggerChild} className={step !== 2 ? 'hidden' : ''}>
-                  <div className="border-l-4 pl-5 sm:pl-8 max-[640px]:border-l-0 max-[640px]:pl-0" style={{ borderColor: 'var(--hairline)' }}>
+                  <div>
                     <h3 className="text-xl font-display font-bold mb-6" style={{ color: 'var(--text-dark)' }}>
                       Additional Information
                     </h3>

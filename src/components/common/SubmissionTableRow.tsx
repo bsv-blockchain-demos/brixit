@@ -7,6 +7,7 @@ import { MapPin, Calendar, CheckCircle, Edit, Trash2, Eye, MessageSquare, Clock,
 import { scoreBrix } from '../../lib/getBrixColor';
 import { formatCityState } from '../../lib/formatAddress';
 import { titleCase } from '../../lib/titleCase';
+import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
 import { formatHumanDate } from '../../lib/formatDate';
 
 interface SubmissionTableRowProps {
@@ -127,36 +128,12 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
 
       {/* Cell 8 — Verified? */}
       <TableCell className="text-center py-3 px-2">
-        {submission.verified ? (
-          <Badge className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-green-pale text-green-mid font-medium text-sm shadow-sm whitespace-nowrap">
-            <CheckCircle className="w-4 h-4" />
-            <span>Verified</span>
-          </Badge>
-        ) : (
-          <Badge className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)] font-semibold text-sm shadow-sm whitespace-nowrap">
-            <Clock className="w-4 h-4" />
-            <span>Pending</span>
-          </Badge>
-        )}
+        <VerifiedBadge verified={!!submission.verified} />
       </TableCell>
 
-      {/* Cell 9 — On-chain */}
+      {/* Cell 9 — Blockchain */}
       <TableCell className="text-center py-3 px-2">
-        {submission.outpoint ? (
-          <Badge className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-badge-neutral-bg text-green-mid font-medium text-sm shadow-sm whitespace-nowrap">
-            <Anchor className="w-4 h-4" />
-            <span>Anchored</span>
-          </Badge>
-        ) : (
-          <Badge
-            className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-badge-neutral-bg text-badge-neutral-text font-medium text-sm shadow-sm whitespace-nowrap"
-            title="Not anchored"
-            aria-label="Not anchored"
-          >
-            <XCircle className="w-4 h-4" />
-            <span>No Anchor</span>
-          </Badge>
-        )}
+        <BlockchainBadge secured={!!submission.outpoint} />
       </TableCell>
 
       {/* Cell 9 — Actions */}

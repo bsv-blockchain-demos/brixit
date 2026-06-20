@@ -2,7 +2,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback } from "../ui/avatar";
-import { Badge } from "../ui/badge";
+import { RoleChip } from "@/components/common/RoleChip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -140,7 +140,7 @@ const Header = () => {
         <Link to="/data-entry">
           <Button
             variant={isActive("/data-entry") ? "default" : "ghost"}
-            className="flex items-center space-x-2 w-full justify-start bg-action-primary hover:bg-action-primary-hover text-white hover:text-white"
+            className="flex items-center space-x-2 w-full justify-start rounded-lg bg-action-primary hover:bg-action-primary-hover text-white hover:text-white"
           >
             <Plus className="w-4 h-4" />
             <span>Submit</span>
@@ -151,9 +151,11 @@ const Header = () => {
       {isAdmin && (
         <Link to="/admin">
           <Button
-            variant={isActive("/admin") ? "default" : "ghost"}
-            className={`flex items-center space-x-2 w-full justify-start ${
-              isActive("/admin") ? "border-b-2 border-gold" : ""
+            variant="ghost"
+            className={`flex items-center space-x-2 w-full justify-start rounded-lg border text-white hover:text-white ${
+              isActive("/admin")
+                ? "bg-white/20 border-white/30 hover:bg-white/20"
+                : "bg-menu-surface border-menu-surface-border hover:bg-white/15"
             }`}
           >
             <Shield className="w-4 h-4" />
@@ -202,16 +204,9 @@ const Header = () => {
                       </AvatarFallback>
                     </Avatar>
                     <div className="hidden sm:flex items-center space-x-1.5">
-                      <span className="text-sm font-medium text-on-bg-text font-mono">{getDisplayName()}</span>
-                      {user.role === "admin" && (
-                        <Badge variant="destructive" className="text-xs px-1 py-0">
-                          Admin
-                        </Badge>
-                      )}
-                      {user.role === "contributor" && (
-                        <Badge variant="secondary" className="text-xs px-1 py-0">
-                          Contributor
-                        </Badge>
+                      <span className="text-sm font-medium text-on-bg-text">{getDisplayName()}</span>
+                      {(user.role === "admin" || user.role === "contributor") && (
+                        <RoleChip role={user.role} />
                       )}
                     </div>
                   </button>
@@ -331,7 +326,25 @@ const Header = () => {
                       key={item.to}
                       to={item.to}
                       onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 my-1 rounded-xl bg-action-primary hover:bg-action-primary-hover text-white font-semibold text-[17px]"
+                      className="flex items-center gap-3 px-4 py-3 my-1 rounded-lg bg-action-primary hover:bg-action-primary-hover text-white font-semibold text-[17px]"
+                    >
+                      <Icon className="w-5 h-5 shrink-0" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                }
+                if (item.to === "/admin") {
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      onClick={() => setMenuOpen(false)}
+                      aria-current={active ? "page" : undefined}
+                      className={`flex items-center gap-3 px-4 py-3 my-1 rounded-lg border text-white font-semibold text-[17px] ${
+                        active
+                          ? "bg-white/20 border-white/30"
+                          : "bg-menu-surface border-menu-surface-border hover:bg-white/15"
+                      }`}
                     >
                       <Icon className="w-5 h-5 shrink-0" />
                       <span>{item.label}</span>
@@ -363,10 +376,8 @@ const Header = () => {
                     <AvatarFallback className="bg-blue-deep text-white">{getUserInitial()}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <div className="font-mono font-bold text-white truncate">{getDisplayName()}</div>
-                    <span className="inline-block mt-0.5 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-action-primary text-white">
-                      {user.role === "admin" ? "Admin" : "Contributor"}
-                    </span>
+                    <div className="font-bold text-white truncate">{getDisplayName()}</div>
+                    <RoleChip role={user.role} className="mt-0.5" />
                   </div>
                   <Link
                     to="/profile"

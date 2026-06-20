@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { scoreBrix } from '@/lib/getBrixColor';
+import { titleCase } from '@/lib/titleCase';
 
 export interface ClusterSample {
   brixValue: number;
@@ -103,7 +104,7 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
                     const quality     = score?.quality ?? 'Excellent';
                     const scoreColor  = score?.hex     ?? 'var(--green-mid)';
                     const productName = s
-                      ? (s.cropVariety ? `${s.cropVariety} ${s.cropLabel}` : s.cropLabel)
+                      ? titleCase(s.cropVariety ? `${s.cropVariety} ${s.cropLabel}` : s.cropLabel)
                       : 'Banana';
                     const location = s ? (s.venueName || s.venueCity || '') : 'Unknown · Location';
                     // Clamp horizontally + flip below a high marker so the

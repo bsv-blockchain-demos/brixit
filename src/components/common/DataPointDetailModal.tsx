@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { BrixDataPoint } from '../../types';
+import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
 import { Button } from '../ui/button';
 import {
   Dialog,
@@ -16,7 +17,7 @@ import {
   Image as ImageIcon,
   Loader2,
   X,
-  XCircle,
+  Clock,
   Edit,
   Package,
   FileText,
@@ -639,12 +640,8 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                 <DetailRow label="Verified">
                   {isAdmin && isEditing ? (
                     <Input id="verified-checkbox" type="checkbox" checked={verified} onChange={(e) => setVerified(e.target.checked)} className="w-4 h-4" />
-                  ) : verified ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-pale text-green-mid">
-                      <CheckCircle className="w-3 h-3" /> Verified
-                    </span>
                   ) : (
-                    <span className="text-text-mid">No</span>
+                    <VerifiedBadge verified={!!verified} />
                   )}
                   {verified && verifiedBy ? (
                     <span className="mt-1 flex items-center gap-1 text-xs font-normal text-text-mid">
@@ -652,28 +649,26 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     </span>
                   ) : null}
                 </DetailRow>
-                <DetailRow label="Blockchain Anchor" last>
-                  {initialDataPoint.outpoint ? (() => {
-                    const txid = initialDataPoint.outpoint.split('.')[0];
-                    return (
-                      <a
-                        href={`https://whatsonchain.com/tx/${txid}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1 text-green-mid hover:text-green-fresh font-mono text-xs min-w-0"
-                        title={`View transaction on WhatsOnChain: ${txid}`}
-                      >
-                        <span className="truncate">{txid.slice(0, 10)}…{txid.slice(-8)}</span>
-                        <ExternalLink className="w-3 h-3 shrink-0" />
-                      </a>
-                    );
-                  })() : (
-                    <span className="inline-flex items-center gap-1 text-text-mid">
-                      <XCircle className="w-3.5 h-3.5 shrink-0" />
-                      No Anchor
-                    </span>
-                  )}
+                <DetailRow label="Blockchain" last>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <BlockchainBadge secured={!!initialDataPoint.outpoint} />
+                    {initialDataPoint.outpoint && (() => {
+                      const txid = initialDataPoint.outpoint.split('.')[0];
+                      return (
+                        <a
+                          href={`https://whatsonchain.com/tx/${txid}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-green-mid hover:text-green-fresh font-mono text-xs min-w-0"
+                          title={`View transaction on WhatsOnChain: ${txid}`}
+                        >
+                          <span className="truncate">{txid.slice(0, 10)}…{txid.slice(-8)}</span>
+                          <ExternalLink className="w-3 h-3 shrink-0" />
+                        </a>
+                      );
+                    })()}
+                  </div>
                 </DetailRow>
               </DetailSection>
               </div>

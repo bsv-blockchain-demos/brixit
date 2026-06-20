@@ -83,7 +83,7 @@ function LeaderboardMobileList({
           <div
             key={(entry as any)[`${labelKey}_id`] ?? label ?? idx}
             onClick={clickable ? () => onNavigate(entry, labelKey) : undefined}
-            className={`flex items-center gap-3 px-4 py-3 border-b border-hairline last:border-b-0 ${
+            className={`flex items-center gap-4 px-4 py-3 border-b border-hairline last:border-b-0 ${
               clickable ? 'cursor-pointer' : ''
             }`}
           >

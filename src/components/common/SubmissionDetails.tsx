@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { MapPin, Calendar, User, CheckCircle, AlertCircle, MessageSquare, Image as ImageIcon, Loader2, Tag, Building, Anchor, XCircle, ExternalLink } from 'lucide-react';
+import { MapPin, Calendar, User, CheckCircle, AlertCircle, MessageSquare, Image as ImageIcon, Loader2, Tag, Building, Anchor, Clock, ExternalLink } from 'lucide-react';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
 import { getBrixColor } from '../../lib/getBrixColor';
 import { getBrixQuality } from '../../lib/getBrixQuality';
 import { formatUsername } from '../../lib/formatUsername';
 import { formatHumanDate } from '../../lib/formatDate';
+import { titleCase } from '../../lib/titleCase';
+import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
 import { BrixDataPoint } from '../../types';
 import { useImageUrls } from '../../hooks/useImageUrls';
 
@@ -45,7 +47,7 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
     <Card>
       <CardHeader>
         <CardTitle className="text-2xl flex items-center space-x-3">
-          <span>{dataPoint.cropLabel ?? dataPoint.cropType}</span>
+          <span>{titleCase(dataPoint.cropLabel ?? dataPoint.cropType)}</span>
           {dataPoint.verified && (
             <CheckCircle className="w-6 h-6 text-green-mid" aria-label="Verified" />
           )}
@@ -91,14 +93,8 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
               <AlertCircle className="w-5 h-5 text-gold" />
             )}
             <div>
-              <p className="text-sm text-text-mid">Verification Status</p>
-              {dataPoint.verified ? (
-                <span className="inline-flex items-center gap-1 bg-green-pale text-green-mid px-1.5 py-0.5 rounded-full text-sm font-medium">
-                  <CheckCircle className="w-3 h-3" /> Verified
-                </span>
-              ) : (
-                <p className="font-medium text-gold">Pending</p>
-              )}
+              <p className="text-sm text-text-mid">Verified</p>
+              <div className="mt-0.5"><VerifiedBadge verified={!!dataPoint.verified} /></div>
             </div>
           </div>
           {dataPoint.verified && dataPoint.verifiedBy && (
@@ -114,28 +110,29 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
             {dataPoint.outpoint ? (
               <Anchor className="w-5 h-5 text-green-mid" />
             ) : (
-              <XCircle className="w-5 h-5 text-text-muted-brown" />
+              <Clock className="w-5 h-5 text-text-muted-brown" />
             )}
             <div className="min-w-0">
-              <p className="text-sm text-text-mid">Blockchain Anchor</p>
-              {dataPoint.outpoint ? (() => {
-                const txid = dataPoint.outpoint.split('.')[0];
-                return (
-                  <a
-                    href={`https://whatsonchain.com/tx/${txid}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center gap-1 text-green-mid hover:text-green-fresh font-mono text-xs break-all"
-                    title={`View transaction on WhatsOnChain: ${txid}`}
-                  >
-                    <span className="truncate">{txid.slice(0, 12)}…{txid.slice(-8)}</span>
-                    <ExternalLink className="w-3 h-3 shrink-0" />
-                  </a>
-                );
-              })() : (
-                <p className="font-medium text-text-muted-brown">Not anchored</p>
-              )}
+              <p className="text-sm text-text-mid">Blockchain</p>
+              <div className="mt-0.5 flex items-center gap-2 flex-wrap">
+                <BlockchainBadge secured={!!dataPoint.outpoint} />
+                {dataPoint.outpoint && (() => {
+                  const txid = dataPoint.outpoint.split('.')[0];
+                  return (
+                    <a
+                      href={`https://whatsonchain.com/tx/${txid}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 text-green-mid hover:text-green-fresh font-mono text-xs break-all"
+                      title={`View transaction on WhatsOnChain: ${txid}`}
+                    >
+                      <span className="truncate">{txid.slice(0, 12)}…{txid.slice(-8)}</span>
+                      <ExternalLink className="w-3 h-3 shrink-0" />
+                    </a>
+                  );
+                })()}
+              </div>
             </div>
           </div>
           <div className="flex items-center space-x-3 p-4 bg-surface-canvas rounded-lg">
