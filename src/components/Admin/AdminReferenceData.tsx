@@ -8,9 +8,22 @@ import {
 } from '@/lib/adminApi';
 
 const CATEGORY_COLUMNS: ColumnDef[] = [
-  { key: 'name', label: 'Name' },
-  { key: 'label', label: 'Label' },
-  { key: 'sort_order', label: 'Sort Order' },
+  {
+    key: 'sort_order',
+    label: 'Order',
+    render: (v) => (
+      <span className="inline-flex items-center justify-center min-w-[1.75rem] h-7 px-2 rounded-md bg-select-bg text-select-fg font-mono text-xs">
+        {v ?? 0}
+      </span>
+    ),
+  },
+  { key: 'name', label: 'Name', render: (v) => <span className="font-mono text-sm text-text-dark">{v}</span> },
+  {
+    key: 'label',
+    label: 'Display Label',
+    render: (v) =>
+      v ? <span className="text-text-dark">{v}</span> : <span className="italic text-text-muted">No display label</span>,
+  },
 ];
 
 const CATEGORY_FIELDS: FieldDef[] = [
@@ -23,13 +36,12 @@ export default function AdminReferenceData() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-xl font-semibold">Reference Data</h2>
-        <p className="text-sm text-muted-foreground">
-          Manage crop categories used across the app
-        </p>
+        <h2 className="text-xl font-display font-bold text-text-dark">Reference Data</h2>
+        <p className="text-sm text-text-mid">Manage crop categories used across the app</p>
       </div>
       <AdminTableEditor
         title="Crop Categories"
+        singular="Category"
         queryKey="admin-categories"
         columns={CATEGORY_COLUMNS}
         formFields={CATEGORY_FIELDS}
