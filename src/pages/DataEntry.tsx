@@ -456,22 +456,9 @@ const DataEntry = () => {
         className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8 max-[640px]:px-2"
         style={{ paddingBottom: 'calc(7rem + var(--safe-bottom))' }}
       >
-        <motion.div className="text-center mb-8 md:mb-12 lb-desktop-only" {...fadeUp}>
-          <p className="uppercase tracking-[0.2em] text-sm font-medium mb-2 text-white">
-            New Entry
-          </p>
-          <h1 className="text-3xl sm:text-4xl font-display font-bold mb-2 text-white">
-            Submit BRIX Reading
-          </h1>
-          <p className="text-md max-w-2xl mx-auto text-on-bg-body">
-            Record one or more refractometer readings from a single shopping session
-          </p>
-        </motion.div>
-
-        {/* Mobile-only page header on the steel band */}
-        <div className="lb-mobile-only mb-4">
-          <h1 className="text-2xl font-display font-bold text-white">New Measurement Entry</h1>
-          <p className="text-on-bg-body mt-1">
+        <div className="mb-6">
+          <h1 className="text-2xl font-display font-bold text-on-bg-text">New Measurement Entry</h1>
+          <p className="mt-1 text-on-bg-body">
             Record one or more refractometer readings from a single shopping session
           </p>
         </div>
@@ -623,7 +610,7 @@ const DataEntry = () => {
                           value={session.purchaseDate}
                           onChange={e => setSessionField('purchaseDate', e.target.value)}
                           max={new Date().toISOString().split('T')[0]}
-                          className={`w-full border-2 rounded-xl px-4 py-3 transition-all hover:border-blue-light focus:outline-none focus:ring-4 focus:ring-blue-pale ${errors.purchaseDate ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh bg-card'}`}
+                          className={`w-full border-2 rounded-xl px-4 py-3 bg-card transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${errors.purchaseDate ? 'border-destructive bg-red-50' : 'border-input'}`}
                           style={{ color: 'var(--text-dark)' }}
                         />
                         {errors.purchaseDate && (
@@ -713,7 +700,7 @@ const DataEntry = () => {
                         value={session.measurementDate}
                         onChange={e => setSessionField('measurementDate', e.target.value)}
                         max={new Date().toISOString().split('T')[0]}
-                        className={`w-full border-2 rounded-xl px-4 py-3 transition-all hover:border-blue-light focus:outline-none focus:ring-4 focus:ring-blue-pale ${errors.measurementDate ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh bg-card'}`}
+                        className={`w-full border-2 rounded-xl px-4 py-3 bg-card transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${errors.measurementDate ? 'border-destructive bg-red-50' : 'border-input'}`}
                         style={{ color: 'var(--text-dark)' }}
                       />
                       {errors.measurementDate && (

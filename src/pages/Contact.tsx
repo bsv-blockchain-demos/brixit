@@ -45,7 +45,7 @@ export default function Contact() {
           <div className="w-12 h-12 bg-green-fresh rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
             <Mail className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Get in touch</h1>
+          <h1 className="text-2xl font-display font-bold text-on-bg-text">Get in touch</h1>
           <p className="text-on-bg-body text-sm mt-1">We would love to hear from you</p>
         </div>
 

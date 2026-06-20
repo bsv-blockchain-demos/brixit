@@ -44,21 +44,20 @@ const DataTable: React.FC = () => {
   }, [navigate]);
 
   return (
-    <div className="px-0 sm:px-6 lg:px-8 py-8">
+    <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-display font-bold text-white">All Submissions</h2>
-          <p className="text-on-bg-body mt-1">Browse community measurements across crops and locations</p>
+          <h1 className="text-2xl font-display font-bold text-on-bg-text">All Submissions</h1>
+          <p className="mt-1 text-on-bg-body">Browse community measurements across crops and locations</p>
         </div>
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="flex items-center gap-2 text-sm"
+          aria-label={isRefreshing ? 'Refreshing submissions' : 'Refresh submissions'}
         >
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {isRefreshing ? 'Refreshing' : 'Refresh'}
         </Button>
       </div>
 

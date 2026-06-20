@@ -250,25 +250,15 @@ const YourData: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
           <div>
-            <h1 className="text-2xl font-display font-bold text-white mb-2">
+            <h1 className="text-2xl font-display font-bold text-on-bg-text">
               Your Data
             </h1>
-            <p className="text-on-bg-body">
+            <p className="mt-1 text-on-bg-body">
               Manage and track your BRIX measurement submissions
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="flex items-center gap-2 text-sm"
-            >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              {isRefreshing ? 'Refreshing' : 'Refresh'}
-            </Button>
             {canSubmit ? (
               <Link to="/data-entry">
                 <Button className="flex items-center space-x-2 bg-action-primary hover:bg-action-primary-hover text-white">
@@ -286,6 +276,15 @@ const YourData: React.FC = () => {
                 <span>Submissions Disabled</span>
               </Button>
             )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              aria-label={isRefreshing ? 'Refreshing your submissions' : 'Refresh your submissions'}
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
           </div>
         </div>
 

@@ -181,7 +181,7 @@ export default function Help() {
           <div className="w-12 h-12 bg-green-fresh rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
             <span className="text-white font-bold text-2xl">B</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">How BRIX works</h1>
+          <h1 className="text-2xl font-display font-bold text-on-bg-text">How BRIX works</h1>
           <p className="text-on-bg-body text-sm mt-1">Everything you need to know to get started</p>
         </div>
 

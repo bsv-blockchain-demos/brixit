@@ -16,7 +16,7 @@ export default function WalletError() {
       <div className="max-w-sm w-full text-center">
 
         <BrixLogo height="5rem" color="white" className="mx-auto mb-4" />
-        <h1 className="text-xl font-bold text-white mb-4">Couldn't connect to your device</h1>
+        <h1 className="text-xl font-display font-bold text-on-bg-text mb-4">Couldn't connect to your device</h1>
 
         <Card>
           <CardContent className="pt-5 space-y-4">

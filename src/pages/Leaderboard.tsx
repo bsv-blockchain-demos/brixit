@@ -388,18 +388,15 @@ const LeaderboardPage: React.FC = () => {
         </div>
       )}
       <Header />
-      <main className="flex-1 max-w-7xl mx-auto w-full p-4 pb-20 md:p-6 lg:p-8">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pb-20">
         {/* Page identity, shown on both mobile and desktop. Refresh lives here
             (data freshness, not a filter) so it sits with the section, not the filters. */}
-        <div className="mb-5 flex items-end justify-between gap-4">
+        <div className="mb-6 flex items-end justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-widest text-on-bg-subtle">
-              Community Rankings
-            </p>
-            <h1 className="font-display text-3xl desktop:text-4xl font-bold leading-tight text-on-bg-text">
+            <h1 className="text-2xl font-display font-bold text-on-bg-text">
               Leaderboard
             </h1>
-            <p className="mt-1.5 text-sm desktop:text-base text-on-bg-body max-w-xl">
+            <p className="mt-1 text-on-bg-body">
               See where the community is finding the most nutritious produce, ranked by location, brand, and contributor.
             </p>
           </div>
