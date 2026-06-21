@@ -22,6 +22,7 @@ import { Drawer, DrawerContent } from '../ui/drawer';
 import { Calendar, Filter, Search, ChevronDown, Check, X } from 'lucide-react';
 import { useFilters, DEFAULT_MAP_FILTERS } from '../../contexts/FilterContext';
 import { getFilterSummary, getActiveFilterList } from '../../lib/filterUtils';
+import { titleCase } from '../../lib/titleCase';
 import { useStaticData } from '../../hooks/useStaticData';
 import { fetchCropCategories } from '../../lib/fetchCropCategories';
 import { MapFilter } from '../../types';
@@ -174,10 +175,12 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
     () => locations.filter(l => (l.label || l.name).toLowerCase().includes(locationQuery.toLowerCase())),
     [locations, locationQuery],
   );
-  const filteredCrops = useMemo(
-    () => crops.filter(c => c.name.toLowerCase().includes(cropQuery.toLowerCase())),
-    [crops, cropQuery],
-  );
+  const filteredCrops = useMemo(() => {
+    const q = cropQuery.toLowerCase();
+    return crops.filter(c => c.name.toLowerCase().includes(q) || (c.label ?? '').toLowerCase().includes(q));
+  }, [crops, cropQuery]);
+  // Resolve a crop's display name (title-cased label) from its DB name.
+  const cropDisplay = (name: string) => titleCase(crops.find(c => c.name === name)?.label ?? name);
   void filteredCategories;  // kept for future category dropdown
 
   // The filter field controls — shared verbatim between the desktop inline panel
@@ -219,7 +222,7 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
                         aria-selected={selected}
                         role="option"
                       >
-                        <span>{crop.name}</span>
+                        <span>{titleCase(crop.label ?? crop.name)}</span>
                         {selected && <Check className="h-4 w-4" />}
                       </CommandItem>
                     );
@@ -236,11 +239,11 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
                   variant="secondary"
                   className="flex items-center gap-1 px-2 py-1 text-xs rounded-full"
                 >
-                  <span>{crop}</span>
+                  <span>{cropDisplay(crop)}</span>
                   <X
                     role="button"
                     tabIndex={0}
-                    aria-label={`Remove crop type ${crop}`}
+                    aria-label={`Remove crop type ${cropDisplay(crop)}`}
                     className="w-3 h-3 cursor-pointer"
                     onClick={() => removeCropType(crop)}
                     onKeyDown={(e) => e.key === 'Enter' && removeCropType(crop)}
@@ -394,9 +397,20 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
           />
         </div>
 
+        <div className={isNarrow ? "flex items-center justify-between" : "flex items-center gap-3"}>
+          <Label className="text-sm font-medium">Timestamped</Label>
+          <Switch
+            checked={filters.timestamped}
+            onCheckedChange={(val) => handleFilterChange('timestamped', val)}
+            aria-checked={filters.timestamped}
+            role="switch"
+            aria-label="Show only measurements timestamped on the blockchain"
+          />
+        </div>
+
         {isAdmin && (
           <div className={isNarrow ? "flex items-center justify-between" : "flex items-center gap-3"}>
-            <Label className="text-sm font-medium">Verified Only</Label>
+            <Label className="text-sm font-medium">Verified</Label>
             <Switch
               checked={filters.verifiedOnly}
               onCheckedChange={(val) => handleFilterChange('verifiedOnly', val)}

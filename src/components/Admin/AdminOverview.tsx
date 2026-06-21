@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, useMotionValue, useSpring, useReducedMotion } from 'framer-motion';
-import { Users, ClipboardList, CheckCircle, AlertCircle, RefreshCw, Anchor } from 'lucide-react';
+import { Users, ClipboardList, CheckCircle, AlertCircle, RefreshCw, Stamp } from 'lucide-react';
 import { fetchAllUsers, fetchUnverifiedSubmissions, type UserWithRoles } from '@/lib/adminApi';
 import { fetchPendingSubmissions } from '@/lib/adminWalletApi';
 import { apiGet } from '@/lib/api';
@@ -130,7 +130,7 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard index={0} label="Total Users" icon={Users} tint="bg-select-bg text-select-fg" value={isLoading ? '—' : stats?.totalUsers}>
+        <StatCard index={0} label="Total Users" icon={Users} tint="bg-select-bg text-select-fg" value={isLoading ? '-' : stats?.totalUsers}>
           {stats && (
             <div className="flex flex-wrap gap-2 mt-3">
               <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-select-bg text-select-fg">
@@ -143,7 +143,7 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
           )}
         </StatCard>
 
-        <StatCard index={1} label="Total Submissions" icon={ClipboardList} tint="bg-green-pale text-green-mid" value={isLoading ? '—' : stats?.totalSubmissions}>
+        <StatCard index={1} label="Total Submissions" icon={ClipboardList} tint="bg-green-pale text-green-mid" value={isLoading ? '-' : stats?.totalSubmissions}>
           <p className="text-xs text-text-mid mt-2">Verified &amp; publicly visible</p>
         </StatCard>
 
@@ -152,7 +152,7 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
           label="Pending Review"
           icon={pending ? AlertCircle : CheckCircle}
           tint={pending ? 'bg-score-average-bg text-score-average' : 'bg-score-excellent-bg text-score-excellent'}
-          value={isLoading ? '—' : pending}
+          value={isLoading ? '-' : pending}
         >
           <p className="text-xs text-text-mid mt-2">
             {pending ? 'Awaiting verification' : 'All submissions verified'}
@@ -162,9 +162,9 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
         <StatCard
           index={3}
           label="Pending Blockchain Records"
-          icon={Anchor}
+          icon={Stamp}
           tint={anchors ? 'bg-score-average-bg text-score-average' : 'bg-score-excellent-bg text-score-excellent'}
-          value={isLoading ? '—' : anchors}
+          value={isLoading ? '-' : anchors}
         >
           <p className="text-xs text-text-mid mt-2">
             {anchors ? 'Awaiting blockchain confirmation' : 'All submissions timestamped'}

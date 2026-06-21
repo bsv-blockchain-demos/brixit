@@ -1,5 +1,8 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { CheckCircle, Clock, Anchor, Info } from 'lucide-react';
+import { CheckCircle, Clock, Stamp } from 'lucide-react';
+
+// Snappy tooltip delay so hovering feels seamless (default provider delay is slow).
+const TOOLTIP_DELAY = 100;
 
 /**
  * Canonical status badges for the two submission states, used everywhere so the
@@ -15,7 +18,7 @@ const PILL = 'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs 
 
 export function VerifiedBadge({ verified }: { verified: boolean }) {
   return (
-    <Tooltip>
+    <Tooltip delayDuration={TOOLTIP_DELAY}>
       <TooltipTrigger asChild>
         <span className={`${PILL} ${verified ? 'bg-score-excellent-bg text-score-excellent' : 'bg-score-average-bg text-score-average'}`}>
           {verified ? <CheckCircle className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
@@ -33,10 +36,10 @@ export function VerifiedBadge({ verified }: { verified: boolean }) {
 
 export function BlockchainBadge({ secured }: { secured: boolean }) {
   return (
-    <Tooltip>
+    <Tooltip delayDuration={TOOLTIP_DELAY}>
       <TooltipTrigger asChild>
-        <span className={`${PILL} ${secured ? 'bg-score-excellent-bg text-score-excellent' : 'bg-badge-neutral-bg text-badge-neutral-text'}`}>
-          <Anchor className="w-3.5 h-3.5" />
+        <span className={`${PILL} ${secured ? 'bg-select-bg text-select-fg' : 'bg-badge-neutral-bg text-badge-neutral-text'}`}>
+          <Stamp className="w-3.5 h-3.5" />
           {secured ? 'Timestamped' : 'Pending'}
         </span>
       </TooltipTrigger>
@@ -52,12 +55,9 @@ export function BlockchainBadge({ secured }: { secured: boolean }) {
 /** Column-header label with an info tooltip explaining the field. */
 export function ColumnHint({ children, help }: { children: React.ReactNode; help: string }) {
   return (
-    <Tooltip>
+    <Tooltip delayDuration={TOOLTIP_DELAY}>
       <TooltipTrigger asChild>
-        <span className="inline-flex items-center gap-1 cursor-help">
-          {children}
-          <Info className="w-3 h-3 opacity-60" />
-        </span>
+        <span className="cursor-help underline decoration-dotted decoration-1 underline-offset-4">{children}</span>
       </TooltipTrigger>
       <TooltipContent className="max-w-[16rem] normal-case font-normal tracking-normal">{help}</TooltipContent>
     </Tooltip>

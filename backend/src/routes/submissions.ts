@@ -309,6 +309,22 @@ router.get('/mine/crops', requireAuth as any, async (req: AuthenticatedRequest, 
   }
 });
 
+// --- Authenticated: GET /api/submissions/mine/venues ---
+router.get('/mine/venues', requireAuth as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.sub;
+    const submissions = await prisma.submission.findMany({
+      where: { userId, venueId: { not: null } },
+      select: { venueId: true },
+      distinct: ['venueId'],
+    });
+    res.json(submissions.map((s: { venueId: string | null }) => s.venueId).filter(Boolean));
+  } catch (err) {
+    console.error('[submissions/mine/venues] Error:', err);
+    res.status(500).json({ error: 'Failed to fetch your venue IDs' });
+  }
+});
+
 // --- Public: GET /api/submissions/:id ---
 router.get('/:id', async (req: Request, res: Response) => {
   try {

@@ -404,10 +404,9 @@ const LeaderboardPage: React.FC = () => {
             onClick={handleRefresh}
             disabled={!canRefresh}
             aria-label="Refresh leaderboards"
-            className={`shrink-0 inline-flex items-center gap-1.5 text-sm font-medium ${canRefresh ? 'text-on-bg-body hover:text-on-bg-text' : 'text-on-bg-muted'}`}
+            className={`shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-lg ${canRefresh ? 'text-on-bg-body hover:text-on-bg-text hover:bg-white/10' : 'text-on-bg-muted'}`}
           >
             <RefreshCw className="h-4 w-4" />
-            <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
         {/* ── Mobile (≤640px): one merged panel — filters · tabs · active board ── */}
@@ -469,11 +468,11 @@ const LeaderboardPage: React.FC = () => {
         </div>
 
         {/* ── Desktop (≥641px): filters sidebar + merged boards panel ── */}
-        <div className="lb-desktop-only flex flex-col md:flex-row gap-6">
-          <aside className="w-full md:w-72">
-            <div className="bg-card text-card-foreground border border-hairline rounded-2xl shadow-sm p-4">
-            <h2 className="text-lg font-semibold font-display text-text-dark mb-4">Filters</h2>
-            <div className="space-y-4">
+        <div className="lb-desktop-only flex flex-col gap-6">
+          {/* Filters — stacked on top, full width */}
+          <div className="bg-card text-card-foreground border border-hairline rounded-2xl shadow-sm p-4">
+            <h2 className="text-lg font-semibold font-display text-text-dark mb-3">Filters</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
               <LocationSelector
                 value={location}
                 onChange={setLocation}
@@ -481,11 +480,11 @@ const LeaderboardPage: React.FC = () => {
                 showAutoDetect={false}
               />
               <div>
-                <label className="block text-sm font-medium text-text-dark mb-2">Crop</label>
+                <label className="block text-sm font-medium text-text-dark mb-1">Crop</label>
                 <select
                   value={crop}
                   onChange={(e) => setCrop(e.target.value)}
-                  className="w-full rounded-lg border border-hairline bg-card text-text-dark px-2 py-2"
+                  className="w-full rounded-lg border border-hairline bg-card text-text-dark text-sm px-2 py-2"
                 >
                   <option value="">All crops</option>
                   {allCrops.map((c) => (
@@ -495,17 +494,16 @@ const LeaderboardPage: React.FC = () => {
                   ))}
                 </select>
               </div>
-              <div className="flex flex-col space-y-2">
-                <button
-                  onClick={resetFilters}
-                  className="text-sm text-text-mid hover:text-text-dark text-left"
-                >
-                  Reset filters
-                </button>
-              </div>
             </div>
+            <div className="mt-3">
+              <button
+                onClick={resetFilters}
+                className="text-sm text-text-mid hover:text-text-dark"
+              >
+                Reset filters
+              </button>
             </div>
-          </aside>
+          </div>
 
           {/* Leaderboard grid — one merged panel, boards split by hairline dividers */}
           <section className="flex-1 min-w-0">

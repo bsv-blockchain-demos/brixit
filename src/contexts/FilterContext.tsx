@@ -8,6 +8,7 @@ export const DEFAULT_MAP_FILTERS: MapFilter = {
   brixRange: [0, 30],
   dateRange: ['', ''],
   verifiedOnly: true,
+  timestamped: false,
   submittedBy: '',
   place: '',
   brand: '',

@@ -154,6 +154,15 @@ export async function fetchMySubmissionsCropIds(userId: string): Promise<string[
   }
 }
 
+export async function fetchMySubmissionsVenueIds(userId: string): Promise<string[]> {
+  try {
+    return await apiGet<string[]>('/api/submissions/mine/venues');
+  } catch (error) {
+    console.error('Error fetching user venue ids:', error);
+    return [];
+  }
+}
+
 export type PublicFormattedSubmissionsQuery = {
   limit: number;
   offset: number;
@@ -170,6 +179,7 @@ export type PublicFormattedSubmissionsQuery = {
   dateStart?: string;
   dateEnd?: string;
   search?: string;
+  timestamped?: boolean;
   sortBy?: 'assessment_date' | 'brix_value' | 'crop_name' | 'place_label';
   sortOrder?: 'asc' | 'desc';
 };
@@ -203,6 +213,7 @@ function buildSubmissionsQueryString(query: Partial<PublicFormattedSubmissionsQu
   if (query.dateStart) params.set('dateStart', query.dateStart);
   if (query.dateEnd) params.set('dateEnd', query.dateEnd);
   if (query.search) params.set('search', query.search);
+  if (query.timestamped) params.set('timestamped', 'true');
   return params.toString();
 }
 

@@ -278,7 +278,7 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
             {user.submissions.map((s) => {
               const normalized = computeNormalizedScore(s.brix_value, thresholdsOf(s));
               const loc = formatVenueLocation(s.place_street_address, s.place_city, s.place_state);
-              const locationText = [s.place_label, loc].filter(Boolean).join(' · ') || '—';
+              const locationText = [s.place_label, loc].filter(Boolean).join(' · ') || '-';
               const brand = s.brand_label ?? s.brand_name;
               return (
                 <div

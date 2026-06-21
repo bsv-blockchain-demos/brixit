@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { MapPin, Calendar, User, CheckCircle, AlertCircle, MessageSquare, Image as ImageIcon, Loader2, Tag, Building, Anchor, Clock, ExternalLink } from 'lucide-react';
+import { MapPin, Calendar, User, CheckCircle, AlertCircle, MessageSquare, Image as ImageIcon, Loader2, Tag, Building, Stamp, Clock, ExternalLink } from 'lucide-react';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
 import { getBrixColor } from '../../lib/getBrixColor';
 import { getBrixQuality } from '../../lib/getBrixQuality';
@@ -108,9 +108,9 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
           )}
           <div className="flex items-center space-x-3 p-4 bg-surface-canvas rounded-lg">
             {dataPoint.outpoint ? (
-              <Anchor className="w-5 h-5 text-green-mid" />
+              <Stamp className="w-5 h-5 text-select-fg" />
             ) : (
-              <Clock className="w-5 h-5 text-text-muted-brown" />
+              <Stamp className="w-5 h-5 text-text-muted-brown" />
             )}
             <div className="min-w-0">
               <p className="text-sm text-text-mid">Blockchain</p>

@@ -330,7 +330,7 @@ const DataEntry = () => {
     }
 
     if (!userWallet || !userPubKey) {
-      toast({ title: 'Wallet not connected — please log in again.', variant: 'destructive' });
+      toast({ title: 'Wallet not connected. Please log in again.', variant: 'destructive' });
       setIsLoading(false);
       return;
     }

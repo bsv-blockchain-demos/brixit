@@ -8,6 +8,7 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from '
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Button } from '../ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -41,8 +42,8 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
   const location = useLocation();
   const highlightedSubmissionId = (location.state as any)?.highlightedSubmissionId as string | undefined;
 
-  const itemsPerPage = 10;
-  const chunkSize = 50;
+  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const chunkSize = itemsPerPage;
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<keyof BrixDataPoint>('submittedAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -73,6 +74,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
       dateStart: filters.dateRange?.[0] || undefined,
       dateEnd: filters.dateRange?.[1] || undefined,
       search: filters.search || undefined,
+      timestamped: filters.timestamped || undefined,
       sortBy: serverSortBy,
       sortOrder,
     } satisfies Omit<PublicFormattedSubmissionsQuery, 'limit' | 'offset'>;
@@ -227,7 +229,22 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
         )}
       <Card className="border-0 shadow-none rounded-none bg-transparent sm:border sm:border-hairline sm:shadow-sm sm:rounded-2xl sm:bg-card">
         <CardHeader className="px-3 sm:px-6">
-          <CardTitle>{totalCount} {totalCount === 1 ? 'Result' : 'Results'}</CardTitle>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>{totalCount} {totalCount === 1 ? 'Result' : 'Results'}</CardTitle>
+            <Select
+              value={String(itemsPerPage)}
+              onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}
+            >
+              <SelectTrigger className="h-8 w-[120px] text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[50, 100, 200].map((n) => (
+                  <SelectItem key={n} value={String(n)}>Show {n}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent className="px-3 sm:px-6">
           {/* Desktop table */}
@@ -265,7 +282,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
                     Date {sortBy === 'submittedAt' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
-                    <ColumnHint help="Whether this reading is approved for public display. Most are approved automatically; outliers are reviewed by an admin.">Verified?</ColumnHint>
+                    <ColumnHint help="Whether this reading is approved for public display. Most are approved automatically; outliers are reviewed by an admin.">Verified</ColumnHint>
                   </TableHead>
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
                     <ColumnHint help="Whether this reading is recorded on the BSV blockchain. 'Timestamped' means it has a permanent, tamper-evident record; 'Pending' means that record is still in progress.">Blockchain</ColumnHint>

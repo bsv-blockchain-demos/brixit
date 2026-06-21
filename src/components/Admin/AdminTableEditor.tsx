@@ -160,7 +160,7 @@ export default function AdminTableEditor({
         return;
       }
       if (f.slug && val && !SLUG_RE.test(val)) {
-        toast({ title: `"${f.label}" must be lowercase letters, numbers or underscores — no spaces`, variant: 'destructive' });
+        toast({ title: `"${f.label}" must be lowercase letters, numbers or underscores, no spaces`, variant: 'destructive' });
         return;
       }
     }
@@ -278,7 +278,7 @@ export default function AdminTableEditor({
                           ? col.render(row[col.key], row)
                           : row[col.key] != null
                             ? String(row[col.key])
-                            : <span className="text-text-muted text-xs">—</span>}
+                            : <span className="text-text-muted text-xs">-</span>}
                       </TableCell>
                     ))}
                     <TableCell className="text-right">
@@ -430,7 +430,7 @@ export default function AdminTableEditor({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none__">
-                        <span className="text-muted-foreground">— None —</span>
+                        <span className="text-muted-foreground">None</span>
                       </SelectItem>
                       {field.options?.map(opt => (
                         <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
@@ -457,7 +457,7 @@ export default function AdminTableEditor({
                     />
                     {field.slug && (
                       <p className="text-xs text-text-muted-brown">
-                        Lowercase letters, numbers and underscores only — no spaces.
+                        Lowercase letters, numbers and underscores only, no spaces.
                       </p>
                     )}
                   </>

@@ -62,14 +62,14 @@ export default function MobileLogin() {
               Connect with Mycelia
             </h1>
             <p className="text-on-bg-body mb-8 leading-relaxed">
-              Mycelia is the app that holds your secure identity. No passwords — just your phone.
+              Mycelia is the app that holds your secure identity. No passwords, just your phone.
             </p>
 
             <ol className="space-y-5">
               {[
                 { n: '1', text: <>Download the <strong className="text-white font-medium">Mycelia app</strong> on your phone if you haven't already.</> },
                 { n: '2', text: <>Open Mycelia, tap <strong className="text-white font-medium">Scan QR</strong>, and point your camera at the code.</> },
-                { n: '3', text: <>Approve the connection request — you're in.</> },
+                { n: '3', text: <>Approve the connection request, and you're in.</> },
               ].map(({ n, text }) => (
                 <li key={n} className="flex items-start gap-3">
                   <span className="shrink-0 w-6 h-6 rounded-full bg-white/10 text-white text-xs flex items-center justify-center font-semibold mt-0.5">
@@ -146,7 +146,7 @@ export default function MobileLogin() {
                     ? 'bg-green-fresh/20 text-green-light'
                     : 'bg-white/10 text-on-bg-body'
                 }`}>
-                  {isConnected ? 'Connected — verifying...' : 'Waiting for Mycelia scan…'}
+                  {isConnected ? 'Connected, verifying...' : 'Waiting for Mycelia scan…'}
                 </span>
               </>
             )}

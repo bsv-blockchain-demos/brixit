@@ -20,7 +20,7 @@ import {
   Calendar,
   MapPin,
   User,
-  Anchor,
+  Stamp,
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
@@ -51,7 +51,7 @@ function shortHex(hex: string, head = 8, tail = 8): string {
 }
 
 const fmtDate = (v: string | number | Date | null | undefined) =>
-  v ? new Date(v).toLocaleDateString() : '—';
+  v ? new Date(v).toLocaleDateString() : '-';
 
 // Small uppercase section label, optionally with a leading icon.
 function Eyebrow({ icon: Icon, children, className = '' }: {
@@ -97,7 +97,7 @@ function PendingViewModal({ id, onClose, onCopy }: { id: string; onClose: () => 
   const score = dp ? scoreBrix(dp.brixLevel, thresholds) : null;
   const brand = dp ? (dp.brandLabel ?? dp.brandName) : null;
   const loc = dp ? formatVenueLocation(dp.streetAddress, dp.city, dp.state) : '';
-  const place = dp ? [dp.placeName, loc].filter(Boolean).join(' · ') || '—' : '—';
+  const place = dp ? [dp.placeName, loc].filter(Boolean).join(' · ') || '-' : '-';
 
   const Row = ({ icon: Icon, label, children }: { icon?: React.ComponentType<{ className?: string }>; label: string; children: React.ReactNode }) => (
     <div className="flex gap-3">
@@ -134,9 +134,9 @@ function PendingViewModal({ id, onClose, onCopy }: { id: string; onClose: () => 
             <div className="space-y-2 text-sm border-t border-hairline pt-3">
               {brand && <Row label="Brand">{brand}</Row>}
               <Row icon={MapPin} label="Place">{place}</Row>
-              <Row icon={Calendar} label="Date">{dp.submittedAt ? new Date(dp.submittedAt).toLocaleDateString() : '—'}</Row>
-              <Row icon={User} label="By">{dp.submittedBy || '—'}</Row>
-              <Row icon={Anchor} label="Blockchain">
+              <Row icon={Calendar} label="Date">{dp.submittedAt ? new Date(dp.submittedAt).toLocaleDateString() : '-'}</Row>
+              <Row icon={User} label="By">{dp.submittedBy || '-'}</Row>
+              <Row icon={Stamp} label="Blockchain">
                 <BlockchainBadge secured={!!dp.outpoint} />
               </Row>
               <Row label="ID">
@@ -316,7 +316,7 @@ export default function AdminTreasury() {
 
   const chain = infoQ.data?.chain ?? 'main';
   const networkPill = (
-    <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full bg-select-bg text-select-fg">
+    <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full bg-green-pale text-green-mid">
       <span className="relative flex h-2 w-2">
         <span className="absolute inline-flex h-full w-full rounded-full bg-green-mid opacity-75 animate-ping motion-reduce:hidden" />
         <span className="relative inline-flex h-2 w-2 rounded-full bg-green-mid" />
@@ -355,7 +355,7 @@ export default function AdminTreasury() {
           </div>
 
           {balanceQ.isLoading ? (
-            <div className="mt-2 text-4xl font-display font-bold text-text-muted-brown">—</div>
+            <div className="mt-2 text-4xl font-display font-bold text-text-muted-brown">-</div>
           ) : balanceQ.error ? (
             <p className="mt-2 text-sm text-destructive">
               {(balanceQ.error as any)?.message ?? 'Failed to load balance'}
@@ -578,9 +578,9 @@ export default function AdminTreasury() {
                       <td className="py-2.5 px-5 text-text-mid tabular-nums whitespace-nowrap">{fmtDate(r.assessmentDate)}</td>
                       <td className="py-2.5 pr-3 font-semibold text-text-dark">{titleCase(r.crop.name.replace(/_/g, ' '))}</td>
                       <td className="py-2.5 pr-3 tabular-nums text-text-dark">{r.brixValue}</td>
-                      <td className="py-2.5 pr-3 text-text-mid">{r.contributorName ?? '—'}</td>
+                      <td className="py-2.5 pr-3 text-text-mid">{r.contributorName ?? '-'}</td>
                       <td className="py-2.5 pr-3 text-text-mid">
-                        {r.venue ? `${r.venue.name}${r.venue.city ? ` · ${r.venue.city}` : ''}` : '—'}
+                        {r.venue ? `${r.venue.name}${r.venue.city ? ` · ${r.venue.city}` : ''}` : '-'}
                       </td>
                       <td className="py-2.5 pr-5 text-right">
                         <button
@@ -611,12 +611,12 @@ export default function AdminTreasury() {
                       <span className="text-xs text-text-mid tabular-nums">{r.brixValue} BRIX</span>
                     </div>
                     <p className="text-xs text-text-muted-brown mt-0.5 truncate">
-                      {r.venue ? `${r.venue.name}${r.venue.city ? ` · ${r.venue.city}` : ''}` : '—'}
+                      {r.venue ? `${r.venue.name}${r.venue.city ? ` · ${r.venue.city}` : ''}` : '-'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <div className="text-right">
-                      <p className="text-sm text-text-mid truncate max-w-[7rem]">{r.contributorName ?? '—'}</p>
+                      <p className="text-sm text-text-mid truncate max-w-[7rem]">{r.contributorName ?? '-'}</p>
                       <p className="text-[11px] text-text-muted-brown tabular-nums mt-0.5">{fmtDate(r.assessmentDate)}</p>
                     </div>
                     <Eye className="w-4 h-4 text-text-muted-brown shrink-0" />
