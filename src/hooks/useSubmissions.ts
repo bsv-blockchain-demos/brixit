@@ -8,6 +8,7 @@ import {
   fetchFormattedSubmissionById,
   fetchMySubmissionsCount,
   fetchMySubmissionsCropIds,
+  fetchMySubmissionsVenueIds,
   fetchMySubmissionsPage,
   fetchMySubmissions,
   type MySubmissionsCountQuery,
@@ -145,6 +146,21 @@ export function useMySubmissionsCropIdsQuery(userId?: string) {
     queryFn: () => {
       if (!userId) return Promise.resolve([]);
       return fetchMySubmissionsCropIds(userId);
+    },
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 2 * ONE_HOUR_MS,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
+}
+
+export function useMySubmissionsVenueIdsQuery(userId?: string) {
+  return useQuery<string[]>({
+    queryKey: ["submissions", "mine", "venue_ids", userId || null],
+    queryFn: () => {
+      if (!userId) return Promise.resolve([]);
+      return fetchMySubmissionsVenueIds(userId);
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,

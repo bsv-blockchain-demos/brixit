@@ -36,7 +36,7 @@ const CATEGORY_FIELDS: FieldDef[] = [
     required: true,
     slug: true,
     placeholder: 'e.g. fruit',
-    help: 'The permanent identifier used in the database and across the app. Lowercase letters, numbers and underscores only — no spaces. Avoid changing it on existing categories, as it can break linked data.',
+    help: 'The permanent identifier used in the database and across the app. Lowercase letters, numbers and underscores only, no spaces. Avoid changing it on existing categories, as it can break linked data.',
   },
   { key: 'sort_order', label: 'Sort Order', type: 'number', placeholder: '0' },
 ];

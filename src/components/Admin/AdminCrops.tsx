@@ -23,7 +23,7 @@ const CategoryChip = ({ value }: { value?: string | null }) =>
   value ? (
     <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-surface-canvas text-text-mid border border-hairline capitalize">{value}</span>
   ) : (
-    <span className="text-text-muted text-xs">—</span>
+    <span className="text-text-muted text-xs">-</span>
   );
 
 const COLUMNS: ColumnDef[] = [
@@ -53,7 +53,7 @@ const COLUMNS: ColumnDef[] = [
             className={`flex flex-col items-center justify-center min-w-[3rem] px-2 py-1 ${t.bg} ${t.ink ? 'text-text-dark' : 'text-white'}`}
           >
             <span className="text-[9px] leading-none uppercase tracking-wide opacity-90">{t.label}</span>
-            <span className="font-mono text-xs leading-tight">{row[t.key] ?? '—'}</span>
+            <span className="font-mono text-xs leading-tight">{row[t.key] ?? '-'}</span>
           </span>
         ))}
       </div>
@@ -82,7 +82,7 @@ export default function AdminCrops() {
       required: true,
       slug: true,
       placeholder: 'e.g. bell_pepper',
-      help: 'The permanent identifier used in the database and across the app (submissions, score lookups). Lowercase letters, numbers and underscores only — no spaces. Avoid changing it on existing crops, as it can break linked data.',
+      help: 'The permanent identifier used in the database and across the app (submissions, score lookups). Lowercase letters, numbers and underscores only, no spaces. Avoid changing it on existing crops, as it can break linked data.',
     },
     { key: 'category', label: 'Category', type: 'select', options: categoryOptions },
     { key: 'poor_brix', label: 'Poor Brix threshold', type: 'number', step: '0.01', placeholder: '0.00' },
@@ -121,7 +121,7 @@ export default function AdminCrops() {
           <div className="grid grid-cols-4 gap-2">
             {TIERS.map((t) => (
               <div key={t.key} className={`rounded-lg ${t.paleBg} py-2 text-center`}>
-                <div className={`font-mono text-sm font-bold leading-none ${t.text}`}>{row[t.key] ?? '—'}</div>
+                <div className={`font-mono text-sm font-bold leading-none ${t.text}`}>{row[t.key] ?? '-'}</div>
                 <div className="mt-1 text-[10px] uppercase tracking-wide text-text-muted-brown">{t.short}</div>
               </div>
             ))}

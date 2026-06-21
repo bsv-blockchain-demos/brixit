@@ -28,7 +28,7 @@ function friendlyAcquireError(err: any): string {
     msg.includes('serial') ||
     msg.includes('no certificate received from certifier')
   ) {
-    return 'Your wallet could not be verified. This usually means your wallet app is out of date — please update it and try again.';
+    return 'Your wallet could not be verified. This usually means your wallet app is out of date. Please update it and try again.';
   }
   if (msg.includes('network') || msg.includes('fetch') || msg.includes('failed to fetch')) {
     return 'Could not reach the server. Check your connection and try again.';

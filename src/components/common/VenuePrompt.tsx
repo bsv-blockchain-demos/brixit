@@ -246,7 +246,7 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
           />
           <div>
             <p className="text-sm font-semibold" style={{ color: 'var(--text-dark)' }}>
-              Skip — coordinates only
+              Skip: coordinates only
             </p>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
               Won&apos;t group on the map.

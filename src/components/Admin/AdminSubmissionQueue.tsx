@@ -166,7 +166,7 @@ function SubmissionCard({
   const cropName = titleCase(s.crop_label ?? s.crop_name) || 'Unknown crop';
   const brand = s.brand_label ?? s.brand_name;
   const loc = formatVenueLocation(s.place_street_address, s.place_city, s.place_state);
-  const locationText = [s.place_label, loc].filter(Boolean).join(' · ') || '—';
+  const locationText = [s.place_label, loc].filter(Boolean).join(' · ') || '-';
   const userName = 'user_display_name' in s ? (s.user_display_name ?? s.user_id) : null;
 
   const title = (
@@ -296,7 +296,7 @@ function AllSubmissionsTab() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
         <Input
-          placeholder="Search by crop, place, brand or user — press Enter"
+          placeholder="Search by crop, place, brand or user, press Enter"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={handleSearchKeyDown}

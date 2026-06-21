@@ -53,6 +53,13 @@ function LeaderboardMobileList({
 
   return (
     <div>
+      {data.length > 0 && (
+        <div className="flex items-center gap-4 px-4 py-2 text-xs font-medium uppercase tracking-wider text-text-muted-brown bg-table-header border-b border-hairline">
+          <span className="shrink-0 w-[34px] text-center">Rank</span>
+          <span className="flex-1">{labelKey === 'location' ? 'Store' : 'Name'}</span>
+          <span className="shrink-0">{labelKey === 'user' ? 'Submissions' : 'Score'}</span>
+        </div>
+      )}
       {data.map((entry, idx) => {
         const label =
           (entry as any)[`${labelKey}_label`] ||
@@ -169,7 +176,7 @@ export function LeaderboardCard({
           ) : (
             <>
             <div className="lb-desktop-only">
-              <div className="grid grid-cols-[auto_1fr_auto] gap-3 text-xs font-medium text-text-muted-brown uppercase tracking-wider border-b border-hairline px-4 py-2 bg-table-header">
+              <div className="grid grid-cols-[auto_1fr_5.5rem] gap-x-5 text-xs font-medium text-text-muted-brown uppercase tracking-wider border-b border-hairline px-4 py-2 bg-table-header">
                 <span className="text-center">Rank</span>
                 <span className="text-left">
                   {labelKey === "location" ? "Store" : "Name"}
@@ -214,7 +221,7 @@ export function LeaderboardCard({
                       <div
                         key={(entry as any)[`${labelKey}_id`] ?? label ?? idx}
                         onClick={() => onNavigate(entry, labelKey)}
-                        className={`grid grid-cols-[auto_1fr_auto] gap-3 items-center px-4 py-2 border-b border-hairline last:border-0 odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors text-sm ${
+                        className={`grid grid-cols-[auto_1fr_5.5rem] gap-x-5 items-center px-4 py-2 border-b border-hairline last:border-0 odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors text-sm ${
                           labelKey !== "user" ? "cursor-pointer" : ""
                         }`}
                       >

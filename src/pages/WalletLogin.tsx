@@ -287,7 +287,7 @@ export default function WalletLogin() {
                   nutritious.
                 </h1>
                 <p className="text-base desktop:text-lg leading-relaxed text-on-bg-body mb-8">
-                  BRIX measures the nutrient density of fresh produce — so you can shop smarter, feed your family better, and share what you discover.
+                  BRIX measures the nutrient density of fresh produce, so you can shop smarter, feed your family better, and share what you discover.
                 </p>
                 <div className="flex flex-col gap-3 max-w-md">
                   <Button
@@ -350,7 +350,7 @@ export default function WalletLogin() {
 
                 <motion.div className="space-y-5" {...fadeUp}>
                   <p className="text-lg leading-relaxed" style={{ color: 'var(--text-mid)' }}>
-                    The BRIX score measures dissolved solids in fresh produce — primarily sugars — along with small amounts of minerals, amino acids, and other compounds. Higher scores often indicate a plant that was photosynthesizing well and functioning efficiently, conditions commonly associated with better flavour and overall food quality.
+                    The BRIX score measures dissolved solids in fresh produce (primarily sugars), along with small amounts of minerals, amino acids, and other compounds. Higher scores often indicate a plant that was photosynthesizing well and functioning efficiently, conditions commonly associated with better flavour and overall food quality.
                   </p>
                   <p className="text-lg leading-relaxed" style={{ color: 'var(--text-mid)' }}>
                     Supermarket carrots often score 4–6. A carrot from a well-managed farm can score 18. Same vegetable. Very different quality. Now you can know before you buy.
@@ -368,7 +368,7 @@ export default function WalletLogin() {
                   Score Guide
                 </p>
                 <p className="text-xs mb-6" style={{ color: 'var(--text-muted)' }}>
-                  Scores are relative to each crop's expected range — apples and bananas are judged by different standards.
+                  Scores are relative to each crop's expected range: apples and bananas are judged by different standards.
                 </p>
 
                 <div className="space-y-6">
@@ -435,7 +435,7 @@ export default function WalletLogin() {
                 eat better
               </h2>
               <p className="text-lg leading-relaxed mb-10 text-on-bg-body">
-                Good food knowledge shouldn't be locked away. When you share a score, you're not just helping yourself — you're changing what your whole community reaches for.
+                Good food knowledge shouldn't be locked away. When you share a score, you're not just helping yourself, you're changing what your whole community reaches for.
               </p>
               <Button
                 onClick={handleLoginClick}
@@ -454,10 +454,10 @@ export default function WalletLogin() {
           <div className="max-w-3xl mx-auto px-5">
             <motion.div className="text-center mb-12" {...fadeUp}>
               <h2 className="font-landing text-3xl desktop:text-4xl font-medium mb-4" style={{ color: 'var(--text-dark)' }}>
-                Your account is yours alone — forever
+                Your account is yours alone, forever
               </h2>
               <p className="text-lg leading-relaxed" style={{ color: 'var(--text-mid)' }}>
-                Most apps store your password on their servers — which can be hacked, leaked, or sold. BRIX works differently: your identity lives only on your own device as a private key. There is no password on our servers for anyone to steal.
+                Most apps store your password on their servers, which can be hacked, leaked, or sold. BRIX works differently: your identity lives only on your own device as a private key. There is no password on our servers for anyone to steal.
               </p>
             </motion.div>
 
@@ -533,7 +533,7 @@ export default function WalletLogin() {
                   onMouseEnter={e => (e.currentTarget.style.color = 'var(--blue-deep)')}
                   onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-mid)')}
                 >Mycelia app</button>
-                {' '}— it's made to work together with BRIX and handles all the complexity for you.{' '}
+                {'. '}It's made to work together with BRIX and handles all the complexity for you.{' '}
                 <a
                   href="#"
                   className="underline underline-offset-2 transition-opacity hover:opacity-70"

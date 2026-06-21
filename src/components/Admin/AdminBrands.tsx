@@ -22,7 +22,7 @@ const FORM_FIELDS: FieldDef[] = [
     required: true,
     slug: true,
     placeholder: 'e.g. whole_foods',
-    help: 'The permanent identifier used in the database and across the app. Lowercase letters, numbers and underscores only — no spaces. Avoid changing it on existing brands, as it can break linked data.',
+    help: 'The permanent identifier used in the database and across the app. Lowercase letters, numbers and underscores only, no spaces. Avoid changing it on existing brands, as it can break linked data.',
   },
 ];
 

@@ -4,13 +4,13 @@ import { PageBackground } from '../components/ui/PageBackground';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Plus, Beaker, CheckCircle, MapPin, AlertCircle, Lock, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Plus, Beaker, CheckCircle, MapPin, Store, AlertCircle, Lock, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { deleteSubmission } from '../lib/fetchSubmissions';
 import { fetchMySubmissionsPage } from '../lib/fetchSubmissions';
-import { useMySubmissionsCountQuery, useMySubmissionsCropIdsQuery, useMySubmissionsPageQuery } from '../hooks/useSubmissions';
+import { useMySubmissionsCountQuery, useMySubmissionsCropIdsQuery, useMySubmissionsVenueIdsQuery, useMySubmissionsPageQuery } from '../hooks/useSubmissions';
 
 import SubmissionTableRow from '../components/common/SubmissionTableRow';
 import { ColumnHint } from '../components/common/StatusBadges';
@@ -46,8 +46,8 @@ const YourData: React.FC = () => {
   const { isLoading: isLoadingStaticData } = useStaticData();
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  const chunkSize = 50;
+  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const chunkSize = itemsPerPage;
 
   // Calculate which chunk we're on and set offset for db query
   const chunkIndex = Math.floor(((currentPage - 1) * itemsPerPage) / chunkSize);
@@ -74,6 +74,7 @@ const YourData: React.FC = () => {
   );
 
   const cropIdsQuery = useMySubmissionsCropIdsQuery(user?.id);
+  const venueIdsQuery = useMySubmissionsVenueIdsQuery(user?.id);
 
   const userSubmissions = submissionsPageQuery.data || [];
   const totalCount = submissionsCountQuery.data ?? 0;
@@ -82,6 +83,10 @@ const YourData: React.FC = () => {
     const ids = cropIdsQuery.data || [];
     return new Set(ids).size;
   }, [cropIdsQuery.data]);
+  const uniqueStoresCount = useMemo(() => {
+    const ids = venueIdsQuery.data || [];
+    return new Set(ids).size;
+  }, [venueIdsQuery.data]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
 
@@ -289,31 +294,38 @@ const YourData: React.FC = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="submissions">
-          <div className="bg-card text-card-foreground border border-hairline rounded-2xl shadow-sm overflow-hidden">
-            {/* Segmented tab bar — blended into the widget, leaderboard-style pills */}
-            <div className="p-3 border-b border-hairline">
-              <TabsList className="flex w-full gap-1 p-1 h-auto bg-surface-canvas border border-hairline rounded-xl">
-                <TabsTrigger
-                  value="submissions"
-                  className="flex-1 py-2 rounded-lg border-b-0 mb-0 text-blue-mid data-[state=active]:bg-card data-[state=active]:text-card-foreground data-[state=active]:border data-[state=active]:border-blue-light data-[state=active]:shadow-sm"
-                >
-                  My Submissions
-                </TabsTrigger>
-                <TabsTrigger
-                  value="stats"
-                  className="flex-1 py-2 rounded-lg border-b-0 mb-0 text-blue-mid data-[state=active]:bg-card data-[state=active]:text-card-foreground data-[state=active]:border data-[state=active]:border-blue-light data-[state=active]:shadow-sm"
-                >
-                  Statistics
-                </TabsTrigger>
-              </TabsList>
-            </div>
+        {/* Statistics — overall view */}
+        <section className="mb-6 space-y-4">
+          <h2 className="text-xl font-display font-bold text-on-bg-text">Statistics</h2>
+          <IconStatGrid stats={[
+            { icon: Beaker,      value: totalCount,           label: 'Total Submissions' },
+            { icon: CheckCircle, value: verifiedCount,        label: 'Verified Measurements' },
+            { icon: MapPin,      value: uniqueCropTypesCount, label: 'Unique Crop Types' },
+            { icon: Store,       value: uniqueStoresCount,    label: 'Unique Stores' },
+          ]} />
+        </section>
 
-            <TabsContent value="submissions" className="mt-0">
-              <CardHeader className="px-3 sm:px-6">
-                <CardTitle>Submitted Measurements ({totalCount})</CardTitle>
-              </CardHeader>
-              <CardContent className="px-3 sm:px-6">
+        {/* Submitted measurements */}
+        <div className="bg-card text-card-foreground border border-hairline rounded-2xl shadow-sm overflow-hidden">
+          <CardHeader className="px-3 sm:px-6">
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle>Submitted Measurements ({totalCount})</CardTitle>
+              <Select
+                value={String(itemsPerPage)}
+                onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}
+              >
+                <SelectTrigger className="h-8 w-[120px] text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[50, 100, 200].map((n) => (
+                    <SelectItem key={n} value={String(n)}>Show {n}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent className="px-3 sm:px-6">
                 {totalCount === 0 ? (
                   <div className="text-center py-12">
                     {canSubmit ? (
@@ -324,7 +336,7 @@ const YourData: React.FC = () => {
                           Start contributing by submitting your first BRIX measurement!
                         </p>
                         <Link to="/data-entry">
-                          <Button className="bg-green-fresh hover:bg-green-mid">
+                          <Button className="bg-action-primary hover:bg-action-primary-hover text-primary-foreground">
                             <Plus className="w-4 h-4 mr-2" />
                             Submit First Measurement
                           </Button>
@@ -363,7 +375,7 @@ const YourData: React.FC = () => {
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Notes</TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Date</TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
-                              <ColumnHint help="Whether this reading is approved for public display. Most are approved automatically; outliers are reviewed by an admin.">Verified?</ColumnHint>
+                              <ColumnHint help="Whether this reading is approved for public display. Most are approved automatically; outliers are reviewed by an admin.">Verified</ColumnHint>
                             </TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
                               <ColumnHint help="Whether this reading is recorded on the BSV blockchain. 'Timestamped' means it has a permanent, tamper-evident record; 'Pending' means that record is still in progress.">Blockchain</ColumnHint>
@@ -436,17 +448,7 @@ const YourData: React.FC = () => {
                   </div>
                 )}
               </CardContent>
-            </TabsContent>
-
-            <TabsContent value="stats" className="mt-0 p-3">
-              <IconStatGrid stats={[
-                { icon: Beaker,        value: totalCount,           label: 'Total Submissions' },
-                { icon: CheckCircle,   value: verifiedCount,        label: 'Verified Measurements' },
-                { icon: MapPin,        value: uniqueCropTypesCount, label: 'Unique Crop Types' },
-              ]} />
-            </TabsContent>
-          </div>
-        </Tabs>
+        </div>
 
         {/* The Modal Component - now handling delete functionality */}
         <DataPointDetailModal

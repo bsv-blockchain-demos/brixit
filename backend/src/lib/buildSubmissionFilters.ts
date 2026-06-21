@@ -20,10 +20,16 @@ export type SubmissionFilterQuery = {
   dateStart?: string;
   dateEnd?: string;
   search?: string;
+  timestamped?: string;
 };
 
 export function buildSubmissionFilters(query: SubmissionFilterQuery): Record<string, any> {
   const where: Record<string, any> = { verified: true };
+
+  // Timestamped = recorded on-chain (outpoint present).
+  if (query.timestamped === 'true') {
+    where.outpoint = { not: null };
+  }
 
   if (query.cropTypes) {
     const cropNames = query.cropTypes.split(',').map((s) => s.trim()).filter(Boolean);

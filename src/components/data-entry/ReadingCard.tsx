@@ -80,7 +80,7 @@ const ReadingCard: React.FC<{
             </span>
           )}
           {!isOpen && hasError && (
-            <span className="text-xs ml-1" style={{ color: 'var(--score-poor)' }}>— incomplete</span>
+            <span className="text-xs ml-1" style={{ color: 'var(--score-poor)' }}>- incomplete</span>
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0 ml-2">
@@ -209,7 +209,7 @@ const ReadingCard: React.FC<{
                   <span className="font-normal ml-1" style={{ color: 'var(--text-muted)' }}>(optional)</span>
                 </Label>
                 <CountedTextarea
-                  placeholder="Variety, observations, or anomalies — e.g. Red Delicious, grown outdoors, unusually sweet..."
+                  placeholder="Variety, observations, or anomalies, e.g. Red Delicious, grown outdoors, unusually sweet..."
                   value={reading.notes}
                   onChange={(v) => onChange(reading.id, 'notes', v)}
                   max={500}

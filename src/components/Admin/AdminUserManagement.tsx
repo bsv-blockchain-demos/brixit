@@ -116,7 +116,7 @@ export default function AdminUserManagement() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
         <Input
-          placeholder="Search by name or UUID — press Enter to search"
+          placeholder="Search by name or UUID, press Enter to search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={handleSearchKeyDown}
@@ -229,7 +229,7 @@ export default function AdminUserManagement() {
                         <span className="block text-[11px] uppercase tracking-wide">submission{u.submission_count !== 1 ? 's' : ''}</span>
                       </>
                     ) : (
-                      <span className="text-xs">—</span>
+                      <span className="text-xs">-</span>
                     )}
                   </div>
                   <div><RoleChip role={currentRole} /></div>

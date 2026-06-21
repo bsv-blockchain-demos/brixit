@@ -96,7 +96,7 @@ export default function VenueVerifyModal({ venueId, venueName, mergeOnly = false
             <>
               <p className="text-sm text-muted-foreground">
                 {nearby.length} unverified venue{nearby.length !== 1 ? 's' : ''} found at this location.
-                Select which to merge — their submissions will be reassigned here and the venues deleted.
+                Select which to merge: their submissions will be reassigned here and the venues deleted.
               </p>
               <div className="space-y-2">
                 {nearby.map(v => {

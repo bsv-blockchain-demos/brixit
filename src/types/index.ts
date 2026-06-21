@@ -114,6 +114,7 @@ export interface MapFilter {
   brixRange: [number, number];
   dateRange: [string, string];
   verifiedOnly: boolean;
+  timestamped: boolean;
   submittedBy: string;
   place: string;
   brand: string;
