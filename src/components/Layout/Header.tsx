@@ -124,15 +124,15 @@ const Header = () => {
         </Button>
       </Link>
 
-      <Link to="/your-data">
+      <Link to="/my-data">
         <Button
           variant="ghost"
           className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/your-data") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
+            isActive("/my-data") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
           }`}
         >
           <User className="w-4 h-4" />
-          <span>Your Data</span>
+          <span>My Data</span>
         </Button>
       </Link>
 
@@ -314,7 +314,7 @@ const Header = () => {
                 { to: "/leaderboard", icon: Trophy, label: "Leaderboard" },
                 { to: "/map", icon: Eye, label: "Explorer" },
                 { to: "/data", icon: Database, label: "Data" },
-                { to: "/your-data", icon: User, label: "Your Data" },
+                { to: "/my-data", icon: User, label: "My Data" },
                 ...(hasRole("contributor") ? [{ to: "/data-entry", icon: Plus, label: "Submit", primary: true }] : []),
                 ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : []),
               ].map((item) => {

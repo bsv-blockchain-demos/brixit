@@ -61,9 +61,9 @@ const DataTable: React.FC = () => {
         </Button>
       </div>
 
-      {/* Merge wrapper: one continuous panel ≤640px (filters · context · results);
-          display:contents ≥641px so the desktop layout renders byte-for-byte as before. */}
-      <div className="bg-surface-canvas text-card-foreground border border-hairline rounded-2xl overflow-hidden sm:contents">
+      {/* One continuous panel on all sizes: filters, context and results merged
+          into a single card, regions split by hairline dividers (no gaps). */}
+      <div className="bg-card text-card-foreground border border-hairline rounded-2xl shadow-sm overflow-hidden">
         <DataBrowserFilters fromLeaderboard={fromLeaderboard} />
         <DataBrowserResults
           fromLeaderboard={fromLeaderboard}

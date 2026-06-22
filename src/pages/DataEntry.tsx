@@ -427,7 +427,7 @@ const DataEntry = () => {
       queryClient.invalidateQueries({ queryKey: ['staticData'] });
       queryClient.invalidateQueries({ queryKey: ['submissions', 'mine'] });
       queryClient.invalidateQueries({ queryKey: ['submissions', 'public_formatted'] });
-      navigate('/your-data');
+      navigate('/my-data');
     } catch (err: any) {
       toast({ title: err.message || 'Something went wrong', variant: 'destructive' });
     } finally {

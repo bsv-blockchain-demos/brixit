@@ -150,6 +150,10 @@ model Submission {
   verified        Boolean   @default(false)
   verifiedBy      String?   @map("verified_by") @db.Uuid
   verifiedAt      DateTime? @map("verified_at") @db.Timestamptz
+  // Soft rejection (admin decline). Distinct from delete: the row is kept,
+  // hidden from the public, and reversible. Rejected when rejectedAt is set.
+  rejectedBy      String?   @map("rejected_by") @db.Uuid
+  rejectedAt      DateTime? @map("rejected_at") @db.Timestamptz
 
   // 'txid.vout' of this reading's PushDrop UTXO. NULL while pending/failed.
   // Siblings in the same session share the txid prefix.

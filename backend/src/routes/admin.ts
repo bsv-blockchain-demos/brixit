@@ -121,6 +121,8 @@ router.get('/users/:id', async (req: AuthenticatedRequest, res: Response) => {
         place_street_address: s.venue?.streetAddress ?? null,
         place_city: s.venue?.city ?? null,
         place_state: s.venue?.state ?? null,
+        timestamped: !!s.outpoint,
+        rejected: !!s.rejectedAt,
       })),
     });
   } catch (err) {
@@ -137,9 +139,13 @@ router.get('/submissions', async (req: AuthenticatedRequest, res: Response) => {
     const search = (req.query.search as string | undefined)?.trim() || undefined;
     const verifiedParam = req.query.verified as string | undefined;
     const verifiedFilter = verifiedParam === 'true' ? true : verifiedParam === 'false' ? false : undefined;
+    const rejectedParam = req.query.rejected as string | undefined;
 
     const where: any = {};
     if (verifiedFilter !== undefined) where.verified = verifiedFilter;
+    // rejected=true → only rejected; rejected=false → only non-rejected; omitted → all.
+    if (rejectedParam === 'true') where.rejectedAt = { not: null };
+    else if (rejectedParam === 'false') where.rejectedAt = null;
     if (search) {
       where.OR = [
         { crop: { name: { contains: search, mode: 'insensitive' } } },
@@ -181,6 +187,8 @@ router.get('/submissions', async (req: AuthenticatedRequest, res: Response) => {
       place_state: s.venue?.state ?? null,
       user_display_name: s.user?.displayName ?? null,
       user_id: s.user?.id ?? null,
+      timestamped: !!s.outpoint,
+      rejected: !!s.rejectedAt,
     }));
 
     res.json({ data, total });
@@ -196,7 +204,8 @@ router.get('/submissions/unverified', async (req: AuthenticatedRequest, res: Res
     const limit = Math.max(1, Math.min(Number(req.query.limit) || 20, 100));
     const offset = Math.max(0, Number(req.query.offset) || 0);
 
-    const where = { verified: false };
+    // Pending = awaiting a decision: not yet verified and not rejected.
+    const where = { verified: false, rejectedAt: null };
 
     const [submissions, total] = await Promise.all([
       prisma.submission.findMany({
@@ -228,6 +237,8 @@ router.get('/submissions/unverified', async (req: AuthenticatedRequest, res: Res
       place_state: s.venue?.state ?? null,
       user_display_name: s.user?.displayName ?? null,
       user_id: s.user?.id ?? null,
+      timestamped: !!s.outpoint,
+      rejected: !!s.rejectedAt,
     }));
 
     res.json({ data, total });
@@ -308,6 +319,9 @@ router.post('/submissions/:id/verify', async (req: AuthenticatedRequest, res: Re
           verified: verify,
           verifiedBy: verify ? adminUserId : null,
           verifiedAt: verify ? new Date() : null,
+          // Verifying clears any prior rejection (the two states are exclusive).
+          rejectedAt: verify ? null : undefined,
+          rejectedBy: verify ? null : undefined,
         },
       });
 
@@ -321,6 +335,46 @@ router.post('/submissions/:id/verify', async (req: AuthenticatedRequest, res: Re
     }
     console.error('[admin/submissions/verify] Error:', err);
     res.status(500).json({ success: false, error: 'Failed to verify submission' });
+  }
+});
+
+// POST /api/admin/submissions/:id/reject
+// Soft decline: keeps the row but flags it rejected and unpublishes it.
+// `reject: false` restores the submission to pending. Distinct from DELETE.
+router.post('/submissions/:id/reject', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const submissionId = req.params.id;
+    const reject = req.body.reject !== false; // default true
+    const adminUserId = req.user!.sub;
+
+    await prisma.$transaction(async (tx) => {
+      const submission = await tx.submission.findUnique({ where: { id: submissionId } });
+      if (!submission) {
+        throw Object.assign(new Error('Submission not found'), { statusCode: 404 });
+      }
+
+      await tx.submission.update({
+        where: { id: submissionId },
+        data: {
+          rejectedAt: reject ? new Date() : null,
+          rejectedBy: reject ? adminUserId : null,
+          // Rejecting unpublishes the reading; restoring returns it to pending
+          // (not auto-verified; an admin still decides).
+          verified: reject ? false : undefined,
+          verifiedBy: reject ? null : undefined,
+          verifiedAt: reject ? null : undefined,
+        },
+      });
+    });
+
+    res.json({ success: true, message: reject ? 'Submission rejected' : 'Submission restored' });
+  } catch (err: any) {
+    if (err?.statusCode === 404) {
+      res.status(404).json({ success: false, error: 'Submission not found' });
+      return;
+    }
+    console.error('[admin/submissions/reject] Error:', err);
+    res.status(500).json({ success: false, error: 'Failed to reject submission' });
   }
 });
 

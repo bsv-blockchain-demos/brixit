@@ -14,6 +14,7 @@ import {
   User,
   CheckCircle,
   AlertCircle,
+  Ban,
   Image as ImageIcon,
   Loader2,
   X,
@@ -28,6 +29,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useWallet } from '../../contexts/WalletContext';
 import { signSubmissionPayload } from '../../lib/signSubmissionPayload';
 import { deleteSubmission } from '../../lib/fetchSubmissions';
+import { verifySubmission, rejectSubmission } from '../../lib/adminApi';
 import { useToast } from '../ui/use-toast';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
@@ -138,6 +140,8 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
 
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Image URLs come from a React Query cache keyed by submission id so the
@@ -256,6 +260,50 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
       });
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Admin moderation (decoupled from edit): approve or revert via the dedicated
+  // admin verify endpoint. Editing the reading itself stays owner-only.
+  const handleSetVerified = async (next: boolean) => {
+    if (!initialDataPoint) return;
+    setVerifying(true);
+    try {
+      const res = await verifySubmission(initialDataPoint.id, next);
+      if (res?.success) {
+        setVerified(next);
+        const nextVerifiedAt = next ? new Date().toISOString() : null;
+        setVerifiedAt(nextVerifiedAt ?? '');
+        toast({ title: next ? 'Submission verified' : 'Submission rejected' });
+        onUpdateSuccess?.({ ...initialDataPoint, verified: next, verifiedAt: nextVerifiedAt });
+      } else {
+        toast({ title: 'Action failed', description: res?.error ?? 'Please try again.', variant: 'destructive' });
+      }
+    } catch (err: any) {
+      toast({ title: 'Error', description: err?.message ?? 'Please try again.', variant: 'destructive' });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  // Soft decline: keeps the record (reversible from the admin Rejected tab),
+  // distinct from permanent Delete. Closes the modal and refreshes the lists.
+  const handleRejectSubmission = async () => {
+    if (!initialDataPoint) return;
+    setRejecting(true);
+    try {
+      const res = await rejectSubmission(initialDataPoint.id, true);
+      if (res?.success) {
+        toast({ title: 'Submission rejected' });
+        onUpdateSuccess?.({ ...initialDataPoint, verified: false });
+        onClose();
+      } else {
+        toast({ title: 'Action failed', description: res?.error ?? 'Please try again.', variant: 'destructive' });
+      }
+    } catch (err: any) {
+      toast({ title: 'Error', description: err?.message ?? 'Please try again.', variant: 'destructive' });
+    } finally {
+      setRejecting(false);
     }
   };
 
@@ -490,7 +538,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   }
 
   const isOwner = user?.id === initialDataPoint.userId;
-  const canEdit = isAdmin || (isOwner && !initialDataPoint.verified);
+  // Editing is owner-only (while still unverified). Admins do not edit other
+  // people's readings; they verify/reject and can delete (see canDelete).
+  const canEdit = isOwner && !initialDataPoint.verified;
   const canDelete = isAdmin || (isOwner && !initialDataPoint.verified);
 
   const cropThresholds = initialDataPoint.cropType
@@ -725,6 +775,47 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                 Cancel
               </Button>
             </>
+          ) : isAdmin ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              {!verified ? (
+                <>
+                  <Button
+                    onClick={() => handleSetVerified(true)}
+                    disabled={verifying || isDeleting || rejecting}
+                    className="h-auto py-3 px-6 text-sm font-medium rounded-xl text-white bg-green-fresh hover:bg-green-mid"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    {verifying ? 'Verifying...' : 'Verify'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleRejectSubmission}
+                    disabled={rejecting || verifying || isDeleting}
+                    className="h-auto py-3 px-6 text-sm font-medium rounded-xl border-hairline text-score-average hover:bg-score-average-bg"
+                  >
+                    <Ban className="w-4 h-4 mr-2" />
+                    {rejecting ? 'Rejecting...' : 'Reject'}
+                  </Button>
+                  <Button variant="destructive" onClick={handleDelete} disabled={isDeleting || verifying || rejecting} className="h-auto py-3 px-6 text-sm font-medium rounded-xl">
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleSetVerified(false)}
+                    disabled={verifying || isDeleting}
+                    className="h-auto py-3 px-6 text-sm font-medium rounded-xl"
+                  >
+                    {verifying ? 'Working...' : 'Unverify'}
+                  </Button>
+                  <Button variant="destructive" onClick={handleDelete} disabled={isDeleting || verifying} className="h-auto py-3 px-6 text-sm font-medium rounded-xl">
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </Button>
+                </>
+              )}
+            </div>
           ) : (
             canDelete && (
               <Button variant="destructive" onClick={handleDelete} disabled={isDeleting} className="h-auto py-3 px-6 text-sm font-medium rounded-xl">

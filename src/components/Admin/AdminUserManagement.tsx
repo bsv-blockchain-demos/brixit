@@ -91,6 +91,9 @@ export default function AdminUserManagement() {
   // Neutral / steel role-change buttons (role changes are not the page's single CTA)
   const steelBtn = "min-h-[40px] px-3 rounded-lg text-sm font-medium bg-select-bg text-select-fg border border-select-border/40 hover:brightness-95";
   const ghostBtn = "min-h-[40px] px-3 rounded-lg text-sm font-medium border border-hairline text-text-dark hover:bg-surface-canvas";
+  // Promote = positive (green); downgrade = destructive (red), matching the app's delete styling.
+  const adminBtn = "min-h-[40px] px-3 rounded-lg text-sm font-medium bg-green-fresh text-white border border-green-fresh hover:bg-green-mid";
+  const downgradeBtn = "min-h-[40px] px-3 rounded-lg text-sm font-medium border border-hairline text-action-danger hover:bg-score-poor-bg";
 
   return (
     <div className="space-y-4">
@@ -189,12 +192,12 @@ export default function AdminUserManagement() {
                 )}
                 {currentRole === 'contributor' && (
                   <>
-                    <button className={`w-full sm:w-auto ${steelBtn}`}
+                    <button className={`w-full sm:w-auto ${adminBtn}`}
                       onClick={() => handleRoleAction(() => upgradeToAdmin(u.id), 'User upgraded to admin')}
                     >
                       Make admin
                     </button>
-                    <button className={`w-full sm:w-auto ${ghostBtn}`}
+                    <button className={`w-full sm:w-auto ${downgradeBtn}`}
                       onClick={() => handleRoleAction(() => downgradeToUser(u.id), 'User downgraded to user')}
                     >
                       Downgrade

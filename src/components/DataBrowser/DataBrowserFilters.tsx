@@ -9,7 +9,6 @@
  * field controls, relaid out to a single column.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -483,7 +482,7 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
   // ── Desktop (≥641px): unchanged ──
   return (
     <>
-      <div className="mb-6 flex flex-col md:flex-row gap-4 items-center">
+      <div className="p-4 border-b border-hairline flex flex-col md:flex-row gap-4 items-center">
         <div className="relative w-full md:w-1/3">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted-brown" />
           <Input
@@ -513,11 +512,9 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
       </div>
 
       {showFilters && (
-        <Card className="mb-6 rounded-2xl border border-hairline shadow-sm">
-          <CardContent className="p-6 space-y-5">
-            {renderFilterFields()}
-          </CardContent>
-        </Card>
+        <div className="p-6 space-y-5 border-b border-hairline">
+          {renderFilterFields()}
+        </div>
       )}
     </>
   );
