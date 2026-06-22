@@ -48,7 +48,7 @@ export default function CreateAccount() {
   // Block access if the wallet already has a Mycelia certificate
   useEffect(() => {
     if (!userWallet) {
-      navigate('/login', { replace: true });
+      navigate('/', { replace: true });
       return;
     }
 
@@ -61,7 +61,7 @@ export default function CreateAccount() {
     }).then(result => {
       if (cancelled) return;
       if (result.certificates.length > 0) {
-        navigate('/login', { replace: true });
+        navigate('/', { replace: true });
       } else {
         setStep('details');
       }
@@ -99,7 +99,7 @@ export default function CreateAccount() {
         certifierUrl: `${API_BASE}/api/certifier`,
       });
 
-      navigate('/login?autocert=1');
+      navigate('/?autocert=1');
     } catch (err: any) {
       console.error('Certificate acquisition failed:', err);
       setError(friendlyAcquireError(err));
@@ -212,7 +212,7 @@ export default function CreateAccount() {
                   type="button"
                   variant="ghost"
                   className="w-full"
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate('/')}
                 >
                   Back
                 </Button>

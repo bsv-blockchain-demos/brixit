@@ -83,7 +83,9 @@ export default function MobileLogin() {
             <div className="mt-8 pt-6 border-t border-white/10">
               <p className="text-xs text-on-bg-muted mb-2">Don't have Mycelia yet?</p>
               <a
-                href="#"
+                href="https://mycelia.life"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-sm font-medium text-white underline underline-offset-2 hover:opacity-80 transition-opacity"
               >
                 Install for free
@@ -91,7 +93,7 @@ export default function MobileLogin() {
             </div>
 
             <button
-              onClick={() => { reset(); navigate('/login'); }}
+              onClick={() => { reset(); navigate('/'); }}
               className="mt-8 flex items-center gap-1.5 text-sm text-on-bg-muted hover:text-on-bg-body transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
@@ -113,7 +115,7 @@ export default function MobileLogin() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => { reset(); navigate('/login'); }}
+                  onClick={() => { reset(); navigate('/'); }}
                   className="w-full border-white/20 bg-transparent text-on-bg-body hover:bg-white/5"
                 >
                   Back to home

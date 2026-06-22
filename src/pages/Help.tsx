@@ -229,11 +229,13 @@ export default function Help() {
             </ol>
             <div className="pt-2">
               <a
-                href="#"
+                href="https://mycelia.life"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm font-medium text-green-fresh hover:text-green-mid underline underline-offset-2"
               >
                 <Smartphone className="w-4 h-4" />
-                Download Mycelia (coming soon)
+                Download Mycelia
               </a>
             </div>
           </CardContent>

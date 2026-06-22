@@ -59,7 +59,7 @@ const Profile = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!user) navigate('/login');
+    if (!user) navigate('/');
   }, [user, navigate]);
 
   const handleCopyKey = async () => {

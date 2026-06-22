@@ -255,7 +255,7 @@ const Header = () => {
               </DropdownMenu>
             ) : (
               <div className="flex items-center space-x-2">
-                <Link to="/login">
+                <Link to="/">
                   <Button variant="ghost" size="sm">
                     Login
                   </Button>

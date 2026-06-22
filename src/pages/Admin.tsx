@@ -76,11 +76,11 @@ export default function Admin() {
   }, [updateFades]);
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   if (!isAdmin) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/leaderboard" replace />;
   }
 
   return (
