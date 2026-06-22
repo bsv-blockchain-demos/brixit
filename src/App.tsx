@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { WalletProvider } from "./contexts/WalletContext";
 import MapView from "./pages/MapView";
@@ -30,6 +30,12 @@ import { WalletRelayProvider } from './contexts/WalletRelayContext';
 
 const queryClient = new QueryClient();
 
+// Back-compat: /login now redirects to /, keeping any query params (e.g. ?autocert=1)
+const LoginRedirect = () => {
+  const { search } = useLocation();
+  return <Navigate to={`/${search}`} replace />;
+};
+
 const RootContent = () => {
   const { isLoading } = useAuth();
 
@@ -46,11 +52,12 @@ const RootContent = () => {
 
   return (
       <Routes>
-        {/* Redirect root to leaderboard */}
-        <Route path="/" element={<Navigate to="/leaderboard" replace />} />
+        {/* Marketing landing lives at the root (WalletLogin renders it). */}
+        <Route path="/" element={<WalletLogin />} />
 
         {/* Public routes */}
-        <Route path="/login" element={<WalletLogin />} />
+        {/* Back-compat: old /login links redirect to / (query params preserved). */}
+        <Route path="/login" element={<LoginRedirect />} />
         <Route path="/create-account" element={<CreateAccount />} />
         <Route path="/wallet-error" element={<WalletError />} />
         <Route path="/mobile-login" element={<MobileLogin />} />

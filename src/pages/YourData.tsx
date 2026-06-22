@@ -213,7 +213,7 @@ const YourData: React.FC = () => {
               <p className="text-text-dark mb-6">
                 You need to be logged in to view your data submissions.
               </p>
-              <Link to="/login">
+              <Link to="/">
                 <Button>Log In</Button>
               </Link>
             </CardContent>

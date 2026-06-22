@@ -24,7 +24,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         {authError}
         <br />
         <button 
-          onClick={() => window.location.href = '/login'} 
+          onClick={() => window.location.href = '/'}
           className="mt-2 text-primary hover:underline"
         >
           Return to Login
@@ -34,7 +34,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
 
   return children;

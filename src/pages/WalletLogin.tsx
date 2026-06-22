@@ -503,7 +503,7 @@ export default function WalletLogin() {
                   className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
                 >
                   <Smartphone className="w-4 h-4" />
-                  Connect with my phone
+                  Connect with my phone via QR code
                 </Button>
               ) : (
                 <Button
@@ -535,7 +535,9 @@ export default function WalletLogin() {
                 >Mycelia app</button>
                 {'. '}It's made to work together with BRIX and handles all the complexity for you.{' '}
                 <a
-                  href="#"
+                  href="https://mycelia.life"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="underline underline-offset-2 transition-opacity hover:opacity-70"
                   style={{ color: 'var(--blue-mid)' }}
                 >
