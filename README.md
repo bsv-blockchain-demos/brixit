@@ -2,7 +2,7 @@
 
 A geospatial data-collection platform where citizen scientists worldwide submit [BRIX](https://en.wikipedia.org/wiki/Brix) bionutrient measurements for food quality tracking. Users record refractometer readings at points of purchase, and the data feeds leaderboards, an interactive map, and brand/location rankings — all authenticated through BSV wallet identity.
 
-> **Status:** Active prototype — functional end-to-end with wallet auth, data submission, leaderboards, and map explorer.
+> **Status:** Live at **[brixit.app](https://brixit.app)**. Functional end-to-end with wallet auth, data submission, leaderboards, map explorer, and admin moderation.
 
 ---
 
@@ -126,7 +126,7 @@ npm run backend
 npm run dev
 ```
 
-Frontend: `http://localhost:5173` | Backend: `http://localhost:3001` | Health check: `http://localhost:3001/api/health`
+Frontend: `http://localhost:8080` | Backend: `http://localhost:3001` | Health check: `http://localhost:3001/health`
 
 ---
 
@@ -171,10 +171,10 @@ Contributors submit BRIX readings with crop type, brand, point of purchase, scor
 Mapbox-powered explorer with store-level clustering, crop-type markers, and a detail panel. Supports "near me" centering and mobile-optimized bottom sheet navigation.
 
 ### Leaderboards
-Normalized BRIX rankings by brand, crop, location, and contributor. Scores cascade from city → state → country when local data is sparse. Filters for geography and time period.
+Normalized BRIX rankings by brand, crop, location, and contributor. Scores cascade from city → state → country when local data is sparse. Filters by country, crop, and store.
 
 ### Admin Tools
-Admin users can verify submissions, manage user roles (contributor/admin), and perform CRUD operations across all data tables with paginated search.
+Admin users review submissions in a dedicated queue: verify, reject (a reversible soft-decline, kept for audit), or delete. They can also click any submission to inspect it in a detail modal, manage user roles (contributor/admin), and perform CRUD operations across all data tables with paginated search.
 
 ---
 
@@ -187,8 +187,8 @@ Full route documentation is in [`backend/README.md`](backend/README.md). Key gro
 | Auth | `POST /api/auth/wallet-login`, `POST /api/auth/refresh`, `GET /api/auth/me` |
 | Submissions | `GET /api/submissions`, `POST /api/submissions/create`, `GET /api/submissions/mine` |
 | Leaderboards | `GET /api/leaderboards/brand`, `/crop`, `/location`, `/user` |
-| Reference data | `GET /api/crops`, `GET /api/brands`, `GET /api/locations` |
-| Admin | `POST /api/admin/roles/grant`, `POST /api/admin/submissions/:id/verify` |
+| Reference data | `GET /api/crops`, `GET /api/brands`, `GET /api/venues` |
+| Admin | `POST /api/admin/roles/grant`, `POST /api/admin/submissions/:id/verify`, `POST /api/admin/submissions/:id/reject` |
 
 ---
 
