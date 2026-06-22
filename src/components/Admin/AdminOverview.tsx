@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, useMotionValue, useSpring, useReducedMotion } from 'framer-motion';
-import { Users, ClipboardList, CheckCircle, AlertCircle, RefreshCw, Stamp } from 'lucide-react';
+import { Users, ClipboardList, CheckCircle, Clock, RefreshCw, Stamp } from 'lucide-react';
+import { CountUp } from '@/components/common/IconStatGrid';
 import { fetchAllUsers, fetchUnverifiedSubmissions, type UserWithRoles } from '@/lib/adminApi';
 import { fetchPendingSubmissions } from '@/lib/adminWalletApi';
 import { apiGet } from '@/lib/api';
@@ -35,19 +36,23 @@ async function fetchOverviewStats() {
   };
 }
 
-// Animated stat surface: staggered entrance, pointer-tilt 3D, hover lift.
+// Animated stat surface: staggered entrance, pointer-tilt 3D, hover lift, a
+// glossy accent badge, count-up value, and a ghosted corner watermark. Mirrors
+// the My Data stat cards. All motion is disabled under prefers-reduced-motion.
 function StatCard({
   index,
   label,
   icon: Icon,
-  tint,
+  accentBg,
+  accentGhost,
   value,
   children,
 }: {
   index: number;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  tint: string;
+  accentBg: string;
+  accentGhost: string;
   value: React.ReactNode;
   children?: React.ReactNode;
 }) {
@@ -78,16 +83,24 @@ function StatCard({
       style={{ rotateX, rotateY, transformPerspective: 900 }}
       className="group relative overflow-hidden bg-card border border-hairline rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 p-5 will-change-transform"
     >
+      {/* Faint oversized echo of the icon, anchored bottom-right for depth */}
+      <Icon aria-hidden className={`pointer-events-none absolute -bottom-5 -right-4 w-28 h-28 ${accentGhost} opacity-[0.06] group-hover:opacity-[0.1] transition-opacity duration-500`} />
       {/* soft sheen that lifts on hover */}
-      <div className="pointer-events-none absolute -top-16 -right-16 h-32 w-32 rounded-full bg-blue-light/0 group-hover:bg-blue-light/10 blur-2xl transition-colors duration-500" />
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-mono uppercase tracking-wider text-text-muted">{label}</span>
-        <span className={`inline-flex items-center justify-center w-9 h-9 rounded-xl ${tint}`}>
-          <Icon className="w-4 h-4" />
-        </span>
+      <div className="pointer-events-none absolute -top-16 -right-16 h-32 w-32 rounded-full bg-blue-light/0 group-hover:bg-blue-light/15 blur-2xl transition-colors duration-500" />
+
+      <div className="relative">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-mono uppercase tracking-wider text-text-muted">{label}</span>
+          <span className={`relative inline-flex items-center justify-center w-11 h-11 rounded-2xl ${accentBg} shadow-lg ring-1 ring-white/15 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3`}>
+            <span aria-hidden className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/25 to-transparent" />
+            <Icon className="relative w-5 h-5 text-white" />
+          </span>
+        </div>
+        <div className="text-3xl font-display font-bold text-blue-deep leading-none tabular-nums">
+          {typeof value === 'number' ? <CountUp value={value} /> : value}
+        </div>
+        {children}
       </div>
-      <div className="text-3xl font-display font-bold text-blue-deep leading-none tabular-nums">{value}</div>
-      {children}
     </motion.div>
   );
 }
@@ -130,7 +143,7 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard index={0} label="Total Users" icon={Users} tint="bg-select-bg text-select-fg" value={isLoading ? '-' : stats?.totalUsers}>
+        <StatCard index={0} label="Total Users" icon={Users} accentBg="bg-blue-deep" accentGhost="text-blue-deep" value={isLoading ? '-' : stats?.totalUsers}>
           {stats && (
             <div className="flex flex-wrap gap-2 mt-3">
               <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-select-bg text-select-fg">
@@ -143,15 +156,16 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
           )}
         </StatCard>
 
-        <StatCard index={1} label="Total Submissions" icon={ClipboardList} tint="bg-green-pale text-green-mid" value={isLoading ? '-' : stats?.totalSubmissions}>
+        <StatCard index={1} label="Total Submissions" icon={ClipboardList} accentBg="bg-green-mid" accentGhost="text-green-mid" value={isLoading ? '-' : stats?.totalSubmissions}>
           <p className="text-xs text-text-mid mt-2">Verified &amp; publicly visible</p>
         </StatCard>
 
         <StatCard
           index={2}
           label="Pending Review"
-          icon={pending ? AlertCircle : CheckCircle}
-          tint={pending ? 'bg-score-average-bg text-score-average' : 'bg-score-excellent-bg text-score-excellent'}
+          icon={pending ? Clock : CheckCircle}
+          accentBg={pending ? 'bg-gold' : 'bg-green-mid'}
+          accentGhost={pending ? 'text-gold' : 'text-green-mid'}
           value={isLoading ? '-' : pending}
         >
           <p className="text-xs text-text-mid mt-2">
@@ -163,7 +177,8 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
           index={3}
           label="Pending Blockchain Records"
           icon={Stamp}
-          tint={anchors ? 'bg-score-average-bg text-score-average' : 'bg-score-excellent-bg text-score-excellent'}
+          accentBg={anchors ? 'bg-gold' : 'bg-green-mid'}
+          accentGhost={anchors ? 'text-gold' : 'text-green-mid'}
           value={isLoading ? '-' : anchors}
         >
           <p className="text-xs text-text-mid mt-2">

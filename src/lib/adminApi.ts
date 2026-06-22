@@ -35,6 +35,8 @@ export interface UnverifiedSubmission {
   place_state: string | null;
   user_display_name: string | null;
   user_id: string;
+  timestamped: boolean;
+  rejected: boolean;
 }
 
 export interface AdminSubmission extends UnverifiedSubmission {
@@ -56,6 +58,8 @@ export interface AdminUserDetailSubmission {
   place_street_address: string | null;
   place_city: string | null;
   place_state: string | null;
+  timestamped: boolean;
+  rejected: boolean;
 }
 
 export interface AdminUserDetailData extends UserWithRoles {
@@ -80,10 +84,11 @@ export async function fetchUserDetail(userId: string) {
   return apiGet<AdminUserDetailData>(`/api/admin/users/${userId}`);
 }
 
-export async function fetchAllSubmissions(params?: { search?: string; verified?: boolean; limit?: number; offset?: number }) {
+export async function fetchAllSubmissions(params?: { search?: string; verified?: boolean; rejected?: boolean; limit?: number; offset?: number }) {
   const qs = new URLSearchParams();
   if (params?.search) qs.set('search', params.search);
   if (params?.verified !== undefined) qs.set('verified', String(params.verified));
+  if (params?.rejected !== undefined) qs.set('rejected', String(params.rejected));
   if (params?.limit !== undefined) qs.set('limit', String(params.limit));
   if (params?.offset !== undefined) qs.set('offset', String(params.offset));
   const query = qs.toString() ? `?${qs}` : '';
@@ -161,6 +166,11 @@ export async function downgradeToUser(userId: string) {
 
 export async function verifySubmission(submissionId: string, verify = true) {
   return apiPost<AdminResponse>(`/api/admin/submissions/${submissionId}/verify`, { verify });
+}
+
+// Soft decline (reject) or restore (reject=false). Distinct from deleteSubmission.
+export async function rejectSubmission(submissionId: string, reject = true) {
+  return apiPost<AdminResponse>(`/api/admin/submissions/${submissionId}/reject`, { reject });
 }
 
 export async function deleteSubmission(submissionId: string) {

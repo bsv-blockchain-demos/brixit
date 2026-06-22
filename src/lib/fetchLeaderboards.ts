@@ -6,6 +6,7 @@ export type Filter = {
   state?: string;
   country?: string;
   crop?: string;
+  store?: string;
   locationName?: string;
   placeId?: string;
   limit?: number;
@@ -44,7 +45,7 @@ async function fetchLeaderboard<R extends LeaderboardEntry>(
   rpcName: string,
   filters: Filter = {}
 ): Promise<R[]> {
-  const { city, state, country, crop } = filters;
+  const { city, state, country, crop, store } = filters;
 
   const endpoint = RPC_TO_ENDPOINT[rpcName] || `/api/leaderboards/${rpcName}`;
 
@@ -53,6 +54,7 @@ async function fetchLeaderboard<R extends LeaderboardEntry>(
   if (state && state !== ALL_STATES) params.set('state', state);
   if (city && city !== ALL_CITIES) params.set('city', city);
   if (crop) params.set('crop', crop);
+  if (store) params.set('store', store);
   if (typeof filters.limit === 'number') params.set('limit', String(filters.limit));
   if (typeof filters.offset === 'number') params.set('offset', String(filters.offset));
 

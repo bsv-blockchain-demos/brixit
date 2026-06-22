@@ -3,21 +3,24 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Check, CheckCircle, ChevronLeft, ChevronRight, Clock, MapPin, RefreshCw, Search, Trash2, User } from 'lucide-react';
+import { Ban, Calendar, Check, CheckCircle, ChevronLeft, ChevronRight, Clock, Loader2, MapPin, RefreshCw, RotateCcw, Search, Trash2, User } from 'lucide-react';
 import {
   fetchUnverifiedSubmissions,
   fetchAllSubmissions,
   verifySubmission,
+  rejectSubmission,
   deleteSubmission,
   type UnverifiedSubmission,
   type AdminSubmission,
 } from '@/lib/adminApi';
+import { useFormattedSubmissionByIdQuery } from '@/hooks/useSubmissions';
+import DataPointDetailModal from '@/components/common/DataPointDetailModal';
 import { formatVenueLocation } from '@/lib/formatAddress';
 import { formatHumanDate } from '@/lib/formatDate';
 import { useCropThresholds } from '@/contexts/CropThresholdContext';
 import { scoreBrix } from '@/lib/getBrixColor';
 import { titleCase } from '@/lib/titleCase';
-import { VerifiedBadge } from '@/components/common/StatusBadges';
+import { VerifiedBadge, BlockchainBadge } from '@/components/common/StatusBadges';
 
 const PAGE_SIZE = 20;
 
@@ -60,7 +63,25 @@ function useSubmissionActions(invalidateKeys: string[]) {
     }
   };
 
-  return { handleVerify, handleDelete, invalidate };
+  // Soft decline (reject=true) or restore to pending (reject=false). Either way
+  // the item leaves the current list, so adjust the page like verify/delete do.
+  const handleReject = async (submissionId: string, reject: boolean, total: number, page: number, setPage: (p: number) => void) => {
+    try {
+      const res = await rejectSubmission(submissionId, reject);
+      if (res.success) {
+        toast({ title: reject ? 'Submission rejected' : 'Submission restored to pending' });
+        const newTotalPages = Math.max(1, Math.ceil((total - 1) / PAGE_SIZE));
+        if (page > newTotalPages) setPage(newTotalPages);
+        invalidate();
+      } else {
+        toast({ title: 'Action failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
+      }
+    } catch (e: any) {
+      toast({ title: 'Error', description: e?.message ?? 'Please try again.', variant: 'destructive' });
+    }
+  };
+
+  return { handleVerify, handleDelete, handleReject, invalidate };
 }
 
 // Header refresh — icon-only on mobile, labelled on desktop
@@ -147,8 +168,19 @@ function RatingPill({ brix, crop }: { brix: number; crop?: string | null }) {
 
 // Verification status chip — shared badge so it matches the public tables/cards.
 
-function StatusChip({ verified }: { verified: boolean }) {
-  return <VerifiedBadge verified={verified} />;
+function StatusChip({ verified, timestamped, rejected }: { verified: boolean; timestamped: boolean; rejected?: boolean }) {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1.5">
+      {rejected ? (
+        <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-score-poor-bg text-score-poor">
+          <Ban className="w-3.5 h-3.5" /> Rejected
+        </span>
+      ) : (
+        <VerifiedBadge verified={verified} />
+      )}
+      <BlockchainBadge secured={timestamped} />
+    </span>
+  );
 }
 
 // Submission card (shared between tabs; distinct desktop + mobile layouts)
@@ -156,13 +188,18 @@ function StatusChip({ verified }: { verified: boolean }) {
 function SubmissionCard({
   s,
   onVerify,
+  onReject,
   onDelete,
+  onOpen,
 }: {
   s: AdminSubmission | UnverifiedSubmission;
   onVerify: (id: string, verify: boolean) => void;
+  onReject: (id: string, reject: boolean) => void;
   onDelete: (id: string) => void;
+  onOpen: () => void;
 }) {
   const verified = 'verified' in s ? s.verified : false;
+  const rejected = !!s.rejected;
   const cropName = titleCase(s.crop_label ?? s.crop_name) || 'Unknown crop';
   const brand = s.brand_label ?? s.brand_name;
   const loc = formatVenueLocation(s.place_street_address, s.place_city, s.place_state);
@@ -197,33 +234,67 @@ function SubmissionCard({
     </div>
   );
 
-  const verifyBtn = !verified ? (
+  const verifyBtn = (
     <button
-      onClick={() => onVerify(s.id, true)}
-      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-action-primary hover:bg-action-primary-hover text-primary-foreground text-sm font-semibold"
+      onClick={(e) => { e.stopPropagation(); onVerify(s.id, true); }}
+      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-green-fresh hover:bg-green-mid text-white text-sm font-semibold"
     >
       <Check className="w-4 h-4" /> Verify
     </button>
-  ) : (
+  );
+
+  const unverifyBtn = (
     <button
-      onClick={() => onVerify(s.id, false)}
+      onClick={(e) => { e.stopPropagation(); onVerify(s.id, false); }}
       className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-hairline text-text-dark text-sm font-medium hover:bg-surface-canvas"
     >
       Unverify
     </button>
   );
 
+  // Reject is a reversible soft decline (amber), distinct from the destructive Delete (red).
+  const rejectBtn = (
+    <button
+      onClick={(e) => { e.stopPropagation(); onReject(s.id, true); }}
+      className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-hairline text-score-average text-sm font-medium hover:bg-score-average-bg"
+    >
+      <Ban className="w-4 h-4" /> Reject
+    </button>
+  );
+
+  const restoreBtn = (
+    <button
+      onClick={(e) => { e.stopPropagation(); onReject(s.id, false); }}
+      className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-hairline text-blue-mid text-sm font-medium hover:bg-surface-canvas"
+    >
+      <RotateCcw className="w-4 h-4" /> Restore
+    </button>
+  );
+
   const deleteBtn = (
     <button
-      onClick={() => onDelete(s.id)}
+      onClick={(e) => { e.stopPropagation(); onDelete(s.id); }}
       className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-hairline text-action-danger text-sm font-medium hover:bg-score-poor-bg"
     >
       <Trash2 className="w-4 h-4" /> Delete
     </button>
   );
 
+  // Pending → Verify · Reject · Delete. Rejected → Restore · Delete. Verified → Unverify · Delete.
+  const actions = rejected
+    ? <>{restoreBtn}{deleteBtn}</>
+    : verified
+      ? <>{unverifyBtn}{deleteBtn}</>
+      : <>{verifyBtn}{rejectBtn}{deleteBtn}</>;
+
   return (
-    <div className="bg-card border border-hairline rounded-2xl shadow-sm overflow-hidden">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(); } }}
+      className="bg-card border border-hairline rounded-2xl shadow-sm overflow-hidden cursor-pointer transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-light"
+    >
       {/* Desktop: score column · details · actions */}
       <div className="hidden sm:flex items-center gap-5 p-4">
         <div className="flex flex-col items-center gap-2 shrink-0">
@@ -233,13 +304,12 @@ function SubmissionCard({
         <div className="flex-1 min-w-0 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
             {title}
-            <StatusChip verified={verified} />
+            <StatusChip verified={verified} timestamped={!!s.timestamped} rejected={rejected} />
           </div>
           {meta}
         </div>
         <div className="flex items-center gap-2 shrink-0 [&>button]:h-9 [&>button]:px-4">
-          {verifyBtn}
-          {deleteBtn}
+          {actions}
         </div>
       </div>
 
@@ -254,13 +324,12 @@ function SubmissionCard({
             </div>
           </div>
           <div>
-            <StatusChip verified={verified} />
+            <StatusChip verified={verified} timestamped={!!s.timestamped} rejected={rejected} />
           </div>
           {meta}
         </div>
         <div className="px-4 pb-4 space-y-2 [&>button]:w-full [&>button]:h-11">
-          {verifyBtn}
-          {deleteBtn}
+          {actions}
         </div>
       </div>
     </div>
@@ -269,7 +338,7 @@ function SubmissionCard({
 
 // All Submissions tab
 
-function AllSubmissionsTab() {
+function AllSubmissionsTab({ onOpenDetail }: { onOpenDetail: (id: string) => void }) {
   const [search, setSearch] = useState('');
   const [committedSearch, setCommittedSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -285,7 +354,7 @@ function AllSubmissionsTab() {
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const { handleVerify, handleDelete } = useSubmissionActions(['admin-all-submissions', 'admin-unverified']);
+  const { handleVerify, handleReject, handleDelete } = useSubmissionActions(['admin-all-submissions', 'admin-unverified', 'admin-rejected']);
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') { setPage(1); setCommittedSearch(search); }
@@ -323,7 +392,9 @@ function AllSubmissionsTab() {
               key={s.id}
               s={s}
               onVerify={(id, verify) => handleVerify(id, verify, total, page, setPage)}
+              onReject={(id, reject) => handleReject(id, reject, total, page, setPage)}
               onDelete={(id) => handleDelete(id, total, page, setPage)}
+              onOpen={() => onOpenDetail(s.id)}
             />
           ))}
         </div>
@@ -336,7 +407,7 @@ function AllSubmissionsTab() {
 
 // Pending tab
 
-function PendingTab() {
+function PendingTab({ onOpenDetail }: { onOpenDetail: (id: string) => void }) {
   const [page, setPage] = useState(1);
 
   const { data, isLoading, isFetching } = useQuery({
@@ -350,7 +421,7 @@ function PendingTab() {
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const { handleVerify, handleDelete } = useSubmissionActions(['admin-unverified', 'admin-all-submissions']);
+  const { handleVerify, handleReject, handleDelete } = useSubmissionActions(['admin-unverified', 'admin-all-submissions', 'admin-rejected']);
 
   return (
     <div className="space-y-4">
@@ -365,7 +436,53 @@ function PendingTab() {
               key={s.id}
               s={{ ...s, verified: false } as AdminSubmission}
               onVerify={(id, verify) => handleVerify(id, verify, total, page, setPage)}
+              onReject={(id, reject) => handleReject(id, reject, total, page, setPage)}
               onDelete={(id) => handleDelete(id, total, page, setPage)}
+              onOpen={() => onOpenDetail(s.id)}
+            />
+          ))}
+        </div>
+      )}
+
+      <Pagination page={page} totalPages={totalPages} isFetching={isFetching} onPage={setPage} />
+    </div>
+  );
+}
+
+// Rejected tab: declined readings, kept for audit and restorable
+
+function RejectedTab({ onOpenDetail }: { onOpenDetail: (id: string) => void }) {
+  const [page, setPage] = useState(1);
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ['admin-rejected', page],
+    queryFn: () => fetchAllSubmissions({ rejected: true, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
+    placeholderData: (prev) => prev,
+    staleTime: Infinity,
+  });
+
+  const submissions = data?.data ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const { handleVerify, handleReject, handleDelete } = useSubmissionActions(['admin-rejected', 'admin-unverified', 'admin-all-submissions']);
+
+  return (
+    <div className="space-y-4">
+      {isLoading ? (
+        <p className="text-sm text-text-mid">Loading...</p>
+      ) : submissions.length === 0 ? (
+        <p className="text-sm text-text-mid">No rejected submissions.</p>
+      ) : (
+        <div className={`space-y-3 ${isFetching ? 'opacity-60 pointer-events-none' : ''}`}>
+          {submissions.map((s) => (
+            <SubmissionCard
+              key={s.id}
+              s={s}
+              onVerify={(id, verify) => handleVerify(id, verify, total, page, setPage)}
+              onReject={(id, reject) => handleReject(id, reject, total, page, setPage)}
+              onDelete={(id) => handleDelete(id, total, page, setPage)}
+              onOpen={() => onOpenDetail(s.id)}
             />
           ))}
         </div>
@@ -379,8 +496,13 @@ function PendingTab() {
 // Root component
 
 export default function AdminSubmissionQueue() {
-  const [tab, setTab] = useState<'pending' | 'all'>('pending');
+  const [tab, setTab] = useState<'pending' | 'all' | 'rejected'>('pending');
   const queryClient = useQueryClient();
+
+  // Click-to-expand: fetch the full submission by id (works for unverified too)
+  // and show it in the shared detail modal (desktop) / full-screen page (mobile).
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const detailQuery = useFormattedSubmissionByIdQuery(detailId ?? undefined, { enabled: !!detailId });
 
   // Pending head: shares the page-1 cache key with PendingTab, so the badge /
   // eyebrow / side-count always reflect the awaiting-review total.
@@ -394,10 +516,12 @@ export default function AdminSubmissionQueue() {
   const refreshAll = () => {
     queryClient.invalidateQueries({ queryKey: ['admin-unverified'] });
     queryClient.invalidateQueries({ queryKey: ['admin-all-submissions'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-rejected'] });
   };
 
   return (
-    <Tabs value={tab} onValueChange={(v) => setTab(v as 'pending' | 'all')} className="space-y-5">
+    <>
+    <Tabs value={tab} onValueChange={(v) => setTab(v as 'pending' | 'all' | 'rejected')} className="space-y-5">
       {/* Section header */}
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -422,6 +546,12 @@ export default function AdminSubmissionQueue() {
             )}
           </TabsTrigger>
           <TabsTrigger
+            value="rejected"
+            className="flex-1 sm:flex-initial rounded-lg border-b-0 mb-0 px-4 py-2 text-sm font-medium text-blue-mid data-[state=active]:bg-card data-[state=active]:text-card-foreground data-[state=active]:border data-[state=active]:border-blue-light data-[state=active]:shadow-sm"
+          >
+            Rejected
+          </TabsTrigger>
+          <TabsTrigger
             value="all"
             className="flex-1 sm:flex-initial rounded-lg border-b-0 mb-0 px-4 py-2 text-sm font-medium text-blue-mid data-[state=active]:bg-card data-[state=active]:text-card-foreground data-[state=active]:border data-[state=active]:border-blue-light data-[state=active]:shadow-sm"
           >
@@ -437,11 +567,31 @@ export default function AdminSubmissionQueue() {
       </div>
 
       <TabsContent value="pending" className="mt-0">
-        <PendingTab />
+        <PendingTab onOpenDetail={setDetailId} />
+      </TabsContent>
+      <TabsContent value="rejected" className="mt-0">
+        <RejectedTab onOpenDetail={setDetailId} />
       </TabsContent>
       <TabsContent value="all" className="mt-0">
-        <AllSubmissionsTab />
+        <AllSubmissionsTab onOpenDetail={setDetailId} />
       </TabsContent>
     </Tabs>
+
+    {/* Loading veil while the full submission is fetched by id */}
+    {detailId && detailQuery.isLoading && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/40 backdrop-blur-sm">
+        <Loader2 className="h-6 w-6 animate-spin text-white" />
+      </div>
+    )}
+
+    {/* Expanded detail: desktop modal, mobile full-screen page (component decides) */}
+    <DataPointDetailModal
+      dataPoint={detailQuery.data ?? null}
+      isOpen={!!detailId && !!detailQuery.data}
+      onClose={() => setDetailId(null)}
+      onDeleteSuccess={() => { setDetailId(null); refreshAll(); }}
+      onUpdateSuccess={() => { refreshAll(); }}
+    />
+    </>
   );
 }

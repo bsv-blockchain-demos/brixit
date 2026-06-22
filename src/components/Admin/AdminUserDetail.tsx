@@ -16,7 +16,7 @@ import { formatVenueLocation } from '@/lib/formatAddress';
 import { titleCase } from '@/lib/titleCase';
 import { RoleChip } from '@/components/common/RoleChip';
 import { ScoreBadge } from '@/components/common/ScoreBadge';
-import { VerifiedBadge } from '@/components/common/StatusBadges';
+import { VerifiedBadge, BlockchainBadge } from '@/components/common/StatusBadges';
 
 interface Props {
   userId: string;
@@ -30,9 +30,14 @@ function getTopRole(roles: AppRole[] | null | undefined): string {
   return 'user';
 }
 
-// Verification status chip — shared badge so it matches everywhere.
-function StatusChip({ verified }: { verified: boolean }) {
-  return <VerifiedBadge verified={verified} />;
+// Verification + blockchain status chips (shared badges so they match everywhere).
+function StatusChip({ verified, timestamped }: { verified: boolean; timestamped: boolean }) {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1.5">
+      <VerifiedBadge verified={verified} />
+      <BlockchainBadge secured={timestamped} />
+    </span>
+  );
 }
 
 // Thresholds for crop-relative scoring (poor/excellent are all computeNormalizedScore needs).
@@ -139,7 +144,7 @@ function SubmissionModal({
                 {new Date(submission.assessment_date).toLocaleDateString()}
               </span>
             </Row>
-            <Row label="Status"><StatusChip verified={verified} /></Row>
+            <Row label="Status"><StatusChip verified={verified} timestamped={!!submission.timestamped} /></Row>
             <Row label="ID"><span className="font-mono text-xs text-text-muted-brown break-all">{submission.id}</span></Row>
           </div>
 
@@ -150,7 +155,7 @@ function SubmissionModal({
                 size="sm"
                 disabled={loading}
                 onClick={() => handleVerify(true)}
-                className="flex-1 bg-action-primary hover:bg-action-primary-hover text-primary-foreground"
+                className="flex-1 bg-green-fresh hover:bg-green-mid text-white"
               >
                 <Check className="w-4 h-4 mr-1" /> Verify
               </Button>
@@ -290,7 +295,7 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold text-text-dark">{titleCase(s.crop_label ?? s.crop_name) || 'Unknown crop'}</span>
                       {brand && <span className="text-text-mid text-sm">· {brand}</span>}
-                      <StatusChip verified={s.verified} />
+                      <StatusChip verified={s.verified} timestamped={!!s.timestamped} />
                     </div>
                     <div className="flex items-start gap-1.5 text-sm text-text-mid">
                       <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0 text-text-muted-brown" />

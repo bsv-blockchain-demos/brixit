@@ -4,7 +4,16 @@ import { Loader2, RefreshCw } from "lucide-react";
 import Header from "../components/Layout/Header";
 import { PageBackground } from '../components/ui/PageBackground';
 import LocationSelector from "../components/common/LocationSelector";
+import { Label } from "../components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 import { fetchCropTypes, CropType } from "../lib/fetchCropTypes";
+import { fetchLocations, Location } from "../lib/fetchLocations";
 import {
   fetchLocationLeaderboard,
   fetchBrandLeaderboard,
@@ -42,6 +51,8 @@ const LeaderboardPage: React.FC = () => {
   }));
   const [crop, setCrop] = useState("");
   const [allCrops, setAllCrops] = useState<CropType[]>([]);
+  const [store, setStore] = useState("");
+  const [allStores, setAllStores] = useState<Location[]>([]);
 
   const [locationData, setLocationData] = useState<LeaderboardEntry[]>([]);
   const [brandData, setBrandData] = useState<LeaderboardEntry[]>([]);
@@ -140,6 +151,14 @@ const LeaderboardPage: React.FC = () => {
       .catch(() => {});
   }, []);
 
+  // Load stores (venues) for the store filter (same pattern as crops)
+
+  useEffect(() => {
+    fetchLocations()
+      .then((stores) => setAllStores(stores || []))
+      .catch(() => {});
+  }, []);
+
   // Fetch leaderboards
 
   useEffect(() => {
@@ -183,10 +202,11 @@ const LeaderboardPage: React.FC = () => {
           state: location.state || undefined,
           city: location.city || undefined,
           crop: crop || undefined,
+          store: store || undefined,
           limit: PAGE_SIZE,
           offset: 0,
         };
-        const userFilters = { crop: crop || undefined, limit: PAGE_SIZE, offset: 0 };
+        const userFilters = { crop: crop || undefined, store: store || undefined, limit: PAGE_SIZE, offset: 0 };
 
         // Fetch all three in parallel on first attempt
         let [loc, brand, users] = await Promise.all([
@@ -221,7 +241,7 @@ const LeaderboardPage: React.FC = () => {
         }
 
         if (mounted && !loc.length && !brand.length) {
-          filters = { country: undefined, state: undefined, city: undefined, crop: crop || undefined, limit: PAGE_SIZE, offset: 0 };
+          filters = { country: undefined, state: undefined, city: undefined, crop: crop || undefined, store: store || undefined, limit: PAGE_SIZE, offset: 0 };
           scope = 'global';
           [loc, brand] = await Promise.all([fetchLoc(filters), fetchBrand(filters)]);
           if (loc.length || brand.length) {
@@ -251,7 +271,7 @@ const LeaderboardPage: React.FC = () => {
 
     run();
     return () => { mounted = false; };
-  }, [location, crop, isInitializing, refreshNonce]);
+  }, [location, crop, store, isInitializing, refreshNonce]);
 
   // Handlers
 
@@ -266,6 +286,7 @@ const LeaderboardPage: React.FC = () => {
   const resetFilters = () => {
     setLocation({ ...emptyLocation, country: user?.country || ALL_COUNTRIES, state: user?.state || "", city: user?.city || "" });
     setCrop("");
+    setStore("");
   };
 
   const loadMore = async (type: 'location' | 'brand' | 'user') => {
@@ -430,6 +451,21 @@ const LeaderboardPage: React.FC = () => {
                   ))}
                 </select>
               </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-text-dark mb-1">Store</label>
+                <select
+                  value={store}
+                  onChange={(e) => setStore(e.target.value)}
+                  className="w-full rounded-lg border border-hairline bg-card text-text-dark text-sm px-2 py-2"
+                >
+                  <option value="">All stores</option>
+                  {allStores.map((s) => (
+                    <option key={s.id} value={s.name}>
+                      {(s.label || s.name).replace(/\b\w/g, ch => ch.toUpperCase())}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="flex items-center gap-4 mt-3 text-sm">
               <button onClick={resetFilters} className="text-text-mid hover:text-text-dark">
@@ -467,12 +503,12 @@ const LeaderboardPage: React.FC = () => {
           ))}
         </div>
 
-        {/* ── Desktop (≥641px): filters sidebar + merged boards panel ── */}
-        <div className="lb-desktop-only flex flex-col gap-6">
-          {/* Filters — stacked on top, full width */}
-          <div className="bg-card text-card-foreground border border-hairline rounded-2xl shadow-sm p-4">
+        {/* ── Desktop (≥641px): one merged panel, filters then boards (no gap) ── */}
+        <div className={`lb-desktop-only ${PANEL}`}>
+          {/* Filters region */}
+          <div className="p-4">
             <h2 className="text-lg font-semibold font-display text-text-dark mb-3">Filters</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl">
               <LocationSelector
                 value={location}
                 onChange={setLocation}
@@ -480,19 +516,36 @@ const LeaderboardPage: React.FC = () => {
                 showAutoDetect={false}
               />
               <div>
-                <label className="block text-sm font-medium text-text-dark mb-1">Crop</label>
-                <select
-                  value={crop}
-                  onChange={(e) => setCrop(e.target.value)}
-                  className="w-full rounded-lg border border-hairline bg-card text-text-dark text-sm px-2 py-2"
-                >
-                  <option value="">All crops</option>
-                  {allCrops.map((c) => (
-                    <option key={c.id} value={c.name}>
-                      {(c.label || c.name).replace(/\b\w/g, ch => ch.toUpperCase())}
-                    </option>
-                  ))}
-                </select>
+                <Label htmlFor="crop">Crop</Label>
+                <Select value={crop || "all"} onValueChange={(v) => setCrop(v === "all" ? "" : v)}>
+                  <SelectTrigger id="crop" className="mt-1 px-4">
+                    <SelectValue placeholder="All crops" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All crops</SelectItem>
+                    {allCrops.map((c) => (
+                      <SelectItem key={c.id} value={c.name}>
+                        {(c.label || c.name).replace(/\b\w/g, ch => ch.toUpperCase())}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="store">Store</Label>
+                <Select value={store || "all"} onValueChange={(v) => setStore(v === "all" ? "" : v)}>
+                  <SelectTrigger id="store" className="mt-1 px-4">
+                    <SelectValue placeholder="All stores" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All stores</SelectItem>
+                    {allStores.map((s) => (
+                      <SelectItem key={s.id} value={s.name}>
+                        {(s.label || s.name).replace(/\b\w/g, ch => ch.toUpperCase())}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="mt-3">
@@ -505,21 +558,18 @@ const LeaderboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Leaderboard grid — one merged panel, boards split by hairline dividers */}
-          <section className="flex-1 min-w-0">
-            {dataScopeMessage && (
-              <div className="mb-4 p-3 bg-surface-canvas border border-hairline rounded-lg text-sm text-text-mid">
-                {dataScopeMessage}
-              </div>
-            )}
-            <div className={PANEL}>
-              {boardConfigs.map((cfg, i) => (
-                <div key={cfg.key} className={i > 0 ? 'border-t border-hairline' : ''}>
-                  {renderBoard(cfg)}
-                </div>
-              ))}
+          {dataScopeMessage && (
+            <div className="px-4 py-3 border-t border-hairline bg-surface-canvas text-sm text-text-mid">
+              {dataScopeMessage}
             </div>
-          </section>
+          )}
+
+          {/* Boards split from filters and each other by hairline dividers */}
+          {boardConfigs.map((cfg) => (
+            <div key={cfg.key} className="border-t border-hairline">
+              {renderBoard(cfg)}
+            </div>
+          ))}
         </div>
       </main>
     </PageBackground>

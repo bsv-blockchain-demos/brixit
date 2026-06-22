@@ -89,7 +89,14 @@ export default function Admin() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Steel header band: title + tab strip */}
-        <div className="bg-background">
+        <div className="relative isolate overflow-hidden bg-background">
+          {/* Decorative watermark backdrop (same wallpaper as the public pages),
+              scoped to this band, light mode only. */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 -z-10 bg-cover bg-center pointer-events-none select-none opacity-[0.55] dark:hidden"
+            style={{ backgroundImage: "url('/backdrop/backdropwallpaper.svg')" }}
+          />
           <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-5">
             <div className="flex items-center gap-2 mb-4">
               <Button

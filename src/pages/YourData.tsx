@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Plus, Beaker, CheckCircle, MapPin, Store, AlertCircle, Lock, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Beaker, ClipboardList, BadgeCheck, Sprout, Store, AlertCircle, Lock, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { deleteSubmission } from '../lib/fetchSubmissions';
@@ -257,7 +257,7 @@ const YourData: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-display font-bold text-on-bg-text">
-              Your Data
+              My Data
             </h1>
             <p className="mt-1 text-on-bg-body">
               Manage and track your BRIX measurement submissions
@@ -298,10 +298,10 @@ const YourData: React.FC = () => {
         <section className="mb-6 space-y-4">
           <h2 className="text-xl font-display font-bold text-on-bg-text">Statistics</h2>
           <IconStatGrid stats={[
-            { icon: Beaker,      value: totalCount,           label: 'Total Submissions' },
-            { icon: CheckCircle, value: verifiedCount,        label: 'Verified Measurements' },
-            { icon: MapPin,      value: uniqueCropTypesCount, label: 'Unique Crop Types' },
-            { icon: Store,       value: uniqueStoresCount,    label: 'Unique Stores' },
+            { icon: ClipboardList, value: totalCount,           label: 'Total Submissions' },
+            { icon: BadgeCheck,    value: verifiedCount,        label: 'Verified Measurements' },
+            { icon: Sprout,        value: uniqueCropTypesCount, label: 'Unique Crop Types' },
+            { icon: Store,         value: uniqueStoresCount,    label: 'Unique Stores' },
           ]} />
         </section>
 

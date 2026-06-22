@@ -67,11 +67,15 @@ WHERE s.verified = true
 
 -- ─── Leaderboard: Brand ──────────────────────────────────────────────────────
 
+-- Drop the previous 6-arg signature before adding the store_filter parameter.
+DROP FUNCTION IF EXISTS get_brand_leaderboard(text, text, text, text, integer, integer);
+
 CREATE OR REPLACE FUNCTION get_brand_leaderboard(
   country_filter text DEFAULT NULL,
   state_filter   text DEFAULT NULL,
   city_filter    text DEFAULT NULL,
   crop_filter    text DEFAULT NULL,
+  store_filter   text DEFAULT NULL,
   limit_count    integer DEFAULT 50,
   offset_count   integer DEFAULT 0
 )
@@ -98,6 +102,7 @@ LANGUAGE sql STABLE AS $$
       AND (state_filter   IS NULL OR lower(v.state)   = lower(state_filter))
       AND (city_filter    IS NULL OR lower(v.city)    = lower(city_filter))
       AND (crop_filter    IS NULL OR lower(c.name)    = lower(crop_filter))
+      AND (store_filter   IS NULL OR lower(v.name)    = lower(store_filter))
     GROUP BY b.id, b.name, b.label
   ),
   ranked AS (
@@ -119,11 +124,15 @@ $$;
 
 -- ─── Leaderboard: Crop ───────────────────────────────────────────────────────
 
+-- Drop the previous 6-arg signature before adding the store_filter parameter.
+DROP FUNCTION IF EXISTS get_crop_leaderboard(text, text, text, text, integer, integer);
+
 CREATE OR REPLACE FUNCTION get_crop_leaderboard(
   country_filter text DEFAULT NULL,
   state_filter   text DEFAULT NULL,
   city_filter    text DEFAULT NULL,
   crop_filter    text DEFAULT NULL,
+  store_filter   text DEFAULT NULL,
   limit_count    integer DEFAULT 50,
   offset_count   integer DEFAULT 0
 )
@@ -149,6 +158,7 @@ LANGUAGE sql STABLE AS $$
       AND (state_filter   IS NULL OR lower(v.state)   = lower(state_filter))
       AND (city_filter    IS NULL OR lower(v.city)    = lower(city_filter))
       AND (crop_filter    IS NULL OR lower(c.name)    = lower(crop_filter))
+      AND (store_filter   IS NULL OR lower(v.name)    = lower(store_filter))
     GROUP BY c.id, c.name, c.label
   ),
   ranked AS (
@@ -178,6 +188,7 @@ CREATE OR REPLACE FUNCTION get_location_leaderboard(
   state_filter   text DEFAULT NULL,
   city_filter    text DEFAULT NULL,
   crop_filter    text DEFAULT NULL,
+  store_filter   text DEFAULT NULL,
   limit_count    integer DEFAULT 50,
   offset_count   integer DEFAULT 0
 )
@@ -216,6 +227,7 @@ LANGUAGE sql STABLE AS $$
       AND (state_filter   IS NULL OR lower(v.state)   = lower(state_filter))
       AND (city_filter    IS NULL OR lower(v.city)    = lower(city_filter))
       AND (crop_filter    IS NULL OR lower(c.name)    = lower(crop_filter))
+      AND (store_filter   IS NULL OR lower(v.name)    = lower(store_filter))
     GROUP BY v.id, v.name, v.city, v.state, v.country
   ),
   ranked AS (
@@ -237,11 +249,15 @@ $$;
 
 -- ─── Leaderboard: User (safe — no PII) ──────────────────────────────────────
 
+-- Drop the previous 6-arg signature before adding the store_filter parameter.
+DROP FUNCTION IF EXISTS get_user_leaderboard_safe(text, text, text, text, integer, integer);
+
 CREATE OR REPLACE FUNCTION get_user_leaderboard_safe(
   country_filter text DEFAULT NULL,
   state_filter   text DEFAULT NULL,
   city_filter    text DEFAULT NULL,
   crop_filter    text DEFAULT NULL,
+  store_filter   text DEFAULT NULL,
   limit_count    integer DEFAULT 50,
   offset_count   integer DEFAULT 0
 )
@@ -277,6 +293,7 @@ LANGUAGE sql STABLE AS $$
       AND (state_filter IS NULL OR v.state = state_filter)
       AND (city_filter IS NULL OR v.city = city_filter)
       AND (crop_filter IS NULL OR c.name = crop_filter)
+      AND (store_filter IS NULL OR lower(v.name) = lower(store_filter))
   ),
   user_stats AS (
     SELECT

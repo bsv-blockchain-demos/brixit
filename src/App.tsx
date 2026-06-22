@@ -85,7 +85,7 @@ const RootContent = () => {
           }
         />
         <Route
-          path="/your-data"
+          path="/my-data"
           element={
             <ProtectedRoute>
               <YourData />

@@ -7,7 +7,7 @@
  *   GET /api/leaderboards/location → Location leaderboard
  *   GET /api/leaderboards/user     → User leaderboard (safe, no PII)
  *
- * Query params: country, state, city, crop, limit, offset
+ * Query params: country, state, city, crop, store, limit, offset
  */
 import { Router } from 'express';
 import type { Request, Response } from 'express';
@@ -43,11 +43,12 @@ function normalizeNumericFields(rows: any[]): any[] {
 router.get('/brand', async (req: Request, res: Response) => {
   try {
     const rows = await prisma.$queryRawUnsafe(
-      `SELECT * FROM get_brand_leaderboard($1::text, $2::text, $3::text, $4::text, $5::integer, $6::integer)`,
+      `SELECT * FROM get_brand_leaderboard($1::text, $2::text, $3::text, $4::text, $5::text, $6::integer, $7::integer)`,
       sanitizeFilter(req.query.country as string),
       sanitizeFilter(req.query.state as string),
       sanitizeFilter(req.query.city as string),
       sanitizeFilter(req.query.crop as string),
+      sanitizeFilter(req.query.store as string),
       parseIntParam(req.query.limit, 50),
       parseIntParam(req.query.offset, 0),
     );
@@ -62,11 +63,12 @@ router.get('/brand', async (req: Request, res: Response) => {
 router.get('/crop', async (req: Request, res: Response) => {
   try {
     const rows = await prisma.$queryRawUnsafe(
-      `SELECT * FROM get_crop_leaderboard($1::text, $2::text, $3::text, $4::text, $5::integer, $6::integer)`,
+      `SELECT * FROM get_crop_leaderboard($1::text, $2::text, $3::text, $4::text, $5::text, $6::integer, $7::integer)`,
       sanitizeFilter(req.query.country as string),
       sanitizeFilter(req.query.state as string),
       sanitizeFilter(req.query.city as string),
       sanitizeFilter(req.query.crop as string),
+      sanitizeFilter(req.query.store as string),
       parseIntParam(req.query.limit, 50),
       parseIntParam(req.query.offset, 0),
     );
@@ -81,11 +83,12 @@ router.get('/crop', async (req: Request, res: Response) => {
 router.get('/location', async (req: Request, res: Response) => {
   try {
     const rows = await prisma.$queryRawUnsafe(
-      `SELECT * FROM get_location_leaderboard($1::text, $2::text, $3::text, $4::text, $5::integer, $6::integer)`,
+      `SELECT * FROM get_location_leaderboard($1::text, $2::text, $3::text, $4::text, $5::text, $6::integer, $7::integer)`,
       sanitizeFilter(req.query.country as string),
       sanitizeFilter(req.query.state as string),
       sanitizeFilter(req.query.city as string),
       sanitizeFilter(req.query.crop as string),
+      sanitizeFilter(req.query.store as string),
       parseIntParam(req.query.limit, 50),
       parseIntParam(req.query.offset, 0),
     );
@@ -100,11 +103,12 @@ router.get('/location', async (req: Request, res: Response) => {
 router.get('/user', async (req: Request, res: Response) => {
   try {
     const rows = await prisma.$queryRawUnsafe(
-      `SELECT * FROM get_user_leaderboard_safe($1::text, $2::text, $3::text, $4::text, $5::integer, $6::integer)`,
+      `SELECT * FROM get_user_leaderboard_safe($1::text, $2::text, $3::text, $4::text, $5::text, $6::integer, $7::integer)`,
       sanitizeFilter(req.query.country as string),
       sanitizeFilter(req.query.state as string),
       sanitizeFilter(req.query.city as string),
       sanitizeFilter(req.query.crop as string),
+      sanitizeFilter(req.query.store as string),
       parseIntParam(req.query.limit, 50),
       parseIntParam(req.query.offset, 0),
     );

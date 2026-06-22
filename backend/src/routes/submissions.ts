@@ -361,10 +361,12 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
       return;
     }
 
-    // Only owner or admin can update
+    // Editing a submission's data is owner-only. Admins moderate via separate
+    // endpoints: verify/reject through POST /api/admin/submissions/:id/verify and
+    // removal through DELETE. They may still edit their *own* submissions.
     const isAdmin = roles.includes('admin');
-    if (submission.userId !== userId && !isAdmin) {
-      res.status(403).json({ error: 'Not authorized to update this submission' });
+    if (submission.userId !== userId) {
+      res.status(403).json({ error: 'Only the submission owner can edit it' });
       return;
     }
 

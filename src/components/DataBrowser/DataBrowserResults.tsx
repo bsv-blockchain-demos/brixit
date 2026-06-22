@@ -22,7 +22,7 @@ import { getFilterSummary, getActiveFilterList } from '../../lib/filterUtils';
 import { fetchFormattedSubmissionsPage, type PublicFormattedSubmissionsQuery } from '../../lib/fetchSubmissions';
 import { BrixDataPoint } from '../../types';
 import SubmissionTableRow from '../common/SubmissionTableRow';
-import { ColumnHint } from '../common/StatusBadges';
+import { ColumnHint, ScoreHint } from '../common/StatusBadges';
 import MobileSubmissionCard from '../common/MobileSubmissionCard';
 import DataPointDetailModal from '../common/DataPointDetailModal';
 import { useAuth } from '../../contexts/AuthContext';
@@ -179,7 +179,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
     <>
       {/* Desktop banner — unchanged; hidden ≤640px (mobile uses the merged card region below) */}
       {fromLeaderboard && (
-        <div className="lb-desktop-only mb-4 p-3 bg-surface-canvas border border-hairline rounded-md">
+        <div className="lb-desktop-only p-3 bg-surface-canvas border-b border-hairline">
           <div className="flex items-center justify-between">
             <p className="text-text-dark text-sm">Showing filtered results from leaderboard selection</p>
             <Button
@@ -197,8 +197,8 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
       {/* Summary is styled for the steel background, so it's desktop-only; on mobile
           the Filters button's count badge conveys active filters instead. */}
       {filterSummary !== 'No active filters' && (
-        <p className="text-sm text-on-bg-body mb-4 lb-desktop-only">
-          Applying filters: <span className="font-semibold text-white">{filterSummary}</span>
+        <p className="text-sm text-text-mid p-4 border-b border-hairline lb-desktop-only">
+          Applying filters: <span className="font-semibold text-text-dark">{filterSummary}</span>
         </p>
       )}
 
@@ -227,7 +227,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
             </div>
           </div>
         )}
-      <Card className="border-0 shadow-none rounded-none bg-transparent sm:border sm:border-hairline sm:shadow-sm sm:rounded-2xl sm:bg-card">
+      <Card className="border-0 shadow-none rounded-none bg-transparent">
         <CardHeader className="px-3 sm:px-6">
           <div className="flex items-center justify-between gap-3">
             <CardTitle>{totalCount} {totalCount === 1 ? 'Result' : 'Results'}</CardTitle>
@@ -272,7 +272,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
                     className="text-xs text-text-muted-brown uppercase tracking-wider text-center cursor-pointer"
                     onClick={() => handleSort('brixLevel')}
                   >
-                    Score {sortBy === 'brixLevel' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <ScoreHint>Score</ScoreHint> {sortBy === 'brixLevel' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Notes</TableHead>
                   <TableHead
