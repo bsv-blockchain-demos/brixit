@@ -1,4 +1,5 @@
 import { fetchFromGeonamesProxy } from './geonamesProxy';
+import { countries } from '../data/countries';
 
 export interface Country {
   code: string;
@@ -28,10 +29,14 @@ export interface LocationData {
   cityId?: number;
 }
 
+function getFlagEmoji(countryCode: string): any {
+  return [...countryCode.toUpperCase()]
+    .map(char => String.fromCodePoint(127397 + char.charCodeAt(0)))
+    .join("");
+}
+
 export class LocationService {
   private static instance: LocationService;
-
-  private readonly REST_COUNTRIES_BASE_URL = 'https://restcountries.com/v3.1';
 
   private countriesCache: Country[] | null = null;
   private statesCache: Map<string, State[]> = new Map();
@@ -47,27 +52,17 @@ export class LocationService {
   }
 
   async getCountries(): Promise<Country[]> {
-    if (this.countriesCache) return this.countriesCache;
-
-    try {
-      const response = await fetch(`${this.REST_COUNTRIES_BASE_URL}/all?fields=name,cca2,flag`);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-      const data = await response.json();
-      const countries: Country[] = data
-        .map((country: any) => ({
-          code: country.cca2,
-          name: country.name.common,
-          flag: country.flag
-        }))
-        .sort((a: Country, b: Country) => a.name.localeCompare(b.name));
-
-      this.countriesCache = countries;
-      return countries;
-    } catch (error) {
-      console.error('Error fetching countries:', error);
-      throw new Error('Failed to load countries.');
+    if (this.countriesCache) {
+      return this.countriesCache;
     }
+
+    const countriesList = countries.map(country => ({
+      ...country,
+      flag: getFlagEmoji(country.code),
+    }));
+
+    this.countriesCache = countriesList;
+    return countriesList;
   }
 
   async getStates(countryCode: string): Promise<State[]> {
