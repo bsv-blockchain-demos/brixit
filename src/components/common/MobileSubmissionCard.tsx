@@ -20,12 +20,14 @@ const MobileSubmissionCard: React.FC<{
   onOpenModal: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
-}> = ({ submission, isOwner, onOpenModal, onEdit, onDelete }) => {
+  onRetry?: () => void;
+  isRetrying?: boolean;
+}> = ({ submission, isOwner, onOpenModal, onEdit, onDelete, onRetry, isRetrying }) => {
   const cropThresholds = (submission.poorBrix != null && submission.excellentBrix != null)
     ? { poor: submission.poorBrix, average: submission.averageBrix ?? 0, good: submission.goodBrix ?? 0, excellent: submission.excellentBrix }
     : undefined;
   const { bgClass: brixColorClass, display: displayScore } = scoreBrix(submission.brixLevel, cropThresholds);
-  const hasActions = !!(onEdit || onDelete);
+  const hasActions = !!(onEdit || onDelete || onRetry);
 
   return (
     <div
@@ -53,6 +55,16 @@ const MobileSubmissionCard: React.FC<{
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" sideOffset={4}>
+                {onRetry && (
+                  <DropdownMenuItem
+                    disabled={isRetrying}
+                    onClick={(e) => { e.stopPropagation(); onRetry(); }}
+                  >
+                    <Anchor className="w-4 h-4 mr-2" />
+                    Retry timestamp
+                  </DropdownMenuItem>
+                )}
+                {onRetry && (onEdit || onDelete) && <DropdownMenuSeparator />}
                 {onEdit && (
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
                     <Edit className="w-4 h-4 mr-2" />

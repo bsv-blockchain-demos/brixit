@@ -18,9 +18,11 @@ interface SubmissionTableRowProps {
   onOpenModal: (submission: BrixDataPoint) => void;
   onEdit?: () => void;
   showOwnerBadge?: boolean;
+  onRetry?: () => void;
+  isRetrying?: boolean;
 }
 
-const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onDelete, isOwner, canDeleteByOwner, onOpenModal, onEdit, showOwnerBadge = true }) => {
+const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onDelete, isOwner, canDeleteByOwner, onOpenModal, onEdit, showOwnerBadge = true, onRetry, isRetrying }) => {
   const cropThresholds = (submission.poorBrix != null && submission.excellentBrix != null)
     ? { poor: submission.poorBrix, average: submission.averageBrix ?? 0, good: submission.goodBrix ?? 0, excellent: submission.excellentBrix }
     : undefined;
@@ -139,6 +141,17 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       {/* Cell 9 — Actions */}
       <TableCell className="text-center py-3 px-4">
         <div className="flex justify-center items-center space-x-1">
+          {onRetry && (
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label="Retry timestamp"
+              disabled={isRetrying}
+              onClick={(e) => { e.stopPropagation(); onRetry(); }}
+            >
+              <Anchor className={`w-5 h-5 ${isRetrying ? 'animate-pulse' : ''}`} />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"

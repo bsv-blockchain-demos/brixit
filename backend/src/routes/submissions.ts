@@ -325,6 +325,112 @@ router.get('/mine/venues', requireAuth as any, async (req: AuthenticatedRequest,
   }
 });
 
+// --- Authenticated: POST /api/submissions/:id/retry-anchor ---
+// Owner-only re-anchor for a submission whose initial anchor never landed.
+router.post('/:id/retry-anchor', requireAuth as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.sub;
+    const submissionUuid = req.params.id;
+
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionUuid },
+      select: { userId: true, outpoint: true },
+    });
+    if (!submission) {
+      res.status(404).json({ error: 'Submission not found' });
+      return;
+    }
+    if (submission.userId !== userId) {
+      res.status(403).json({ error: 'Only the submission owner can retry its timestamp' });
+      return;
+    }
+    if (submission.outpoint) {
+      res.status(409).json({ error: 'Submission is already timestamped' });
+      return;
+    }
+
+    const body = req.body;
+    const payloadJson     = typeof body.payloadJson     === 'string' ? body.payloadJson     : null;
+    const userSignature   = typeof body.userSignature   === 'string' ? body.userSignature   : null;
+    const userKeyID       = typeof body.userKeyID        === 'string' ? body.userKeyID        : null;
+    const userIdentityKey = typeof body.userIdentityKey  === 'string' ? body.userIdentityKey  : null;
+
+    if (!payloadJson || !userSignature || !userKeyID || !userIdentityKey) {
+      res.status(400).json({ error: 'Missing signing fields (payloadJson, userSignature, userKeyID, userIdentityKey).' });
+      return;
+    }
+
+    const lengthErrors = [
+      exceedsLimit(payloadJson, FIELD_LIMITS.PAYLOAD_JSON, 'payloadJson'),
+      exceedsLimit(userSignature, FIELD_LIMITS.USER_SIGNATURE, 'userSignature'),
+      exceedsLimit(userKeyID, FIELD_LIMITS.USER_KEY_ID, 'userKeyID'),
+      exceedsLimit(userIdentityKey, FIELD_LIMITS.USER_IDENTITY_KEY, 'userIdentityKey'),
+    ].filter((e): e is string => e !== null);
+    if (lengthErrors.length > 0) {
+      res.status(400).json({ error: lengthErrors[0] });
+      return;
+    }
+
+    const walletIdentity = await prisma.walletIdentity.findUnique({
+      where: { userId: submission.userId! },
+      select: { identityKey: true },
+    });
+    if (!walletIdentity || walletIdentity.identityKey.toLowerCase() !== userIdentityKey.toLowerCase()) {
+      res.status(403).json({ error: 'userIdentityKey does not match the submission owner.' });
+      return;
+    }
+
+    try {
+      await anyoneWallet.verifySignature({
+        data: Utils.toArray(payloadJson, 'utf8'),
+        signature: Utils.toArray(userSignature, 'hex'),
+        protocolID: USER_SIGNING_PROTOCOL,
+        keyID: userKeyID,
+        counterparty: userIdentityKey,
+      });
+    } catch {
+      res.status(400).json({ error: 'user signature did not verify against payloadJson.' });
+      return;
+    }
+
+    const entry: SubmissionEntry = {
+      submissionUuid,
+      userIdentityKey,
+      userKeyID,
+      payloadJson,
+      userSignature,
+    };
+
+    // Fire-and-forget. Re-read outpoint first: the serial queue makes repeat
+    // retries idempotent — once one lands, the rest no-op.
+    void enqueueWalletTask(async () => {
+      try {
+        const fresh = await prisma.submission.findUnique({
+          where: { id: submissionUuid },
+          select: { outpoint: true },
+        });
+        if (fresh?.outpoint) {
+          console.log(`[anchor retry] ${submissionUuid} already anchored (${fresh.outpoint}); skipping`);
+          return;
+        }
+        const anchor = await createSubmissionTx({ op: 'NEW', wallet: serverWallet, entries: [entry] });
+        await prisma.submission.update({
+          where: { id: submissionUuid },
+          data: { outpoint: anchor.results[0].pushDropOutpoint ?? null },
+        });
+        console.log(`[anchor retry] ${submissionUuid} → ${anchor.txid}`);
+      } catch (err) {
+        console.error(`[anchor retry] failed for ${submissionUuid}:`, err);
+      }
+    });
+
+    res.status(202).json({ message: 'Anchor retry queued' });
+  } catch (err) {
+    console.error('[submissions/:id/retry-anchor] Error:', err);
+    res.status(500).json({ error: 'Failed to retry timestamp' });
+  }
+});
+
 // --- Public: GET /api/submissions/:id ---
 router.get('/:id', async (req: Request, res: Response) => {
   try {
@@ -445,7 +551,6 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
 
     if (hasSigningFields) {
       const submissionUuid = req.params.id;
-      const previousOutpoint = submission.outpoint;
       const entry: SubmissionEntry = {
         submissionUuid,
         userIdentityKey: userIdentityKey!,
@@ -456,6 +561,14 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
 
       void enqueueWalletTask(async () => {
         try {
+          // Re-read outpoint: a concurrent retry/edit may have anchored while
+          // we were queued, so EDIT the current one rather than duplicate it.
+          const current = await prisma.submission.findUnique({
+            where: { id: submissionUuid },
+            select: { outpoint: true },
+          });
+          const previousOutpoint = current?.outpoint ?? null;
+
           let outpoint: string | undefined;
           if (previousOutpoint) {
             // EDIT — spend the previous PushDrop, produce a new one.

@@ -23,6 +23,7 @@ import { useToast } from '../hooks/use-toast';
 import { apiPost } from '@/lib/api';
 import { useWallet } from '@/contexts/WalletContext';
 import { signSubmissionPayload } from '@/lib/signSubmissionPayload';
+import { buildSubmissionPayload } from '@/lib/buildSubmissionPayload';
 import { getPresignedUploadUrl, uploadFileToS3, finalizeUpload } from '@/lib/uploadApi';
 import LocationSearch from '../components/common/LocationSearch';
 import VenuePrompt, { type VenueChoice } from '../components/common/VenuePrompt';
@@ -342,17 +343,17 @@ const DataEntry = () => {
     try {
       for (const r of filledReadings) {
         const brixValue = Number(r.brixLevel.toFixed(2));
-        const payload = {
+        const payload = buildSubmissionPayload({
           cropName: r.cropType,
-          brixValue,
-          brandName: r.brandName || null,
-          notes: r.notes || null,
+          brixValue: r.brixLevel,
+          brandName: r.brandName,
+          notes: r.notes,
           assessmentDate,
-          purchaseDate: purchaseDate || null,
+          purchaseDate,
           latitude: session.latitude,
           longitude: session.longitude,
-          locationName: session.location || null,
-        };
+          locationName: session.location,
+        });
         const sig = await signSubmissionPayload(userWallet, userPubKey, payload);
         signedReadings.push({
           cropName: r.cropType,

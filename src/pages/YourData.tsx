@@ -8,8 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Plus, Beaker, ClipboardList, BadgeCheck, Sprout, Store, AlertCircle, Lock, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { deleteSubmission } from '../lib/fetchSubmissions';
-import { fetchMySubmissionsPage } from '../lib/fetchSubmissions';
+import { useWallet } from '@/contexts/WalletContext';
+import { deleteSubmission, fetchMySubmissionsPage, retrySubmissionAnchor } from '../lib/fetchSubmissions';
+import { signSubmissionPayload } from '@/lib/signSubmissionPayload';
+import { buildSubmissionPayload } from '@/lib/buildSubmissionPayload';
 import { useMySubmissionsCountQuery, useMySubmissionsCropIdsQuery, useMySubmissionsVenueIdsQuery, useMySubmissionsPageQuery } from '../hooks/useSubmissions';
 
 import SubmissionTableRow from '../components/common/SubmissionTableRow';
@@ -35,8 +37,10 @@ import {
 
 const YourData: React.FC = () => {
   const { user } = useAuth();
+  const { userWallet, userPubKey } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [retryingId, setRetryingId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const canSubmit = user?.role === 'admin' || user?.role === 'contributor';
@@ -184,6 +188,34 @@ const YourData: React.FC = () => {
     setSelectedDataPoint(updated);
     setOpenInEditMode(false);
   }, [queryClient]);
+
+  const handleRetryAnchor = useCallback(async (submission: BrixDataPoint) => {
+    if (!userWallet || !userPubKey) {
+      toast({ title: 'Wallet not connected', description: 'Please log in again to retry.', variant: 'destructive' });
+      return;
+    }
+    setRetryingId(submission.id);
+    try {
+      const payload = buildSubmissionPayload({
+        cropName: submission.cropType,
+        brixValue: submission.brixLevel,
+        brandName: submission.brandName,
+        notes: submission.outlier_notes,
+        assessmentDate: submission.submittedAt,
+        purchaseDate: submission.purchaseDate,
+        latitude: submission.latitude,
+        longitude: submission.longitude,
+        locationName: submission.locationName,
+      });
+      const sig = await signSubmissionPayload(userWallet, userPubKey, payload);
+      await retrySubmissionAnchor(submission.id, sig);
+      toast({ title: 'Retry started', description: 'Your record will appear shortly. Refresh to check.' });
+    } catch (err: any) {
+      toast({ title: 'Retry failed', description: err?.message || 'Please try again.', variant: 'destructive' });
+    } finally {
+      setRetryingId(null);
+    }
+  }, [userWallet, userPubKey, toast]);
 
   // Handler for deletion, now that it's in the modal
   const handleDelete = async (id: string) => {
@@ -397,6 +429,8 @@ const YourData: React.FC = () => {
                                 isOwner={isOwner}
                                 canDeleteByOwner={canDeleteByOwner}
                                 showOwnerBadge={false}
+                                onRetry={isOwner && !submission.outpoint ? () => handleRetryAnchor(submission) : undefined}
+                                isRetrying={retryingId === submission.id}
                               />
                             );
                           })}
@@ -417,6 +451,8 @@ const YourData: React.FC = () => {
                             onOpenModal={() => handleOpenModal(submission)}
                             onEdit={canAct ? () => handleEditSubmission(submission) : undefined}
                             onDelete={canAct ? () => setDeleteTargetId(submission.id) : undefined}
+                            onRetry={isOwner && !submission.outpoint ? () => handleRetryAnchor(submission) : undefined}
+                            isRetrying={retryingId === submission.id}
                           />
                         );
                       })}

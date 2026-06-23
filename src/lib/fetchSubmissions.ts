@@ -1,5 +1,5 @@
 // src/lib/fetchSubmissions.ts
-import { apiGet, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiDelete } from '@/lib/api';
 import { BrixDataPoint } from '@/types';
 
 // Backend API row shape (matches Express route response)
@@ -309,4 +309,20 @@ export async function deleteSubmission(submissionId: string): Promise<boolean> {
     console.error('Error deleting submission:', error);
     return false;
   }
+}
+
+export interface RetryAnchorSignature {
+  payloadJson: string;
+  userSignature: string;
+  userKeyID: string;
+  userIdentityKey: string;
+}
+
+// Re-attempts the on-chain timestamp for a submission whose anchor never landed.
+// Throws on non-2xx (apiPost rejects); the 202 success body is ignored.
+export async function retrySubmissionAnchor(
+  submissionId: string,
+  signature: RetryAnchorSignature,
+): Promise<void> {
+  await apiPost(`/api/submissions/${submissionId}/retry-anchor`, signature);
 }
