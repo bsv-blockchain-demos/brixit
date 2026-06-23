@@ -2,6 +2,7 @@
 import { TableCell, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { BrixDataPoint } from '../../types';
 import { MapPin, Calendar, CheckCircle, Edit, Trash2, Eye, MessageSquare, Clock, Lock, User, XCircle, Anchor } from 'lucide-react';
 import { scoreBrix } from '../../lib/getBrixColor';
@@ -142,46 +143,66 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       <TableCell className="text-center py-3 px-4">
         <div className="flex justify-center items-center space-x-1">
           {onRetry && (
-            <Button
-              variant="ghost"
-              size="sm"
-              aria-label="Retry timestamp"
-              disabled={isRetrying}
-              onClick={(e) => { e.stopPropagation(); onRetry(); }}
-            >
-              <Anchor className={`w-5 h-5 ${isRetrying ? 'animate-pulse' : ''}`} />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Retry timestamp"
+                  disabled={isRetrying}
+                  onClick={(e) => { e.stopPropagation(); onRetry(); }}
+                >
+                  <Anchor className={`w-5 h-5 ${isRetrying ? 'animate-pulse' : ''}`} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Retry timestamp</TooltipContent>
+            </Tooltip>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label="View submission details"
-            onClick={() => onOpenModal(submission)}
-          >
-            <Eye className="w-5 h-5" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label="View submission details"
+                onClick={() => onOpenModal(submission)}
+              >
+                <Eye className="w-5 h-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>View</TooltipContent>
+          </Tooltip>
 
           {canEdit && onEdit && (
-            <Button
-              variant="ghost"
-              size="sm"
-              aria-label="Edit submission"
-              onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            >
-              <Edit className="w-5 h-5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Edit submission"
+                  onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                >
+                  <Edit className="w-5 h-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Edit</TooltipContent>
+            </Tooltip>
           )}
 
           {canDeleteByOwner ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(submission.id)}
-              className="text-destructive hover:text-destructive/80"
-              aria-label="Delete submission"
-            >
-              <Trash2 className="w-5 h-5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDelete(submission.id)}
+                  className="text-destructive hover:text-destructive/80"
+                  aria-label="Delete submission"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Delete</TooltipContent>
+            </Tooltip>
           ) : (
             isOwner && submission.verified && (
               <span title="Verified submissions cannot be deleted by non-admins." className="cursor-not-allowed">
