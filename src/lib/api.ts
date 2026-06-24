@@ -134,7 +134,7 @@ export async function apiPut<T = unknown>(path: string, body?: unknown, options:
     ...rest,
     method: 'POST',
     body: body ? JSON.stringify(body) : undefined,
-    headers: { ...(optHeaders as Record<string, string> | undefined), 'X-HTTP-Method-Override': 'PUT' },
+    headers: { ...(optHeaders as Record<string, string> | undefined), 'X-Brixit-Method': 'PUT' },
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -152,7 +152,7 @@ export async function apiDelete<T = unknown>(path: string, options: FetchOptions
   const res = await apiFetch(path, {
     ...rest,
     method: 'POST',
-    headers: { ...(optHeaders as Record<string, string> | undefined), 'X-HTTP-Method-Override': 'DELETE' },
+    headers: { ...(optHeaders as Record<string, string> | undefined), 'X-Brixit-Method': 'DELETE' },
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
