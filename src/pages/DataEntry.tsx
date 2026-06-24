@@ -66,7 +66,7 @@ const mkReading = (): CropReading => ({
 
 const DataEntry = () => {
   const { user } = useAuth();
-  const { userWallet, userPubKey } = useWallet();
+  const { ensureWallet } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -331,8 +331,17 @@ const DataEntry = () => {
       }
     }
 
-    if (!userWallet || !userPubKey) {
-      toast({ title: 'Wallet not connected. Please log in again.', variant: 'destructive' });
+    // Acquire the wallet on demand: an authenticated session can reach this page
+    // with no live wallet handle (session restored from cookie, or the iOS webview
+    // was reloaded). ensureWallet() returns the existing handle or acquires one,
+    // and never ejects to /wallet-error.
+    const ensured = await ensureWallet().catch(() => null);
+    if (!ensured) {
+      toast({
+        title: "Couldn't reach your wallet",
+        description: 'Make sure BRIX is open inside the Mycelia app, then try again.',
+        variant: 'destructive',
+      });
       setIsLoading(false);
       return;
     }
@@ -355,7 +364,7 @@ const DataEntry = () => {
           longitude: session.longitude,
           locationName: session.location,
         });
-        const sig = await signSubmissionPayload(userWallet, userPubKey, payload);
+        const sig = await signSubmissionPayload(ensured.wallet, ensured.pubKey, payload);
         signedReadings.push({
           cropName: r.cropType,
           brixValue,
@@ -458,7 +467,7 @@ const DataEntry = () => {
       <Header />
       <main
         className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8 max-[640px]:px-3"
-        style={{ paddingBottom: 'calc(7rem + var(--safe-bottom))' }}
+        style={{ paddingBottom: 'calc(7rem + var(--bottom-inset))' }}
       >
         <div className="mb-6">
           <h1 className="text-2xl font-display font-bold text-on-bg-text">New Measurement Entry</h1>
@@ -739,7 +748,7 @@ const DataEntry = () => {
           backgroundColor: 'hsl(var(--card))',
           borderColor: 'var(--hairline)',
           padding: '0.75rem 1rem',
-          paddingBottom: 'calc(0.75rem + var(--safe-bottom))',
+          paddingBottom: 'calc(0.75rem + var(--bottom-inset))',
         }}
       >
         <div className="max-w-5xl mx-auto">

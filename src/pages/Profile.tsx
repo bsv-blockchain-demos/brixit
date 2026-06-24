@@ -119,7 +119,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-surface-canvas">
       <Header />
-      <div className="pt-6 px-4 sm:px-6 lg:px-8" style={{ paddingBottom: 'calc(2rem + var(--safe-bottom))' }}>
+      <div className="pt-6 px-4 sm:px-6 lg:px-8" style={{ paddingBottom: 'calc(2rem + var(--bottom-inset))' }}>
         <div className="max-w-3xl mx-auto space-y-4">
           {/* Back + page title */}
           <div className="flex items-center gap-1">

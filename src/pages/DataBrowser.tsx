@@ -9,7 +9,7 @@ const DataBrowser = () => {
     <FilterProvider>
       <PageBackground className="min-h-screen">
         <Header />
-        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-20">
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-[var(--bottom-inset)]">
           <DataTable />
         </main>
       </PageBackground>

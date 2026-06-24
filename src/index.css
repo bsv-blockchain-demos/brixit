@@ -36,6 +36,14 @@
     --safe-left: env(safe-area-inset-left, 0px);
     --safe-right: env(safe-area-inset-right, 0px);
 
+    /* Mycelia overlays a floating URL-style bar at the bottom of the mobile
+       webview. Pages reserve `--bottom-inset` so content and action buttons
+       clear that bar AND the device safe area. Mobile-first: `--bottom-bar` is
+       the bar's height here and is zeroed at the desktop breakpoint below
+       (no Mycelia bar on desktop). Tune `--bottom-bar` to the real bar height. */
+    --bottom-bar: 4.5rem;
+    --bottom-inset: calc(var(--bottom-bar) + var(--safe-bottom));
+
     /* Blue structural family (formerly blue-deep / blue-mist) */
     --blue-deep:  #2c4a5c;   /* dark blue — hero, footer, nav backgrounds   */
     --blue-mid:    #5787a1;   /* mid blue — header fill, cards on dark bg     */
@@ -363,5 +371,14 @@
     /* Keep a static steel ring instead of pulsing. */
     animation: none;
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--select-strong) 35%, transparent);
+  }
+}
+
+/* Desktop (>= 900px, the project's `desktop` breakpoint) has no Mycelia bar,
+   so collapse the reserve to nothing. `--bottom-inset` still carries the device
+   safe area via the base definition. */
+@media (min-width: 900px) {
+  :root {
+    --bottom-bar: 0px;
   }
 }

@@ -4,8 +4,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { WalletProvider } from "./contexts/WalletContext";
+import { WalletProvider, useWallet } from "./contexts/WalletContext";
 import MapView from "./pages/MapView";
 import Leaderboard from "./pages/Leaderboard";
 import DataBrowser from "./pages/DataBrowser";
@@ -34,6 +35,20 @@ const queryClient = new QueryClient();
 const LoginRedirect = () => {
   const { search } = useLocation();
   return <Navigate to={`/${search}`} replace />;
+};
+
+// Silently (re)acquire the wallet handle when an authenticated session has none —
+// e.g. the session was restored from the refresh cookie, or the iOS webview was
+// reloaded. Gated on isAuthenticated so it never probes a wallet on the public
+// landing page, and so never triggers the /wallet-error redirect.
+const WalletPrewarm = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const { userWallet, ensureWallet } = useWallet();
+  useEffect(() => {
+    if (isLoading || !isAuthenticated || userWallet) return;
+    ensureWallet().catch(() => {});
+  }, [isLoading, isAuthenticated, userWallet, ensureWallet]);
+  return null;
 };
 
 const RootContent = () => {
@@ -129,6 +144,7 @@ const App = () => (
         <WalletRelayProvider>
           <WalletProvider>
             <AuthProvider>
+              <WalletPrewarm />
               <FilterProvider>
                 <CropThresholdProvider>
                   <RootContent />

@@ -4,7 +4,7 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { BrixDataPoint } from '../../types';
-import { MapPin, Calendar, CheckCircle, Edit, Trash2, Eye, MessageSquare, Clock, Lock, User, XCircle, Anchor } from 'lucide-react';
+import { MapPin, Calendar, CheckCircle, Edit, Trash2, Eye, MessageSquare, Clock, Lock, User, XCircle } from 'lucide-react';
 import { scoreBrix } from '../../lib/getBrixColor';
 import { formatCityState } from '../../lib/formatAddress';
 import { titleCase } from '../../lib/titleCase';
@@ -111,7 +111,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       {/* Cell 5 — Score */}
       <TableCell className="text-center py-3 px-4">
         <Badge
-          className={`${brixColorClass} text-white px-3 py-1 rounded-xl font-bold text-base shadow-sm`}
+          className={`${brixColorClass} text-white px-3 py-1 rounded-xl font-bold text-sm shadow-sm min-w-[4.5rem] justify-center`}
         >
           {displayScore}
         </Badge>
@@ -152,7 +152,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
                   disabled={isRetrying}
                   onClick={(e) => { e.stopPropagation(); onRetry(); }}
                 >
-                  <Anchor className={`w-5 h-5 ${isRetrying ? 'animate-pulse' : ''}`} />
+                  <Clock className={`w-5 h-5 ${isRetrying ? 'animate-pulse' : ''}`} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Retry timestamp</TooltipContent>

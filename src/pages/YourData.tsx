@@ -15,7 +15,7 @@ import { buildSubmissionPayload } from '@/lib/buildSubmissionPayload';
 import { useMySubmissionsCountQuery, useMySubmissionsCropIdsQuery, useMySubmissionsVenueIdsQuery, useMySubmissionsPageQuery } from '../hooks/useSubmissions';
 
 import SubmissionTableRow from '../components/common/SubmissionTableRow';
-import { ColumnHint } from '../components/common/StatusBadges';
+import { ColumnHint, ScoreHint } from '../components/common/StatusBadges';
 import MobileSubmissionCard from '../components/common/MobileSubmissionCard';
 import { BrixDataPoint } from '../types';
 import { useToast } from '../hooks/use-toast';
@@ -238,7 +238,7 @@ const YourData: React.FC = () => {
     return (
       <PageBackground className="min-h-screen">
         <Header />
-        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-20">
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-[var(--bottom-inset)]">
           <Card>
             <CardContent className="text-center py-12">
               <h2 className="text-2xl font-bold text-text-dark mb-2">Please Log In</h2>
@@ -260,7 +260,7 @@ const YourData: React.FC = () => {
     return (
       <PageBackground className="min-h-screen">
         <Header />
-        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-20 text-center">
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-[var(--bottom-inset)] text-center">
           <div className="flex items-center justify-center gap-2">
             <Loader2 className="w-5 h-5 text-green-mid animate-spin" />
             <p className="text-on-bg-body">Loading your submissions...</p>
@@ -274,7 +274,7 @@ const YourData: React.FC = () => {
     return (
       <PageBackground className="min-h-screen">
         <Header />
-        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-20 text-center">
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-[var(--bottom-inset)] text-center">
           <p className="text-red-600">Error: Failed to load your submissions.</p>
         </main>
       </PageBackground>
@@ -285,7 +285,7 @@ const YourData: React.FC = () => {
     <PageBackground className="min-h-screen">
       <Header />
 
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-20">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-[var(--bottom-inset)]">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-display font-bold text-on-bg-text">
@@ -404,7 +404,7 @@ const YourData: React.FC = () => {
                             {/* <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Variety</TableHead> */}
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Brand</TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Location</TableHead>
-                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">BRIX</TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center"><ScoreHint>Score</ScoreHint></TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Notes</TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
                               <ColumnHint help="Whether this reading is approved for public display. Most are approved automatically; outliers are reviewed by an admin.">Verified</ColumnHint>

@@ -146,7 +146,7 @@ export default function Admin() {
         </div>
 
         {/* Body on the calm canvas */}
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 pb-20">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 pb-[var(--bottom-inset)]">
           <TabsContent value="overview" className="mt-0">
             <AdminOverview onReviewPending={() => setActiveTab('submissions')} />
           </TabsContent>

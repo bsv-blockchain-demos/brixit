@@ -363,7 +363,7 @@ const Header = () => {
             </nav>
 
             {/* Account card pinned to bottom */}
-            <div className="px-4" style={{ paddingBottom: "calc(1rem + var(--safe-bottom))" }}>
+            <div className="px-4" style={{ paddingBottom: "calc(1rem + var(--bottom-inset))" }}>
               <div className="rounded-2xl" style={{ backgroundColor: "var(--menu-surface)" }}>
                 <div className="flex items-center gap-3 p-3">
                   <Avatar className="h-10 w-10">

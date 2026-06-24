@@ -762,7 +762,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   );
 
   const detailFooter = (
-    <div className="flex justify-between items-center pt-4 border-t border-hairline pb-[calc(1rem+var(--safe-bottom))]">
+    <div className="flex justify-between items-center pt-4 border-t border-hairline pb-[calc(1rem+var(--bottom-inset))]">
           {isEditing ? (
             <>
               <Button

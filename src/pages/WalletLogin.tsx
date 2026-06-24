@@ -562,7 +562,7 @@ export default function WalletLogin() {
         </section>
 
         {/* ═══ Section 6: Footer ═════════════════════════════════ */}
-        <footer className="py-5" style={{ backgroundColor: 'var(--green-fresh)' }}>
+        <footer className="py-5" style={{ backgroundColor: 'var(--green-fresh)', paddingBottom: 'calc(1.25rem + var(--bottom-inset))' }}>
           <div className="max-w-5xl mx-auto px-5 grid grid-cols-3 items-center">
             <img src="/logos/BRIXit-footer.svg" alt="BRIXit" className="h-6" />
             <nav className="flex items-center justify-center gap-6 text-sm text-on-bg-muted">

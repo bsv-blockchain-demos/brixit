@@ -409,7 +409,7 @@ const LeaderboardPage: React.FC = () => {
         </div>
       )}
       <Header />
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pb-20">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pb-[var(--bottom-inset)]">
         {/* Page identity, shown on both mobile and desktop. Refresh lives here
             (data freshness, not a filter) so it sits with the section, not the filters. */}
         <div className="mb-6 flex items-end justify-between gap-4">
