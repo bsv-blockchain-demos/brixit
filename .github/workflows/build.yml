@@ -11,6 +11,14 @@ on:
       - master
   workflow_dispatch:
 
+# Serialize builds of the same commit so a master push and a tag push (e.g. a
+# release) don't run concurrently and deadlock on the shared buildx (gha) cache.
+# Queue rather than cancel, so both :latest and the version tag get built; the
+# second run reuses the now-warm cache and finishes fast.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.sha }}
+  cancel-in-progress: false
+
 jobs:
   get_tag:
     runs-on: ubuntu-latest
