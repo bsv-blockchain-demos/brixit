@@ -4,7 +4,7 @@ import { CardContent, CardHeader, CardTitle } from "../ui/card";
 import { LeaderboardEntry } from "../../lib/fetchLeaderboards";
 import { computeNormalizedScore } from "../../lib/getBrixColor";
 import { ScoreBadge } from "../common/ScoreBadge";
-import { ScoreHint } from "../common/StatusBadges";
+import { ScoreHint, ColumnHint } from "../common/StatusBadges";
 import { formatUsername } from "../../lib/formatUsername";
 import { formatVenueLocation } from "../../lib/formatAddress";
 
@@ -56,7 +56,7 @@ function LeaderboardMobileList({
     <div>
       {data.length > 0 && (
         <div className="flex items-center gap-4 px-4 py-2 text-xs font-medium uppercase tracking-wider text-text-muted-brown bg-table-header border-b border-hairline">
-          <span className="shrink-0 w-[34px] text-center">Rank</span>
+          <span className="shrink-0 w-[34px] text-center"><ColumnHint help="Where this entry places on the leaderboard. Entries that are tied share the same rank, shown as (tie).">Rank</ColumnHint></span>
           <span className="flex-1">{labelKey === 'location' ? 'Store' : 'Name'}</span>
           <span className="shrink-0">{labelKey === 'user' ? 'Submissions' : <ScoreHint>Score</ScoreHint>}</span>
         </div>
@@ -178,7 +178,7 @@ export function LeaderboardCard({
             <>
             <div className="lb-desktop-only">
               <div className="grid grid-cols-[3.5rem_1fr_5.5rem] gap-x-6 text-xs font-medium text-text-muted-brown uppercase tracking-wider border-b border-hairline px-4 py-2 bg-table-header">
-                <span className="text-center">Rank</span>
+                <span className="text-center"><ColumnHint help="Where this entry places on the leaderboard. Entries that are tied share the same rank, shown as (tie).">Rank</ColumnHint></span>
                 <span className="text-left">
                   {labelKey === "location" ? "Store" : "Name"}
                 </span>

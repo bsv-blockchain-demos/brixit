@@ -334,3 +334,34 @@
     display: block;
   }
 }
+
+/* ── Brix guide bottom sheet: respect prefers-reduced-motion (no slide/fade) ── */
+@media (prefers-reduced-motion: reduce) {
+  [vaul-drawer],
+  [vaul-overlay] {
+    transition: none !important;
+  }
+}
+
+/* ── Active submission-step badge: gentle "alive" pulse (steel glow) ───────── */
+@keyframes brix-step-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--select-strong) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--select-strong) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--select-strong) 0%, transparent);
+  }
+}
+.brix-step-pulse {
+  animation: brix-step-pulse 2.2s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .brix-step-pulse {
+    /* Keep a static steel ring instead of pulsing. */
+    animation: none;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--select-strong) 35%, transparent);
+  }
+}

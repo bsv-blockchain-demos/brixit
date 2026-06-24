@@ -437,11 +437,11 @@ const LeaderboardPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-3">
               <LocationSelector value={location} onChange={setLocation} required={false} showAutoDetect={false} />
               <div>
-                <label className="block text-sm font-medium text-text-dark mb-1">Crop</label>
+                <label className="block text-sm font-medium leading-none text-text-dark mb-1">Crop</label>
                 <select
                   value={crop}
                   onChange={(e) => setCrop(e.target.value)}
-                  className="w-full rounded-lg border border-hairline bg-card text-text-dark text-sm px-2 py-2"
+                  className="w-full h-10 rounded-lg border border-hairline bg-card text-text-dark text-sm px-2"
                 >
                   <option value="">All crops</option>
                   {allCrops.map((c) => (
@@ -452,11 +452,11 @@ const LeaderboardPage: React.FC = () => {
                 </select>
               </div>
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-text-dark mb-1">Store</label>
+                <label className="block text-sm font-medium leading-none text-text-dark mb-1">Store</label>
                 <select
                   value={store}
                   onChange={(e) => setStore(e.target.value)}
-                  className="w-full rounded-lg border border-hairline bg-card text-text-dark text-sm px-2 py-2"
+                  className="w-full h-10 rounded-lg border border-hairline bg-card text-text-dark text-sm px-2"
                 >
                   <option value="">All stores</option>
                   {allStores.map((s) => (

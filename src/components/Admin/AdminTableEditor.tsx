@@ -212,7 +212,7 @@ export default function AdminTableEditor({
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
           <Input
@@ -242,6 +242,19 @@ export default function AdminTableEditor({
         >
           <Plus className="h-4 w-4" /> Add {singularTitle}
         </button>
+        <Select
+          value={String(pageSize)}
+          onValueChange={val => { setPageSize(Number(val)); setPage(0); }}
+        >
+          <SelectTrigger className="ml-auto h-10 w-[110px] shrink-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PAGE_SIZE_OPTIONS.map(n => (
+              <SelectItem key={n} value={String(n)}>Show {n}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Table — one surface, hairline rows, canvas header. Desktop table + optional mobile cards. */}
@@ -332,47 +345,32 @@ export default function AdminTableEditor({
         )}
       </div>
 
-      {/* Pagination / total */}
-      <div className="flex items-center justify-between text-sm text-text-mid">
-        <div className="flex items-center gap-3">
-          <Select
-            value={String(pageSize)}
-            onValueChange={val => { setPageSize(Number(val)); setPage(0); }}
-          >
-            <SelectTrigger className="h-8 w-[110px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PAGE_SIZE_OPTIONS.map(n => (
-                <SelectItem key={n} value={String(n)}>Show {n}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <span>
-            {data?.total ?? 0} total
-            {committedSearch && ` for "${committedSearch}"`}
-          </span>
-        </div>
+      {/* Total count + pagination (page indicator centered, matching the user data panel) */}
+      <div className="space-y-3">
+        <p className="text-sm text-text-mid">
+          {data?.total ?? 0} total
+          {committedSearch && ` for "${committedSearch}"`}
+        </p>
         {totalPages > 1 && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between">
             <Button
               variant="outline"
-              size="icon"
-              className="h-7 w-7"
+              size="sm"
+              className="border-hairline hover:bg-surface-canvas gap-1"
               onClick={() => setPage(p => p - 1)}
               disabled={page === 0}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3.5 w-3.5" /> Previous
             </Button>
-            <span>Page {page + 1} of {totalPages}</span>
+            <span className="text-sm text-muted-foreground">Page {page + 1} of {totalPages}</span>
             <Button
               variant="outline"
-              size="icon"
-              className="h-7 w-7"
+              size="sm"
+              className="border-hairline hover:bg-surface-canvas gap-1"
               onClick={() => setPage(p => p + 1)}
               disabled={page >= totalPages - 1}
             >
-              <ChevronRight className="h-4 w-4" />
+              Next <ChevronRight className="h-3.5 w-3.5" />
             </Button>
           </div>
         )}

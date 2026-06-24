@@ -4,6 +4,7 @@ import { ArrowLeft, Smartphone, KeyRound, ShieldCheck, Leaf, Fingerprint } from 
 import { AuthBackground } from '@/components/ui/AuthBackground';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BrixLogo } from '@/components/common/BrixLogo';
 import {
   Accordion,
   AccordionContent,
@@ -178,9 +179,7 @@ export default function Help() {
 
         {/* Header */}
         <div className="text-center">
-          <div className="w-12 h-12 bg-green-fresh rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
-            <span className="text-white font-bold text-2xl">B</span>
-          </div>
+          <BrixLogo height="5rem" color="white" className="mx-auto mb-4" />
           <h1 className="text-2xl font-display font-bold text-on-bg-text">How BRIX works</h1>
           <p className="text-on-bg-body text-sm mt-1">Everything you need to know to get started</p>
         </div>
@@ -242,7 +241,7 @@ export default function Help() {
         </Card>
 
         {/* On desktop */}
-        <p className="text-center text-xs text-text-muted pb-4">
+        <p className="text-center text-xs text-on-bg-muted pb-4">
           On a desktop? Choose <em>connect via mobile QR</em> on the login screen and scan the code with your Mycelia app.
         </p>
 
