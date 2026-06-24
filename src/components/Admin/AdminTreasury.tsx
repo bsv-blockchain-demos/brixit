@@ -531,8 +531,8 @@ export default function AdminTreasury() {
             <div className="flex items-center gap-2">
               <h3 className="font-display font-bold text-base text-text-dark">Pending Blockchain Records</h3>
               {pendingQ.data && pendingQ.data.total > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-score-average-bg text-score-average">
-                  <Clock className="w-3 h-3" /> {pendingQ.data.total} pending
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-badge-neutral-bg text-badge-neutral-text">
+                  <Stamp className="w-3 h-3" /> {pendingQ.data.total} pending
                 </span>
               )}
             </div>
@@ -665,7 +665,8 @@ export default function AdminTreasury() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs font-medium uppercase tracking-wider text-text-muted-brown border-y border-hairline bg-table-header">
-                  <th className="py-2 px-5">Status</th>
+                  <th className="py-2 px-5">Date</th>
+                  <th className="py-2 pr-3">Status</th>
                   <th className="py-2 pr-3">Labels</th>
                   <th className="py-2 pr-3">Description</th>
                   <th className="py-2 pr-3">Sats</th>
@@ -673,9 +674,18 @@ export default function AdminTreasury() {
                 </tr>
               </thead>
               <tbody>
-                {activityQ.data.actions.map((a) => (
+                {[...activityQ.data.actions]
+                  .sort((a, b) => {
+                    // Most recent first; actions with no matched date sink to the bottom.
+                    if (a.timestamp && b.timestamp) return b.timestamp.localeCompare(a.timestamp);
+                    if (a.timestamp) return -1;
+                    if (b.timestamp) return 1;
+                    return 0;
+                  })
+                  .map((a) => (
                   <tr key={a.txid} className="border-b border-hairline last:border-0">
-                    <td className="py-2.5 px-5">
+                    <td className="py-2.5 px-5 text-text-mid tabular-nums whitespace-nowrap">{fmtDate(a.timestamp)}</td>
+                    <td className="py-2.5 pr-3">
                       <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-surface-canvas text-text-mid border border-hairline capitalize">
                         {a.status}
                       </span>

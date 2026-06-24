@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useWallet } from '@/contexts/WalletContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,6 +36,18 @@ export default function WalletLogin() {
   const { userWallet, userPubKey, isConnecting, maxRetriesExceeded, retryCount, initializeWallet, resetWalletState } = useWallet();
   const { walletLogin, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // The landing page is designed light-only. Force light while it is mounted by
+  // removing the `.dark` class from <html>, restoring it on unmount. This is purely
+  // visual and does NOT change the user's saved theme preference.
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    const wasDark = root.classList.contains('dark');
+    if (wasDark) root.classList.remove('dark');
+    return () => {
+      if (wasDark) root.classList.add('dark');
+    };
+  }, []);
 
   const [certificateError, setCertificateError] = useState<string | null>(null);
   const [isCheckingCertificates, setIsCheckingCertificates] = useState(false);
@@ -250,6 +262,7 @@ export default function WalletLogin() {
                 }}
               />
               <nav className="hidden sm:flex items-center gap-6 text-sm text-on-bg-muted">
+                <a href="https://www.bionutrient.org/brix" target="_blank" rel="noopener noreferrer" className="hover:text-white/80 transition-colors">What is Brix?</a>
                 <button onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white/80 transition-colors">About</button>
                 <button onClick={() => navigate('/faq')} className="hover:text-white/80 transition-colors">FAQ</button>
                 <button onClick={() => navigate('/contact')} className="hover:text-white/80 transition-colors">Contact</button>
@@ -528,17 +541,17 @@ export default function WalletLogin() {
                 Don't have one yet? We recommend the{' '}
                 <button
                   onClick={() => navigate('/faq#mycelia')}
-                  className="font-semibold underline underline-offset-2 transition-colors"
+                  className="font-semibold transition-colors"
                   style={{ color: 'var(--text-mid)' }}
                   onMouseEnter={e => (e.currentTarget.style.color = 'var(--blue-deep)')}
                   onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-mid)')}
                 >Mycelia app</button>
-                {'. '}It's made to work together with BRIX and handles all the complexity for you.{' '}
+                {'.'}<br /><br />It's made to work together with BRIX and handles all the complexity for you.{' '}
                 <a
                   href="https://mycelia.life"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline underline-offset-2 transition-opacity hover:opacity-70"
+                  className="font-semibold transition-opacity hover:opacity-70"
                   style={{ color: 'var(--blue-mid)' }}
                 >
                   Install here
@@ -553,6 +566,7 @@ export default function WalletLogin() {
           <div className="max-w-5xl mx-auto px-5 grid grid-cols-3 items-center">
             <img src="/logos/BRIXit-footer.svg" alt="BRIXit" className="h-6" />
             <nav className="flex items-center justify-center gap-6 text-sm text-on-bg-muted">
+              <a href="https://www.bionutrient.org/brix" target="_blank" rel="noopener noreferrer" className="hover:text-white/80 transition-colors">What is Brix?</a>
               <button onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white/80 transition-colors">About</button>
               <button onClick={() => navigate('/faq')} className="hover:text-white/80 transition-colors">FAQ</button>
               <button onClick={() => navigate('/contact')} className="hover:text-white/80 transition-colors">Contact</button>

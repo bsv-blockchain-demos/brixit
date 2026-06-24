@@ -38,7 +38,15 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       className="border-hairline odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors cursor-pointer"
       onClick={() => onOpenModal(submission)} // Make the whole row clickable
     >
-      {/* Cell 1 — Crop */}
+      {/* Date */}
+      <TableCell className="py-3 px-4 whitespace-nowrap">
+        <div className="flex items-center space-x-1 text-sm text-text-mid">
+          <Calendar className="w-3.5 h-3.5 text-text-muted-brown" />
+          <span>{formatHumanDate(submission.submittedAt)}</span>
+        </div>
+      </TableCell>
+
+      {/* Crop */}
       <TableCell className="py-3 px-4">
         <div>
           <span className="text-sm text-text-mid">{titleCase(submission.cropLabel ?? submission.cropType)}</span>
@@ -121,15 +129,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
         )}
       </TableCell>
 
-      {/* Cell 7 — Date */}
-      <TableCell className="py-3 px-4 whitespace-nowrap">
-        <div className="flex items-center space-x-1 text-sm text-text-mid">
-          <Calendar className="w-3.5 h-3.5 text-text-muted-brown" />
-          <span>{formatHumanDate(submission.submittedAt)}</span>
-        </div>
-      </TableCell>
-
-      {/* Cell 8 — Verified? */}
+      {/* Verified? */}
       <TableCell className="text-center py-3 px-2">
         <VerifiedBadge verified={!!submission.verified} />
       </TableCell>

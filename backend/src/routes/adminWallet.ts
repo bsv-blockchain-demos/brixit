@@ -350,9 +350,31 @@ router.get('/activity', async (req: AuthenticatedRequest, res: Response) => {
       }),
     );
 
+    // Wallet actions carry no timestamp, so we surface a real datetime by
+    // matching each action's txid to the anchoring submission's outpoint
+    // ('txid.vout') and reading its assessmentDate. Top-ups and hard-deleted
+    // submissions have no matching row, so their timestamp stays null.
+    const actions = result.actions ?? [];
+    const txids = [...new Set(actions.map((a: any) => a.txid).filter(Boolean))] as string[];
+    const tsByTxid = new Map<string, string>();
+    if (txids.length) {
+      const subs = await prisma.submission.findMany({
+        where: { OR: txids.map((t) => ({ outpoint: { startsWith: t } })) },
+        select: { outpoint: true, assessmentDate: true },
+      });
+      for (const s of subs) {
+        if (!s.outpoint || !s.assessmentDate) continue;
+        const tx = s.outpoint.split('.')[0];
+        const iso = s.assessmentDate.toISOString();
+        // Siblings in a session share a txid; keep the most recent date.
+        const existing = tsByTxid.get(tx);
+        if (!existing || iso > existing) tsByTxid.set(tx, iso);
+      }
+    }
+
     res.json({
       totalActions: result.totalActions,
-      actions: result.actions,
+      actions: actions.map((a: any) => ({ ...a, timestamp: tsByTxid.get(a.txid) ?? null })),
     });
   } catch (err: any) {
     console.error('[admin-wallet] /activity failed:', err);

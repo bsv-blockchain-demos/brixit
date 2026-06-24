@@ -93,8 +93,8 @@ export function BlockchainBadge({ secured }: { secured: boolean }) {
     <HintPopover
       help={
         secured
-          ? 'Recorded on the BSV blockchain, giving this reading a permanent, tamper-evident timestamp.'
-          : 'Not written to the BSV blockchain yet. The on-chain record is still pending.'
+          ? 'Timestamped by anchoring this reading to the BSV blockchain, giving it a permanent, tamper-evident record.'
+          : 'Not yet anchored to the BSV blockchain. Anchoring is still pending, so the on-chain timestamp is not final.'
       }
     >
       <span

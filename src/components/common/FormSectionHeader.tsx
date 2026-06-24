@@ -1,14 +1,22 @@
-export function FormSectionHeader({ title, required }: { title: string; required?: boolean }) {
+export function FormSectionHeader({ title, required, description }: { title: string; required?: boolean; description?: string }) {
   return (
-    <div className="flex items-center gap-3 mb-6">
-      <h3 className="text-xl font-display font-bold leading-none" style={{ color: 'var(--text-dark)' }}>{title}</h3>
-      {required && (
-        <span
-          className="text-sm font-medium leading-none"
-          style={{ color: 'var(--green-mid)' }}
-        >
-          Required
-        </span>
+    <div className="mb-6">
+      <div className="flex items-center gap-3">
+        <h3 className="text-xl font-display font-bold leading-none" style={{ color: 'var(--text-dark)' }}>{title}</h3>
+        {required && (
+          <span
+            aria-label="Required"
+            className="text-xl font-bold leading-none"
+            style={{ color: 'var(--action-danger)' }}
+          >
+            *
+          </span>
+        )}
+      </div>
+      {description && (
+        <p className="text-sm mt-1.5 leading-snug" style={{ color: 'var(--text-mid)' }}>
+          {description}
+        </p>
       )}
     </div>
   );

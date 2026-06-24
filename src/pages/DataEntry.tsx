@@ -30,6 +30,7 @@ import VenuePrompt, { type VenueChoice } from '../components/common/VenuePrompt'
 import { useStaticData } from '../hooks/useStaticData';
 import ReadingCard, { type CropReading } from '../components/data-entry/ReadingCard';
 import { FormSectionHeader } from '../components/common/FormSectionHeader';
+import { BrixGuideProvider, BrixGuideBanner } from '../components/data-entry/brix-guide';
 
 interface DetailedLocationInfo {
   name: string;
@@ -452,6 +453,7 @@ const DataEntry = () => {
   const allBrands = [...brands, ...pendingBrands.map(name => ({ name, label: name }))];
 
   return (
+    <BrixGuideProvider>
     <PageBackground className="min-h-screen">
       <Header />
       <main
@@ -492,7 +494,7 @@ const DataEntry = () => {
                 <div className="flex items-center gap-3">
                   {/* Step 1 — Shop */}
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step > 1 ? 'bg-select-strong text-select-strong-fg' : 'bg-select-strong text-select-strong-fg ring-4 ring-blue-pale'}`}>
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step > 1 ? 'bg-select-strong text-select-strong-fg' : 'bg-select-strong text-select-strong-fg brix-step-pulse'}`}>
                       {step > 1 ? <Check className="w-4 h-4" strokeWidth={3} /> : '1'}
                     </span>
                     <span className={`text-sm ${step === 1 ? 'font-semibold text-text-dark' : 'font-medium text-text-mid'}`}>Shop</span>
@@ -506,19 +508,21 @@ const DataEntry = () => {
                   </div>
                   {/* Step 2 — Crops */}
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step >= 2 ? 'bg-select-strong text-select-strong-fg ring-4 ring-blue-pale' : 'border-2 border-hairline bg-card text-text-muted-brown'}`}>
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step >= 2 ? 'bg-select-strong text-select-strong-fg brix-step-pulse' : 'border-2 border-hairline bg-card text-text-muted-brown'}`}>
                       2
                     </span>
                     <span className={`text-sm ${step === 2 ? 'font-semibold text-text-dark' : 'font-medium text-text-muted-brown'}`}>Crops</span>
                   </div>
                 </div>
               </div>
+              {/* 30-second Brix guide entry point, shown on both steps */}
+              <BrixGuideBanner className="mb-6" />
               <motion.div className="space-y-10 sm:space-y-12" {...stagger}>
 
                 {/* ── Section 1: Session context (mobile Step 1) ── */}
                 <motion.div {...staggerChild} className={step !== 1 ? 'hidden' : ''}>
                   <div>
-                    <FormSectionHeader title="Where did you shop?" required />
+                    <FormSectionHeader title="Where did you shop?" required description="Pick the store or market this trip's produce came from. One shop per submission." />
 
                     <div className="mb-6">
                       {/* Location */}
@@ -620,7 +624,7 @@ const DataEntry = () => {
                           value={session.purchaseDate}
                           onChange={e => setSessionField('purchaseDate', e.target.value)}
                           max={new Date().toISOString().split('T')[0]}
-                          className={`w-full border-2 rounded-xl px-4 py-3 bg-card transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-light focus-visible:ring-offset-2 ${errors.purchaseDate ? 'border-destructive bg-red-50' : 'border-input'}`}
+                          className={`w-full border-2 rounded-xl px-4 py-3 bg-card transition-colors focus:outline-none ${errors.purchaseDate ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh'}`}
                           style={{ color: 'var(--text-dark)' }}
                         />
                         {errors.purchaseDate && (
@@ -645,10 +649,10 @@ const DataEntry = () => {
                       <MapPin className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />
                       {session.posType || 'Shop'}{session.purchaseDate ? ` · ${session.purchaseDate}` : ''}
                     </span>
-                    <button type="button" onClick={() => setStep(1)} className="shrink-0 font-medium text-action-primary hover:text-action-primary-hover">Edit</button>
+                    <button type="button" onClick={() => setStep(1)} className="shrink-0 font-medium text-green-fresh hover:text-green-mid">Change</button>
                   </div>
                   <div>
-                    <FormSectionHeader title="What did you measure?" required />
+                    <FormSectionHeader title="What did you measure?" required description="Add every crop you took a reading for on this trip, a card each. You can add as many as you like." />
                     {errors.readings_global && (
                       <p className="text-destructive text-sm mb-4 flex items-center gap-1">
                         <X className="w-4 h-4" />{errors.readings_global}
@@ -710,7 +714,7 @@ const DataEntry = () => {
                         value={session.measurementDate}
                         onChange={e => setSessionField('measurementDate', e.target.value)}
                         max={new Date().toISOString().split('T')[0]}
-                        className={`w-full border-2 rounded-xl px-4 py-3 bg-card transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-light focus-visible:ring-offset-2 ${errors.measurementDate ? 'border-destructive bg-red-50' : 'border-input'}`}
+                        className={`w-full border-2 rounded-xl px-4 py-3 bg-card transition-colors focus:outline-none ${errors.measurementDate ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh'}`}
                         style={{ color: 'var(--text-dark)' }}
                       />
                       {errors.measurementDate && (
@@ -797,6 +801,7 @@ const DataEntry = () => {
         </div>
       </div>
     </PageBackground>
+    </BrixGuideProvider>
   );
 };
 

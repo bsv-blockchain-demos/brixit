@@ -87,8 +87,8 @@ const Profile = () => {
 
   const handleLocationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!location.country || !location.state || !location.city) {
-      setFormErrors({ location: 'Please complete all fields' });
+    if (!location.country) {
+      setFormErrors({ location: 'Please select a country.' });
       return;
     }
     setLoading(prev => ({ ...prev, location: true }));
