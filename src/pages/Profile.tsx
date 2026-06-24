@@ -31,7 +31,7 @@ const getRank = (submissions: number) => {
 };
 
 const Profile = () => {
-  const { user, updateUsername, updateLocation, authError } = useAuth();
+  const { user, updateUsername, updateLocation } = useAuth();
   const [displayName, setDisplayName] = useState(user?.display_name || '');
   const [copied, setCopied] = useState(false);
 
@@ -81,7 +81,7 @@ const Profile = () => {
     if (success) {
       toast({ title: 'Name updated!' });
     } else {
-      setFormErrors({ username: authError || 'Failed to update name.' });
+      setFormErrors({ username: 'Could not save your name. Please try again.' });
     }
   };
 
@@ -101,7 +101,7 @@ const Profile = () => {
     if (success) {
       toast({ title: 'Location updated!' });
     } else {
-      setFormErrors({ location: authError || 'Failed to update location.' });
+      setFormErrors({ location: 'Could not save your location. Please try again.' });
     }
   };
 

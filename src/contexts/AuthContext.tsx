@@ -191,8 +191,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (refreshedProfile) setUser(refreshedProfile);
       return true;
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unexpected error updating username.";
-      setAuthError(message);
+      // Surface failures as a local form error in the caller, NOT the global
+      // authError — that makes ProtectedRoute eject the user to the login page
+      // on any transient write failure.
+      console.error("[updateUsername]", err instanceof Error ? err.message : err);
       return false;
     }
   };
@@ -213,8 +215,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (refreshedProfile) setUser(refreshedProfile);
       return true;
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unexpected error updating location.";
-      setAuthError(message);
+      console.error("[updateLocation]", err instanceof Error ? err.message : err);
       return false;
     }
   };
