@@ -253,6 +253,12 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
               <TableHeader>
                 <TableRow className="border-hairline">
                   <TableHead
+                    className="text-xs text-text-muted-brown uppercase tracking-wider whitespace-nowrap cursor-pointer"
+                    onClick={() => handleSort('submittedAt')}
+                  >
+                    Date {sortBy === 'submittedAt' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </TableHead>
+                  <TableHead
                     className="text-xs text-text-muted-brown uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('cropType')}
                   >
@@ -275,17 +281,11 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
                     <ScoreHint>Score</ScoreHint> {sortBy === 'brixLevel' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Notes</TableHead>
-                  <TableHead
-                    className="text-xs text-text-muted-brown uppercase tracking-wider whitespace-nowrap cursor-pointer"
-                    onClick={() => handleSort('submittedAt')}
-                  >
-                    Date {sortBy === 'submittedAt' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </TableHead>
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
                     <ColumnHint help="Whether this reading is approved for public display. Most are approved automatically; outliers are reviewed by an admin.">Verified</ColumnHint>
                   </TableHead>
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
-                    <ColumnHint help="Whether this reading is recorded on the BSV blockchain. 'Timestamped' means it has a permanent, tamper-evident record; 'Pending' means that record is still in progress.">Blockchain</ColumnHint>
+                    <ColumnHint help="Whether this reading is anchored to the BSV blockchain. 'Timestamped' means it has been anchored, giving a permanent, tamper-evident record; 'Pending' means anchoring is still in progress.">Blockchain</ColumnHint>
                   </TableHead>
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Actions</TableHead>
                 </TableRow>

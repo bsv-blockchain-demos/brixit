@@ -45,6 +45,21 @@ const server = http.createServer(app);
 
 // --- Global middleware ---
 app.use(corsMiddleware);
+// HTTP method-override: the proxy in front of the API rejects PUT/DELETE, and
+// its WAF also blocks the well-known override headers (X-HTTP-Method-Override,
+// X-Method-Override, X-HTTP-Method). A non-standard header (X-Brixit-Method)
+// passes through, so the client tunnels PUT/DELETE through POST + that header;
+// rewrite the method here, before routing, so existing handlers run unchanged.
+app.use((req, _res, next) => {
+  const override = req.headers['x-brixit-method'];
+  if (req.method === 'POST' && typeof override === 'string') {
+    const method = override.toUpperCase();
+    if (method === 'PUT' || method === 'DELETE' || method === 'PATCH') {
+      req.method = method;
+    }
+  }
+  next();
+});
 app.use(express.json({ limit: '10mb' }));
 app.use(requestLogger);
 

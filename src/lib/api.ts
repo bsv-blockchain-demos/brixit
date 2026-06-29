@@ -127,10 +127,14 @@ export async function apiPost<T = unknown>(path: string, body?: unknown, options
  * PUT helper.
  */
 export async function apiPut<T = unknown>(path: string, body?: unknown, options: FetchOptions = {}): Promise<T> {
+  // Tunnel PUT through POST + override header: some proxies in front of the API
+  // reject PUT/DELETE outright. The backend rewrites the method before routing.
+  const { headers: optHeaders, ...rest } = options;
   const res = await apiFetch(path, {
-    method: 'PUT',
+    ...rest,
+    method: 'POST',
     body: body ? JSON.stringify(body) : undefined,
-    ...options,
+    headers: { ...(optHeaders as Record<string, string> | undefined), 'X-Brixit-Method': 'PUT' },
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -143,7 +147,13 @@ export async function apiPut<T = unknown>(path: string, body?: unknown, options:
  * DELETE helper.
  */
 export async function apiDelete<T = unknown>(path: string, options: FetchOptions = {}): Promise<T> {
-  const res = await apiFetch(path, { method: 'DELETE', ...options });
+  // Tunnel DELETE through POST + override header (see apiPut).
+  const { headers: optHeaders, ...rest } = options;
+  const res = await apiFetch(path, {
+    ...rest,
+    method: 'POST',
+    headers: { ...(optHeaders as Record<string, string> | undefined), 'X-Brixit-Method': 'DELETE' },
+  });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || `API error ${res.status}`);

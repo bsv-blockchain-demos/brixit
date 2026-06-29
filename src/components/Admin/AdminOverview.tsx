@@ -177,8 +177,8 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
           index={3}
           label="Pending Blockchain Records"
           icon={Stamp}
-          accentBg={anchors ? 'bg-gold' : 'bg-green-mid'}
-          accentGhost={anchors ? 'text-gold' : 'text-green-mid'}
+          accentBg={anchors ? 'bg-badge-neutral-text' : 'bg-green-mid'}
+          accentGhost={anchors ? 'text-badge-neutral-text' : 'text-green-mid'}
           value={isLoading ? '-' : anchors}
         >
           <p className="text-xs text-text-mid mt-2">

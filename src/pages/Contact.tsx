@@ -4,12 +4,13 @@ import { ArrowLeft, Mail, MessageSquare, Users } from 'lucide-react';
 import { AuthBackground } from '@/components/ui/AuthBackground';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BrixLogo } from '@/components/common/BrixLogo';
 
 const channels = [
   {
     icon: Mail,
     title: 'Email',
-    body: 'For general questions, partnership inquiries, or support requests, reach us at hello@brix.earth. We aim to respond within two business days.',
+    body: 'For general questions, partnership inquiries, or support requests, reach us at admin@bionutrient.org. We aim to respond within two business days.',
   },
   {
     icon: MessageSquare,
@@ -28,7 +29,7 @@ export default function Contact() {
 
   return (
     <AuthBackground>
-      <div className="w-full max-w-xl mx-auto space-y-6 py-8 pb-20 self-start">
+      <div className="w-full max-w-xl mx-auto space-y-6 pt-8 self-start">
 
         {/* Back */}
         <Button
@@ -42,9 +43,7 @@ export default function Contact() {
 
         {/* Header */}
         <div className="text-center">
-          <div className="w-12 h-12 bg-green-fresh rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
-            <Mail className="w-6 h-6 text-white" />
-          </div>
+          <BrixLogo height="5rem" color="white" className="mx-auto mb-4" />
           <h1 className="text-2xl font-display font-bold text-on-bg-text">Get in touch</h1>
           <p className="text-on-bg-body text-sm mt-1">We would love to hear from you</p>
         </div>
@@ -64,7 +63,7 @@ export default function Contact() {
           </Card>
         ))}
 
-        <p className="text-center text-xs text-text-muted pb-4">
+        <p className="text-center text-xs text-on-bg-muted pb-4">
           BRIX is an open community project. All feedback shapes what we build next.
         </p>
 

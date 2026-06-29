@@ -12,6 +12,13 @@ type WalletContextType = {
   maxRetriesExceeded: boolean;
   retryCount: number;
   initializeWallet: () => Promise<void>;
+  /**
+   * Acquire the wallet on demand for an authenticated session that has no live
+   * handle (cookie-restored session, or the iOS webview was reloaded). Returns
+   * the existing handle if present, otherwise acquires one. Throws on failure —
+   * never navigates to /wallet-error.
+   */
+  ensureWallet: () => Promise<{ wallet: WalletClient; pubKey: string }>;
   resetWalletState: () => void;
   /** Inject a relay wallet (mobile QR flow) as the active wallet. */
   setRelayWallet: (wallet: WalletClient, pubKey: string) => void;
@@ -32,8 +39,25 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const isInitializingRef = useRef(false);
   const hasAutoInitialized = useRef(false);
   const relaySourceRef = useRef(false); // true when userWallet was injected from relay
+  const ensurePromiseRef = useRef<Promise<{ wallet: WalletClient; pubKey: string }> | null>(null);
 
   const navigate = useNavigate();
+
+  // Acquire + validate the in-app wallet (Mycelia substrate / desktop). Sets the
+  // live handles in state and returns them. No retry/backoff and — crucially — NO
+  // navigation side-effect, so callers (e.g. ensureWallet) decide how to handle
+  // failure instead of the user being ejected to /wallet-error.
+  const acquireWallet = useCallback(async (): Promise<{ wallet: WalletClient; pubKey: string }> => {
+    const newWallet = new WalletClient('auto');
+    const isConnected = await newWallet.isAuthenticated();
+    if (!isConnected) {
+      throw new Error('Wallet not authenticated');
+    }
+    const { publicKey } = await newWallet.getPublicKey({ identityKey: true });
+    setUserWallet(newWallet);
+    setUserPubKey(publicKey);
+    return { wallet: newWallet, pubKey: publicKey };
+  }, []);
 
   const initializeWallet = useCallback(async () => {
     if (isInitializingRef.current || maxRetriesExceededRef.current) return;
@@ -42,17 +66,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setIsConnecting(true);
 
     try {
-      const newWallet = new WalletClient('auto');
-      const isConnected = await newWallet.isAuthenticated();
-
-      if (!isConnected) {
-        throw new Error('Wallet not authenticated');
-      }
-
-      const { publicKey } = await newWallet.getPublicKey({ identityKey: true });
-
-      setUserWallet(newWallet);
-      setUserPubKey(publicKey);
+      await acquireWallet();
       retryCountRef.current = 0;
       setRetryCount(0);
       setIsConnecting(false);
@@ -87,7 +101,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setIsConnecting(false);
       }
     }
-  }, [navigate]); // navigate is the only external dep; retry state tracked via refs
+  }, [navigate, acquireWallet]); // retry state tracked via refs
 
   const setRelayWallet = useCallback((wallet: WalletClient, pubKey: string) => {
     // Cancel any in-flight initializeWallet retry
@@ -106,6 +120,29 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setUserWallet(wallet);
     setUserPubKey(pubKey);
   }, []);
+
+  const ensureWallet = useCallback(async (): Promise<{ wallet: WalletClient; pubKey: string }> => {
+    // Already have a live handle (relay- or auto-sourced) — reuse it as-is.
+    if (userWallet && userPubKey) {
+      return { wallet: userWallet, pubKey: userPubKey };
+    }
+    // Coalesce concurrent callers (e.g. the silent pre-warm and a submit firing
+    // together) onto a single acquire so we don't spawn two wallet clients.
+    if (ensurePromiseRef.current) {
+      return ensurePromiseRef.current;
+    }
+    setIsConnecting(true);
+    const p = (async () => {
+      try {
+        return await acquireWallet();
+      } finally {
+        ensurePromiseRef.current = null;
+        setIsConnecting(false);
+      }
+    })();
+    ensurePromiseRef.current = p;
+    return p;
+  }, [userWallet, userPubKey, acquireWallet]);
 
   const resetWalletState = useCallback(() => {
     retryCountRef.current = 0;
@@ -141,6 +178,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       maxRetriesExceeded,
       retryCount,
       initializeWallet,
+      ensureWallet,
       resetWalletState,
       setRelayWallet
     }}>

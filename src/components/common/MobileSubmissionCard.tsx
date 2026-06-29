@@ -4,7 +4,7 @@ import { gradeBrix } from '../../lib/getBrixColor';
 import { titleCase } from '../../lib/titleCase';
 import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
 import { formatHumanDate } from '../../lib/formatDate';
-import { CheckCircle, Clock, MapPin, User, MoreVertical, Edit, Trash2, Anchor } from 'lucide-react';
+import { CheckCircle, Clock, MapPin, User, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import {
   DropdownMenu,
@@ -60,7 +60,7 @@ const MobileSubmissionCard: React.FC<{
                     disabled={isRetrying}
                     onClick={(e) => { e.stopPropagation(); onRetry(); }}
                   >
-                    <Anchor className="w-4 h-4 mr-2" />
+                    <Clock className="w-4 h-4 mr-2" />
                     Retry timestamp
                   </DropdownMenuItem>
                 )}
@@ -85,7 +85,7 @@ const MobileSubmissionCard: React.FC<{
             </DropdownMenu>
           )}
           <Badge
-            className={`${brixColorClass} text-white px-3 py-1 rounded-xl font-semibold text-sm shadow-sm whitespace-nowrap`}
+            className={`${brixColorClass} text-white px-3 py-1 rounded-xl font-bold text-sm shadow-sm min-w-[4.5rem] justify-center`}
           >
             {quality}
           </Badge>

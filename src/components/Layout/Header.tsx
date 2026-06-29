@@ -245,12 +245,6 @@ const Header = () => {
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <div className="px-2 py-1.5 flex items-center gap-3">
-                    <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Privacy</a>
-                    <span className="text-muted-foreground/40 text-xs">·</span>
-                    <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Terms</a>
-                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
@@ -369,7 +363,7 @@ const Header = () => {
             </nav>
 
             {/* Account card pinned to bottom */}
-            <div className="px-4" style={{ paddingBottom: "calc(1rem + var(--safe-bottom))" }}>
+            <div className="px-4" style={{ paddingBottom: "calc(1rem + var(--bottom-inset))" }}>
               <div className="rounded-2xl" style={{ backgroundColor: "var(--menu-surface)" }}>
                 <div className="flex items-center gap-3 p-3">
                   <Avatar className="h-10 w-10">

@@ -38,7 +38,15 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       className="border-hairline odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors cursor-pointer"
       onClick={() => onOpenModal(submission)} // Make the whole row clickable
     >
-      {/* Cell 1 — Crop */}
+      {/* Date */}
+      <TableCell className="py-3 px-4 whitespace-nowrap">
+        <div className="flex items-center space-x-1 text-sm text-text-mid">
+          <Calendar className="w-3.5 h-3.5 text-text-muted-brown" />
+          <span>{formatHumanDate(submission.submittedAt)}</span>
+        </div>
+      </TableCell>
+
+      {/* Crop */}
       <TableCell className="py-3 px-4">
         <div>
           <span className="text-sm text-text-mid">{titleCase(submission.cropLabel ?? submission.cropType)}</span>
@@ -103,7 +111,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       {/* Cell 5 — Score */}
       <TableCell className="text-center py-3 px-4">
         <Badge
-          className={`${brixColorClass} text-white px-3 py-1 rounded-xl font-semibold text-sm shadow-sm whitespace-nowrap`}
+          className={`${brixColorClass} text-white px-3 py-1 rounded-xl font-bold text-sm shadow-sm min-w-[4.5rem] justify-center`}
         >
           {quality}
         </Badge>
@@ -121,15 +129,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
         )}
       </TableCell>
 
-      {/* Cell 7 — Date */}
-      <TableCell className="py-3 px-4 whitespace-nowrap">
-        <div className="flex items-center space-x-1 text-sm text-text-mid">
-          <Calendar className="w-3.5 h-3.5 text-text-muted-brown" />
-          <span>{formatHumanDate(submission.submittedAt)}</span>
-        </div>
-      </TableCell>
-
-      {/* Cell 8 — Verified? */}
+      {/* Verified? */}
       <TableCell className="text-center py-3 px-2">
         <VerifiedBadge verified={!!submission.verified} />
       </TableCell>
@@ -152,7 +152,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
                   disabled={isRetrying}
                   onClick={(e) => { e.stopPropagation(); onRetry(); }}
                 >
-                  <Anchor className={`w-5 h-5 ${isRetrying ? 'animate-pulse' : ''}`} />
+                  <Clock className={`w-5 h-5 ${isRetrying ? 'animate-pulse' : ''}`} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Retry timestamp</TooltipContent>

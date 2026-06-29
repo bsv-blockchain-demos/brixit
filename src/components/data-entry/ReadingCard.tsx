@@ -9,6 +9,7 @@ import ComboBoxAddable from '../ui/combo-box-addable';
 import Combobox from '../ui/combo-box';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
 import { gradeBrix } from '../../lib/getBrixColor';
+import { BrixGuideInlineTrigger } from './brix-guide';
 import { titleCase } from '../../lib/titleCase';
 
 export interface CropReading {
@@ -151,13 +152,16 @@ const ReadingCard: React.FC<{
 
               {/* BRIX */}
               <div>
-                <Label
-                  className="flex items-center gap-1 mb-2 text-xs font-semibold"
-                  style={{ color: 'var(--text-mid)' }}
-                >
-                  <Droplets className="w-3.5 h-3.5" style={{ color: tierColor }} />
-                  BRIX Reading <span className="text-destructive ml-0.5">*</span>
-                </Label>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <Label
+                    className="flex items-center gap-1 text-xs font-semibold"
+                    style={{ color: 'var(--text-mid)' }}
+                  >
+                    <Droplets className="w-3.5 h-3.5" style={{ color: tierColor }} />
+                    BRIX Reading <span className="text-destructive ml-0.5">*</span>
+                  </Label>
+                  <BrixGuideInlineTrigger />
+                </div>
                 <div className="flex items-center gap-4">
                   <Input
                     type="number"
@@ -206,7 +210,7 @@ const ReadingCard: React.FC<{
                   onChange={(v) => onChange(reading.id, 'notes', v)}
                   max={500}
                   rows={2}
-                  className={`w-full border-2 rounded-xl px-3 py-2 text-sm transition-all hover:border-blue-light focus:outline-none focus:ring-4 focus:ring-blue-pale ${errors[`reading_${reading.id}_notes`] ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh bg-card'}`}
+                  className={`w-full border-2 rounded-xl px-3 py-2 text-sm transition-all focus:outline-none ${errors[`reading_${reading.id}_notes`] ? 'border-destructive bg-red-50' : 'border-input hover:border-green-fresh focus:border-green-fresh bg-card'}`}
                   style={{ color: 'var(--text-dark)' }}
                 />
                 {errors[`reading_${reading.id}_notes`] && (

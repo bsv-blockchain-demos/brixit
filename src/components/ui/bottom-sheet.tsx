@@ -45,7 +45,7 @@ export function BottomSheet({
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-4 pb-[calc(1rem_+_var(--safe-bottom))]">{children}</div>
+          <div className="flex-1 overflow-y-auto p-4 pb-[calc(1rem_+_var(--bottom-inset))]">{children}</div>
         </Sheet.Content>
       </Sheet.Portal>
     </Sheet.Root>

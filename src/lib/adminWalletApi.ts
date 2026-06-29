@@ -48,6 +48,12 @@ export interface WalletAction {
   version: number;
   lockTime: number;
   outputs?: WalletActionOutput[];
+  /**
+   * ISO timestamp from the matching submission's assessmentDate, joined by
+   * outpoint on the backend. Null for actions with no matching submission
+   * (e.g. top-ups, hard-deleted submissions).
+   */
+  timestamp?: string | null;
 }
 
 export interface WalletActivity {

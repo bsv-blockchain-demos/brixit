@@ -31,7 +31,7 @@ const getRank = (submissions: number) => {
 };
 
 const Profile = () => {
-  const { user, updateUsername, updateLocation, authError } = useAuth();
+  const { user, updateUsername, updateLocation } = useAuth();
   const [displayName, setDisplayName] = useState(user?.display_name || '');
   const [copied, setCopied] = useState(false);
 
@@ -81,14 +81,14 @@ const Profile = () => {
     if (success) {
       toast({ title: 'Name updated!' });
     } else {
-      setFormErrors({ username: authError || 'Failed to update name.' });
+      setFormErrors({ username: 'Could not save your name. Please try again.' });
     }
   };
 
   const handleLocationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!location.country || !location.state || !location.city) {
-      setFormErrors({ location: 'Please complete all fields' });
+    if (!location.country) {
+      setFormErrors({ location: 'Please select a country.' });
       return;
     }
     setLoading(prev => ({ ...prev, location: true }));
@@ -101,7 +101,7 @@ const Profile = () => {
     if (success) {
       toast({ title: 'Location updated!' });
     } else {
-      setFormErrors({ location: authError || 'Failed to update location.' });
+      setFormErrors({ location: 'Could not save your location. Please try again.' });
     }
   };
 
@@ -119,7 +119,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-surface-canvas">
       <Header />
-      <div className="pt-6 px-4 sm:px-6 lg:px-8" style={{ paddingBottom: 'calc(2rem + var(--safe-bottom))' }}>
+      <div className="pt-6 px-4 sm:px-6 lg:px-8" style={{ paddingBottom: 'calc(2rem + var(--bottom-inset))' }}>
         <div className="max-w-3xl mx-auto space-y-4">
           {/* Back + page title */}
           <div className="flex items-center gap-1">

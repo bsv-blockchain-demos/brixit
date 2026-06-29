@@ -15,6 +15,7 @@ import {
   CheckCircle,
   AlertCircle,
   Ban,
+  Trash2,
   Image as ImageIcon,
   Loader2,
   X,
@@ -714,7 +715,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-green-mid hover:text-green-fresh font-mono text-xs min-w-0"
+                          className="inline-flex items-center gap-1 text-blue-mid hover:text-blue-deep font-mono text-xs min-w-0"
                           title={`View transaction on WhatsOnChain: ${txid}`}
                         >
                           <span className="truncate">{txid.slice(0, 10)}…{txid.slice(-8)}</span>
@@ -765,7 +766,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   );
 
   const detailFooter = (
-    <div className="flex justify-between items-center pt-4 border-t border-hairline pb-[calc(1rem+var(--safe-bottom))]">
+    <div className="flex justify-between items-center pt-4 border-t border-hairline pb-[calc(1rem+var(--bottom-inset))]">
           {isEditing ? (
             <>
               <Button
@@ -800,7 +801,8 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     <Ban className="w-4 h-4 mr-2" />
                     {rejecting ? 'Rejecting...' : 'Reject'}
                   </Button>
-                  <Button variant="destructive" onClick={handleDelete} disabled={isDeleting || verifying || rejecting} className="h-auto py-3 px-6 text-sm font-medium rounded-xl">
+                  <Button variant="outline" onClick={handleDelete} disabled={isDeleting || verifying || rejecting} className="h-auto py-3 px-6 text-sm font-medium rounded-xl border-hairline text-action-danger hover:bg-score-poor-bg">
+                    <Trash2 className="w-4 h-4 mr-2" />
                     {isDeleting ? 'Deleting...' : 'Delete'}
                   </Button>
                 </>
@@ -814,7 +816,8 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                   >
                     {verifying ? 'Working...' : 'Unverify'}
                   </Button>
-                  <Button variant="destructive" onClick={handleDelete} disabled={isDeleting || verifying} className="h-auto py-3 px-6 text-sm font-medium rounded-xl">
+                  <Button variant="outline" onClick={handleDelete} disabled={isDeleting || verifying} className="h-auto py-3 px-6 text-sm font-medium rounded-xl border-hairline text-action-danger hover:bg-score-poor-bg">
+                    <Trash2 className="w-4 h-4 mr-2" />
                     {isDeleting ? 'Deleting...' : 'Delete'}
                   </Button>
                 </>
@@ -822,7 +825,8 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
             </div>
           ) : (
             canDelete && (
-              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting} className="h-auto py-3 px-6 text-sm font-medium rounded-xl">
+              <Button variant="outline" onClick={handleDelete} disabled={isDeleting} className="h-auto py-3 px-6 text-sm font-medium rounded-xl border-hairline text-action-danger hover:bg-score-poor-bg">
+                <Trash2 className="w-4 h-4 mr-2" />
                 {isDeleting ? 'Deleting...' : 'Delete Submission'}
               </Button>
             )

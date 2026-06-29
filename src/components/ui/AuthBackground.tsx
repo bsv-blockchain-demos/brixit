@@ -8,7 +8,7 @@ export function AuthBackground({ children }: { children: React.ReactNode }) {
         className="fixed inset-0 -z-10 bg-cover bg-center pointer-events-none select-none opacity-[0.55]"
         style={{ backgroundImage: "url('/backdrop/backdropwallpaper.svg')" }}
       />
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4 pb-[var(--bottom-inset)]">
         {children}
       </div>
     </div>
