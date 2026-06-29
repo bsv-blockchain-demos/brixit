@@ -28,7 +28,7 @@ export default function MobileLogin() {
   useEffect(() => {
     if (loginStatus === 'done') {
       authCompletedRef.current = true;
-      navigate('/leaderboard');
+      navigate('/map');
     }
   }, [loginStatus, navigate]);
 

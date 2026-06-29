@@ -13,7 +13,7 @@ import DataPointDetailModal from '../common/DataPointDetailModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { getMapboxToken } from '@/lib/getMapboxToken';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
-import { computeNormalizedScore, rankColorFromNormalized, toDisplayScore, scoreBrix } from '../../lib/getBrixColor';
+import { computeNormalizedScore, rankColorFromNormalized, toDisplayScore, gradeBrix } from '../../lib/getBrixColor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import LocationSearch from '../common/LocationSearch';
@@ -84,10 +84,13 @@ function buildSubmissionsGeoJSON(
       typeof brixVal === 'number' && !isNaN(brixVal)
         ? computeNormalizedScore(brixVal, thresholds, minBrix, maxBrix)
         : 1.5;
+    // Individual dots are colored by the crop's thresholds (quality), not the
+    // normalized %. Clusters still average normalizedScore (see cluster layer).
+    const tierColor = gradeBrix(typeof brixVal === 'number' ? brixVal : null, thresholds).hex;
     features.push({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [lng, lat] },
-      properties: { id: point.id, normalizedScore },
+      properties: { id: point.id, normalizedScore, tierColor },
     });
   }
   return { type: 'FeatureCollection', features };
@@ -471,7 +474,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           source: 'submissions',
           filter: ['!', ['has', 'point_count']],
           paint: {
-            'circle-color': tierColorExpr(['get', 'normalizedScore']),
+            'circle-color': ['get', 'tierColor'],
             'circle-radius': 7,
             'circle-stroke-color': 'white',
             'circle-stroke-width': 1.5,
@@ -646,7 +649,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         ? { poor: sub.poorBrix, average: sub.averageBrix ?? 0, good: sub.goodBrix ?? 0, excellent: sub.excellentBrix }
         : getThresholds(cropKey);
     const brixVal = sub.brixLevel ?? (sub as any).brix_value;
-    const score = typeof brixVal === 'number' ? scoreBrix(brixVal, thresholds ?? null, minBrix, maxBrix) : null;
+    const grade = typeof brixVal === 'number' ? gradeBrix(brixVal, thresholds ?? null) : null;
     const canNavigate = navigable && !!user && !!sub.id;
     return (
       <div
@@ -663,8 +666,8 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
             {sub.submittedAt ? formatHumanDate(sub.submittedAt) : '-'}
           </span>
         </div>
-        <div className={`flex-shrink-0 min-w-[52px] px-3 py-1 text-center font-bold text-sm text-white rounded-full ${score?.bgClass ?? 'bg-gray-300'}`}>
-          {score ? score.display : '-'}
+        <div className={`flex-shrink-0 px-3 py-1 text-center font-semibold text-sm text-white rounded-full whitespace-nowrap ${grade?.bgClass ?? 'bg-badge-neutral'}`}>
+          {grade ? grade.quality : '-'}
         </div>
       </div>
     );

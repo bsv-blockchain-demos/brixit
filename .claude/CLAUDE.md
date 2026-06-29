@@ -54,7 +54,12 @@ Score colors are their own dedicated `--score-*` tokens (not `--green-mid`/`--gr
 | Average | 1.25–1.49 | 25–49% | `--score-average` (`#e1b12c`) |
 | Poor | < 1.25 | 0–24% | `--score-poor` (`#c0392b`) |
 
-Use `rankColorFromNormalized(n)` for color and `toDisplayScore(n)` for the displayed %. Do **not** use `getBrixColor` or `getBrixQuality` for user-facing score badges — those compare raw BRIX against absolute thresholds and will diverge from the % display.
+There are **two display paths**, by surface:
+
+- **Individual submission** (data rows, mobile cards, detail modal, map markers, data-entry preview) → quality label + color from the crop's four thresholds via **`gradeBrix(brix, thresholds)`** (returns `{ quality, bgClass, hex }`, built on `getBrixColor`/`getBrixQuality`). **No percentage.** `gradeBrix` derives the label from the color bucket, so they can never disagree.
+- **Aggregate of submissions** (leaderboard, map clusters, crop/brand rankings) → normalized average **percentage** via `computeNormalizedScore` / `scoreBrix`, colored by `rankColorFromNormalized(n)` and displayed with `toDisplayScore(n)`.
+
+Do not mix the paths: never use the normalized % path for an individual badge, and never use `gradeBrix` for an aggregate. Both paths resolve the same `--score-*` tokens — never add a parallel quality→color map.
 
 ## Mobile-First Strategy
 

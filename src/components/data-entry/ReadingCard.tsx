@@ -8,7 +8,7 @@ import { Slider } from '../ui/slider';
 import ComboBoxAddable from '../ui/combo-box-addable';
 import Combobox from '../ui/combo-box';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
-import { scoreBrix } from '../../lib/getBrixColor';
+import { gradeBrix } from '../../lib/getBrixColor';
 import { titleCase } from '../../lib/titleCase';
 
 export interface CropReading {
@@ -20,12 +20,6 @@ export interface CropReading {
   images: File[];
 }
 
-const QUALITY_COLOR: Record<string, string> = {
-  Excellent: 'var(--green-mid)',
-  Good: 'var(--green-fresh)',
-  Average: 'var(--gold)',
-  Poor: 'var(--score-poor)',
-};
 
 const ReadingCard: React.FC<{
   reading: CropReading;
@@ -45,9 +39,7 @@ const ReadingCard: React.FC<{
   const prefersReducedMotion = useReducedMotion();
   const { getThresholds } = useCropThresholds();
   const thresholds = reading.cropType ? getThresholds(reading.cropType) : null;
-  const score = scoreBrix(reading.brixLevel, thresholds);
-  const tierColor = QUALITY_COLOR[score.quality] ?? 'var(--score-poor)';
-  const tierLabel = score.quality;
+  const { hex: tierColor, quality: tierLabel } = gradeBrix(reading.brixLevel, thresholds);
   const cropLabel = titleCase(crops.find(c => c.name === reading.cropType)?.label || reading.cropType);
   const hasError = !!(errors[`reading_${reading.id}_cropType`] || errors[`reading_${reading.id}_brixLevel`]);
 
