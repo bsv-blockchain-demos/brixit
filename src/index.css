@@ -54,7 +54,7 @@
     /* Score palette */
     --gold:          #e1b12c;   /* average score                               */
     --score-average: #e1b12c;
-    --score-poor:    #c0392b;   /* poor score — RED (distinct from action orange) */
+    --score-poor:    #d9772c;   /* poor score — ORANGE (decoupled from danger red) */
 
     /* Text — warm brown family from style guide */
     --text-dark:  #524d40;   /* primary body text                             */
@@ -64,7 +64,7 @@
     /* ── UI action tokens ─────────────────────────────── */
     --action-primary:       #eb6e24;   /* orange CTA                          */
     --action-primary-hover: #c85a1a;   /* darker orange on hover              */
-    --action-danger: var(--score-poor);
+    --action-danger: #c0392b;   /* destructive red — decoupled from --score-poor */
 
     /* ── Badge tiers ──────────────────────────────────── */
     --badge-amber-bg:   #fdf0d8;
@@ -107,7 +107,7 @@
     --field-border: #d8d3ca;       /* input borders                      */
 
     /* ── Score tier solid-bg companions (for pills/labels) ── */
-    --score-poor-bg: #fbe9e7;
+    --score-poor-bg: #fcefe2;
     --score-average-bg: #fcf3da;
     --score-good-bg: #e8f1e0;
     --score-excellent-bg: #dfeee6;
@@ -149,7 +149,7 @@
     --accent: 204 43% 95%;            /* blue-mist — hover on white surfaces  */
     --accent-foreground: 43 12% 29%;  /* dark text on light hover             */
 
-    --destructive: 6 64% 46%;         /* red — matches --score-poor #c0392b   */
+    --destructive: 6 64% 46%;         /* destructive red (score-poor is now orange) */
     --destructive-foreground: 0 0% 100%;
 
     --border: 205 39% 90%;            /* blue-pale — card/input borders       */
@@ -183,7 +183,7 @@
     --orange: var(--action-primary);
     --gold:          #f0c040;
     --score-average: #f0c040;
-    --score-poor:    #e0584a;
+    --score-poor:    #e8893f;   /* poor score — orange (dark) */
 
     --text-dark:  #e8e0d8;
     --text-mid:   #b0a898;
@@ -192,7 +192,7 @@
     /* ── UI action tokens ─────────────────────────────── */
     --action-primary:       #f07830;
     --action-primary-hover: #d46520;
-    --action-danger: var(--score-poor);
+    --action-danger: #e0584a;   /* destructive red (dark) — decoupled */
 
     /* ── Badge tiers (dark) ───────────────────────────── */
     --badge-amber-bg:   #2a1e06;
@@ -226,7 +226,7 @@
     --green-pale: #18301d;
     --hairline: rgba(255,255,255,0.10);
     --field-border: rgba(255,255,255,0.14);
-    --score-poor-bg: #3a1714;
+    --score-poor-bg: #3a2614;
     --score-average-bg: #2e2408;
     --score-good-bg: #18301d;
     --score-excellent-bg: #10271a;

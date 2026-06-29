@@ -46,7 +46,7 @@ const ReadingCard: React.FC<{
   return (
     <div
       className="rounded-xl border overflow-hidden"
-      style={{ borderColor: hasError ? 'var(--score-poor)' : 'var(--field-border)', backgroundColor: 'hsl(var(--card))' }}
+      style={{ borderColor: hasError ? 'var(--action-danger)' : 'var(--field-border)', backgroundColor: 'hsl(var(--card))' }}
     >
       {/* Accordion header */}
       <div
@@ -59,7 +59,7 @@ const ReadingCard: React.FC<{
         <div className="flex items-center gap-2 min-w-0">
           <span
             className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-            style={{ backgroundColor: hasError ? 'var(--score-poor)' : 'var(--select-strong)' }}
+            style={{ backgroundColor: hasError ? 'var(--action-danger)' : 'var(--select-strong)' }}
           >
             {index + 1}
           </span>
@@ -72,7 +72,7 @@ const ReadingCard: React.FC<{
             </span>
           )}
           {!isOpen && hasError && (
-            <span className="text-xs ml-1" style={{ color: 'var(--score-poor)' }}>- incomplete</span>
+            <span className="text-xs ml-1" style={{ color: 'var(--action-danger)' }}>- incomplete</span>
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0 ml-2">
