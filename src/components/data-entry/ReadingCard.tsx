@@ -8,7 +8,7 @@ import { Slider } from '../ui/slider';
 import ComboBoxAddable from '../ui/combo-box-addable';
 import Combobox from '../ui/combo-box';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
-import { scoreBrix } from '../../lib/getBrixColor';
+import { gradeBrix } from '../../lib/getBrixColor';
 import { BrixGuideInlineTrigger } from './brix-guide';
 import { titleCase } from '../../lib/titleCase';
 
@@ -21,12 +21,6 @@ export interface CropReading {
   images: File[];
 }
 
-const QUALITY_COLOR: Record<string, string> = {
-  Excellent: 'var(--green-mid)',
-  Good: 'var(--green-fresh)',
-  Average: 'var(--gold)',
-  Poor: 'var(--score-poor)',
-};
 
 const ReadingCard: React.FC<{
   reading: CropReading;
@@ -46,16 +40,14 @@ const ReadingCard: React.FC<{
   const prefersReducedMotion = useReducedMotion();
   const { getThresholds } = useCropThresholds();
   const thresholds = reading.cropType ? getThresholds(reading.cropType) : null;
-  const score = scoreBrix(reading.brixLevel, thresholds);
-  const tierColor = QUALITY_COLOR[score.quality] ?? 'var(--score-poor)';
-  const tierLabel = score.quality;
+  const { hex: tierColor, quality: tierLabel } = gradeBrix(reading.brixLevel, thresholds);
   const cropLabel = titleCase(crops.find(c => c.name === reading.cropType)?.label || reading.cropType);
   const hasError = !!(errors[`reading_${reading.id}_cropType`] || errors[`reading_${reading.id}_brixLevel`]);
 
   return (
     <div
       className="rounded-xl border overflow-hidden"
-      style={{ borderColor: hasError ? 'var(--score-poor)' : 'var(--field-border)', backgroundColor: 'hsl(var(--card))' }}
+      style={{ borderColor: hasError ? 'var(--action-danger)' : 'var(--field-border)', backgroundColor: 'hsl(var(--card))' }}
     >
       {/* Accordion header */}
       <div
@@ -68,7 +60,7 @@ const ReadingCard: React.FC<{
         <div className="flex items-center gap-2 min-w-0">
           <span
             className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-            style={{ backgroundColor: hasError ? 'var(--score-poor)' : 'var(--select-strong)' }}
+            style={{ backgroundColor: hasError ? 'var(--action-danger)' : 'var(--select-strong)' }}
           >
             {index + 1}
           </span>
@@ -81,7 +73,7 @@ const ReadingCard: React.FC<{
             </span>
           )}
           {!isOpen && hasError && (
-            <span className="text-xs ml-1" style={{ color: 'var(--score-poor)' }}>- incomplete</span>
+            <span className="text-xs ml-1" style={{ color: 'var(--action-danger)' }}>- incomplete</span>
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0 ml-2">

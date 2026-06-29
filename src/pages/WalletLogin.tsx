@@ -170,7 +170,7 @@ export default function WalletLogin() {
       const result = await walletLogin(userPubKey, certificate, userData, proof);
 
       if (result.success) {
-        navigate('/leaderboard');
+        navigate('/map');
       } else {
         setCertificateError(result.error || 'Authentication failed. Please try again.');
       }
@@ -189,7 +189,7 @@ export default function WalletLogin() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/leaderboard');
+      navigate('/map');
     }
   }, [isAuthenticated, navigate]);
 

@@ -110,7 +110,7 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
           </button>
         </div>
         {error && (
-          <p className="px-4 pb-3 text-xs" style={{ color: 'var(--score-poor)' }}>{error}</p>
+          <p className="px-4 pb-3 text-xs" style={{ color: 'var(--action-danger)' }}>{error}</p>
         )}
       </div>
     );
@@ -256,7 +256,7 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
       </div>
 
       {error && (
-        <p className="px-4 pb-3 text-xs" style={{ color: 'var(--score-poor)' }}>{error}</p>
+        <p className="px-4 pb-3 text-xs" style={{ color: 'var(--action-danger)' }}>{error}</p>
       )}
     </div>
   );

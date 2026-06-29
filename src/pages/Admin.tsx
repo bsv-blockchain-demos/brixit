@@ -80,7 +80,7 @@ export default function Admin() {
   }
 
   if (!isAdmin) {
-    return <Navigate to="/leaderboard" replace />;
+    return <Navigate to="/map" replace />;
   }
 
   return (

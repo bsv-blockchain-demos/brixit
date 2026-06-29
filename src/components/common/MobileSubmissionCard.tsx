@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { BrixDataPoint } from '../../types';
-import { scoreBrix } from '../../lib/getBrixColor';
+import { gradeBrix } from '../../lib/getBrixColor';
 import { titleCase } from '../../lib/titleCase';
 import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
 import { formatHumanDate } from '../../lib/formatDate';
@@ -26,7 +26,7 @@ const MobileSubmissionCard: React.FC<{
   const cropThresholds = (submission.poorBrix != null && submission.excellentBrix != null)
     ? { poor: submission.poorBrix, average: submission.averageBrix ?? 0, good: submission.goodBrix ?? 0, excellent: submission.excellentBrix }
     : undefined;
-  const { bgClass: brixColorClass, display: displayScore } = scoreBrix(submission.brixLevel, cropThresholds);
+  const { bgClass: brixColorClass, quality } = gradeBrix(submission.brixLevel, cropThresholds);
   const hasActions = !!(onEdit || onDelete || onRetry);
 
   return (
@@ -87,7 +87,7 @@ const MobileSubmissionCard: React.FC<{
           <Badge
             className={`${brixColorClass} text-white px-3 py-1 rounded-xl font-bold text-sm shadow-sm min-w-[4.5rem] justify-center`}
           >
-            {displayScore}
+            {quality}
           </Badge>
         </div>
       </div>

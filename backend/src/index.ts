@@ -90,6 +90,7 @@ new WalletRelayService({
   wallet: serverWallet as unknown as WalletLike,
   relayUrl: config.relayUrl,
   origin: config.relayOrigin,
+  schema: config.relaySchema,
 });
 
 // --- Auth routes ---

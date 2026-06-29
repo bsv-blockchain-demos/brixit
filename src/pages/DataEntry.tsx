@@ -116,7 +116,7 @@ const DataEntry = () => {
 
   useEffect(() => {
     if (!user || (user.role !== 'contributor' && user.role !== 'admin')) {
-      navigate('/leaderboard');
+      navigate('/map');
     }
   }, [user, navigate]);
 

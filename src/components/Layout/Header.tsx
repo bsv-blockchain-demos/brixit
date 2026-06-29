@@ -171,7 +171,7 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/leaderboard" className="flex items-center">
+          <Link to="/map" className="flex items-center">
             <BrixLogo height="3rem" color="white" />
           </Link>
 

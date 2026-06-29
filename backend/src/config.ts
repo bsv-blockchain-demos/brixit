@@ -55,6 +55,9 @@ export const config = {
   // http(s):// URL of this backend server — embedded in QR codes so mobile can call /api/session/:id
   // Must differ from CORS_ORIGINS (which is the frontend URL). Defaults to localhost for dev.
   relayOrigin: process.env.ORIGIN || `http://localhost:${port}`,
+  // Deep-link scheme embedded in the QR pairing URI — must match the scheme the
+  // mobile wallet app registers. The Mycelia app uses `mycelia-app`.
+  relaySchema: process.env.RELAY_SCHEMA || 'mycelia-app',
 
   // BSV Wallet
   backendPrivateKey: process.env.SERVER_PRIVATE_KEY || '',
