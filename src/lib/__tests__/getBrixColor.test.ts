@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { getBrixColor, computeNormalizedScore, rankColorFromNormalized } from '../getBrixColor';
+import { getBrixColor, computeNormalizedScore, rankColorFromNormalized, scoreBrix, gradeBrix } from '../getBrixColor';
 import type { BrixThresholds } from '../getBrixQuality';
 
 const asc: BrixThresholds = { poor: 4, average: 8, good: 12, excellent: 16 };
@@ -203,5 +203,75 @@ describe('rankColorFromNormalized', () => {
 
   it('returns poor colors just below 1.25', () => {
     expect(rankColorFromNormalized(1.24).bgClass).toBe('bg-score-poor');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// scoreBrix — quality label, color (hex/bgClass), and display must stay in
+// lockstep. Consumers (data row, detail modal) MUST read color from this
+// bundle and never re-derive it from a parallel quality→color map, or the
+// badge label and the colored square can disagree (the 50% "Good label /
+// gold square" bug).
+// ---------------------------------------------------------------------------
+describe('scoreBrix', () => {
+  // poor=0, excellent=16 → normalized = brix/16 + 1.
+  const t: BrixThresholds = { poor: 0, average: 4, good: 8, excellent: 16 };
+
+  it('keeps quality, hex, and bgClass consistent at the Good boundary (50%)', () => {
+    // brix 8 → normalized 1.5 → Good tier, displayed "50%".
+    const s = scoreBrix(8, t);
+    expect(s.quality).toBe('Good');
+    expect(s.display).toBe('50%');
+    expect(s.bgClass).toBe('bg-score-good');
+    expect(s.hex).toBe(TOKEN.good);
+  });
+
+  it('quality matches the color tier across every bucket', () => {
+    const cases: Array<[number, string, string, string]> = [
+      [16, 'Excellent', 'bg-score-excellent', TOKEN.excellent], // normalized 2.0
+      [10, 'Good',      'bg-score-good',      TOKEN.good],       // normalized 1.625
+      [5,  'Average',   'bg-score-average',   TOKEN.average],    // normalized 1.3125
+      [1,  'Poor',      'bg-score-poor',      TOKEN.poor],       // normalized 1.0625
+    ];
+    for (const [brix, quality, bgClass, hex] of cases) {
+      const s = scoreBrix(brix, t);
+      expect(s.quality).toBe(quality);
+      expect(s.bgClass).toBe(bgClass);
+      expect(s.hex).toBe(hex);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// gradeBrix — individual-submission grading. quality is DERIVED from the
+// color bucket so label and color can never disagree. Below-poor => Poor;
+// only invalid input => Unknown + neutral.
+// ---------------------------------------------------------------------------
+describe('gradeBrix', () => {
+  const t: BrixThresholds = { poor: 4, average: 8, good: 12, excellent: 16 };
+
+  it('grades excellent with matching label, class and hex', () => {
+    expect(gradeBrix(16, t)).toEqual({ quality: 'Excellent', bgClass: 'bg-score-excellent', hex: TOKEN.excellent });
+  });
+  it('grades good', () => {
+    expect(gradeBrix(13, t)).toEqual({ quality: 'Good', bgClass: 'bg-score-good', hex: TOKEN.good });
+  });
+  it('grades average', () => {
+    expect(gradeBrix(9, t)).toEqual({ quality: 'Average', bgClass: 'bg-score-average', hex: TOKEN.average });
+  });
+  it('grades poor', () => {
+    expect(gradeBrix(5, t)).toEqual({ quality: 'Poor', bgClass: 'bg-score-poor', hex: TOKEN.poor });
+  });
+  it('grades a below-poor reading as Poor, not Unknown', () => {
+    const g = gradeBrix(1, t);
+    expect(g.quality).toBe('Poor');
+    expect(g.bgClass).toBe('bg-score-poor');
+  });
+  it('grades invalid brix as Unknown + neutral', () => {
+    expect(gradeBrix(null, t)).toEqual({ quality: 'Unknown', bgClass: 'bg-badge-neutral', hex: '#d1d5db' });
+  });
+  it('grades missing thresholds as Unknown', () => {
+    expect(gradeBrix(10, undefined).quality).toBe('Unknown');
+    expect(gradeBrix(10, null).quality).toBe('Unknown');
   });
 });

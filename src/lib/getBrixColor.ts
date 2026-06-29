@@ -172,6 +172,40 @@ export function scoreBrix(
   return { normalized, display, bgClass, hex, quality };
 }
 
+export type BrixGrade = {
+  quality: 'Excellent' | 'Good' | 'Average' | 'Poor' | 'Unknown';
+  bgClass: string;
+  hex: string;
+};
+
+// Maps the threshold color bucket back to a quality label. Because both come
+// from getBrixColor, the label and the color are guaranteed to agree.
+const BG_TO_QUALITY: Record<string, BrixGrade['quality']> = {
+  'bg-score-excellent': 'Excellent',
+  'bg-score-good': 'Good',
+  'bg-score-average': 'Average',
+  'bg-score-poor': 'Poor',
+};
+
+/**
+ * Grade an INDIVIDUAL BRIX reading against its crop's four thresholds.
+ * Use this for per-submission badges/markers (quality + color, no %).
+ * For aggregates/rankings use the normalized path (scoreBrix / rankColorFromNormalized).
+ *
+ * Below the poor threshold reads as Poor. Only genuinely invalid input
+ * (missing/NaN brix, missing/invalid thresholds) reads as Unknown + neutral.
+ */
+export function gradeBrix(
+  brix: number | null | undefined,
+  thresholds: BrixThresholds | null | undefined,
+): BrixGrade {
+  const t = thresholds ?? undefined;
+  const bgClass = getBrixColor(brix, t, 'bg');
+  const hex = getBrixColor(brix, t, 'hex');
+  const quality = BG_TO_QUALITY[bgClass] ?? 'Unknown';
+  return { quality, bgClass, hex };
+}
+
 /**
  * Escape hatch for when you only need the raw 1–2 normalized number (e.g. computing averages).
  * Use scoreBrix() for anything display-related.
