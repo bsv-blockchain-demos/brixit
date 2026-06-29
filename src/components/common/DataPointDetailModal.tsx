@@ -38,7 +38,7 @@ import { apiPut } from '../../lib/api';
 import { useImageUrls } from '../../hooks/useImageUrls';
 import { formatUsername } from '../../lib/formatUsername';
 import { formatHumanDate } from '../../lib/formatDate';
-import { scoreBrix } from '../../lib/getBrixColor';
+import { gradeBrix } from '../../lib/getBrixColor';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
 import Combobox from '../ui/combo-box';
 import { useStaticData } from '../../hooks/useStaticData';
@@ -552,17 +552,10 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
       })
     : undefined;
 
-  const { quality: qualityText } = scoreBrix(initialDataPoint.brixLevel, cropThresholds);
-
-  const scoreStyle = (() => {
-    switch (qualityText) {
-      case 'Excellent': return { color: 'var(--green-mid)' };
-      case 'Good':
-      case 'Average':   return { color: 'var(--gold)' };
-      case 'Poor':      return { color: 'var(--score-poor)' };
-      default:          return { color: 'var(--text-muted)' };
-    }
-  })();
+  // Color and quality label both come from gradeBrix so they can never diverge.
+  // hex resolves the same --score-* token the data-row badge uses (one source of
+  // truth) — do NOT re-derive color from a parallel quality→color map here.
+  const { quality: qualityText, hex: scoreColor } = gradeBrix(initialDataPoint.brixLevel, cropThresholds);
 
   const detailContent = (
     <>
@@ -584,7 +577,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               <div className="flex items-center gap-5">
                 <div
                   className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center shrink-0 leading-none"
-                  style={{ backgroundColor: scoreStyle.color }}
+                  style={{ backgroundColor: scoreColor }}
                   aria-label={`Brix score ${initialDataPoint.brixLevel}, rated ${qualityText}`}
                 >
                   <span className="text-white font-display font-bold text-[2rem]">{initialDataPoint.brixLevel}</span>
@@ -593,7 +586,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                 <div className="flex flex-col items-center gap-2">
                   <span
                     className="inline-block px-3 py-1 rounded-full text-sm font-semibold"
-                    style={{ color: scoreStyle.color, backgroundColor: `color-mix(in srgb, ${scoreStyle.color} 15%, transparent)` }}
+                    style={{ color: scoreColor, backgroundColor: `color-mix(in srgb, ${scoreColor} 15%, transparent)` }}
                   >
                     {qualityText} Quality
                   </span>

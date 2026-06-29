@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { BrixDataPoint } from '../../types';
 import { MapPin, Calendar, CheckCircle, Edit, Trash2, Eye, MessageSquare, Clock, Lock, User, XCircle, Anchor } from 'lucide-react';
-import { scoreBrix } from '../../lib/getBrixColor';
+import { gradeBrix } from '../../lib/getBrixColor';
 import { formatCityState } from '../../lib/formatAddress';
 import { titleCase } from '../../lib/titleCase';
 import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
@@ -27,7 +27,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
   const cropThresholds = (submission.poorBrix != null && submission.excellentBrix != null)
     ? { poor: submission.poorBrix, average: submission.averageBrix ?? 0, good: submission.goodBrix ?? 0, excellent: submission.excellentBrix }
     : undefined;
-  const { bgClass: brixColorClass, display: displayScore } = scoreBrix(submission.brixLevel, cropThresholds);
+  const { bgClass: brixColorClass, quality } = gradeBrix(submission.brixLevel, cropThresholds);
 
   // Determine if the edit button should be visible (only owner can edit)
   const canEdit = isOwner;
@@ -103,9 +103,9 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       {/* Cell 5 — Score */}
       <TableCell className="text-center py-3 px-4">
         <Badge
-          className={`${brixColorClass} text-white px-3 py-1 rounded-xl font-bold text-base shadow-sm`}
+          className={`${brixColorClass} text-white px-3 py-1 rounded-xl font-semibold text-sm shadow-sm whitespace-nowrap`}
         >
-          {displayScore}
+          {quality}
         </Badge>
       </TableCell>
 
