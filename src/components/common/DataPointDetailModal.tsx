@@ -39,6 +39,7 @@ import { useImageUrls } from '../../hooks/useImageUrls';
 import { formatUsername } from '../../lib/formatUsername';
 import { formatHumanDate } from '../../lib/formatDate';
 import { gradeBrix } from '../../lib/getBrixColor';
+import { ScoreThresholdBar } from './ScoreThresholdBar';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
 import Combobox from '../ui/combo-box';
 import { useStaticData } from '../../hooks/useStaticData';
@@ -591,9 +592,19 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     {qualityText} Quality
                   </span>
                   {cropThresholds?.poor != null && cropThresholds?.excellent != null && (
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      Crop range: {cropThresholds.poor}–{cropThresholds.excellent} BRIX
-                    </p>
+                    <div className="flex flex-col items-center gap-1.5">
+                      <ScoreThresholdBar
+                        poor={cropThresholds.poor}
+                        average={cropThresholds.average}
+                        good={cropThresholds.good}
+                        excellent={cropThresholds.excellent}
+                        mode="range"
+                        activeTier={qualityText}
+                      />
+                      <span className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                        BRIX score range
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>

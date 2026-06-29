@@ -3,6 +3,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { titleCase } from '@/lib/titleCase';
 import AdminTableEditor from './AdminTableEditor';
 import type { ColumnDef, FieldDef } from './AdminTableEditor';
+import { ScoreThresholdBar } from '../common/ScoreThresholdBar';
 import {
   fetchAdminCrops,
   createAdminCrop,
@@ -46,17 +47,13 @@ const COLUMNS: ColumnDef[] = [
     key: 'poor_brix',
     label: 'Score thresholds',
     render: (_v, row) => (
-      <div className="flex items-center gap-px rounded-md overflow-hidden w-fit">
-        {TIERS.map((t) => (
-          <span
-            key={t.key}
-            className={`flex flex-col items-center justify-center min-w-[3rem] px-2 py-1 ${t.bg} ${t.ink ? 'text-text-dark' : 'text-white'}`}
-          >
-            <span className="text-[9px] leading-none uppercase tracking-wide opacity-90">{t.label}</span>
-            <span className="font-mono text-xs leading-tight">{row[t.key] ?? '-'}</span>
-          </span>
-        ))}
-      </div>
+      <ScoreThresholdBar
+        poor={row.poor_brix}
+        average={row.average_brix}
+        good={row.good_brix}
+        excellent={row.excellent_brix}
+        mode="threshold"
+      />
     ),
   },
 ];
