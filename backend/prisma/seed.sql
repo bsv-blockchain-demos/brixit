@@ -7,14 +7,36 @@ CREATE OR REPLACE FUNCTION get_normalized_brix_1_to_2(crop_id_arg uuid, brix_val
 RETURNS numeric AS $$
 DECLARE
     poor_brix numeric;
+    average_brix numeric;
+    good_brix numeric;
     excellent_brix numeric;
     denominator numeric;
 BEGIN
-    SELECT c.poor_brix, c.excellent_brix
-    INTO poor_brix, excellent_brix
+    SELECT c.poor_brix, c.average_brix, c.good_brix, c.excellent_brix
+    INTO poor_brix, average_brix, good_brix, excellent_brix
     FROM crops c
     WHERE c.id = crop_id_arg;
 
+    -- Piecewise through all four thresholds (poor→1.0, average→1.25, good→1.5,
+    -- excellent→1.75, →2.0 beyond). Keep in sync with computeNormalizedScore().
+    IF poor_brix IS NOT NULL AND average_brix IS NOT NULL
+       AND good_brix IS NOT NULL AND excellent_brix IS NOT NULL
+       AND poor_brix < average_brix AND average_brix < good_brix
+       AND good_brix < excellent_brix THEN
+        IF brix_value_arg <= poor_brix THEN
+            RETURN 1.0;
+        ELSIF brix_value_arg <= average_brix THEN
+            RETURN 1.0 + (brix_value_arg - poor_brix) / (average_brix - poor_brix) * 0.25;
+        ELSIF brix_value_arg <= good_brix THEN
+            RETURN 1.25 + (brix_value_arg - average_brix) / (good_brix - average_brix) * 0.25;
+        ELSIF brix_value_arg <= excellent_brix THEN
+            RETURN 1.5 + (brix_value_arg - good_brix) / (excellent_brix - good_brix) * 0.25;
+        ELSE
+            RETURN LEAST(2.0, 1.75 + (brix_value_arg - excellent_brix) / (excellent_brix - good_brix) * 0.25);
+        END IF;
+    END IF;
+
+    -- Fallback: linear poor→excellent (avg/good missing or non-monotonic).
     denominator := excellent_brix - poor_brix;
     IF denominator IS NULL OR denominator = 0 THEN
         RETURN 1.5;

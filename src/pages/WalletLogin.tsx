@@ -386,10 +386,10 @@ export default function WalletLogin() {
 
                 <div className="space-y-6">
                   {[
-                    { tier: 'Excellent', label: '75%+', color: 'var(--green-mid)',   desc: 'Well above the expected range for this crop.' },
-                    { tier: 'Good',      label: '50%+', color: 'var(--green-fresh)', desc: 'Above the crop average. Better than most commercial produce.' },
-                    { tier: 'Average',   label: '25%+', color: 'var(--gold)',         desc: 'Near the crop average. Typical of commercial growing.' },
-                    { tier: 'Poor',      label: '<25%',  color: 'var(--score-poor)',  desc: 'Below the expected range. Low nutrient density for this crop.' },
+                    { tier: 'Excellent', label: '75%+', color: 'var(--score-excellent)', desc: 'Well above the expected range for this crop.' },
+                    { tier: 'Good',      label: '50%+', color: 'var(--score-good)',      desc: 'Above the crop average. Better than most commercial produce.' },
+                    { tier: 'Average',   label: '25%+', color: 'var(--score-average)',   desc: 'Near the crop average. Typical of commercial growing.' },
+                    { tier: 'Poor',      label: '<25%',  color: 'var(--score-poor)',     desc: 'Below the expected range. Low nutrient density for this crop.' },
                   ].map(({ tier, label, color, desc }) => (
                     <div key={tier} className="flex items-start gap-5">
                       <p className="text-3xl font-display font-bold shrink-0 w-16 tabular-nums" style={{ color }}>{label}</p>
@@ -420,13 +420,13 @@ export default function WalletLogin() {
 
             <motion.div {...stagger} className="grid desktop:grid-cols-3 gap-5">
               <motion.div {...staggerChild}>
-                <FeedCard product="Biodynamic Tomatoes" location="Hopp Farm · Basel" score={19.2} pct="88%" user="Sandra K." rating="Excellent" />
+                <FeedCard product="Biodynamic Tomatoes" location="Hopp Farm · Basel" score={13.0} pct="81%" user="Sandra K." rating="Excellent" />
               </motion.div>
               <motion.div {...staggerChild}>
-                <FeedCard product="Organic Apples" location="Migros Oerlikon" score={9.0} pct="54%" user="Marie R." rating="Good" />
+                <FeedCard product="Organic Apples" location="Migros Oerlikon" score={15.0} pct="56%" user="Marie R." rating="Good" />
               </motion.div>
               <motion.div {...staggerChild}>
-                <FeedCard product="Baby Leaf Salad" location="Coop Geneva" score={4.5} pct="19%" user="Céline L." rating="Poor" />
+                <FeedCard product="Baby Leaf Salad" location="Coop Geneva" score={5.5} pct="19%" user="Céline L." rating="Poor" />
               </motion.div>
             </motion.div>
           </div>

@@ -121,21 +121,61 @@ describe('getBrixColor', () => {
 // computeNormalizedScore
 // ---------------------------------------------------------------------------
 describe('computeNormalizedScore', () => {
+  // Piecewise: poor→1.0, average→1.25, good→1.5, excellent→1.75.
   const t: BrixThresholds = { poor: 0, average: 4, good: 8, excellent: 16 };
 
-  it('returns 1.0 for a value equal to poor', () => {
-    // (0 - 0) / (16 - 0) + 1 = 1.0
+  it('anchors poor → 1.0 (0%)', () => {
     expect(computeNormalizedScore(0, t)).toBeCloseTo(1.0);
   });
 
-  it('returns 2.0 for a value equal to excellent', () => {
-    // (16 - 0) / (16 - 0) + 1 = 2.0
-    expect(computeNormalizedScore(16, t)).toBeCloseTo(2.0);
+  it('anchors average → 1.25 (25%)', () => {
+    expect(computeNormalizedScore(4, t)).toBeCloseTo(1.25);
   });
 
-  it('returns 1.5 for a value at the midpoint', () => {
-    // (8 - 0) / (16 - 0) + 1 = 1.5
+  it('anchors good → 1.5 (50%)', () => {
     expect(computeNormalizedScore(8, t)).toBeCloseTo(1.5);
+  });
+
+  it('anchors excellent → 1.75 (75%), NOT 2.0', () => {
+    expect(computeNormalizedScore(16, t)).toBeCloseTo(1.75);
+  });
+
+  it('interpolates linearly between poor and average', () => {
+    // 1.0 + (2-0)/(4-0)*0.25 = 1.125
+    expect(computeNormalizedScore(2, t)).toBeCloseTo(1.125);
+  });
+
+  it('interpolates linearly between good and excellent', () => {
+    // 1.5 + (12-8)/(16-8)*0.25 = 1.625
+    expect(computeNormalizedScore(12, t)).toBeCloseTo(1.625);
+  });
+
+  it('extrapolates beyond excellent above 1.75 (capped at 2.0)', () => {
+    // 1.75 + (20-16)/(16-8)*0.25 = 1.875
+    expect(computeNormalizedScore(20, t)).toBeCloseTo(1.875);
+    // Far beyond excellent caps at 2.0 (100%+)
+    expect(computeNormalizedScore(1000, t)).toBe(2.0);
+  });
+
+  it('clamps below poor to 1.0', () => {
+    expect(computeNormalizedScore(-5, t)).toBe(1.0);
+  });
+
+  it('regression: a reading between average and good buckets as Average, not Good', () => {
+    // apple-12 regression: linear gave 1.5 ("Good"); piecewise must keep it in
+    // the Average band (1.25–1.5) so aggregate colour matches gradeBrix.
+    const apple: BrixThresholds = { poor: 6, average: 10, good: 14, excellent: 18 };
+    const n = computeNormalizedScore(12, apple);
+    expect(n).toBeGreaterThanOrEqual(1.25);
+    expect(n).toBeLessThan(1.5);
+    expect(rankColorFromNormalized(n).bgClass).toBe('bg-score-average');
+  });
+
+  it('falls back to linear poor→excellent when average/good are missing (non-monotonic)', () => {
+    // average/good zeroed → not strictly increasing → linear fallback.
+    const partial: BrixThresholds = { poor: 0, average: 0, good: 0, excellent: 16 };
+    // (8 - 0) / (16 - 0) + 1 = 1.5
+    expect(computeNormalizedScore(8, partial)).toBeCloseTo(1.5);
   });
 
   it('falls back to min/max range when thresholds is null', () => {

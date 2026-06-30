@@ -8,7 +8,7 @@ export function FeedCard({ product, location, pct, score, user, rating }: {
   user: string;
   rating: 'Excellent' | 'Good' | 'Poor';
 }) {
-  const color = rating === 'Excellent' ? 'var(--green-mid)' : rating === 'Good' ? 'var(--gold)' : 'var(--score-poor)';
+  const color = rating === 'Excellent' ? 'var(--score-excellent)' : rating === 'Good' ? 'var(--score-good)' : 'var(--score-poor)';
   return (
     <Card className="overflow-hidden border" style={{ borderColor: 'var(--hairline)' }}>
       <CardContent className="p-5">

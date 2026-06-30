@@ -17,6 +17,7 @@ import { computeNormalizedScore, rankColorFromNormalized, toDisplayScore, gradeB
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import LocationSearch from '../common/LocationSearch';
+import { ScoreGauge } from '../common/ScoreGauge';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   fetchLocationLeaderboard,
@@ -666,8 +667,8 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
             {sub.submittedAt ? formatHumanDate(sub.submittedAt) : '-'}
           </span>
         </div>
-        <div className={`flex-shrink-0 w-28 px-3 py-1 text-center font-semibold text-sm text-white rounded-full whitespace-nowrap ${grade?.bgClass ?? 'bg-badge-neutral'}`}>
-          {grade ? grade.quality : '-'}
+        <div className="flex-shrink-0">
+          <ScoreGauge thresholds={thresholds} value={brixVal} quality={grade?.quality ?? 'Unknown'} />
         </div>
       </div>
     );

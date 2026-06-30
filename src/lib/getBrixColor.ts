@@ -216,6 +216,28 @@ export function computeNormalizedScore(
   fallbackMin?: number,
   fallbackMax?: number
 ): number {
+  // Piecewise through all four thresholds (poor→1.0, average→1.25, good→1.5,
+  // excellent→1.75, →2.0 beyond) so the colour buckets match the crop's tiers.
+  if (
+    thresholds &&
+    typeof thresholds.poor === 'number' &&
+    typeof thresholds.average === 'number' &&
+    typeof thresholds.good === 'number' &&
+    typeof thresholds.excellent === 'number' &&
+    thresholds.poor < thresholds.average &&
+    thresholds.average < thresholds.good &&
+    thresholds.good < thresholds.excellent
+  ) {
+    const { poor, average, good, excellent } = thresholds;
+    if (brix <= poor) return 1.0;
+    if (brix <= average) return 1.0 + ((brix - poor) / (average - poor)) * 0.25;
+    if (brix <= good) return 1.25 + ((brix - average) / (good - average)) * 0.25;
+    if (brix <= excellent) return 1.5 + ((brix - good) / (excellent - good)) * 0.25;
+    // Beyond excellent: continue at the good→excellent slope, capped at 2.0.
+    return Math.min(2.0, 1.75 + ((brix - excellent) / (excellent - good)) * 0.25);
+  }
+
+  // Fallback: linear poor→excellent when average/good are missing/non-monotonic.
   if (thresholds && typeof thresholds.poor === 'number' && typeof thresholds.excellent === 'number' && thresholds.excellent > thresholds.poor) {
     return (brix - thresholds.poor) / (thresholds.excellent - thresholds.poor) + 1;
   }
