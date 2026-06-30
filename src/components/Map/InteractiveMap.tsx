@@ -13,7 +13,7 @@ import DataPointDetailModal from '../common/DataPointDetailModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { getMapboxToken } from '@/lib/getMapboxToken';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
-import { computeNormalizedScore, rankColorFromNormalized, toDisplayScore, gradeBrix } from '../../lib/getBrixColor';
+import { computeNormalizedScore, gradeBrix } from '../../lib/getBrixColor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import LocationSearch from '../common/LocationSearch';
@@ -124,7 +124,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   >(null);
 
   const [isMapLoaded, setIsMapLoaded] = useState(false);
-  const [groupBy, setGroupBy] = useState<'none' | 'crop' | 'brand'>('crop');
+  const [groupBy, setGroupBy] = useState<'none' | 'crop' | 'brand'>('none');
   const [searchValue, setSearchValue] = useState('');
   const [minBrix, setMinBrix] = useState<number>(0);
   const [maxBrix, setMaxBrix] = useState<number>(1);
@@ -212,7 +212,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   // Open sheet and reset group when a point is selected
   useEffect(() => {
     if (selectedPoint) {
-      setGroupBy('crop');
+      setGroupBy('none');
       setSelectedEntry(null);
       setMobileSheetOpen(true);
     }
@@ -759,7 +759,6 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                   ) : (
                     placeCropRankings.map((c) => {
                       const n = Number(c.average_normalized_score ?? 1.5);
-                      const { bgClass } = rankColorFromNormalized(n);
                       const label = c.label ?? 'Unknown';
                       return (
                         <div
@@ -773,9 +772,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                               Submissions: {c.submission_count ?? '-'}
                             </div>
                           </div>
-                          <div className={`w-14 h-7 rounded-full text-white flex items-center justify-center text-sm font-semibold ${bgClass}`}>
-                            {toDisplayScore(n)}
-                          </div>
+                          <ScoreGauge normalizedScore={n} />
                         </div>
                       );
                     })
@@ -793,7 +790,6 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                   ) : (
                     placeBrandRankings.map((b) => {
                       const n = Number(b.average_normalized_score ?? 1.5);
-                      const { bgClass } = rankColorFromNormalized(n);
                       const label = b.label ?? 'Unknown';
                       return (
                         <div
@@ -807,9 +803,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                               Submissions: {b.submission_count ?? '-'}
                             </div>
                           </div>
-                          <div className={`w-14 h-7 rounded-full text-white flex items-center justify-center text-sm font-semibold ${bgClass}`}>
-                            {toDisplayScore(n)}
-                          </div>
+                          <ScoreGauge normalizedScore={n} />
                         </div>
                       );
                     })

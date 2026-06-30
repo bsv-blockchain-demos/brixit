@@ -3,7 +3,7 @@ import { ChevronDown, MapPin } from "lucide-react";
 import { CardContent, CardHeader, CardTitle } from "../ui/card";
 import { LeaderboardEntry } from "../../lib/fetchLeaderboards";
 import { computeNormalizedScore } from "../../lib/getBrixColor";
-import { ScoreBadge } from "../common/ScoreBadge";
+import { ScoreGauge } from "../common/ScoreGauge";
 import { ScoreHint, ColumnHint } from "../common/StatusBadges";
 import { formatUsername } from "../../lib/formatUsername";
 import { formatVenueLocation } from "../../lib/formatAddress";
@@ -34,7 +34,7 @@ function getRankBadgeStyle(rank: number): React.CSSProperties {
 
 /* Mobile-only card list (≤640px). Presentation only; the rank/tie/score
    derivation mirrors the desktop table so displayed values match exactly.
-   All colors come from design tokens (Tailwind token classes, ScoreBadge,
+   All colors come from design tokens (Tailwind token classes, ScoreGauge,
    and getRankBadgeStyle) so it renders correctly in light and dark mode. */
 function LeaderboardMobileList({
   data,
@@ -123,7 +123,7 @@ function LeaderboardMobileList({
               {labelKey === 'user' ? (
                 <span className="font-display font-bold text-base text-text-dark">{subs}</span>
               ) : (
-                <ScoreBadge normalizedScore={normalizedScore} size="sm" />
+                <ScoreGauge normalizedScore={normalizedScore} />
               )}
             </div>
           </div>
@@ -256,7 +256,7 @@ export function LeaderboardCard({
                               {entry.submission_count ?? 0}
                             </span>
                           ) : (
-                            <ScoreBadge normalizedScore={normalizedScore} size="sm" />
+                            <ScoreGauge normalizedScore={normalizedScore} />
                           )}
                         </div>
                       </div>
