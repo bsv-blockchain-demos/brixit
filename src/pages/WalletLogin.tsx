@@ -165,6 +165,20 @@ export default function WalletLogin() {
       if (result.success) {
         navigate('/map');
       } else {
+        // A certificate the backend can't trust (wrong issuer/type, subject
+        // mismatch, or bad signature) will never pass on retry — the wallet
+        // simply doesn't hold an identity we accept. Route to account setup
+        // instead of dead-ending the user on a "Try Again" loop. Transient and
+        // server-side errors still surface in the modal for a genuine retry.
+        const err = (result.error || '').toLowerCase();
+        const untrustedCert =
+          err.includes('certificate issuer') ||
+          err.includes('certificate subject') ||
+          err.includes('certificate signature');
+        if (untrustedCert) {
+          navigate('/create-account');
+          return;
+        }
         setCertificateError(result.error || 'Authentication failed. Please try again.');
       }
     } catch (error: any) {
