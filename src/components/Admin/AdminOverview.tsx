@@ -90,7 +90,7 @@ function StatCard({
 
       <div className="relative">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-mono uppercase tracking-wider text-text-muted">{label}</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">{label}</span>
           <span className={`relative inline-flex items-center justify-center w-11 h-11 rounded-2xl ${accentBg} shadow-lg ring-1 ring-white/15 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3`}>
             <span aria-hidden className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/25 to-transparent" />
             <Icon className="relative w-5 h-5 text-white" />

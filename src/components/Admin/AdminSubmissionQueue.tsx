@@ -138,7 +138,7 @@ function ScoreBlock({ brix, crop, size = 'lg' }: { brix: number; crop?: string |
       }`}
     >
       <span className={`font-display font-bold leading-none ${size === 'lg' ? 'text-3xl' : 'text-2xl'}`}>{brix}</span>
-      <span className="mt-1 text-[10px] font-semibold tracking-[0.16em] uppercase opacity-90">BRIX</span>
+      <span className="mt-1 text-2xs font-semibold tracking-[0.16em] uppercase opacity-90">BRIX</span>
     </div>
   );
 }
@@ -373,7 +373,7 @@ function AllSubmissionsTab({ onOpenDetail }: { onOpenDetail: (id: string) => voi
         />
       </div>
 
-      <p className="text-sm text-text-muted">
+      <p className="text-sm text-text-mid">
         {committedSearch
           ? `${total} result${total !== 1 ? 's' : ''} for "${committedSearch}"`
           : `${total} total submission${total !== 1 ? 's' : ''}`}
@@ -560,7 +560,7 @@ export default function AdminSubmissionQueue() {
           </TabsTrigger>
         </TabsList>
         {tab === 'pending' && (
-          <span className="hidden sm:block text-sm text-text-muted whitespace-nowrap">
+          <span className="hidden sm:block text-sm text-text-mid whitespace-nowrap">
             {pendingCount} awaiting review
           </span>
         )}

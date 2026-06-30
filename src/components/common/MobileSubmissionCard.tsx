@@ -3,8 +3,9 @@ import { BrixDataPoint } from '../../types';
 import { gradeBrix } from '../../lib/getBrixColor';
 import { titleCase } from '../../lib/titleCase';
 import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
+import { ScoreGauge } from './ScoreGauge';
 import { formatHumanDate } from '../../lib/formatDate';
-import { CheckCircle, Clock, MapPin, User, MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { CheckCircle, Stamp, MapPin, User, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import {
   DropdownMenu,
@@ -26,7 +27,7 @@ const MobileSubmissionCard: React.FC<{
   const cropThresholds = (submission.poorBrix != null && submission.excellentBrix != null)
     ? { poor: submission.poorBrix, average: submission.averageBrix ?? 0, good: submission.goodBrix ?? 0, excellent: submission.excellentBrix }
     : undefined;
-  const { bgClass: brixColorClass, quality } = gradeBrix(submission.brixLevel, cropThresholds);
+  const { quality } = gradeBrix(submission.brixLevel, cropThresholds);
   const hasActions = !!(onEdit || onDelete || onRetry);
 
   return (
@@ -60,7 +61,7 @@ const MobileSubmissionCard: React.FC<{
                     disabled={isRetrying}
                     onClick={(e) => { e.stopPropagation(); onRetry(); }}
                   >
-                    <Clock className="w-4 h-4 mr-2" />
+                    <Stamp className="w-4 h-4 mr-2" />
                     Retry timestamp
                   </DropdownMenuItem>
                 )}
@@ -84,15 +85,21 @@ const MobileSubmissionCard: React.FC<{
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          <Badge
-            className={`${brixColorClass} text-white px-3 py-1 rounded-xl font-bold text-sm shadow-sm min-w-[4.5rem] justify-center`}
-          >
-            {quality}
-          </Badge>
         </div>
       </div>
 
-      <div className="mt-2 text-sm text-text-mid">
+      {/* BRIX + Score: the two desktop columns, brought into the card */}
+      <div className="mt-3 flex items-center gap-4">
+        <div className="shrink-0">
+          {typeof submission.brixLevel === 'number'
+            ? <span className="font-mono font-bold text-lg text-text-dark tabular-nums">{submission.brixLevel}</span>
+            : <span className="text-text-muted-brown text-sm">--</span>}
+          <span className="ml-1 text-2xs uppercase tracking-wide text-text-muted">BRIX</span>
+        </div>
+        <ScoreGauge thresholds={cropThresholds} value={submission.brixLevel} quality={quality} />
+      </div>
+
+      <div className="mt-3 text-sm text-text-mid">
         {formatHumanDate(submission.submittedAt)}
       </div>
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
@@ -108,7 +115,7 @@ const MobileSubmissionCard: React.FC<{
       )}
 
       {isOwner && (
-        <Badge className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-pale text-green-fresh font-medium text-xs">
+        <Badge className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-hairline bg-transparent text-text-mid font-medium text-xs">
           <User className="w-3 h-3" />
           Your Submission
         </Badge>

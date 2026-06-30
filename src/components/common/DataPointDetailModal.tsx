@@ -39,8 +39,9 @@ import { apiPut } from '../../lib/api';
 import { useImageUrls } from '../../hooks/useImageUrls';
 import { formatUsername } from '../../lib/formatUsername';
 import { formatHumanDate } from '../../lib/formatDate';
+import { formatFullLocation } from '../../lib/formatAddress';
 import { gradeBrix } from '../../lib/getBrixColor';
-import { ScoreThresholdBar } from './ScoreThresholdBar';
+import { RefractometerReading } from './RefractometerReading';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
 import Combobox from '../ui/combo-box';
 import { useStaticData } from '../../hooks/useStaticData';
@@ -48,22 +49,15 @@ import { useStaticData } from '../../hooks/useStaticData';
 // Grouped detail card: one icon-headed section holding a list of label/value rows.
 // All colors go through inverting tokens (card, hairline, blue-deep, text-*) so the
 // whole thing flips correctly in dark mode.
-function DetailSection({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+function DetailSection({ icon, title, children, columns = 1 }: { icon: React.ReactNode; title: string; children: React.ReactNode; columns?: 1 | 2 }) {
   return (
-    <section
-      className="rounded-2xl border shadow-sm overflow-hidden"
-      style={{ borderColor: 'var(--hairline)', backgroundColor: 'hsl(var(--card))' }}
-    >
-      <div className="flex items-center gap-2 px-4 pt-4 pb-1">
-        <span
-          className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-          style={{ backgroundColor: 'var(--blue-deep)' }}
-        >
-          {icon}
-        </span>
+    <section className="rounded-2xl border border-hairline bg-card shadow-sm overflow-hidden">
+      <div className="flex items-center gap-1.5 px-4 pt-4 pb-1">
+        {icon}
         <h4 className="text-xs font-semibold uppercase tracking-wider text-text-mid">{title}</h4>
       </div>
-      <div className="px-4 pb-1">{children}</div>
+      {/* columns=2 → 2-col grid (mobile + desktop); drop per-row dividers since the grid gap separates cells. */}
+      <div className={`px-4 pb-1 ${columns === 2 ? 'grid grid-cols-2 gap-x-6 [&>div]:border-b-0' : ''}`}>{children}</div>
     </section>
   );
 }
@@ -557,7 +551,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   // Color and quality label both come from gradeBrix so they can never diverge.
   // hex resolves the same --score-* token the data-row badge uses (one source of
   // truth) — do NOT re-derive color from a parallel quality→color map here.
-  const { quality: qualityText, hex: scoreColor } = gradeBrix(initialDataPoint.brixLevel, cropThresholds);
+  const { quality: qualityText } = gradeBrix(initialDataPoint.brixLevel, cropThresholds);
 
   const detailContent = (
     <>
@@ -569,53 +563,19 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
           )}
 
           <div className="space-y-6">
-            <div
-              className="rounded-2xl border shadow-sm p-6"
-              style={{ borderColor: 'var(--hairline)', backgroundColor: 'hsl(var(--card))' }}
-            >
-              <p className="uppercase tracking-[0.2em] text-xs font-medium mb-4" style={{ color: 'var(--text-muted)' }}>
-                Refractometer Reading
-              </p>
-              <div className="flex items-center gap-5">
-                <div
-                  className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center shrink-0 leading-none"
-                  style={{ backgroundColor: scoreColor }}
-                  aria-label={`Brix score ${initialDataPoint.brixLevel}, rated ${qualityText}`}
-                >
-                  <span className="text-white font-display font-bold text-[2rem]">{initialDataPoint.brixLevel}</span>
-                  <span className="text-white/80 text-[0.65rem] font-semibold uppercase tracking-widest mt-1.5">BRIX</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <span
-                    className="inline-block px-3 py-1 rounded-full text-sm font-semibold"
-                    style={{ color: scoreColor, backgroundColor: `color-mix(in srgb, ${scoreColor} 15%, transparent)` }}
-                  >
-                    {qualityText} Quality
-                  </span>
-                  {cropThresholds?.poor != null && cropThresholds?.excellent != null && (
-                    <div className="flex flex-col items-center gap-1.5">
-                      <ScoreThresholdBar
-                        poor={cropThresholds.poor}
-                        average={cropThresholds.average}
-                        good={cropThresholds.good}
-                        excellent={cropThresholds.excellent}
-                        mode="range"
-                        activeTier={qualityText}
-                      />
-                      <span className="text-[10px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                        BRIX score range
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            <RefractometerReading
+              thresholds={cropThresholds}
+              value={initialDataPoint.brixLevel}
+              cropName={getDisplayLabel(crops, initialDataPoint.cropType)}
+              quality={qualityText}
+              variant={isMobilePage ? 'mobile' : 'desktop'}
+            />
 
             <div className="pt-4 border-t border-hairline">
               <h3 className="text-lg font-bold font-display text-text-dark mb-2">Submission Details</h3>
 
               <div className="space-y-4">
-              <DetailSection icon={<Building className="w-3.5 h-3.5 text-white" />} title="Source">
+              <DetailSection icon={<Building className="w-3.5 h-3.5 text-text-mid" />} title="Source" columns={2}>
                 <DetailRow label="Location (Store)">
                   {isEditing ? (
                     <Combobox items={Array.isArray(locations) ? locations : []} value={locationName} onSelect={setLocationName} placeholder="Select Store" />
@@ -624,13 +584,11 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                   )}
                 </DetailRow>
                 <DetailRow label="Place (Address)">
-                  {/* Address is read-only — it lives on the venue, not the submission. */}
-                  <span className="block break-words leading-relaxed">{initialDataPoint.streetAddress || 'N/A'}</span>
-                  {(initialDataPoint.latitude || initialDataPoint.longitude) ? (
-                    <span className="block mt-1 text-xs font-normal text-text-mid">
-                      {initialDataPoint.latitude?.toFixed(4)}, {initialDataPoint.longitude?.toFixed(4)}
-                    </span>
-                  ) : null}
+                  {/* Read-only (the address lives on the venue). Show the human address
+                      (street, city, state); never the raw coordinates. */}
+                  <span className="block break-words leading-relaxed">
+                    {formatFullLocation(initialDataPoint.streetAddress, initialDataPoint.city, initialDataPoint.state, initialDataPoint.country) || 'N/A'}
+                  </span>
                 </DetailRow>
                 <DetailRow label="Purchase Date">
                   {isEditing ? (
@@ -648,7 +606,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                 </DetailRow>
               </DetailSection>
 
-              <DetailSection icon={<Package className="w-3.5 h-3.5 text-white" />} title="Product">
+              <DetailSection icon={<Package className="w-3.5 h-3.5 text-text-mid" />} title="Product" columns={2}>
                 <DetailRow label="Crop Type">
                   {isEditing ? (
                     <Combobox items={Array.isArray(crops) ? crops : []} value={cropType} onSelect={setCropType} placeholder="Select Crop" />
@@ -681,7 +639,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               </div>
 
               <div className="mt-4 space-y-4">
-              <DetailSection icon={<FileText className="w-3.5 h-3.5 text-white" />} title="Notes">
+              <DetailSection icon={<FileText className="w-3.5 h-3.5 text-text-mid" />} title="Notes">
                 <DetailRow label="Outlier Notes" last>
                   {isEditing ? (
                     <Textarea value={outlierNotes} onChange={e => setOutlierNotes(e.target.value)} rows={4} />
@@ -691,7 +649,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                 </DetailRow>
               </DetailSection>
 
-              <DetailSection icon={<CheckCircle className="w-3.5 h-3.5 text-white" />} title="Provenance">
+              <DetailSection icon={<CheckCircle className="w-3.5 h-3.5 text-text-mid" />} title="Provenance" columns={2}>
                 <DetailRow label="Verified">
                   {isAdmin && isEditing ? (
                     <Input id="verified-checkbox" type="checkbox" checked={verified} onChange={(e) => setVerified(e.target.checked)} className="w-4 h-4" />
@@ -729,37 +687,35 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               </div>
             </div>
 
-            <div className="pt-4 border-t border-hairline">
-              <h3 className="flex items-center space-x-2 text-lg font-bold font-display text-text-dark mb-4">
-                <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--blue-deep)' }}>
-                  <ImageIcon className="w-3.5 h-3.5 text-white" />
-                </span>
-                <span>Reference Images ({imageUrls.length})</span>
-              </h3>
-              {imagesLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-8 h-8 animate-spin text-green-mid" />
-                  <span className="ml-3 text-text-muted-brown">Loading images...</span>
-                </div>
-              ) : imageUrls.length === 0 ? (
-                <p className="text-text-muted-brown italic">No images added for this submission.</p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {imageUrls.map((url: string, index: number) => (
-                    <div key={index} className="relative w-full pb-[75%] rounded-2xl overflow-hidden shadow-sm border group" style={{ borderColor: 'var(--hairline)' }}>
-                      <img
-                        src={url}
-                        alt={`Submission image ${index + 1}`}
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        onError={(e) => {
-                          e.currentTarget.src = 'https://placehold.co/400x300/CCCCCC/333333?text=Image+Error';
-                          e.currentTarget.alt = 'Error loading image';
-                        }}
-                      />
+            <div className="mt-4">
+              <DetailSection icon={<ImageIcon className="w-3.5 h-3.5 text-text-mid" />} title={`Reference Images (${imageUrls.length})`}>
+                <div className="pt-1 pb-3">
+                  {imagesLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin text-green-mid" />
+                      <span className="ml-3 text-sm text-text-muted">Loading images...</span>
                     </div>
-                  ))}
+                  ) : imageUrls.length === 0 ? (
+                    <p className="text-sm text-text-muted italic">No images added for this submission.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {imageUrls.map((url: string, index: number) => (
+                        <div key={index} className="relative w-full pb-[75%] rounded-2xl overflow-hidden shadow-sm border border-hairline group">
+                          <img
+                            src={url}
+                            alt={`Submission image ${index + 1}`}
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://placehold.co/400x300/CCCCCC/333333?text=Image+Error';
+                              e.currentTarget.alt = 'Error loading image';
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              </DetailSection>
             </div>
           </div>
     </>

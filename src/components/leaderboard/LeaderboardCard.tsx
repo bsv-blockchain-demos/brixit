@@ -222,7 +222,7 @@ export function LeaderboardCard({
                       <div
                         key={(entry as any)[`${labelKey}_id`] ?? label ?? idx}
                         onClick={() => onNavigate(entry, labelKey)}
-                        className={`grid grid-cols-[3.5rem_1fr_5.5rem] gap-x-6 items-center px-4 py-2 border-b border-hairline last:border-0 odd:bg-card even:bg-table-stripe hover:bg-table-stripe transition-colors text-sm ${
+                        className={`grid grid-cols-[3.5rem_1fr_5.5rem] gap-x-6 items-center px-4 py-3 border-b border-hairline last:border-0 hover:bg-surface-canvas transition-colors text-sm ${
                           labelKey !== "user" ? "cursor-pointer" : ""
                         }`}
                       >

@@ -129,7 +129,17 @@ export function ColumnHint({ children, help }: { children: React.ReactNode; help
 export const SCORE_HELP =
   "A nutrient-density rating from 0 to 100%. Each reading is scored against its crop's own poor-to-excellent range, so different produce can be compared fairly. Higher is better.";
 
+// The Score column shows a quality rating (Poor to Excellent) plus a gauge of where
+// the reading sits on the crop's scale. Aggregates (leaderboard) keep SCORE_HELP,
+// which still describes a 0 to 100% score.
+export const SCORE_RATING_HELP =
+  "How this reading rates on its crop's own scale, from Poor to Excellent. The gauge shows where it lands between the crop's poor and excellent thresholds, so different produce can be compared fairly. Higher is better.";
+
+// The raw refractometer reading shown in the BRIX column (its own number).
+export const BRIX_HELP =
+  "The raw refractometer reading: a measure of the sugars and nutrients dissolved in the sample. It is the unadjusted number, so use the Score to compare crops, since the same BRIX means different things for different crops.";
+
 /** "Score" column-header label with the standard score-explanation popover. */
-export function ScoreHint({ children = 'Score' }: { children?: React.ReactNode }) {
-  return <ColumnHint help={SCORE_HELP}>{children}</ColumnHint>;
+export function ScoreHint({ children = 'Score', variant = 'percent' }: { children?: React.ReactNode; variant?: 'percent' | 'rating' }) {
+  return <ColumnHint help={variant === 'rating' ? SCORE_RATING_HELP : SCORE_HELP}>{children}</ColumnHint>;
 }

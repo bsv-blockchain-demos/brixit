@@ -301,7 +301,7 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
                       <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0 text-text-muted-brown" />
                       <span className="min-w-0">{locationText}</span>
                     </div>
-                    <div className="inline-flex items-center gap-1.5 text-sm text-text-muted-brown">
+                    <div className="inline-flex items-center gap-1.5 text-sm text-text-mid">
                       <Calendar className="w-3.5 h-3.5" />
                       {new Date(s.assessment_date).toLocaleDateString()}
                     </div>

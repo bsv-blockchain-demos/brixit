@@ -26,9 +26,10 @@ interface ScoreThresholdBarProps {
  * - mode="threshold": each chip shows the tier's floor value (Admin crops look).
  * - mode="range": each chip shows the tier's band (poor–average, …, excellent+) —
  *   clearer for end users in the submission detail modal.
- * When activeTier matches a real tier, that chip grows (larger, bold) and the
- * others dim — so the reading's tier stands out. With no activeTier (e.g. admin
- * threshold mode) every chip renders at the base size, unchanged.
+ * All chips render at one uniform size, full colour, and uniform font so the
+ * strip reads identically everywhere it appears. When activeTier names a real
+ * tier, that chip's value is bold to mark the reading's tier — without changing
+ * any chip's size, colour, fill, or font size, so every box stays identical.
  */
 export function ScoreThresholdBar({
   poor, average, good, excellent, mode = 'range', activeTier, className = '',
@@ -56,22 +57,19 @@ export function ScoreThresholdBar({
     <div className={`flex items-stretch gap-px rounded-md overflow-hidden w-fit ${className}`}>
       {TIERS.map((t) => {
         const isActive = hasActive && activeTier === t.tier;
-        const dim = hasActive && !isActive;
         return (
           <span
             key={t.tier}
             className={[
-              'flex flex-col items-center justify-center transition-all',
+              'flex flex-col items-center justify-center transition-all w-[4.75rem] px-1 py-1',
               t.bg,
               t.ink ? 'text-text-dark' : 'text-white',
-              isActive ? 'min-w-[3.5rem] px-3 py-1.5 z-10' : 'min-w-[3rem] px-2 py-1',
-              dim ? 'opacity-55' : '',
             ].join(' ')}
           >
-            <span className={`leading-none uppercase tracking-wide opacity-90 ${isActive ? 'text-[10px]' : 'text-[9px]'}`}>
+            <span className="leading-none uppercase tracking-wide opacity-90 whitespace-nowrap text-[9px]">
               {t.label}
             </span>
-            <span className={`font-mono leading-tight ${isActive ? 'text-sm font-bold' : 'text-xs'}`}>
+            <span className={`font-mono leading-tight whitespace-nowrap text-xs ${isActive ? 'font-bold' : ''}`}>
               {valueByTier[t.tier]}
             </span>
           </span>

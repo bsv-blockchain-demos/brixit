@@ -22,7 +22,7 @@ import { getFilterSummary, getActiveFilterList } from '../../lib/filterUtils';
 import { fetchFormattedSubmissionsPage, type PublicFormattedSubmissionsQuery } from '../../lib/fetchSubmissions';
 import { BrixDataPoint } from '../../types';
 import SubmissionTableRow from '../common/SubmissionTableRow';
-import { ColumnHint, ScoreHint } from '../common/StatusBadges';
+import { ColumnHint, ScoreHint, BRIX_HELP } from '../common/StatusBadges';
 import MobileSubmissionCard from '../common/MobileSubmissionCard';
 import DataPointDetailModal from '../common/DataPointDetailModal';
 import { useAuth } from '../../contexts/AuthContext';
@@ -278,22 +278,25 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
                     className="text-xs text-text-muted-brown uppercase tracking-wider text-center cursor-pointer"
                     onClick={() => handleSort('brixLevel')}
                   >
-                    <ScoreHint>Score</ScoreHint> {sortBy === 'brixLevel' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    <ColumnHint help={BRIX_HELP}>BRIX</ColumnHint> {sortBy === 'brixLevel' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </TableHead>
+                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
+                    <ScoreHint variant="rating">Score</ScoreHint>
                   </TableHead>
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Notes</TableHead>
-                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
+                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">
                     <ColumnHint help="Whether this reading is approved for public display. Most are approved automatically; outliers are reviewed by an admin.">Verified</ColumnHint>
                   </TableHead>
-                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
+                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">
                     <ColumnHint help="Whether this reading is anchored to the BSV blockchain. 'Timestamped' means it has been anchored, giving a permanent, tamper-evident record; 'Pending' means anchoring is still in progress.">Blockchain</ColumnHint>
                   </TableHead>
-                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Actions</TableHead>
+                  <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {currentItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-text-mid">
+                    <TableCell colSpan={10} className="text-center py-8 text-text-mid">
                       No data found for the current filters.
                     </TableCell>
                   </TableRow>

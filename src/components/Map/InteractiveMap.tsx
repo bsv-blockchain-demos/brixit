@@ -666,7 +666,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
             {sub.submittedAt ? formatHumanDate(sub.submittedAt) : '-'}
           </span>
         </div>
-        <div className={`flex-shrink-0 px-3 py-1 text-center font-semibold text-sm text-white rounded-full whitespace-nowrap ${grade?.bgClass ?? 'bg-badge-neutral'}`}>
+        <div className={`flex-shrink-0 w-28 px-3 py-1 text-center font-semibold text-sm text-white rounded-full whitespace-nowrap ${grade?.bgClass ?? 'bg-badge-neutral'}`}>
           {grade ? grade.quality : '-'}
         </div>
       </div>

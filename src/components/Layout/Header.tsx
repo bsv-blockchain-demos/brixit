@@ -88,18 +88,6 @@ const Header = () => {
 
   const NavLinks = () => (
     <>
-      <Link to="/leaderboard">
-        <Button
-          variant="ghost"
-          className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/leaderboard") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
-          }`}
-        >
-          <Trophy className="w-4 h-4" />
-          <span>Leaderboard</span>
-        </Button>
-      </Link>
-
       <Link to="/map">
         <Button
           variant="ghost"
@@ -109,6 +97,18 @@ const Header = () => {
         >
           <Eye className="w-4 h-4" />
           <span>Explorer</span>
+        </Button>
+      </Link>
+
+      <Link to="/leaderboard">
+        <Button
+          variant="ghost"
+          className={`flex items-center space-x-2 w-full justify-start ${
+            isActive("/leaderboard") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
+          }`}
+        >
+          <Trophy className="w-4 h-4" />
+          <span>Leaderboard</span>
         </Button>
       </Link>
 
@@ -305,8 +305,8 @@ const Header = () => {
             {/* Nav list */}
             <nav className="flex-1 overflow-y-auto px-4 pt-4 space-y-1">
               {[
-                { to: "/leaderboard", icon: Trophy, label: "Leaderboard" },
                 { to: "/map", icon: Eye, label: "Explorer" },
+                { to: "/leaderboard", icon: Trophy, label: "Leaderboard" },
                 { to: "/data", icon: Database, label: "Data" },
                 { to: "/my-data", icon: User, label: "My Data" },
                 ...(hasRole("contributor") ? [{ to: "/data-entry", icon: Plus, label: "Submit", primary: true }] : []),

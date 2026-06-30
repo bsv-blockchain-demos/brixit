@@ -76,7 +76,7 @@ export default function VenueVerifyModal({ venueId, venueName, mergeOnly = false
     <Dialog open onOpenChange={open => { if (!open) onClose(); }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 font-display text-text-dark">
             {mergeOnly
               ? <><GitMerge className="w-4 h-4" /> Merge into "{venueName}"</>
               : <><ShieldCheck className="w-4 h-4" /> Verify "{venueName}"</>}
@@ -86,15 +86,15 @@ export default function VenueVerifyModal({ venueId, venueName, mergeOnly = false
         <div className="space-y-4 py-1">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              <Loader2 className="w-5 h-5 animate-spin text-text-muted" />
             </div>
           ) : !hasNearby ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-text-mid">
               No unverified venues found at this location.
             </p>
           ) : (
             <>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-text-mid">
                 {nearby.length} unverified venue{nearby.length !== 1 ? 's' : ''} found at this location.
                 Select which to merge: their submissions will be reassigned here and the venues deleted.
               </p>
@@ -114,8 +114,8 @@ export default function VenueVerifyModal({ venueId, venueName, mergeOnly = false
                       />
                       <div className="flex-1 min-w-0 text-sm">
                         <div className="font-medium">{v.name}</div>
-                        {loc && <div className="text-xs text-muted-foreground">{loc}</div>}
-                        <div className="text-xs text-muted-foreground mt-0.5">
+                        {loc && <div className="text-xs text-text-muted">{loc}</div>}
+                        <div className="text-xs text-text-muted mt-0.5">
                           {v.submission_count} submission{v.submission_count !== 1 ? 's' : ''}
                         </div>
                       </div>

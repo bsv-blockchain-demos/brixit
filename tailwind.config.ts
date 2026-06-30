@@ -23,6 +23,11 @@ export default {
 				landing: ['Cooper BT', 'Georgia', 'serif'],
 				body: ['DM Sans', 'system-ui', 'sans-serif'],
 			},
+			fontSize: {
+				// Micro-label / eyebrow token — single source for sub-`text-xs`
+				// captions and uppercase labels. Replaces ad-hoc text-[10px]/[11px].
+				'2xs': ['0.6875rem', { lineHeight: '1rem' }],
+			},
 			screens: {
 				desktop: '900px',
 			},

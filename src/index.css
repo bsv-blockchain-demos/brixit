@@ -63,6 +63,8 @@
     --gold:          #e1b12c;   /* average score                               */
     --score-average: #e1b12c;
     --score-poor:    #d9772c;   /* poor score — ORANGE (decoupled from danger red) */
+    --score-average-text: #a07d00;  /* readable gold for amber-tier hero text (light) */
+    --score-good-text:    #4e8a2e;  /* darker green so Good-tier hero text stays legible */
 
     /* Text — warm brown family from style guide */
     --text-dark:  #524d40;   /* primary body text                             */
@@ -192,6 +194,8 @@
     --gold:          #f0c040;
     --score-average: #f0c040;
     --score-poor:    #e8893f;   /* poor score — orange (dark) */
+    --score-average-text: #f0c040;
+    --score-good-text:    #7fc850;
 
     --text-dark:  #e8e0d8;
     --text-mid:   #b0a898;

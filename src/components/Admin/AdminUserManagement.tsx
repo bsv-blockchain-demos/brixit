@@ -138,7 +138,7 @@ export default function AdminUserManagement() {
           {/* Column headers (desktop only) — grid tracks shared with the rows below keep them aligned */}
           <div className="hidden sm:grid sm:grid-cols-[1fr_7rem_6rem_16rem] sm:items-center gap-3 px-4 py-2.5 bg-table-header text-xs font-medium uppercase tracking-wider text-text-muted-brown">
             <div className="min-w-0">User · Wallet</div>
-            <div className="text-center">Activity</div>
+            <div>Activity</div>
             <div>Role</div>
             <div className="text-right">Manage</div>
           </div>
@@ -159,7 +159,7 @@ export default function AdminUserManagement() {
               <div className="font-medium text-text-dark flex items-center gap-2 min-w-0">
                 <span className="truncate">{u.display_name ?? u.id}</span>
                 {isSelf && (
-                  <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-select-bg text-select-fg shrink-0">You</span>
+                  <span className="text-2xs font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-select-bg text-select-fg shrink-0">You</span>
                 )}
               </div>
             );
@@ -225,11 +225,11 @@ export default function AdminUserManagement() {
                       <div className="mt-0.5">{wallet}</div>
                     </div>
                   </div>
-                  <div className="text-center text-text-muted">
+                  <div className="text-text-muted">
                     {u.submission_count != null ? (
                       <>
                         <span className="block text-sm text-text-dark">{u.submission_count}</span>
-                        <span className="block text-[11px] uppercase tracking-wide">submission{u.submission_count !== 1 ? 's' : ''}</span>
+                        <span className="block text-2xs uppercase tracking-wide">submission{u.submission_count !== 1 ? 's' : ''}</span>
                       </>
                     ) : (
                       <span className="text-xs">-</span>

@@ -64,6 +64,8 @@ export interface ColumnDef {
   key: string;
   label: string;
   render?: (value: any, row: any) => React.ReactNode;
+  /** Horizontal alignment for this column's header and cells. Defaults to left. */
+  align?: 'left' | 'center' | 'right';
 }
 
 interface Props {
@@ -264,7 +266,7 @@ export default function AdminTableEditor({
             <TableHeader>
               <TableRow className="bg-table-header hover:bg-table-header border-hairline">
                 {columns.map(col => (
-                  <TableHead key={col.key} className="text-xs font-medium uppercase tracking-wider text-text-muted-brown">{col.label}</TableHead>
+                  <TableHead key={col.key} className={`text-xs font-medium uppercase tracking-wider text-text-muted-brown ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : ''}`}>{col.label}</TableHead>
                 ))}
                 <TableHead className="w-20 text-right text-xs font-medium uppercase tracking-wider text-text-muted-brown">Actions</TableHead>
               </TableRow>
@@ -286,7 +288,7 @@ export default function AdminTableEditor({
                 data?.data.map((row: any) => (
                   <TableRow key={row.id} className={`border-hairline hover:bg-surface-canvas ${isFetching ? 'opacity-60' : ''}`}>
                     {columns.map(col => (
-                      <TableCell key={col.key} className="text-text-dark">
+                      <TableCell key={col.key} className={`text-text-dark ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : ''}`}>
                         {col.render
                           ? col.render(row[col.key], row)
                           : row[col.key] != null
@@ -362,7 +364,7 @@ export default function AdminTableEditor({
             >
               <ChevronLeft className="h-3.5 w-3.5" /> Previous
             </Button>
-            <span className="text-sm text-muted-foreground">Page {page + 1} of {totalPages}</span>
+            <span className="text-sm text-text-mid">Page {page + 1} of {totalPages}</span>
             <Button
               variant="outline"
               size="sm"
@@ -380,7 +382,7 @@ export default function AdminTableEditor({
       <Dialog open={dialogOpen} onOpenChange={open => { if (!open) setDialogOpen(false); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editRow ? 'Edit' : 'Add'} {singularTitle}</DialogTitle>
+            <DialogTitle className="font-display text-text-dark">{editRow ? 'Edit' : 'Add'} {singularTitle}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             {formFields.map(field => (
@@ -412,7 +414,7 @@ export default function AdminTableEditor({
                       onChange={e => setFormValues(v => ({ ...v, [field.key]: e.target.checked }))}
                       className="h-4 w-4 rounded border-input accent-green-fresh cursor-pointer"
                     />
-                    <label htmlFor={field.key} className="text-sm text-muted-foreground cursor-pointer">
+                    <label htmlFor={field.key} className="text-sm text-text-mid cursor-pointer">
                       {field.label}
                     </label>
                   </div>
@@ -428,7 +430,7 @@ export default function AdminTableEditor({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none__">
-                        <span className="text-muted-foreground">None</span>
+                        <span className="text-text-muted">None</span>
                       </SelectItem>
                       {field.options?.map(opt => (
                         <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
@@ -479,7 +481,7 @@ export default function AdminTableEditor({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete "{deleteTarget?.name}"?</AlertDialogTitle>
+            <AlertDialogTitle className="font-display text-text-dark">Delete "{deleteTarget?.name}"?</AlertDialogTitle>
             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           {deleteError && (

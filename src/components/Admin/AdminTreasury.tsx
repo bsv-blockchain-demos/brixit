@@ -21,6 +21,7 @@ import {
   MapPin,
   User,
   Stamp,
+  Fingerprint,
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
@@ -60,7 +61,7 @@ function Eyebrow({ icon: Icon, children, className = '' }: {
   className?: string;
 }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted-brown ${className}`}>
+    <span className={`inline-flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-text-muted-brown ${className}`}>
       {Icon ? <Icon className="w-3.5 h-3.5" /> : null}
       {children}
     </span>
@@ -415,7 +416,7 @@ export default function AdminTreasury() {
                     <PopoverContent align="end" className="w-64 space-y-3">
                       <div>
                         <p className="text-xs font-semibold mb-1 text-text-mid">Sweep past date</p>
-                        <p className="text-[10px] text-text-muted-brown">
+                        <p className="text-2xs text-text-muted-brown">
                           Funds sent to an older day's rotating address. UTC dates.
                         </p>
                       </div>
@@ -452,7 +453,7 @@ export default function AdminTreasury() {
         {/* Identity */}
         <div className="bg-card border border-hairline rounded-2xl shadow-sm p-5">
           <div className="flex items-center justify-between">
-            <Eyebrow>Wallet Identity</Eyebrow>
+            <Eyebrow icon={Fingerprint}>Wallet Identity</Eyebrow>
             <span className="hidden lg:inline-flex">{networkPill}</span>
           </div>
 
@@ -467,10 +468,10 @@ export default function AdminTreasury() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <Eyebrow>Top-up Address</Eyebrow>
-                  <span className="text-[11px] text-text-muted-brown">rotates {fmtDate(infoQ.data.addressRotatesAt)}</span>
+                  <span className="text-2xs text-text-muted-brown">rotates {fmtDate(infoQ.data.addressRotatesAt)}</span>
                 </div>
                 <CopyField value={infoQ.data.address} onCopy={() => copy(infoQ.data!.address, 'Address')} />
-                <p className="text-[10px] text-text-muted-brown mt-1.5">
+                <p className="text-2xs text-text-muted-brown mt-1.5">
                   Derived fresh each UTC day. Funds sent to older addresses remain spendable.
                 </p>
               </div>
@@ -500,7 +501,7 @@ export default function AdminTreasury() {
                   </CollapsibleTrigger>
                 </div>
                 <CollapsibleContent className="pt-3 space-y-2.5">
-                  <p className="text-[10px] text-text-muted-brown italic">
+                  <p className="text-2xs text-text-muted-brown italic">
                     Public parameters, not secrets. Anyone with these can derive the address, but spending still requires the
                     server wallet's master key. Use only if the automated top-up sweep fails and funds need manual recovery.
                   </p>
@@ -560,12 +561,12 @@ export default function AdminTreasury() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs font-medium uppercase tracking-wider text-text-muted-brown border-y border-hairline bg-table-header">
-                    <th className="py-2 px-5">Submitted</th>
-                    <th className="py-2 pr-3">Crop</th>
-                    <th className="py-2 pr-3">BRIX</th>
-                    <th className="py-2 pr-3">Contributor</th>
-                    <th className="py-2 pr-3">Venue</th>
-                    <th className="py-2 pr-5 text-right">View</th>
+                    <th className="py-3 px-5">Submitted</th>
+                    <th className="py-3 pr-3">Crop</th>
+                    <th className="py-3 pr-3">BRIX</th>
+                    <th className="py-3 pr-3">Contributor</th>
+                    <th className="py-3 pr-3">Venue</th>
+                    <th className="py-3 pr-5 text-right">View</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -575,14 +576,14 @@ export default function AdminTreasury() {
                       onClick={() => setViewId(r.id)}
                       className="border-b border-hairline last:border-0 cursor-pointer hover:bg-surface-canvas transition-colors"
                     >
-                      <td className="py-2.5 px-5 text-text-mid tabular-nums whitespace-nowrap">{fmtDate(r.assessmentDate)}</td>
-                      <td className="py-2.5 pr-3 font-semibold text-text-dark">{titleCase(r.crop.name.replace(/_/g, ' '))}</td>
-                      <td className="py-2.5 pr-3 tabular-nums text-text-dark">{r.brixValue}</td>
-                      <td className="py-2.5 pr-3 text-text-mid">{r.contributorName ?? '-'}</td>
-                      <td className="py-2.5 pr-3 text-text-mid">
+                      <td className="py-3 px-5 text-text-mid tabular-nums whitespace-nowrap">{fmtDate(r.assessmentDate)}</td>
+                      <td className="py-3 pr-3 font-semibold text-text-dark">{titleCase(r.crop.name.replace(/_/g, ' '))}</td>
+                      <td className="py-3 pr-3 tabular-nums text-text-dark">{r.brixValue}</td>
+                      <td className="py-3 pr-3 text-text-mid">{r.contributorName ?? '-'}</td>
+                      <td className="py-3 pr-3 text-text-mid">
                         {r.venue ? `${r.venue.name}${r.venue.city ? ` · ${r.venue.city}` : ''}` : '-'}
                       </td>
-                      <td className="py-2.5 pr-5 text-right">
+                      <td className="py-3 pr-5 text-right">
                         <button
                           onClick={(e) => { e.stopPropagation(); setViewId(r.id); }}
                           aria-label="View submission"
@@ -617,7 +618,7 @@ export default function AdminTreasury() {
                   <div className="flex items-center gap-2 shrink-0">
                     <div className="text-right">
                       <p className="text-sm text-text-mid truncate max-w-[7rem]">{r.contributorName ?? '-'}</p>
-                      <p className="text-[11px] text-text-muted-brown tabular-nums mt-0.5">{fmtDate(r.assessmentDate)}</p>
+                      <p className="text-2xs text-text-muted-brown tabular-nums mt-0.5">{fmtDate(r.assessmentDate)}</p>
                     </div>
                     <Eye className="w-4 h-4 text-text-muted-brown shrink-0" />
                   </div>
@@ -649,7 +650,7 @@ export default function AdminTreasury() {
               ))}
             </div>
           </div>
-          <p className="text-xs text-text-muted-brown">Last 25 wallet actions, filtered by label.</p>
+          <p className="text-sm text-text-mid">Last 25 wallet actions, filtered by label.</p>
         </div>
 
         {activityQ.isLoading ? (
@@ -665,12 +666,12 @@ export default function AdminTreasury() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs font-medium uppercase tracking-wider text-text-muted-brown border-y border-hairline bg-table-header">
-                  <th className="py-2 px-5">Date</th>
-                  <th className="py-2 pr-3">Status</th>
-                  <th className="py-2 pr-3">Labels</th>
-                  <th className="py-2 pr-3">Description</th>
-                  <th className="py-2 pr-3">Sats</th>
-                  <th className="py-2 pr-5">TXID</th>
+                  <th className="py-3 px-5">Date</th>
+                  <th className="py-3 pr-3">Status</th>
+                  <th className="py-3 pr-3">Labels</th>
+                  <th className="py-3 pr-3">Description</th>
+                  <th className="py-3 pr-3">Sats</th>
+                  <th className="py-3 pr-5">TXID</th>
                 </tr>
               </thead>
               <tbody>
@@ -684,27 +685,27 @@ export default function AdminTreasury() {
                   })
                   .map((a) => (
                   <tr key={a.txid} className="border-b border-hairline last:border-0">
-                    <td className="py-2.5 px-5 text-text-mid tabular-nums whitespace-nowrap">{fmtDate(a.timestamp)}</td>
-                    <td className="py-2.5 pr-3">
+                    <td className="py-3 px-5 text-text-mid tabular-nums whitespace-nowrap">{fmtDate(a.timestamp)}</td>
+                    <td className="py-3 pr-3">
                       <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-surface-canvas text-text-mid border border-hairline capitalize">
                         {a.status}
                       </span>
                     </td>
-                    <td className="py-2.5 pr-3">
+                    <td className="py-3 pr-3">
                       <div className="flex flex-wrap gap-1">
                         {(a.labels ?? []).map((l) => (
-                          <span key={l} className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-mono text-text-muted-brown border border-hairline">
+                          <span key={l} className="inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-mono text-text-muted-brown border border-hairline">
                             {l}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="py-2.5 pr-3 text-xs text-text-mid">{a.description}</td>
-                    <td className={`py-2.5 pr-3 tabular-nums text-xs ${a.satoshis < 0 ? 'text-destructive' : a.satoshis > 0 ? 'text-score-good' : 'text-text-mid'}`}>
+                    <td className="py-3 pr-3 text-text-mid">{a.description}</td>
+                    <td className={`py-3 pr-3 tabular-nums ${a.satoshis < 0 ? 'text-destructive' : a.satoshis > 0 ? 'text-score-good' : 'text-text-mid'}`}>
                       {a.satoshis > 0 ? '+' : ''}
                       {formatSatoshis(a.satoshis)}
                     </td>
-                    <td className="py-2.5 pr-5">
+                    <td className="py-3 pr-5">
                       <a
                         href={whatsOnChainTxUrl(chain, a.txid)}
                         target="_blank"

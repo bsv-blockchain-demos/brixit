@@ -119,7 +119,7 @@ export default function AdminCrops() {
             {TIERS.map((t) => (
               <div key={t.key} className={`rounded-lg ${t.paleBg} py-2 text-center`}>
                 <div className={`font-mono text-sm font-bold leading-none ${t.text}`}>{row[t.key] ?? '-'}</div>
-                <div className="mt-1 text-[10px] uppercase tracking-wide text-text-muted-brown">{t.short}</div>
+                <div className="mt-1 text-2xs uppercase tracking-wide text-text-muted-brown">{t.short}</div>
               </div>
             ))}
           </div>

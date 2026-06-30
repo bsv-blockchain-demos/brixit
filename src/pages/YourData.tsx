@@ -15,7 +15,7 @@ import { buildSubmissionPayload } from '@/lib/buildSubmissionPayload';
 import { useMySubmissionsCountQuery, useMySubmissionsCropIdsQuery, useMySubmissionsVenueIdsQuery, useMySubmissionsPageQuery } from '../hooks/useSubmissions';
 
 import SubmissionTableRow from '../components/common/SubmissionTableRow';
-import { ColumnHint, ScoreHint } from '../components/common/StatusBadges';
+import { ColumnHint, ScoreHint, BRIX_HELP } from '../components/common/StatusBadges';
 import MobileSubmissionCard from '../components/common/MobileSubmissionCard';
 import { BrixDataPoint } from '../types';
 import { useToast } from '../hooks/use-toast';
@@ -404,15 +404,16 @@ const YourData: React.FC = () => {
                             {/* <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Variety</TableHead> */}
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Brand</TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Location</TableHead>
-                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center"><ScoreHint>Score</ScoreHint></TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center"><ColumnHint help={BRIX_HELP}>BRIX</ColumnHint></TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center"><ScoreHint variant="rating">Score</ScoreHint></TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Notes</TableHead>
-                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">
                               <ColumnHint help="Whether this reading is approved for public display. Most are approved automatically; outliers are reviewed by an admin.">Verified</ColumnHint>
                             </TableHead>
-                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">
                               <ColumnHint help="Whether this reading is anchored to the BSV blockchain. 'Timestamped' means it has been anchored, giving a permanent, tamper-evident record; 'Pending' means anchoring is still in progress.">Blockchain</ColumnHint>
                             </TableHead>
-                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center">Actions</TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-right">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
