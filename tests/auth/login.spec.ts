@@ -40,13 +40,13 @@ test.describe('FAQ page', () => {
     await expect(page.getByText(/what is the mycelia app/i)).toBeVisible();
   });
 
-  test('back button returns to login', async ({ page }) => {
-    // Navigate from /login so history is set correctly
-    await page.goto('/login');
+  test('back button returns to the landing page', async ({ page }) => {
+    // The landing lives at '/'; '/login' just redirects there.
+    await page.goto('/');
     await page.getByRole('contentinfo').getByRole('button', { name: /faq/i }).click();
     await expect(page).toHaveURL(/\/faq/);
     await page.getByRole('button', { name: /back/i }).click();
-    await expect(page).toHaveURL(/\/login/);
+    await expect(page).toHaveURL(/\/$/);
   });
 });
 
@@ -75,7 +75,7 @@ test.describe('Wallet error page', () => {
 });
 
 test.describe('Authenticated redirect', () => {
-  test('redirects to leaderboard when already logged in', async ({ page }) => {
+  test('redirects to the map when already logged in', async ({ page }) => {
     await page.route('**/api/auth/refresh', route =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ access_token: 'tok' }) })
     );
@@ -86,10 +86,8 @@ test.describe('Authenticated redirect', () => {
         last_submission: null, roles: ['contributor'],
       })})
     );
-    await page.route('**/api/leaderboards/**', route =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' })
-    );
     await page.goto('/login');
-    await expect(page).toHaveURL(/\/leaderboard/);
+    // Default post-login destination is the map.
+    await expect(page).toHaveURL(/\/map/);
   });
 });

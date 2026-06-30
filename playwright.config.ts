@@ -27,9 +27,13 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev',
+    // Locally: reuse the dev server you already have on :8080.
+    // In CI: build once and serve the static bundle with `vite preview`
+    command: process.env.CI
+      ? 'npm run build && npm run preview -- --port 8080 --strictPort'
+      : 'npm run dev',
     url: 'http://localhost:8080',
-    reuseExistingServer: true,
-    timeout: 120_000,
+    reuseExistingServer: !process.env.CI,
+    timeout: 180_000,
   },
 });
