@@ -1,6 +1,6 @@
 ﻿import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Smartphone, KeyRound, ShieldCheck, Leaf, Fingerprint } from 'lucide-react';
+import { ArrowLeft, Smartphone, KeyRound, ShieldCheck, Leaf, Fingerprint, Gauge } from 'lucide-react';
 import { AuthBackground } from '@/components/ui/AuthBackground';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,29 +16,28 @@ const FAQ = [
   {
     value: 'brix',
     icon: Leaf,
-    question: 'What is BRIX?',
+    question: 'What is BRIXit?',
     answer: (
-      <>
-        <p>
-          A fresh carrot from a well-managed farm and one from an industrial supermarket
-          shelf look identical, but they may taste completely different and reflect very
-          different growing conditions. Until now, there was no simple way for ordinary
-          people to measure this difference. BRIX gives you that number.
-        </p>
-        <p className="mt-3">
-          BRIX is a community app for tracking and sharing BRIX scores, a simple number
-          that reflects how your food was grown. Using a device called a refractometer,
-          anyone can measure produce from a farm, market, or store and compare it to
-          readings from around the world.
-        </p>
-        <p className="mt-3">
-          The BRIX score measures dissolved solids in fresh produce (primarily sugars),
-          along with small amounts of minerals, amino acids, and other compounds. Higher
-          scores often indicate a plant that was photosynthesizing well and functioning
-          efficiently, conditions commonly associated with better flavour and overall food
-          quality.
-        </p>
-      </>
+      <p>
+        BRIXit is a community app for measuring the nutritional quality of fresh produce.
+        Using a handheld refractometer, you scan a fruit or vegetable to get its BRIXit
+        score: a simple number reflecting how it was grown. Two carrots can look identical
+        yet score very differently. BRIXit lets you measure, compare, and share results
+        with people around the world.
+      </p>
+    ),
+  },
+  {
+    value: 'measure',
+    icon: Gauge,
+    question: 'How do I measure produce?',
+    answer: (
+      <p>
+        You'll need a handheld refractometer, an inexpensive optical tool. Squeeze a drop
+        of juice from the produce onto the lens and read the number: that's your BRIXit
+        score. Record it in the app with the crop and where you bought it, and it joins
+        the shared map for everyone to compare.
+      </p>
     ),
   },
   {
@@ -46,24 +45,13 @@ const FAQ = [
     icon: KeyRound,
     question: 'Why do we use a wallet instead of a password?',
     answer: (
-      <>
-        <p>
-          When you create an account with an email and password, that password is stored
-          on a company's server. If that server gets breached (and major services are
-          breached every year) your credentials are exposed. We didn't want to build yet
-          another database of passwords that could be leaked, sold, or misused.
-        </p>
-        <p className="mt-3">
-          Instead, your identity lives only on your own device inside a wallet: software
-          that holds a cryptographic key unique to you. When you sign in, your wallet
-          proves your identity through a cryptographic handshake rather than sending a
-          password. Nobody, including us, can access your account without your approval.
-        </p>
-        <p className="mt-3">
-          Think of it as a digital keychain: it unlocks BRIX (and other compatible apps),
-          but the key never leaves your device and there is no password for anyone to steal.
-        </p>
-      </>
+      <p>
+        Passwords get stored on company servers, which get breached, leaked, or sold.
+        BRIXit avoids that entirely. Instead, your identity lives in a wallet on your own
+        device, holding a private key only you control. When you sign in, your wallet
+        proves who you are through a cryptographic handshake. There's no password on our
+        servers for anyone to steal.
+      </p>
     ),
   },
   {
@@ -71,26 +59,13 @@ const FAQ = [
     icon: Fingerprint,
     question: 'What is an identity key and why do we need one?',
     answer: (
-      <>
-        <p>
-          To keep submissions trustworthy, BRIX needs to know that different measurements
-          come from the same person, to prevent spam and duplicate accounts. But we don't
-          need to know <em>who</em> that person is, just that they're consistent. An
-          identity key solves this: it lets you prove continuity of identity without
-          revealing personal information.
-        </p>
-        <p className="mt-3">
-          Your identity key is a public cryptographic identifier: a permanent username
-          mathematically generated from your wallet. Your submissions are linked to your
-          key, not your name. The key is public (anyone can see it), but only you can
-          prove you own it, because the matching private key never leaves your device.
-        </p>
-        <p className="mt-3">
-          You don't need to memorise it. Your wallet handles everything automatically.
-          It also means you can use the same identity across any other app that supports
-          this standard.
-        </p>
-      </>
+      <p>
+        Your identity key is a public code generated by your wallet, like a permanent
+        username. It lets BRIXit link your submissions to one consistent identity, keeping
+        data trustworthy, without knowing who you are. The key is public, but only you can
+        prove you own it, since the matching private key never leaves your device. Your
+        wallet handles it automatically.
+      </p>
     ),
   },
   {
@@ -98,26 +73,13 @@ const FAQ = [
     icon: ShieldCheck,
     question: 'What is a certificate and why does BRIX use one?',
     answer: (
-      <>
-        <p>
-          Knowing that an identity key exists isn't enough. BRIX also needs to confirm
-          it belongs to a genuine, verified member rather than a bot or spammer. The
-          traditional approach is to maintain a list of approved users in a database on
-          our servers, but that's another database to protect, and another breach waiting
-          to happen. A certificate solves this without us holding anything.
-        </p>
-        <p className="mt-3">
-          When you create a BRIX account, we issue a cryptographic membership certificate
-          directly into your wallet. It's cryptographically signed by BRIX, so the app
-          can verify your membership is genuine without looking anything up on our servers.
-          It contains only what you chose to share: an optional display name and email.
-        </p>
-        <p className="mt-3">
-          You control it entirely: it stays in your wallet, and you can revoke access at
-          any time by removing it. This is why BRIX has no password: your certificate
-          is your proof of membership.
-        </p>
-      </>
+      <p>
+        A certificate proves you're a genuine member, not a bot. When you create an
+        account, BRIXit issues a membership certificate into your wallet, signed by us, so
+        the app can verify it without any server lookup. It holds only what you choose to
+        share: an optional display name and email. You keep it in your wallet and can
+        remove it anytime.
+      </p>
     ),
   },
   {
@@ -125,26 +87,13 @@ const FAQ = [
     icon: Smartphone,
     question: 'What is the Mycelia app?',
     answer: (
-      <>
-        <p>
-          Managing cryptographic keys safely is genuinely difficult. Done badly it creates
-          security holes; done well, it requires software that most people don't know how
-          to set up. We wanted people to use BRIX without becoming cryptography experts,
-          so we chose to build on Mycelia, an existing wallet app that handles all the
-          complexity for you.
-        </p>
-        <p className="mt-3">
-          Mycelia is designed for everyday people: no blockchain or crypto knowledge
-          needed. It manages your identity key and certificates behind the scenes. Once
-          set up, opening BRIX from within the app signs you in automatically. On a
-          desktop, you can scan a QR code with Mycelia to connect without installing
-          anything extra on your computer.
-        </p>
-        <p className="mt-3">
-          Mycelia also works with other compatible apps, so the identity and certificates
-          you build here carry across the wider ecosystem.
-        </p>
-      </>
+      <p>
+        Mycelia is the wallet app BRIXit is built on. It manages your identity key and
+        certificates for you, so you never handle cryptography yourself. Create your
+        identity in Mycelia once, then open BRIXit from inside it to sign in automatically.
+        On desktop, scan a QR code with Mycelia to connect. The same identity works across
+        other compatible apps too.
+      </p>
     ),
   },
 ];
@@ -180,7 +129,7 @@ export default function Help() {
         {/* Header */}
         <div className="text-center">
           <BrixLogo height="5rem" color="white" className="mx-auto mb-4" />
-          <h1 className="text-2xl font-display font-bold text-on-bg-text">How BRIX works</h1>
+          <h1 className="text-2xl font-display font-bold text-on-bg-text">How BRIXit works</h1>
           <p className="text-on-bg-body text-sm mt-1">Everything you need to know to get started</p>
         </div>
 
@@ -216,7 +165,7 @@ export default function Help() {
               {[
                 'Download the Mycelia app on your phone.',
                 'Create your identity inside Mycelia. It only takes a minute.',
-                'Open BRIX from within the Mycelia app and you will be signed in automatically.',
+                'Open BRIXit from within the Mycelia app and you will be signed in automatically.',
               ].map((step, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <span className="w-5 h-5 rounded-full bg-green-fresh text-white text-xs flex items-center justify-center shrink-0 mt-0.5">

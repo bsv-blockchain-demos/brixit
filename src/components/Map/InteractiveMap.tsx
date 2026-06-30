@@ -27,6 +27,7 @@ import {
 } from '../../lib/fetchLeaderboards';
 import { formatCityState } from '../../lib/formatAddress';
 import { formatHumanDate } from '../../lib/formatDate';
+import { titleCase } from '../../lib/titleCase';
 
 // Types
 
@@ -660,11 +661,11 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       >
         <div className="flex flex-col min-w-0 flex-1">
           <span className="font-semibold text-sm truncate">
-            {safeStr(sub.cropLabel ?? sub.cropType ?? 'Unknown Crop')}
+            {titleCase(safeStr(sub.cropLabel ?? sub.cropType ?? 'Unknown Crop'))}
           </span>
           <span className="text-xs text-text-muted-brown mt-1 truncate">
-            {safeStr(sub.brandLabel ?? sub.brandName ?? 'Unknown Brand')},{' '}
-            {sub.submittedAt ? formatHumanDate(sub.submittedAt) : '-'}
+            {[safeStr(sub.brandLabel ?? sub.brandName).trim(), sub.submittedAt ? formatHumanDate(sub.submittedAt) : '']
+              .filter(Boolean).join(', ') || '-'}
           </span>
         </div>
         <div className="flex-shrink-0">
@@ -895,7 +896,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
             open={mobileSheetOpen}
             onOpenChange={setMobileSheetOpen}
             title={locTitle || 'Location details'}
-            className="pointer-events-auto"
+            className="pointer-events-auto h-[60vh]"
           >
             <div className="mb-4">{renderLeaderboard()}</div>
           </BottomSheet>

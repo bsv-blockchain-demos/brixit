@@ -6,7 +6,7 @@ import { WalletClient } from '@bsv/sdk';
 import { createAuthProof } from '@/lib/authProof';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Smartphone, ArrowRight, ShieldCheck, KeyRound, MonitorSmartphone } from 'lucide-react';
+import { ArrowRight, ShieldCheck, MonitorSmartphone, Lock, QrCode, ArrowDown, Wallet } from 'lucide-react';
 import { getDataFromWallet } from '@/utils/getDataFromWallet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { motion, useReducedMotion } from 'framer-motion';
@@ -25,7 +25,7 @@ function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="text-center border-l border-white/10 first:border-l-0 px-4">
       <p className="font-display text-2xl desktop:text-3xl font-bold text-white">{value}</p>
-      <p className="text-xs mt-1 text-on-bg-muted">{label}</p>
+      <p className="font-mono text-xs mt-1 tracking-wide text-on-bg-muted">{label}</p>
     </div>
   );
 }
@@ -288,12 +288,12 @@ export default function WalletLogin() {
                   className="font-landing font-medium text-white leading-[1.12] mb-6"
                   style={{ fontSize: 'clamp(2.125rem, 9vw, 3.25rem)' }}
                 >
-                  Finally know if your food is{' '}
-                  <em className="italic" style={{ color: 'white' }}>actually</em>{' '}
-                  nutritious.
+                  Know how{' '}
+                  <em className="italic" style={{ color: 'white' }}>nutritious</em>{' '}
+                  your food is.
                 </h1>
                 <p className="text-base desktop:text-lg leading-relaxed text-on-bg-body mb-8">
-                  BRIX measures the nutrient density of fresh produce, so you can shop smarter, feed your family better, and share what you discover.
+                  BRIXit measures the refraction of fresh produce - you can use a refractometer to shop smarter, feed your family better, and share what you discover.
                 </p>
                 <div className="flex flex-col gap-3 max-w-md">
                   <Button
@@ -324,12 +324,17 @@ export default function WalletLogin() {
 
             {/* Stats strip */}
             <motion.div
-              className="mt-16 desktop:mt-20 grid grid-cols-3 max-w-md desktop:max-w-xl mx-auto desktop:mx-0 border-t border-white/10 pt-8"
+              className="mt-16 desktop:mt-20 max-w-md desktop:max-w-xl mx-auto desktop:mx-0 border-t border-white/10 pt-8"
               {...(prefersReducedMotion ? {} : { initial: { opacity: 0 }, whileInView: { opacity: 1 }, viewport: { once: true }, transition: { duration: 0.5, delay: 0.35 } })}
             >
-              <Stat value="14,280+" label="scores submitted" />
-              <Stat value="342" label="farms tracked" />
-              <Stat value="38" label="countries" />
+              <div className="grid grid-cols-3">
+                <Stat value="60+" label="crops you can test" />
+                <Stat value="120+" label="brands tracked" />
+                <Stat value="100%" label="readings anchored on-chain" />
+              </div>
+              <p className="mt-5 text-center desktop:text-left font-mono text-xs tracking-wide text-on-bg-muted">
+                every reading, permanently verifiable
+              </p>
             </motion.div>
           </div>
         </section>
@@ -345,7 +350,7 @@ export default function WalletLogin() {
               <div>
                 <motion.div className="mb-8" {...fadeUp}>
                   <p className="uppercase tracking-[0.2em] text-sm font-medium mb-3" style={{ color: 'var(--blue-mid)' }}>
-                    What is a brix score?
+                    What is a BRIXit score?
                   </p>
                   <h2 className="font-landing text-3xl desktop:text-4xl font-medium" style={{ color: 'var(--text-dark)' }}>
                     A number that tells you how{' '}
@@ -356,39 +361,62 @@ export default function WalletLogin() {
 
                 <motion.div className="space-y-5" {...fadeUp}>
                   <p className="text-lg leading-relaxed" style={{ color: 'var(--text-mid)' }}>
-                    The BRIX score measures dissolved solids in fresh produce (primarily sugars), along with small amounts of minerals, amino acids, and other compounds. Higher scores often indicate a plant that was photosynthesizing well and functioning efficiently, conditions commonly associated with better flavour and overall food quality.
+                    The BRIXit score measures the dissolved solids in fresh produce: minerals, amino acids, sugars, and other compounds.
                   </p>
                   <p className="text-lg leading-relaxed" style={{ color: 'var(--text-mid)' }}>
-                    Supermarket carrots often score 4–6. A carrot from a well-managed farm can score 18. Same vegetable. Very different quality. Now you can know before you buy.
+                    Higher scores often indicate a plant that was photosynthesising well and functioning efficiently, conditions linked to better flavour and nutrition.
+                  </p>
+                  <p className="text-lg leading-relaxed" style={{ color: 'var(--text-mid)' }}>
+                    One carrot can score 6. Another, grown in living soil, can score 18. Same vegetable. Very different nutrition. Now you can know what you're buying.
                   </p>
                 </motion.div>
               </div>
 
-              {/* Right column — score guide card */}
+              {/* Right column — merged score guide card (one surface, two regions) */}
               <motion.div
-                className="rounded-2xl p-6 desktop:p-8 bg-white border shadow-sm"
-                style={{ borderColor: 'var(--hairline)' }}
+                className="rounded-2xl bg-card border border-hairline shadow-sm overflow-hidden"
                 {...fadeUp}
               >
-                <p className="uppercase tracking-[0.15em] text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>
-                  Score Guide
-                </p>
-                <p className="text-xs mb-6" style={{ color: 'var(--text-muted)' }}>
-                  Scores are relative to each crop's expected range — apples and bananas are judged by different standards. A 14 BRIX apple is only good; a 14 BRIX banana is excellent.
-                </p>
-
-                <div className="space-y-6">
+                {/* Region 1 — what each tier means */}
+                <div className="px-7 py-6">
+                  <p className="uppercase tracking-[0.2em] text-sm font-medium mb-4" style={{ color: 'var(--blue-mid)' }}>
+                    Score Guide
+                  </p>
                   {[
-                    { crop: 'Apple',  poor: 6, average: 10, good: 14, excellent: 18 },
-                    { crop: 'Banana', poor: 8, average: 10, good: 12, excellent: 14 },
-                  ].map(({ crop, poor, average, good, excellent }) => (
-                    <div key={crop}>
-                      <p className="font-semibold mb-2" style={{ color: 'var(--text-dark)' }}>{crop}</p>
-                      <div className="overflow-x-auto">
-                        <ScoreThresholdBar mode="range" poor={poor} average={average} good={good} excellent={excellent} />
+                    { tier: 'Excellent', bg: 'bg-score-excellent', desc: 'Well above the expected range for this crop.' },
+                    { tier: 'Good',      bg: 'bg-score-good',      desc: 'Above the crop average. Better than most commercial produce.' },
+                    { tier: 'Average',   bg: 'bg-score-average',   desc: 'Near the crop average. Typical of commercial growing.' },
+                    { tier: 'Poor',      bg: 'bg-score-poor',      desc: 'Below the expected range. Low nutrient density for this crop.' },
+                  ].map((t, i) => (
+                    <div key={t.tier} className={`grid grid-cols-[14px_1fr] gap-3.5 py-3 ${i > 0 ? 'border-t border-hairline' : ''}`}>
+                      <span className={`w-3.5 h-3.5 rounded-[5px] mt-[3px] ${t.bg}`} />
+                      <div>
+                        <p className="font-semibold text-sm leading-tight" style={{ color: 'var(--text-dark)' }}>{t.tier}</p>
+                        <p className="text-xs leading-relaxed mt-0.5" style={{ color: 'var(--text-mid)' }}>{t.desc}</p>
                       </div>
                     </div>
                   ))}
+                </div>
+
+                {/* Region 2 — how each crop is judged */}
+                <div className="px-7 py-6 border-t border-hairline">
+                  <p className="uppercase tracking-[0.2em] text-sm font-medium mb-3" style={{ color: 'var(--blue-mid)' }}>
+                    How each crop is judged
+                  </p>
+                  <p className="text-sm leading-relaxed mb-5" style={{ color: 'var(--text-mid)' }}>
+                    Ranges are relative to each crop's expected values. A 14&nbsp;BRIXit apple is only good, but a 14&nbsp;BRIXit banana is excellent.
+                  </p>
+                  <div className="space-y-5">
+                    {[
+                      { crop: 'Apple',  poor: 6, average: 10, good: 14, excellent: 18 },
+                      { crop: 'Banana', poor: 8, average: 10, good: 12, excellent: 14 },
+                    ].map(({ crop, poor, average, good, excellent }) => (
+                      <div key={crop}>
+                        <p className="font-landing text-xl mb-2" style={{ color: 'var(--text-dark)' }}>{crop}</p>
+                        <ScoreThresholdBar fullWidth mode="range" poor={poor} average={average} good={good} excellent={excellent} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </motion.div>
             </div>
@@ -396,14 +424,14 @@ export default function WalletLogin() {
         </section>
 
         {/* ═══ Section 3: Community Scores ═══════════════════════ */}
-        <section id="community" className="py-20 desktop:py-28" style={{ backgroundColor: 'hsl(var(--card))' }}>
+        <section id="community" className="py-20 desktop:py-28" style={{ backgroundColor: 'var(--bone)' }}>
           <div className="max-w-5xl mx-auto px-5">
             <motion.div className="mb-10" {...fadeUp}>
               <p className="uppercase tracking-[0.2em] text-sm font-medium mb-3" style={{ color: 'var(--blue-mid)' }}>
                 Community
               </p>
               <h2 className="font-landing text-3xl desktop:text-4xl font-medium" style={{ color: 'var(--text-dark)' }}>
-                What people are finding
+                What people are <em style={{ color: 'var(--blue-mid)' }}>finding</em>
               </h2>
             </motion.div>
 
@@ -421,97 +449,152 @@ export default function WalletLogin() {
           </div>
         </section>
 
-        {/* ═══ Section 4: Mission ════════════════════════════════ */}
-        <section className="py-24 desktop:py-32" style={{ backgroundColor: 'hsl(var(--background))' }}>
-          <div className="max-w-2xl mx-auto px-5 text-center">
+        {/* ═══ Section 4: Our Vision ═════════════════════════════ */}
+        <section className="py-14 desktop:py-24" style={{ backgroundColor: 'var(--green-tint)' }}>
+          <div className="max-w-[680px] mx-auto px-5 text-center">
             <motion.div {...fadeUp}>
-              <p className="uppercase tracking-[0.2em] text-sm font-medium mb-5 text-on-bg-subtle">
-                Our Mission
+              <p className="uppercase tracking-[0.2em] text-sm font-medium" style={{ color: 'var(--blue-mid)' }}>
+                Our Vision
               </p>
               <h2
-                className="font-landing font-medium text-white leading-tight mb-6"
-                style={{ fontSize: 'clamp(2rem, 5vw, 3rem)' }}
+                className="font-landing text-3xl desktop:text-4xl font-medium mt-4"
+                style={{ color: 'var(--text-dark)' }}
               >
-                Every score you submit helps{' '}
-                <em style={{ color: 'white' }}>another family</em>{' '}
-                eat better
+                Locally we <em style={{ color: 'var(--blue-mid)' }}>act</em>, globally we <em style={{ color: 'var(--blue-mid)' }}>share</em>.
               </h2>
-              <p className="text-lg leading-relaxed mb-10 text-on-bg-body">
-                Good food knowledge shouldn't be locked away. When you share a score, you're not just helping yourself, you're changing what your whole community reaches for.
+              <p className="text-lg leading-relaxed mt-6" style={{ color: 'var(--text-mid)' }}>
+                People who buy food can test it and share its quality with everyone else. Ten people in a small city can complete a review of local food quality in a month. Locally we act, globally we share.
               </p>
-              <Button
-                onClick={handleLoginClick}
-                size="lg"
-                className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-4 px-10 text-base font-medium gap-2 rounded-xl"
-              >
-                Join 8,400 conscious shoppers
-                <ArrowRight className="w-4 h-4" />
-              </Button>
+              <p className="text-lg leading-relaxed mt-4" style={{ color: 'var(--text-mid)' }}>
+                Sharing, learning, and acting together, we put our power and our money toward the betterment of our families, and grow the world we want to see.
+              </p>
             </motion.div>
           </div>
         </section>
 
-        {/* ═══ Section 5: Sign Up ════════════════════════════════ */}
-        <section className="py-20 desktop:py-28" style={{ backgroundColor: 'hsl(var(--card))' }}>
-          <div className="max-w-3xl mx-auto px-5">
-            <motion.div className="text-center mb-12" {...fadeUp}>
-              <h2 className="font-landing text-3xl desktop:text-4xl font-medium mb-4" style={{ color: 'var(--text-dark)' }}>
-                Your account is yours alone, forever
-              </h2>
-              <p className="text-lg leading-relaxed" style={{ color: 'var(--text-mid)' }}>
-                Most apps store your password on their servers, which can be hacked, leaked, or sold. BRIX works differently: your identity lives only on your own device as a private key. There is no password on our servers for anyone to steal.
-              </p>
-            </motion.div>
-
-            <motion.div {...stagger} className="grid desktop:grid-cols-3 gap-6 mb-12">
-              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--hairline)' }}>
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--blue-mid)' }}>
-                  <KeyRound className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>No password to forget</h3>
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>Your wallet handles authentication. No emails, no resets, no breaches.</p>
-              </motion.div>
-              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--hairline)' }}>
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--blue-mid)' }}>
-                  <ShieldCheck className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>Your data is never sold</h3>
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>Scores are public, but your identity stays private unless you choose otherwise.</p>
-              </motion.div>
-              <motion.div {...staggerChild} className="text-center p-6 rounded-2xl bg-card border shadow-sm hover:shadow-md transition-shadow" style={{ borderColor: 'var(--hairline)' }}>
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--blue-mid)' }}>
-                  <MonitorSmartphone className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>Works on phone or computer</h3>
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>Connect from any device. Your wallet travels with you.</p>
-              </motion.div>
-            </motion.div>
-
-            <motion.div className="flex flex-col items-center gap-3" {...fadeUp}>
-              <button
-                onClick={() => navigate('/faq')}
-                className="flex items-center gap-1.5 text-sm font-medium mb-1 transition-colors"
-                style={{ color: 'var(--blue-mid)' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--blue-deep)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--blue-mid)')}
+        {/* ═══ Section 4b: Mission ═══════════════════════════════ */}
+        {/* The one saturated full-bleed block in this run of the page. No CTA of
+            its own — the Connect section below is the single conversion. */}
+        <section className="relative overflow-hidden py-20 desktop:py-32" style={{ backgroundColor: 'hsl(var(--background))' }}>
+          {/* faint depth glow so the flat steel feels alive, not a paint chip */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{ background: 'radial-gradient(120% 90% at 50% -10%, rgba(255,255,255,0.10), transparent 55%)' }}
+          />
+          <div className="relative max-w-[820px] mx-auto px-5 text-center">
+            <motion.div {...stagger}>
+              <motion.p {...staggerChild} className="uppercase tracking-[0.2em] text-sm font-medium mb-5 text-on-bg-subtle">
+                Our Mission
+              </motion.p>
+              <motion.h2
+                {...staggerChild}
+                className="font-landing text-3xl desktop:text-4xl font-medium text-white leading-tight mb-6"
               >
-                Why do we use this instead of a password?
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+                Every score you submit helps{' '}
+                <em style={{ color: 'white' }}>another family</em>{' '}
+                eat better
+              </motion.h2>
+              <motion.p {...staggerChild} className="text-lg leading-relaxed text-on-bg-body mx-auto" style={{ maxWidth: '540px' }}>
+                Good food knowledge shouldn't be locked away. When you share a score, you're not just helping yourself, you're changing what your whole community reaches for.
+              </motion.p>
+
+              {/* Social-proof line — replaces the count the old button used to carry. */}
+              <motion.div {...staggerChild} className="inline-flex items-center gap-2.5 mt-8 text-xs tracking-wide text-white/80">
+                <span className="inline-flex">
+                  {[0, 1, 2, 3].map((i) => (
+                    <span
+                      key={i}
+                      className="w-4 h-4 rounded-full"
+                      style={{ background: 'rgba(255,255,255,0.85)', border: '1.5px solid var(--blue-mid)', marginLeft: i === 0 ? 0 : '-5px' }}
+                    />
+                  ))}
+                </span>
+                Thousands of shoppers sharing what they find
+              </motion.div>
+
+              {/* Quiet scroll cue (NOT a primary CTA) — smooth-scrolls to Connect. */}
+              <motion.div {...staggerChild} className="mt-12">
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('connect')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  className="inline-flex items-center gap-2.5 rounded-full px-5 py-2.5 text-white text-sm font-medium border transition-colors"
+                  style={{ borderColor: 'rgba(255,255,255,0.34)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.10)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.34)'; }}
+                >
+                  Get started in a tap
+                  <motion.span
+                    className="inline-flex"
+                    animate={prefersReducedMotion ? undefined : { y: [0, 3, 0] }}
+                    transition={prefersReducedMotion ? undefined : { repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+                  >
+                    <ArrowDown className="w-4 h-4" />
+                  </motion.span>
+                </button>
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ═══ Section 5: Privacy / Connect ══════════════════════ */}
+        {/* The page's single real conversion. The five interactive elements
+            (why-link, QR button, desktop-wallet button, Mycelia link, Install
+            link) keep their production labels, URLs, and handlers unchanged —
+            only the layout/styling around them was refreshed. */}
+        <section id="connect" className="py-20 desktop:py-28" style={{ backgroundColor: 'var(--paper)' }}>
+          <div className="max-w-[760px] mx-auto px-5 text-center">
+
+            <motion.p {...fadeUp} className="uppercase tracking-[0.2em] text-sm font-medium mb-6" style={{ color: 'var(--blue-mid)' }}>
+              Private by design
+            </motion.p>
+
+            <motion.h2
+              {...fadeUp}
+              className="font-landing text-3xl desktop:text-4xl font-medium mb-5"
+              style={{ color: 'var(--text-dark)' }}
+            >
+              Your account is yours alone, <em style={{ fontStyle: 'italic', color: 'var(--blue-mid)' }}>forever</em>
+            </motion.h2>
+
+            <motion.p {...fadeUp} className="text-lg leading-relaxed mx-auto mb-12" style={{ color: 'var(--text-mid)', maxWidth: '500px' }}>
+              Your identity lives on your device as a private key, never on our servers. Nothing to leak, nothing to steal.
+            </motion.p>
+
+            {/* Feature trio — no boxes, hairline-divided, airy. */}
+            <motion.div {...stagger} className="grid desktop:grid-cols-3 max-w-[720px] mx-auto mb-12">
+              <motion.div {...staggerChild} className="px-6 py-5 desktop:py-1 text-center">
+                <Lock className="w-[22px] h-[22px] mx-auto mb-3" style={{ color: 'var(--blue-mid)' }} />
+                <h3 className="text-[15px] font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>No password to forget</h3>
+                <p className="text-xs leading-normal" style={{ color: 'var(--text-mid)' }}>Your wallet signs you in. No emails, resets, or breaches.</p>
+              </motion.div>
+              <motion.div {...staggerChild} className="px-6 py-5 desktop:py-1 text-center border-t desktop:border-t-0 desktop:border-l" style={{ borderColor: 'var(--hairline)' }}>
+                <ShieldCheck className="w-[22px] h-[22px] mx-auto mb-3" style={{ color: 'var(--blue-mid)' }} />
+                <h3 className="text-[15px] font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>Your data is never sold</h3>
+                <p className="text-xs leading-normal" style={{ color: 'var(--text-mid)' }}>Scores are public. Your identity stays yours.</p>
+              </motion.div>
+              <motion.div {...staggerChild} className="px-6 py-5 desktop:py-1 text-center border-t desktop:border-t-0 desktop:border-l" style={{ borderColor: 'var(--hairline)' }}>
+                <MonitorSmartphone className="w-[22px] h-[22px] mx-auto mb-3" style={{ color: 'var(--blue-mid)' }} />
+                <h3 className="text-[15px] font-semibold mb-1.5" style={{ color: 'var(--text-dark)' }}>Phone or computer</h3>
+                <p className="text-xs leading-normal" style={{ color: 'var(--text-mid)' }}>Connect from any device. Your wallet comes with you.</p>
+              </motion.div>
+            </motion.div>
+
+            {/* Connect buttons — stacked, equal-width column. UNCHANGED handlers/labels. */}
+            <motion.div {...fadeUp} className="flex flex-col items-center gap-2.5 w-full max-w-[360px] mx-auto mb-5">
               {!isMobile ? (
                 <Button
                   onClick={() => navigate('/mobile-login')}
                   size="lg"
-                  className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
+                  className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-3.5 px-5 text-sm font-medium gap-2 w-full"
                 >
-                  <Smartphone className="w-4 h-4" />
+                  <QrCode className="w-4 h-4" />
                   Connect with my phone via QR code
                 </Button>
               ) : (
                 <Button
                   onClick={handleLoginClick}
                   size="lg"
-                  className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
+                  className="bg-action-primary hover:bg-action-primary-hover text-white h-auto py-3.5 px-5 text-sm font-medium gap-2 w-full"
                 >
                   Connect with mobile browser
                 </Button>
@@ -521,32 +604,48 @@ export default function WalletLogin() {
                   onClick={handleLoginClick}
                   variant="outline"
                   size="lg"
-                  className="h-auto py-3.5 px-8 text-base font-medium gap-2 w-full max-w-sm"
+                  className="h-auto py-3.5 px-5 text-sm font-medium gap-2 w-full"
                 >
                   Connect with desktop wallet
                 </Button>
               )}
-              <p className="text-sm text-center mt-2" style={{ color: 'var(--text-muted)' }}>
+            </motion.div>
+
+            {/* Quiet "why" text link — UNCHANGED handler/label. */}
+            <motion.div {...fadeUp} className="mb-11">
+              <button
+                onClick={() => navigate('/faq')}
+                className="text-sm transition-colors underline decoration-1 underline-offset-4 hover:opacity-80"
+                style={{ color: 'var(--blue-deep)', textDecorationColor: 'var(--blue-light)' }}
+              >
+                Why do we use this instead of a password?
+              </button>
+            </motion.div>
+
+            {/* Mycelia recommendation lockup — BOTH links (Mycelia app, Install here) UNCHANGED. */}
+            <motion.div {...fadeUp} className="flex items-center gap-3 max-w-[520px] mx-auto text-left rounded-xl bg-card" style={{ border: '1px solid var(--hairline)', padding: '13px 18px' }}>
+              <span className="flex-none w-[34px] h-[34px] rounded-[9px] inline-flex items-center justify-center text-white" style={{ background: 'var(--blue-mid)' }}>
+                <Wallet className="w-[18px] h-[18px]" />
+              </span>
+              <span className="text-xs leading-relaxed" style={{ color: 'var(--text-mid)' }}>
                 Don't have one yet? We recommend the{' '}
                 <button
                   onClick={() => navigate('/faq#mycelia')}
-                  className="font-semibold transition-colors"
-                  style={{ color: 'var(--text-mid)' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--blue-deep)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-mid)')}
-                >Mycelia app</button>
-                {'.'}<br /><br />It's made to work together with BRIX and handles all the complexity for you.{' '}
+                  className="font-semibold underline decoration-1 underline-offset-2 hover:opacity-80"
+                  style={{ color: 'var(--blue-deep)' }}
+                >Mycelia app</button>. It's made to work together with BRIXit and handles all the complexity for you.{' '}
                 <a
                   href="https://mycelia.life"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-semibold transition-opacity hover:opacity-70"
-                  style={{ color: 'var(--blue-mid)' }}
+                  className="font-semibold underline decoration-1 underline-offset-2 whitespace-nowrap hover:opacity-80"
+                  style={{ color: 'var(--blue-deep)' }}
                 >
                   Install here
                 </a>
-              </p>
+              </span>
             </motion.div>
+
           </div>
         </section>
 

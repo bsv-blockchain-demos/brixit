@@ -3,7 +3,7 @@ type Tier = 'Poor' | 'Average' | 'Good' | 'Excellent';
 // Label text matches the Admin crops strip exactly so mode="threshold" renders identically.
 const TIERS: { tier: Tier; label: string; bg: string; ink?: boolean }[] = [
   { tier: 'Poor',      label: 'Poor',      bg: 'bg-score-poor' },
-  { tier: 'Average',   label: 'Avg',       bg: 'bg-score-average', ink: true },
+  { tier: 'Average',   label: 'Average',   bg: 'bg-score-average', ink: true },
   { tier: 'Good',      label: 'Good',      bg: 'bg-score-good' },
   { tier: 'Excellent', label: 'Excellent', bg: 'bg-score-excellent' },
 ];
@@ -19,6 +19,8 @@ interface ScoreThresholdBarProps {
   mode?: 'range' | 'threshold';
   activeTier?: Tier | 'Unknown';
   className?: string;
+  /** Stretch the strip to fill its container (tiers share width equally). */
+  fullWidth?: boolean;
 }
 
 /**
@@ -32,7 +34,7 @@ interface ScoreThresholdBarProps {
  * any chip's size, colour, fill, or font size, so every box stays identical.
  */
 export function ScoreThresholdBar({
-  poor, average, good, excellent, mode = 'range', activeTier, className = '',
+  poor, average, good, excellent, mode = 'range', activeTier, className = '', fullWidth = false,
 }: ScoreThresholdBarProps) {
   const valueByTier: Record<Tier, string> =
     mode === 'range'
@@ -54,14 +56,14 @@ export function ScoreThresholdBar({
   const hasActive = TIERS.some((t) => t.tier === activeTier);
 
   return (
-    <div className={`flex items-stretch gap-px rounded-md overflow-hidden w-fit ${className}`}>
+    <div className={`flex items-stretch gap-px rounded-md overflow-hidden ${fullWidth ? 'w-full' : 'w-fit'} ${className}`}>
       {TIERS.map((t) => {
         const isActive = hasActive && activeTier === t.tier;
         return (
           <span
             key={t.tier}
             className={[
-              'flex flex-col items-center justify-center transition-all w-[4.75rem] px-1 py-1',
+              `flex flex-col items-center justify-center transition-all px-1 py-1 ${fullWidth ? 'flex-1 min-w-0' : 'w-[4.75rem]'}`,
               t.bg,
               t.ink ? 'text-text-dark' : 'text-white',
             ].join(' ')}
