@@ -29,12 +29,15 @@ import serverWallet from '../serverWallet.js';
 
 const router = Router();
 
-const ALLOWED_FIELDS = new Set(['username', 'email']);
+// The frontend follows the `displayName` cert convention (getDataFromWallet reads
+// `displayName`, with `username` kept only as a legacy fallback). Accept both so
+// new and legacy clients can mint a cert; require at least one display value.
+const ALLOWED_FIELDS = new Set(['displayName', 'username', 'email']);
 
 function validateFields(fields: Record<string, string>): string | null {
   const extra = Object.keys(fields).filter(k => !ALLOWED_FIELDS.has(k));
   if (extra.length > 0) return `unexpected fields: ${extra.join(', ')}`;
-  if (!fields.username?.trim()) return 'username is required';
+  if (!(fields.displayName?.trim() || fields.username?.trim())) return 'displayName is required';
   if (fields.email !== undefined && !fields.email.includes('@')) return 'email must be a valid address';
   return null;
 }
