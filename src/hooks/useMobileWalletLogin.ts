@@ -1,18 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { useWalletRelay } from '@/contexts/WalletRelayContext';
-import { Utils } from '@bsv/sdk';
+import { findLoginCertificate } from '@/lib/certConfig';
 import { createAuthProof } from '@/lib/authProof';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/contexts/WalletContext';
 import { getDataFromWallet } from '@/utils/getDataFromWallet';
 import type { WalletClient } from '@bsv/sdk';
 
-const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY as string | undefined;
-const MYCELIA_CERT_TYPE = (import.meta.env.VITE_CERT_TYPE as string) || 'Brixit Identity';
 const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY as string | undefined;
 
 function checkEnvVars(): string | null {
-  if (!MYCELIA_CERTIFIER_KEY) return 'VITE_SERVER_PUBLIC_KEY is not set';
+  if (!BACKEND_PUBLIC_KEY) return 'VITE_SERVER_PUBLIC_KEY is not set';
   return null;
 }
 
@@ -65,17 +63,10 @@ export function useMobileWalletLogin() {
         // Inject into WalletContext now so CreateAccount can use it if we redirect there
         setRelayWallet(wallet as unknown as WalletClient, identityKey);
 
-        const { certificates } = await wallet.listCertificates({
-          certifiers: [MYCELIA_CERTIFIER_KEY!],
-          types: [Utils.toBase64(Utils.toArray(MYCELIA_CERT_TYPE, 'utf8'))],
-          limit: 1,
-        });
-
-        if (!certificates || certificates.length === 0) {
+        const certificate = await findLoginCertificate(wallet);
+        if (!certificate) {
           throw new Error('NO_CERTIFICATE');
         }
-
-        const certificate = certificates[0];
         const userData = await getDataFromWallet(wallet, certificate);
 
         if (!userData) {

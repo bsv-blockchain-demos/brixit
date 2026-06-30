@@ -30,15 +30,16 @@ export async function getDataFromWallet(userWallet: any, certificate: any): Prom
 
     console.log('✅ Profile data retrieved from certificate');
 
-    // Return only the fields BRIX needs
-    // Mycelia certs use `username`; fall back to `displayName` for legacy certs
-    const usernameRaw = decryptedFields.username || decryptedFields.displayName;
+    // Return only the fields BRIX needs.
+    // `displayName` is the cert convention; `username` is read only as a
+    // fallback for legacy certs that used the older key.
+    const displayRaw = decryptedFields.displayName || decryptedFields.username;
     const emailRaw = decryptedFields.email;
 
     const email = typeof emailRaw === 'string' && emailRaw.trim().length > 0 ? emailRaw.trim() : undefined;
 
     const profileData: WalletProfileData = {
-      displayName: (typeof usernameRaw === 'string' && usernameRaw.trim()) || 'Anonymous',
+      displayName: (typeof displayRaw === 'string' && displayRaw.trim()) || 'Anonymous',
       locationLng: Number(decryptedFields.lng) || 0,
       locationLat: Number(decryptedFields.lat) || 0,
       email,

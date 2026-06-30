@@ -8,11 +8,12 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { API_BASE } from '@/lib/api';
+import { findLoginCertificate } from '@/lib/certConfig';
 import { AuthBackground } from '@/components/ui/AuthBackground';
 import { BrixLogo } from '@/components/common/BrixLogo';
 
-const MYCELIA_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
-const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
+const BRIXIT_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
+const BRIXIT_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 
 type Step = 'checking' | 'details' | 'acquiring';
 
@@ -54,13 +55,9 @@ export default function CreateAccount() {
 
     let cancelled = false;
 
-    userWallet.listCertificates({
-      certifiers: [MYCELIA_CERTIFIER_KEY],
-      types: [Utils.toBase64(Utils.toArray(MYCELIA_CERT_TYPE, 'utf8'))],
-      limit: 1,
-    }).then(result => {
+    findLoginCertificate(userWallet).then(certificate => {
       if (cancelled) return;
-      if (result.certificates.length > 0) {
+      if (certificate) {
         navigate('/', { replace: true });
       } else {
         setStep('details');
@@ -89,13 +86,13 @@ export default function CreateAccount() {
     setError(null);
 
     try {
-      const certType = Utils.toBase64(Utils.toArray(MYCELIA_CERT_TYPE, 'utf8'));
+      const certType = Utils.toBase64(Utils.toArray(BRIXIT_CERT_TYPE, 'utf8'));
 
       await (userWallet as any).acquireCertificate({
         type: certType,
         fields,
         acquisitionProtocol: 'issuance',
-        certifier: MYCELIA_CERTIFIER_KEY,
+        certifier: BRIXIT_CERTIFIER_KEY,
         certifierUrl: `${API_BASE}/api/certifier`,
       });
 
@@ -111,9 +108,11 @@ export default function CreateAccount() {
 
   async function handleCreateNamed(e: React.FormEvent) {
     e.preventDefault();
-    // Empty username → anonymous: use the wallet identity key as the account identifier
+    // The cert's display field follows the `displayName` convention (identityKey
+    // is the real handle; this is pure UI display). Empty → anonymous: fall back
+    // to the wallet identity key.
     const fields: Record<string, string> = {
-      username: username.trim() || userPubKey || '',
+      displayName: username.trim() || userPubKey || '',
     };
     if (email.trim()) fields.email = email.trim();
     await acquireCert(fields);

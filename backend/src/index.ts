@@ -98,7 +98,7 @@ app.use('/api/auth', authRoutes);                              // refresh, logou
 app.use('/api/auth/wallet-login', walletAuthRoutes);           // POST desktop wallet certificate login
 app.use('/api/auth', emailOtpRoutes);                          // POST send-otp, verify-otp
 
-// --- Mycelia certificate issuer ---
+// --- BRIXit certificate issuer ---
 app.use('/api/certifier', certifierRoutes);                    // POST /:subject/signCertificate
 
 // --- Public data routes ---

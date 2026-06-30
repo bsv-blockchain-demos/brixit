@@ -1,5 +1,5 @@
 /**
- * Mycelia certificate signing endpoint.
+ * BRIXit certificate signing endpoint.
  *
  * Called by the BSV wallet daemon during acquireCertificate({ acquisitionProtocol: 'issuance' }).
  *
