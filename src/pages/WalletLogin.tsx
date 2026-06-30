@@ -25,7 +25,7 @@ function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="text-center border-l border-white/10 first:border-l-0 px-4">
       <p className="font-display text-2xl desktop:text-3xl font-bold text-white">{value}</p>
-      <p className="font-mono text-xs mt-1 tracking-wide text-on-bg-muted">{label}</p>
+      <p className="text-xs mt-1 text-on-bg-muted">{label}</p>
     </div>
   );
 }
@@ -324,17 +324,12 @@ export default function WalletLogin() {
 
             {/* Stats strip */}
             <motion.div
-              className="mt-16 desktop:mt-20 max-w-md desktop:max-w-xl mx-auto desktop:mx-0 border-t border-white/10 pt-8"
+              className="mt-16 desktop:mt-20 grid grid-cols-3 max-w-md desktop:max-w-xl mx-auto desktop:mx-0 border-t border-white/10 pt-8"
               {...(prefersReducedMotion ? {} : { initial: { opacity: 0 }, whileInView: { opacity: 1 }, viewport: { once: true }, transition: { duration: 0.5, delay: 0.35 } })}
             >
-              <div className="grid grid-cols-3">
-                <Stat value="60+" label="crops you can test" />
-                <Stat value="120+" label="brands tracked" />
-                <Stat value="100%" label="readings anchored on-chain" />
-              </div>
-              <p className="mt-5 text-center desktop:text-left font-mono text-xs tracking-wide text-on-bg-muted">
-                every reading, permanently verifiable
-              </p>
+              <Stat value="60+" label="crops you can test" />
+              <Stat value="120+" label="brands tracked" />
+              <Stat value="100%" label="readings anchored on-chain" />
             </motion.div>
           </div>
         </section>
