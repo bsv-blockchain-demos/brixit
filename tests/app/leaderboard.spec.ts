@@ -28,18 +28,19 @@ test.describe('Leaderboard', () => {
     await expect(authedPage.getByText("Olivia's Organics").filter({ visible: true }).first()).toBeVisible();
   });
 
-  test('scores display as percentage not raw BRIX', async ({ authedPage }) => {
+  test('scores display as a quality rating, not raw BRIX', async ({ authedPage }) => {
     await expect(authedPage.getByText('Loading leaderboards...')).not.toBeVisible({ timeout: 5000 });
-    // Score badges must contain % — raw BRIX floats like "16.1" should not appear as score badges
-    const scoreBadges = authedPage.locator('text=/%/').filter({ visible: true });
-    await expect(scoreBadges.first()).toBeVisible();
+    // Aggregate scores render as a crop-relative quality rating (ScoreGauge tier
+    // label), never raw BRIX. Brand "Olivia's Organics" has average_brix 16.1.
+    const rating = authedPage.getByText(/^(Poor|Average|Good|Excellent)$/).filter({ visible: true });
+    await expect(rating.first()).toBeVisible();
     await expect(authedPage.getByText('16.1', { exact: true })).toHaveCount(0);
   });
 
-  test('outlier scores show 100%+ not a number above 100', async ({ authedPage }) => {
+  test('aggregate scores never show a percentage', async ({ authedPage }) => {
     await expect(authedPage.getByText('Loading leaderboards...')).not.toBeVisible({ timeout: 5000 });
-    // No score badge should show a number larger than 100 followed by %
-    await expect(authedPage.getByText(/1[0-9]{2}%/)).not.toBeVisible();
+    // The leaderboard gauge is a tier label + slider only — no percentage number.
+    await expect(authedPage.locator('text=/%/').filter({ visible: true })).toHaveCount(0);
   });
 
   test('Most Submissions leaderboard shows submission counts', async ({ authedPage }) => {
