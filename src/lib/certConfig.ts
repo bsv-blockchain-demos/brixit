@@ -20,7 +20,7 @@ export const ACCEPTED_CERTS: AcceptedCert[] = [
     type: (import.meta.env.VITE_MYCELIA_CERT_TYPE as string) || 'Mycelia Identity',
     certifier:
       (import.meta.env.VITE_MYCELIA_CERTIFIER as string) ||
-      '027e1a4071b3b210166d0546299936c7abde87abc72fd61e0870babf0d0cea5756',
+      '037e6afda08c6e1a095e727dbbbb28dec2499fdc12e95d4dd693004048a460f4c3',
   },
   {
     type: (import.meta.env.VITE_CERT_TYPE as string) || 'Brixit Identity',

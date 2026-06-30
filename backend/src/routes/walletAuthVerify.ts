@@ -124,7 +124,24 @@ router.post('/', async (req, res) => {
       },
     );
     if (!trusted) {
-      res.status(401).json({ success: false, error: 'Invalid certificate issuer' });
+      // TEMP DIAGNOSTIC — remove once the MyceliaID key rotation has settled.
+      // Compares the incoming cert against both trusted (certifier, type) pairs
+      // so we can see exactly which side mismatches on the deployed env.
+      const { Utils } = await import('@bsv/sdk');
+      const b64 = (s: string) => Utils.toBase64(Utils.toArray(s, 'utf8'));
+      const debug = {
+        incomingCertifier: certificate.certifier,
+        backendPublicKey,
+        certifierMatchesBackend: certificate.certifier === backendPublicKey,
+        certifierMatchesMycelia: certificate.certifier === config.myceliaIdCertifier,
+        incomingType: certificate.type,
+        expectedBrixitType: b64(config.brixitCertType),
+        brixitTypeMatches: certificate.type === b64(config.brixitCertType),
+        expectedMyceliaType: b64(config.myceliaIdCertType),
+        myceliaTypeMatches: certificate.type === b64(config.myceliaIdCertType),
+      };
+      console.log('[cert-debug]', JSON.stringify(debug, null, 2));
+      res.status(401).json({ success: false, error: 'Invalid certificate issuer', debug });
       return;
     }
 
