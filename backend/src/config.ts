@@ -64,6 +64,9 @@ export const config = {
 
   // Mycelia certificate
   myceliaCertType: process.env.CERT_TYPE || 'Brixit Identity',
+  // Mycelia ID (V2 parent identity) — second trusted login certifier.
+  myceliaIdCertType: process.env.MYCELIA_CERT_TYPE || 'Mycelia Identity',
+  myceliaIdCertifier: process.env.MYCELIA_CERTIFIER || '027e1a4071b3b210166d0546299936c7abde87abc72fd61e0870babf0d0cea5756',
 
   // Auto-verification
   autoVerifyUserId: process.env.AUTO_VERIFY_USER_ID || '',
