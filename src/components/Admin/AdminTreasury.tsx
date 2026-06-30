@@ -327,7 +327,7 @@ export default function AdminTreasury() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -650,7 +650,7 @@ export default function AdminTreasury() {
               ))}
             </div>
           </div>
-          <p className="text-sm text-text-mid">Last 25 wallet actions, filtered by label.</p>
+          <p className="text-sm text-text-mid">Last 25 wallet actions, newest first, filtered by label.</p>
         </div>
 
         {activityQ.isLoading ? (
@@ -666,8 +666,7 @@ export default function AdminTreasury() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs font-medium uppercase tracking-wider text-text-muted-brown border-y border-hairline bg-table-header">
-                  <th className="py-3 px-5">Date</th>
-                  <th className="py-3 pr-3">Status</th>
+                  <th className="py-3 px-5">Status</th>
                   <th className="py-3 pr-3">Labels</th>
                   <th className="py-3 pr-3">Description</th>
                   <th className="py-3 pr-3">Sats</th>
@@ -675,18 +674,11 @@ export default function AdminTreasury() {
                 </tr>
               </thead>
               <tbody>
-                {[...activityQ.data.actions]
-                  .sort((a, b) => {
-                    // Most recent first; actions with no matched date sink to the bottom.
-                    if (a.timestamp && b.timestamp) return b.timestamp.localeCompare(a.timestamp);
-                    if (a.timestamp) return -1;
-                    if (b.timestamp) return 1;
-                    return 0;
-                  })
+                {/* Render in backend order (wallet chronology, newest-first); don't re-sort. */}
+                {activityQ.data.actions
                   .map((a) => (
                   <tr key={a.txid} className="border-b border-hairline last:border-0">
-                    <td className="py-3 px-5 text-text-mid tabular-nums whitespace-nowrap">{fmtDate(a.timestamp)}</td>
-                    <td className="py-3 pr-3">
+                    <td className="py-3 px-5">
                       <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-surface-canvas text-text-mid border border-hairline capitalize">
                         {a.status}
                       </span>
