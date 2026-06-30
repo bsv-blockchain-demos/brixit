@@ -108,9 +108,11 @@ export default function CreateAccount() {
 
   async function handleCreateNamed(e: React.FormEvent) {
     e.preventDefault();
-    // Empty username → anonymous: use the wallet identity key as the account identifier
+    // The cert's display field follows the `displayName` convention (identityKey
+    // is the real handle; this is pure UI display). Empty → anonymous: fall back
+    // to the wallet identity key.
     const fields: Record<string, string> = {
-      username: username.trim() || userPubKey || '',
+      displayName: username.trim() || userPubKey || '',
     };
     if (email.trim()) fields.email = email.trim();
     await acquireCert(fields);
