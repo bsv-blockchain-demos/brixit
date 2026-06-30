@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { getBrixColor, computeNormalizedScore, rankColorFromNormalized, scoreBrix, gradeBrix } from '../getBrixColor';
+import { getBrixColor, computeNormalizedScore, rankColorFromNormalized, scoreBrix, gradeBrix, tierFromNormalized } from '../getBrixColor';
 import type { BrixThresholds } from '../getBrixQuality';
 
 const asc: BrixThresholds = { poor: 4, average: 8, good: 12, excellent: 16 };
@@ -313,5 +313,18 @@ describe('gradeBrix', () => {
   it('grades missing thresholds as Unknown', () => {
     expect(gradeBrix(10, undefined).quality).toBe('Unknown');
     expect(gradeBrix(10, null).quality).toBe('Unknown');
+  });
+});
+
+describe('tierFromNormalized', () => {
+  it('maps each bucket including boundaries', () => {
+    expect(tierFromNormalized(2.0)).toBe('Excellent');
+    expect(tierFromNormalized(1.75)).toBe('Excellent');
+    expect(tierFromNormalized(1.74)).toBe('Good');
+    expect(tierFromNormalized(1.5)).toBe('Good');
+    expect(tierFromNormalized(1.49)).toBe('Average');
+    expect(tierFromNormalized(1.25)).toBe('Average');
+    expect(tierFromNormalized(1.24)).toBe('Poor');
+    expect(tierFromNormalized(1.0)).toBe('Poor');
   });
 });

@@ -144,6 +144,14 @@ export function toDisplayScore(normalizedScore: number): string {
   return pct > 100 ? '100%+' : `${pct}%`;
 }
 
+/** Map a normalized 1–2 score to its quality tier (same buckets as rankColorFromNormalized). */
+export function tierFromNormalized(n: number): 'Excellent' | 'Good' | 'Average' | 'Poor' {
+  if (n >= 1.75) return 'Excellent';
+  if (n >= 1.5) return 'Good';
+  if (n >= 1.25) return 'Average';
+  return 'Poor';
+}
+
 export type BrixScore = {
   normalized: number;
   display: string;
@@ -165,10 +173,7 @@ export function scoreBrix(
   const normalized = computeNormalizedScore(brix, thresholds, fallbackMin, fallbackMax);
   const { bgClass, hex } = rankColorFromNormalized(normalized);
   const display = toDisplayScore(normalized);
-  const quality: BrixScore['quality'] =
-    normalized >= 1.75 ? 'Excellent' :
-    normalized >= 1.5  ? 'Good' :
-    normalized >= 1.25 ? 'Average' : 'Poor';
+  const quality: BrixScore['quality'] = tierFromNormalized(normalized);
   return { normalized, display, bgClass, hex, quality };
 }
 
