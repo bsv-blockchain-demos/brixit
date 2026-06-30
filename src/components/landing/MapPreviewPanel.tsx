@@ -100,7 +100,6 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
                         ? { poor: s.poorBrix, average: null, good: null, excellent: s.excellentBrix }
                         : null,
                     ) : null;
-                    const displayPct  = score?.display ?? '88%';
                     const quality     = score?.quality ?? 'Excellent';
                     const scoreColor  = score?.hex     ?? 'var(--green-mid)';
                     const productName = s
@@ -123,11 +122,8 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
                         }}
                       >
                         <div className="bg-white rounded-xl shadow-xl px-2 py-1.5 desktop:px-3 desktop:py-2.5 w-36 desktop:w-44 relative">
-                          <div className="flex items-baseline gap-1 mb-0.5">
-                            <span className="font-display font-bold text-base desktop:text-xl leading-none" style={{ color: scoreColor }}>
-                              {displayPct}
-                            </span>
-                            <span className="font-semibold uppercase tracking-wide" style={{ color: scoreColor, fontSize: '10px' }}>
+                          <div className="mb-0.5">
+                            <span className="font-display font-bold text-base desktop:text-xl leading-none uppercase tracking-wide" style={{ color: scoreColor }}>
                               {quality}
                             </span>
                           </div>

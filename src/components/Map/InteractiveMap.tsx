@@ -727,7 +727,6 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
     return (
       <div className="h-full flex flex-col">
         <Tabs
-          defaultValue="crop"
           value={groupBy}
           onValueChange={(val) => setGroupBy(val as any)}
           className="flex-1 flex flex-col"

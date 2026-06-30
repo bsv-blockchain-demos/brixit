@@ -15,7 +15,7 @@ import { scoreBrix, computeNormalizedScore } from '@/lib/getBrixColor';
 import { formatVenueLocation } from '@/lib/formatAddress';
 import { titleCase } from '@/lib/titleCase';
 import { RoleChip } from '@/components/common/RoleChip';
-import { ScoreBadge } from '@/components/common/ScoreBadge';
+import { ScoreGauge } from '@/components/common/ScoreGauge';
 import { VerifiedBadge, BlockchainBadge } from '@/components/common/StatusBadges';
 
 interface Props {
@@ -116,7 +116,7 @@ function SubmissionModal({
         <div className="space-y-4">
           {/* Score */}
           <div className="flex items-center gap-4">
-            <ScoreBadge normalizedScore={normalized} size="lg" />
+            <ScoreGauge normalizedScore={normalized} />
             <div>
               <div className="font-semibold text-base text-text-dark">{quality}</div>
               <div className="text-sm text-text-mid">{submission.brix_value} BRIX</div>
@@ -306,7 +306,7 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
                       {new Date(s.assessment_date).toLocaleDateString()}
                     </div>
                   </div>
-                  <ScoreBadge normalizedScore={normalized} size="sm" className="shrink-0" />
+                  <ScoreGauge normalizedScore={normalized} className="shrink-0" />
                 </div>
               );
             })}

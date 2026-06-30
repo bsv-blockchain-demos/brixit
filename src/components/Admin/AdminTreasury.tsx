@@ -30,7 +30,7 @@ import { Random, Utils } from '@bsv/sdk';
 import { buildTopupOutput } from '@/lib/buildTopupOutput';
 import { titleCase } from '@/lib/titleCase';
 import { scoreBrix } from '@/lib/getBrixColor';
-import { ScoreBadge } from '@/components/common/ScoreBadge';
+import { ScoreGauge } from '@/components/common/ScoreGauge';
 import { formatVenueLocation } from '@/lib/formatAddress';
 import { fetchSubmissionById } from '@/lib/fetchSubmissions';
 import { BlockchainBadge } from '@/components/common/StatusBadges';
@@ -125,7 +125,7 @@ function PendingViewModal({ id, onClose, onCopy }: { id: string; onClose: () => 
         ) : (
           <div className="space-y-4">
             <div className="flex items-center gap-4">
-              <ScoreBadge normalizedScore={score.normalized} size="lg" />
+              <ScoreGauge normalizedScore={score.normalized} />
               <div>
                 <div className="font-semibold text-base text-text-dark">{score.quality}</div>
                 <div className="text-sm text-text-mid">{dp.brixLevel} BRIX</div>
