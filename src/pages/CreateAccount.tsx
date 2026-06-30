@@ -12,8 +12,8 @@ import { findLoginCertificate } from '@/lib/certConfig';
 import { AuthBackground } from '@/components/ui/AuthBackground';
 import { BrixLogo } from '@/components/common/BrixLogo';
 
-const MYCELIA_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
-const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
+const BRIXIT_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
+const BRIXIT_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 
 type Step = 'checking' | 'details' | 'acquiring';
 
@@ -86,13 +86,13 @@ export default function CreateAccount() {
     setError(null);
 
     try {
-      const certType = Utils.toBase64(Utils.toArray(MYCELIA_CERT_TYPE, 'utf8'));
+      const certType = Utils.toBase64(Utils.toArray(BRIXIT_CERT_TYPE, 'utf8'));
 
       await (userWallet as any).acquireCertificate({
         type: certType,
         fields,
         acquisitionProtocol: 'issuance',
-        certifier: MYCELIA_CERTIFIER_KEY,
+        certifier: BRIXIT_CERTIFIER_KEY,
         certifierUrl: `${API_BASE}/api/certifier`,
       });
 

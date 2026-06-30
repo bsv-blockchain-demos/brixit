@@ -118,7 +118,7 @@ router.post('/', async (req, res) => {
       { certifier: certificate.certifier, type: certificate.type },
       backendPublicKey,
       {
-        brixitType: config.myceliaCertType,
+        brixitType: config.brixitCertType,
         myceliaCertifier: config.myceliaIdCertifier,
         myceliaType: config.myceliaIdCertType,
       },

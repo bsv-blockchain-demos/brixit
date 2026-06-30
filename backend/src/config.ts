@@ -62,8 +62,8 @@ export const config = {
   // BSV Wallet
   backendPrivateKey: process.env.SERVER_PRIVATE_KEY || '',
 
-  // Mycelia certificate
-  myceliaCertType: process.env.CERT_TYPE || 'Brixit Identity',
+  // BRIXit certificate type (issued by this backend's own server wallet).
+  brixitCertType: process.env.CERT_TYPE || 'Brixit Identity',
   // Mycelia ID (V2 parent identity) — second trusted login certifier.
   myceliaIdCertType: process.env.MYCELIA_CERT_TYPE || 'Mycelia Identity',
   myceliaIdCertifier: process.env.MYCELIA_CERTIFIER || '027e1a4071b3b210166d0546299936c7abde87abc72fd61e0870babf0d0cea5756',
