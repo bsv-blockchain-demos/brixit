@@ -2,7 +2,7 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useWallet } from '@/contexts/WalletContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Utils, WalletClient } from '@bsv/sdk';
+import { WalletClient } from '@bsv/sdk';
 import { createAuthProof } from '@/lib/authProof';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -12,12 +12,11 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { motion, useReducedMotion } from 'framer-motion';
 import { getMapboxToken } from '@/lib/getMapboxToken';
 import { apiGet } from '@/lib/api';
+import { findLoginCertificate } from '@/lib/certConfig';
 import { MapPreviewPanel, type MapPreview, type MapCluster } from '@/components/landing/MapPreviewPanel';
 import { FeedCard } from '@/components/landing/FeedCard';
 import { AuthDialogContent } from '@/components/auth/AuthDialogContent';
 
-const MYCELIA_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
-const MYCELIA_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 
 // ── Stat column (hero strip) ─────────────────────────────────────
@@ -147,18 +146,11 @@ export default function WalletLogin() {
     setCertificateError(null);
 
     try {
-      const certificates = await userWallet.listCertificates({
-        certifiers: [MYCELIA_CERTIFIER_KEY],
-        types: [Utils.toBase64(Utils.toArray(MYCELIA_CERT_TYPE, 'utf8'))],
-        limit: 1,
-      });
-
-      if (certificates.certificates.length === 0) {
+      const certificate = await findLoginCertificate(userWallet);
+      if (!certificate) {
         navigate('/create-account');
         return;
       }
-
-      const certificate = certificates.certificates[0];
       const userData = await getDataFromWallet(userWallet, certificate);
 
       if (!userData) {

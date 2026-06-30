@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { API_BASE } from '@/lib/api';
+import { findLoginCertificate } from '@/lib/certConfig';
 import { AuthBackground } from '@/components/ui/AuthBackground';
 import { BrixLogo } from '@/components/common/BrixLogo';
 
@@ -54,13 +55,9 @@ export default function CreateAccount() {
 
     let cancelled = false;
 
-    userWallet.listCertificates({
-      certifiers: [MYCELIA_CERTIFIER_KEY],
-      types: [Utils.toBase64(Utils.toArray(MYCELIA_CERT_TYPE, 'utf8'))],
-      limit: 1,
-    }).then(result => {
+    findLoginCertificate(userWallet).then(certificate => {
       if (cancelled) return;
-      if (result.certificates.length > 0) {
+      if (certificate) {
         navigate('/', { replace: true });
       } else {
         setStep('details');
