@@ -28,6 +28,7 @@ import { reverseGeocode } from '../utils/geocode.js';
 import prisma from '../db/client.js';
 import serverWallet from '../serverWallet.js';
 import { verifyAuthProof } from '../lib/verifyAuthProof.js';
+import { isTrustedCertificate } from '../lib/trustedCertificates.js';
 import type { AuthProof } from '../lib/authProof.js';
 
 const router = Router();
@@ -110,9 +111,19 @@ router.post('/', async (req, res) => {
       return;
     }
 
-    // 2. Verify certificate issuer is this backend (Mycelia/Brixit cert)
+    // 2. Verify the certificate comes from a trusted certifier (BRIXit server
+    //    wallet or Mycelia ID) with the expected type for that certifier.
     const { publicKey: backendPublicKey } = await serverWallet.getPublicKey({ identityKey: true });
-    if (certificate.certifier !== backendPublicKey) {
+    const trusted = isTrustedCertificate(
+      { certifier: certificate.certifier, type: certificate.type },
+      backendPublicKey,
+      {
+        brixitType: config.myceliaCertType,
+        myceliaCertifier: config.myceliaIdCertifier,
+        myceliaType: config.myceliaIdCertType,
+      },
+    );
+    if (!trusted) {
       res.status(401).json({ success: false, error: 'Invalid certificate issuer' });
       return;
     }
