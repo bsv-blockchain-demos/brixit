@@ -15,6 +15,7 @@ import { apiGet } from '@/lib/api';
 import { findLoginCertificate } from '@/lib/certConfig';
 import { MapPreviewPanel, type MapPreview, type MapCluster } from '@/components/landing/MapPreviewPanel';
 import { FeedCard } from '@/components/landing/FeedCard';
+import { ScoreThresholdBar } from '@/components/common/ScoreThresholdBar';
 import { AuthDialogContent } from '@/components/auth/AuthDialogContent';
 
 const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
@@ -373,22 +374,18 @@ export default function WalletLogin() {
                   Score Guide
                 </p>
                 <p className="text-xs mb-6" style={{ color: 'var(--text-muted)' }}>
-                  Scores are relative to each crop's expected range: apples and bananas are judged by different standards.
+                  Scores are relative to each crop's expected range — apples and bananas are judged by different standards. A 14 BRIX apple is only good; a 14 BRIX banana is excellent.
                 </p>
 
                 <div className="space-y-6">
                   {[
-                    { tier: 'Excellent', label: '75%+', color: 'var(--score-excellent)', desc: 'Well above the expected range for this crop.' },
-                    { tier: 'Good',      label: '50%+', color: 'var(--score-good)',      desc: 'Above the crop average. Better than most commercial produce.' },
-                    { tier: 'Average',   label: '25%+', color: 'var(--score-average)',   desc: 'Near the crop average. Typical of commercial growing.' },
-                    { tier: 'Poor',      label: '<25%',  color: 'var(--score-poor)',     desc: 'Below the expected range. Low nutrient density for this crop.' },
-                  ].map(({ tier, label, color, desc }) => (
-                    <div key={tier} className="flex items-start gap-5">
-                      <p className="text-3xl font-display font-bold shrink-0 w-16 tabular-nums" style={{ color }}>{label}</p>
-                      <div className="flex-1">
-                        <p className="font-semibold" style={{ color: 'var(--text-dark)' }}>{tier}</p>
-                        <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>{desc}</p>
-                        <div className="h-0.5 w-12 mt-3 rounded-full" style={{ backgroundColor: color }} />
+                    { crop: 'Apple',  poor: 6, average: 10, good: 14, excellent: 18 },
+                    { crop: 'Banana', poor: 8, average: 10, good: 12, excellent: 14 },
+                  ].map(({ crop, poor, average, good, excellent }) => (
+                    <div key={crop}>
+                      <p className="font-semibold mb-2" style={{ color: 'var(--text-dark)' }}>{crop}</p>
+                      <div className="overflow-x-auto">
+                        <ScoreThresholdBar mode="range" poor={poor} average={average} good={good} excellent={excellent} />
                       </div>
                     </div>
                   ))}
@@ -412,13 +409,13 @@ export default function WalletLogin() {
 
             <motion.div {...stagger} className="grid desktop:grid-cols-3 gap-5">
               <motion.div {...staggerChild}>
-                <FeedCard product="Biodynamic Tomatoes" location="Hopp Farm · Basel" score={13.0} pct="81%" user="Sandra K." rating="Excellent" />
+                <FeedCard product="Biodynamic Tomatoes" location="Hopp Farm · Basel" score={13.0} normalizedScore={1.81} user="Sandra K." />
               </motion.div>
               <motion.div {...staggerChild}>
-                <FeedCard product="Organic Apples" location="Migros Oerlikon" score={15.0} pct="56%" user="Marie R." rating="Good" />
+                <FeedCard product="Organic Apples" location="Migros Oerlikon" score={15.0} normalizedScore={1.56} user="Marie R." />
               </motion.div>
               <motion.div {...staggerChild}>
-                <FeedCard product="Baby Leaf Salad" location="Coop Geneva" score={5.5} pct="19%" user="Céline L." rating="Poor" />
+                <FeedCard product="Baby Leaf Salad" location="Coop Geneva" score={5.5} normalizedScore={1.19} user="Céline L." />
               </motion.div>
             </motion.div>
           </div>
