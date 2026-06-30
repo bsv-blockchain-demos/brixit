@@ -16,7 +16,9 @@ jobs:
     - name: Install dependencies
       run: npm ci
     - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
+      # Only chromium — it's the single project in playwright.config.ts. Add
+      # firefox/webkit here if those projects are re-enabled.
+      run: npx playwright install --with-deps chromium
     - name: Run Playwright tests
       run: npx playwright test
       timeout-minutes: 15
