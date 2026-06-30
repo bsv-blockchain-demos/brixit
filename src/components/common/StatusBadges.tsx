@@ -124,14 +124,13 @@ export function ColumnHint({ children, help }: { children: React.ReactNode; help
   );
 }
 
-// Single source of truth for what the BRIX "Score" means, so every "Score"
-// label across the app explains it identically. See [[score-is-crop-relative]].
+// Aggregate "Score" (leaderboard): the gauge shows the average quality as a tier
+// label (Poor to Excellent) plus a slider, not a percentage. See [[score-is-crop-relative]].
 export const SCORE_HELP =
-  "A nutrient-density rating from 0 to 100%. Each reading is scored against its crop's own poor-to-excellent range, so different produce can be compared fairly. Higher is better.";
+  "The average quality of this entry's readings, rated Poor to Excellent. The slider shows where that average sits between poor and excellent. Each reading is scored against its own crop's range, so different produce compares fairly. Higher is better.";
 
-// The Score column shows a quality rating (Poor to Excellent) plus a gauge of where
-// the reading sits on the crop's scale. Aggregates (leaderboard) keep SCORE_HELP,
-// which still describes a 0 to 100% score.
+// Individual "Score" (data tables): a quality rating (Poor to Excellent) plus a gauge
+// of where the single reading sits on its crop's scale. No percentage.
 export const SCORE_RATING_HELP =
   "How this reading rates on its crop's own scale, from Poor to Excellent. The gauge shows where it lands between the crop's poor and excellent thresholds, so different produce can be compared fairly. Higher is better.";
 
@@ -140,6 +139,6 @@ export const BRIX_HELP =
   "The raw refractometer reading: a measure of the sugars and nutrients dissolved in the sample. It is the unadjusted number, so use the Score to compare crops, since the same BRIX means different things for different crops.";
 
 /** "Score" column-header label with the standard score-explanation popover. */
-export function ScoreHint({ children = 'Score', variant = 'percent' }: { children?: React.ReactNode; variant?: 'percent' | 'rating' }) {
+export function ScoreHint({ children = 'Score', variant = 'aggregate' }: { children?: React.ReactNode; variant?: 'aggregate' | 'rating' }) {
   return <ColumnHint help={variant === 'rating' ? SCORE_RATING_HELP : SCORE_HELP}>{children}</ColumnHint>;
 }

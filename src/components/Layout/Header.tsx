@@ -170,8 +170,8 @@ const Header = () => {
     <header className="bg-background border-b border-white/30 pt-[var(--safe-top)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link to="/map" className="flex items-center">
+          {/* Logo: signed-in users go to the app map; signed-out visitors go to the home/landing page */}
+          <Link to={user ? '/map' : '/'} className="flex items-center">
             <BrixLogo height="3rem" color="white" />
           </Link>
 

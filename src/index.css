@@ -53,6 +53,8 @@
     /* Brand & score greens */
     --green-fresh:    #639647;  /* brand green — links, secondary actions      */
     --green-mid:      #1f6b3f;  /* excellent score color                       */
+    --green-700:      #4a7533;  /* deep green accent (Vision eyebrow), not a score color */
+    --green-tint:     #eef5e8;  /* soft, unsaturated green section wash         */
     --score-excellent: #1f6b3f;
     --score-good:      #6fae3f;
 
@@ -101,6 +103,13 @@
 
     /* ── Canvas backdrop behind listed cards (steel-50). Cards sit raised on it. ── */
     --surface-canvas: #eef3f6;
+
+    /* ── Warm bone — a subtle, unsaturated step away from white. Used on landing
+         sections (community feed) so white cards lift without adding colour. ── */
+    --bone: #f6f3ec;
+
+    /* ── Warm paper — the lightest page base. White chips/cards lift off it. ── */
+    --paper: #fbf9f3;
 
     /* ── Selection / active — steel-based (replaces green-for-selection) ── */
     --select-bg: #eef4f8;          /* selected pill/chip fill            */
@@ -187,6 +196,8 @@
 
     --green-fresh:     #7ab35b;   /* brighter brand green for dark            */
     --green-mid:       #2a9460;   /* brighter excellent for dark              */
+    --green-700:       #93c97a;   /* lifted green accent for dark             */
+    --green-tint:      #15271b;   /* deep green-tinted canvas for dark        */
     --score-excellent: #2a9460;
     --score-good:      #7fc850;
 
@@ -229,6 +240,12 @@
 
     /* ── Canvas backdrop behind listed cards (deep steel) ── */
     --surface-canvas: #0d1a24;
+
+    /* ── Warm bone (dark): a subtle step that recedes behind raised cards. ── */
+    --bone: #101a23;
+
+    /* ── Warm paper (dark): page base in the dark steel family. ── */
+    --paper: #0e1a23;
 
     /* ── Selection / structure / outcome (dark) ── */
     --select-bg: rgba(74,122,148,0.22);
