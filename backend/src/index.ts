@@ -20,6 +20,9 @@ import { authLimiter, submissionLimiter, uploadLimiter, imagesLimiter, geonamesL
 import { healthProbe } from './routes/health.js';
 import { readyProbe } from './routes/ready.js';
 
+// Float treasury monitoring (vendored, read-only)
+import { createBalanceRoute } from './balanceRoute.js';
+
 // Route imports
 import authRoutes from './routes/auth.js';
 import walletAuthRoutes from './routes/walletAuthVerify.js';
@@ -82,6 +85,14 @@ app.use('/api/geonames', geonamesLimiter);
 // --- Health / readiness probes  ---
 app.get('/health', healthProbe);
 app.get('/ready', readyProbe);
+
+// --- Float treasury monitoring: GET /treasury/balance (bearer auth, reads via listOutputs only) ---
+app.use(createBalanceRoute({
+  wallet: serverWallet,
+  appName: 'bsv-blockchain-demos/brixit',
+  chain: 'main',
+  token: process.env.FLOAT_BALANCE_TOKEN!,
+}));
 
 // --- Wallet relay (QR pairing) — registers /api/session, /api/session/:id, /api/request/:id, /ws ---
 new WalletRelayService({
