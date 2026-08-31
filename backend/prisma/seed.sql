@@ -1,5 +1,11 @@
 -- Brixit Database Seed: Helper functions, leaderboard RPCs, and views
 -- Run after Prisma migrations: psql $DATABASE_URL -f prisma/seed.sql
+--
+-- The brand, crop and location boards rank by average score, so each requires
+-- >= 5 verified submissions to be eligible — a single lucky reading would
+-- otherwise outrank a well-sampled entry. The HAVING sits in the base CTE so
+-- RANK() only sees eligible rows and ranks stay contiguous from 1. The user
+-- board ranks by volume, so no threshold applies there.
 
 -- ─── Helper: Normalize brix value to 1.0–2.0 scale ──────────────────────────
 
@@ -126,6 +132,7 @@ LANGUAGE sql STABLE AS $$
       AND (crop_filter    IS NULL OR lower(c.name)    = lower(crop_filter))
       AND (store_filter   IS NULL OR lower(v.name)    = lower(store_filter))
     GROUP BY b.id, b.name, b.label
+    HAVING COUNT(*) >= 5
   ),
   ranked AS (
     SELECT brand_id, brand_name, brand_label,
@@ -182,6 +189,7 @@ LANGUAGE sql STABLE AS $$
       AND (crop_filter    IS NULL OR lower(c.name)    = lower(crop_filter))
       AND (store_filter   IS NULL OR lower(v.name)    = lower(store_filter))
     GROUP BY c.id, c.name, c.label
+    HAVING COUNT(*) >= 5
   ),
   ranked AS (
     SELECT crop_id, crop_name, crop_label,
@@ -244,13 +252,15 @@ LANGUAGE sql STABLE AS $$
     FROM submissions s
     JOIN venues v ON s.venue_id = v.id
     LEFT JOIN crops c ON s.crop_id = c.id
-    WHERE s.skip_venue_prompt = false
+    WHERE s.verified = true
+      AND s.skip_venue_prompt = false
       AND (country_filter IS NULL OR lower(v.country) = lower(country_filter))
       AND (state_filter   IS NULL OR lower(v.state)   = lower(state_filter))
       AND (city_filter    IS NULL OR lower(v.city)    = lower(city_filter))
       AND (crop_filter    IS NULL OR lower(c.name)    = lower(crop_filter))
       AND (store_filter   IS NULL OR lower(v.name)    = lower(store_filter))
     GROUP BY v.id, v.name, v.city, v.state, v.country
+    HAVING COUNT(*) >= 5
   ),
   ranked AS (
     SELECT location_id, location_name, location_label, street_address, city, state, country,

@@ -45,17 +45,23 @@ async function derivePayoutScript(wallet: WalletInterface, submissionUuid: strin
 
 const router = Router();
 
-// Prisma include for full submission detail (authenticated context)
-const FULL_SUBMISSION_INCLUDE = {
+// Public submission shape. `images` is part of it — every detail surface shows them.
+const PUBLIC_SUBMISSION_INCLUDE = {
   crop: { select: { id: true, name: true, label: true, poorBrix: true, averageBrix: true, goodBrix: true, excellentBrix: true, category: true } },
   brand: { select: { id: true, name: true, label: true } },
   venue: { select: { id: true, name: true, posType: true, latitude: true, longitude: true, streetAddress: true, city: true, state: true, country: true } },
-  user: { select: { id: true, displayName: true } },
-  verifier: { select: { id: true, displayName: true } },
   images: { select: { imageUrl: true } },
 } as const;
 
-function formatFullSubmission(s: any) {
+// Full detail (authenticated context) = public shape + the user/verifier joins.
+const FULL_SUBMISSION_INCLUDE = {
+  ...PUBLIC_SUBMISSION_INCLUDE,
+  user: { select: { id: true, displayName: true } },
+  verifier: { select: { id: true, displayName: true } },
+} as const;
+
+/** The public submission payload — every public endpoint formats through here, so they can't drift. */
+export function formatPublicSubmission(s: any) {
   return {
     id: s.id,
     assessment_date: s.assessmentDate,
@@ -87,10 +93,17 @@ function formatFullSubmission(s: any) {
     pos_type: s.venue?.posType ?? null,
     skip_venue_prompt: s.skipVenuePrompt ?? false,
     outpoint: s.outpoint ?? null,
+    images: s.images?.map((i: any) => i.imageUrl) ?? [],
+  };
+}
+
+/** Public shape plus the submitter/verifier identities. */
+export function formatFullSubmission(s: any) {
+  return {
+    ...formatPublicSubmission(s),
     user_id: s.user?.id ?? null,
     user_display_name: s.user?.displayName ?? null,
     verified_by_display_name: s.verifier?.displayName ?? null,
-    images: s.images?.map((i: any) => i.imageUrl) ?? [],
   };
 }
 
@@ -114,49 +127,14 @@ router.get('/', async (req: Request, res: Response) => {
 
     const submissions = await prisma.submission.findMany({
       where,
-      include: {
-        crop: { select: { id: true, name: true, label: true, poorBrix: true, averageBrix: true, goodBrix: true, excellentBrix: true, category: true } },
-        brand: { select: { id: true, name: true, label: true } },
-        venue: { select: { id: true, name: true, posType: true, latitude: true, longitude: true, streetAddress: true, city: true, state: true, country: true } },
-      },
+      include: PUBLIC_SUBMISSION_INCLUDE,
       orderBy: orderByMap[sortBy] || { assessmentDate: 'desc' },
       skip: offset,
       take: limit,
     });
 
-    // Public view: strip user PII
-    const result = submissions.map((s: any) => ({
-      id: s.id,
-      assessment_date: s.assessmentDate,
-      brix_value: Number(s.brixValue),
-      verified: s.verified,
-      verified_at: s.verifiedAt,
-      crop_variety: s.cropVariety,
-      outlier_notes: s.outlierNotes,
-      purchase_date: s.purchaseDate,
-      crop_id: s.crop?.id ?? null,
-      crop_name: s.crop?.name ?? null,
-      crop_label: s.crop?.label ?? null,
-      poor_brix: s.crop?.poorBrix ? Number(s.crop.poorBrix) : null,
-      average_brix: s.crop?.averageBrix ? Number(s.crop.averageBrix) : null,
-      good_brix: s.crop?.goodBrix ? Number(s.crop.goodBrix) : null,
-      excellent_brix: s.crop?.excellentBrix ? Number(s.crop.excellentBrix) : null,
-      category: s.crop?.category ?? null,
-      brand_id: s.brand?.id ?? null,
-      brand_name: s.brand?.name ?? null,
-      brand_label: s.brand?.label ?? null,
-      place_id: s.venue?.id ?? null,
-      place_label: s.venue?.name ?? null,
-      latitude: s.venue?.latitude ?? null,
-      longitude: s.venue?.longitude ?? null,
-      street_address: s.venue?.streetAddress ?? null,
-      city: s.venue?.city ?? null,
-      state: s.venue?.state ?? null,
-      country: s.venue?.country ?? null,
-      pos_type: s.venue?.posType ?? null,
-      skip_venue_prompt: s.skipVenuePrompt ?? false,
-      outpoint: s.outpoint ?? null,
-    }));
+    // Public view: no user PII (formatPublicSubmission omits the user joins).
+    const result = submissions.map(formatPublicSubmission);
 
     res.json(result);
   } catch (err) {
@@ -201,45 +179,12 @@ router.get('/bounds', async (req: Request, res: Response) => {
           longitude: { not: null, gte: west, lte: east },
         },
       },
-      include: {
-        crop: { select: { id: true, name: true, label: true, poorBrix: true, averageBrix: true, goodBrix: true, excellentBrix: true, category: true } },
-        brand: { select: { id: true, name: true, label: true } },
-        venue: { select: { id: true, name: true, posType: true, latitude: true, longitude: true, streetAddress: true, city: true, state: true, country: true } },
-      },
+      include: PUBLIC_SUBMISSION_INCLUDE,
       orderBy: { assessmentDate: sortOrder },
       take: limit,
     });
 
-    const result = submissions.map((s: any) => ({
-      id: s.id,
-      assessment_date: s.assessmentDate,
-      brix_value: Number(s.brixValue),
-      verified: s.verified,
-      crop_variety: s.cropVariety,
-      purchase_date: s.purchaseDate,
-      crop_id: s.crop?.id ?? null,
-      crop_name: s.crop?.name ?? null,
-      crop_label: s.crop?.label ?? null,
-      poor_brix: s.crop?.poorBrix ? Number(s.crop.poorBrix) : null,
-      average_brix: s.crop?.averageBrix ? Number(s.crop.averageBrix) : null,
-      good_brix: s.crop?.goodBrix ? Number(s.crop.goodBrix) : null,
-      excellent_brix: s.crop?.excellentBrix ? Number(s.crop.excellentBrix) : null,
-      category: s.crop?.category ?? null,
-      brand_id: s.brand?.id ?? null,
-      brand_name: s.brand?.name ?? null,
-      brand_label: s.brand?.label ?? null,
-      place_id: s.venue?.id ?? null,
-      place_label: s.venue?.name ?? null,
-      latitude: s.venue?.latitude ?? null,
-      longitude: s.venue?.longitude ?? null,
-      street_address: s.venue?.streetAddress ?? null,
-      city: s.venue?.city ?? null,
-      state: s.venue?.state ?? null,
-      country: s.venue?.country ?? null,
-      pos_type: s.venue?.posType ?? null,
-      skip_venue_prompt: s.skipVenuePrompt ?? false,
-      outpoint: s.outpoint ?? null,
-    }));
+    const result = submissions.map(formatPublicSubmission);
 
     res.json(result);
   } catch (err) {
