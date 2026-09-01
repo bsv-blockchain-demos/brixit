@@ -21,6 +21,7 @@ import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import ProtectedRoute from "./components/misc/ProtectedRoute";
 import { FilterProvider } from './contexts/FilterContext'
 import { CropThresholdProvider } from './contexts/CropThresholdContext';
@@ -119,6 +120,14 @@ const RootContent = () => {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
             </ProtectedRoute>
           }
         />

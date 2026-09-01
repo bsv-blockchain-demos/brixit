@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
-import { Copy, Check, ArrowLeft, Shield, Eye, Sprout, Leaf, TreePine, Trash2, Pencil } from 'lucide-react';
+import { Copy, Check, ArrowLeft, Shield, Eye, Sprout, Leaf, TreePine, Pencil } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useToast } from '../hooks/use-toast';
 import LocationSelector from '../components/common/LocationSelector';
@@ -285,26 +285,6 @@ const Profile = () => {
             </Card>
           </motion.div>
 
-          {/* Danger Zone */}
-          <motion.div {...fadeUp}>
-            <Card className="border border-hairline rounded-2xl shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-1">
-                  <Trash2 className="w-4 h-4 text-action-primary" />
-                  <p className="text-sm font-semibold text-action-primary">Danger Zone</p>
-                </div>
-                <p className="text-sm text-text-muted-brown mb-4">
-                  Account deletion is not available at this time.
-                </p>
-                <Button
-                  disabled
-                  className="w-full bg-surface-canvas text-text-muted-brown border border-hairline hover:bg-surface-canvas"
-                >
-                  Delete Account
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
         </div>
       </div>
     </div>

@@ -30,6 +30,7 @@ import {
   Copy,
   Check,
   ArrowRight,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { BrixLogo } from "@/components/common/BrixLogo";
@@ -227,6 +228,12 @@ const Header = () => {
                     <Link to="/profile" className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
                       Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings" className="cursor-pointer">
+                      <SettingsIcon className="mr-2 h-4 w-4" />
+                      Settings
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
