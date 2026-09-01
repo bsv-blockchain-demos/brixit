@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Button } from '../ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { TableSortControl, type SortOption } from '@/components/common/TableSortControl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   useFormattedSubmissionsCountQuery,
@@ -31,6 +32,15 @@ interface DataBrowserResultsProps {
   fromLeaderboard: boolean;
   onBackToLeaderboard: () => void;
 }
+
+// Mirrors the sortable column headers in the desktop table below.
+type MobileSortKey = 'submittedAt' | 'cropType' | 'locationName' | 'brixLevel';
+const MOBILE_SORT_OPTIONS: SortOption<MobileSortKey>[] = [
+  { value: 'submittedAt', label: 'Date' },
+  { value: 'cropType', label: 'Crop' },
+  { value: 'locationName', label: 'Place' },
+  { value: 'brixLevel', label: 'BRIX' },
+];
 
 const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
   fromLeaderboard,
@@ -247,6 +257,19 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
           </div>
         </CardHeader>
         <CardContent className="px-3 sm:px-6">
+          {/* Sorting on mobile: the column headers below are inside a
+              `hidden desktop:block` wrapper, so this is the only way to reach
+              the same sortBy/sortOrder state on a narrow viewport. Changing
+              either resets to page 1 via the effect that watches them. */}
+          <TableSortControl
+            className="desktop:hidden mb-3"
+            options={MOBILE_SORT_OPTIONS}
+            sortBy={sortBy as MobileSortKey}
+            sortOrder={sortOrder}
+            onSortByChange={(v) => setSortBy(v)}
+            onSortOrderToggle={() => setSortOrder(o => (o === 'asc' ? 'desc' : 'asc'))}
+          />
+
           {/* Desktop table */}
           <div className="hidden desktop:block overflow-x-auto">
             <Table>

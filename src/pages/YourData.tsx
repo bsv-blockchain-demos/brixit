@@ -2,6 +2,7 @@
 import Header from '../components/Layout/Header';
 import { PageBackground } from '../components/ui/PageBackground';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { TableSortControl, type SortOption } from '@/components/common/TableSortControl';
 import { Button } from '../components/ui/button';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -35,6 +36,13 @@ import {
   AlertDialogTitle,
 } from '../components/ui/alert-dialog';
 
+// The my-submissions endpoint only supports ordering by these two fields.
+type MySortKey = 'assessment_date' | 'brix_value';
+const MY_DATA_SORT_OPTIONS: SortOption<MySortKey>[] = [
+  { value: 'assessment_date', label: 'Date' },
+  { value: 'brix_value', label: 'BRIX' },
+];
+
 const YourData: React.FC = () => {
   const { user } = useAuth();
   const { userWallet, userPubKey } = useWallet();
@@ -51,6 +59,9 @@ const YourData: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
+  // The my-submissions endpoint only orders by these two fields.
+  const [sortBy, setSortBy] = useState<MySortKey>('assessment_date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const chunkSize = itemsPerPage;
 
   // Calculate which chunk we're on and set offset for db query
@@ -71,8 +82,8 @@ const YourData: React.FC = () => {
           userId: user.id,
           limit: chunkSize,
           offset: chunkOffset,
-          sortBy: 'assessment_date',
-          sortOrder: 'desc',
+          sortBy,
+          sortOrder,
         }
       : undefined
   );
@@ -115,11 +126,13 @@ const YourData: React.FC = () => {
           userId: user.id,
           limit: chunkSize,
           offset: chunkOffset + chunkSize,
-          sortBy: 'assessment_date' as const,
-          sortOrder: 'desc' as const,
+          // Must track the active sort, otherwise the prefetched chunk is
+          // ordered differently from the page it is meant to serve.
+          sortBy,
+          sortOrder,
         }
       : undefined;
-  }, [chunkOffset, user?.id]);
+  }, [chunkOffset, user?.id, sortBy, sortOrder]);
 
   useEffect(() => {
     if (!shouldPrefetchNextChunk || !nextPageQuery) return;
@@ -394,6 +407,18 @@ const YourData: React.FC = () => {
                   </div>
                 ) : (
                   <div>
+                    {/* Shown at every width: unlike the data browser, this
+                        table's column headers are not clickable, so this is
+                        the only sort affordance on desktop as well as mobile. */}
+                    <TableSortControl
+                      className="mb-3 desktop:max-w-xs"
+                      options={MY_DATA_SORT_OPTIONS}
+                      sortBy={sortBy}
+                      sortOrder={sortOrder}
+                      onSortByChange={(v) => { setSortBy(v); setCurrentPage(1); }}
+                      onSortOrderToggle={() => { setSortOrder(o => (o === 'asc' ? 'desc' : 'asc')); setCurrentPage(1); }}
+                    />
+
                     {/* Desktop table */}
                     <div className="hidden desktop:block overflow-x-auto">
                       <Table>
