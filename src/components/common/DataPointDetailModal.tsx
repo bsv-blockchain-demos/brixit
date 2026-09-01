@@ -576,7 +576,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
 
               <div className="space-y-4">
               <DetailSection icon={<Building className="w-3.5 h-3.5 text-text-mid" />} title="Source" columns={2}>
-                <DetailRow label="Location (Store)">
+                <DetailRow label="Place (Store)">
                   {isEditing ? (
                     <Combobox items={Array.isArray(locations) ? locations : []} value={locationName} onSelect={setLocationName} placeholder="Select Store" />
                   ) : (

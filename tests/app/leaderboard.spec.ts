@@ -18,7 +18,7 @@ test.describe('Leaderboard', () => {
   // The page renders responsive (mobile + desktop) layouts, so several texts
   // resolve to >1 element — scope with .first() to avoid strict-mode violations.
   test('renders the three leaderboard cards', async ({ authedPage }) => {
-    await expect(authedPage.getByRole('heading', { name: 'Top Locations' }).first()).toBeVisible();
+    await expect(authedPage.getByRole('heading', { name: 'Top Places' }).first()).toBeVisible();
     await expect(authedPage.getByRole('heading', { name: 'Top Brands' }).first()).toBeVisible();
     await expect(authedPage.getByRole('heading', { name: 'Most Submissions' }).first()).toBeVisible();
   });

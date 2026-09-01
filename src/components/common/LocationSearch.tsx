@@ -177,7 +177,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       properties.place_formatted ||
       `${street_address}${city ? ', ' + city : ''}`.trim() ||
       poi_name ||
-      'Unknown Location';
+      'Unknown Place';
 
     return {
       name: display_name,

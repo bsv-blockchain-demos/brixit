@@ -105,7 +105,7 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
                     const productName = s
                       ? titleCase(s.cropVariety ? `${s.cropVariety} ${s.cropLabel}` : s.cropLabel)
                       : 'Banana';
-                    const location = s ? (s.venueName || s.venueCity || '') : 'Unknown · Location';
+                    const location = s ? (s.venueName || s.venueCity || '') : 'Unknown · Place';
                     // Clamp horizontally + flip below a high marker so the
                     // bubble never clips the panel edges.
                     const bubbleX = Math.max(28, Math.min(72, largestPct.x));

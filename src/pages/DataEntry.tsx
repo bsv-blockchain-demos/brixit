@@ -541,7 +541,7 @@ const DataEntry = () => {
                           style={{ color: 'var(--text-mid)' }}
                         >
                           <MapPin className="w-4 h-4" />
-                          Location <span className="text-destructive">*</span>
+                          Place <span className="text-destructive">*</span>
                         </Label>
                         <LocationSearch
                           value={session.location}

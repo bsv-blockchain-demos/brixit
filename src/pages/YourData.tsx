@@ -403,7 +403,7 @@ const YourData: React.FC = () => {
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Crop</TableHead>
                             {/* <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Variety</TableHead> */}
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Brand</TableHead>
-                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Location</TableHead>
+                            <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Place</TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center"><ColumnHint help={BRIX_HELP}>BRIX</ColumnHint></TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-center"><ScoreHint variant="rating">Score</ScoreHint></TableHead>
                             <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Notes</TableHead>

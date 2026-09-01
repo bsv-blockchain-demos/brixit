@@ -868,7 +868,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         <div className="p-4 flex-shrink-0 flex flex-row items-start justify-between border-b">
           <div className="min-w-0">
             <h2 className="text-lg font-display font-semibold truncate">
-              {locTitle || 'Location details'}
+              {locTitle || 'Place details'}
             </h2>
             {selectedPoint && (
               <p className="text-sm text-text-muted-brown mt-1 truncate">
@@ -895,7 +895,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           <BottomSheet
             open={mobileSheetOpen}
             onOpenChange={setMobileSheetOpen}
-            title={locTitle || 'Location details'}
+            title={locTitle || 'Place details'}
             className="pointer-events-auto h-[60vh]"
           >
             <div className="mb-4">{renderLeaderboard()}</div>

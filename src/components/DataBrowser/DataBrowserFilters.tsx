@@ -300,7 +300,7 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="w-full justify-between text-sm" aria-haspopup="listbox">
-                {filters.place || 'Select Location'}
+                {filters.place || 'Select Place'}
                 <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -313,7 +313,7 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
                   onValueChange={setLocationQuery}
                   aria-label="Search location"
                 />
-                <CommandList role="listbox" aria-label="Locations">
+                <CommandList role="listbox" aria-label="Places">
                   <CommandEmpty>No locations found.</CommandEmpty>
                   {filteredLocations.map((loc) => (
                     <CommandItem

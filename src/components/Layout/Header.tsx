@@ -114,7 +114,7 @@ const Header = () => {
           }`}
         >
           <Trophy className="w-4 h-4" />
-          <span>Leaderboard</span>
+          <span>Places</span>
         </Button>
       </Link>
 
@@ -126,7 +126,7 @@ const Header = () => {
           }`}
         >
           <Database className="w-4 h-4" />
-          <span>Data</span>
+          <span>Readings</span>
         </Button>
       </Link>
 
@@ -334,8 +334,8 @@ const Header = () => {
             <nav className="flex-1 overflow-y-auto px-4 pt-4 space-y-1">
               {[
                 { to: "/map", icon: Eye, label: "Explorer" },
-                { to: "/leaderboard", icon: Trophy, label: "Leaderboard" },
-                { to: "/data", icon: Database, label: "Data" },
+                { to: "/leaderboard", icon: Trophy, label: "Places" },
+                { to: "/data", icon: Database, label: "Readings" },
                 { to: "/my-data", icon: User, label: "My Data" },
                 ...(hasRole("contributor") ? [{ to: "/data-entry", icon: Plus, label: "Submit", primary: true }] : []),
                 ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : []),

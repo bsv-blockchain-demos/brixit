@@ -373,12 +373,12 @@ const LeaderboardPage: React.FC = () => {
   const PANEL = "bg-card text-card-foreground border border-hairline rounded-2xl shadow-sm overflow-hidden";
 
   const boardConfigs = [
-    { key: 'location' as const, title: 'Top Locations', subtitle: 'Where the highest-scoring produce is being found', data: locationData, hasMore: locationHasMore, isLoadingMore: loadingMore.location, onLoadMore: () => loadMore('location') },
+    { key: 'location' as const, title: 'Top Places', subtitle: 'Where the highest-scoring produce is being found', data: locationData, hasMore: locationHasMore, isLoadingMore: loadingMore.location, onLoadMore: () => loadMore('location') },
     { key: 'brand' as const, title: 'Top Brands', subtitle: 'Farms and brands with the best average scores', data: brandData, hasMore: brandHasMore, isLoadingMore: loadingMore.brand, onLoadMore: () => loadMore('brand') },
     { key: 'user' as const, title: 'Most Submissions', subtitle: 'The community’s most active contributors', data: userData, hasMore: userHasMore, isLoadingMore: loadingMore.user, onLoadMore: () => loadMore('user') },
   ];
   const filterTabs = ([
-    { key: 'location', label: 'Locations' },
+    { key: 'location', label: 'Places' },
     { key: 'brand', label: 'Brands' },
     { key: 'user', label: 'Submissions' },
   ] as const);
@@ -418,7 +418,7 @@ const LeaderboardPage: React.FC = () => {
               Leaderboard
             </h1>
             <p className="mt-1 text-on-bg-body">
-              See where the community is finding the most nutritious produce, ranked by location, brand, and contributor.
+              See where the community is finding the most nutritious produce, ranked by place, brand, and contributor.
             </p>
           </div>
           <button
