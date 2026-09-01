@@ -27,6 +27,7 @@ import { buildSubmissionFilters } from '../lib/buildSubmissionFilters.js';
 import { enqueueWalletTask } from '../lib/walletQueue.js';
 import { anyoneWallet } from '../lib/anyoneWallet.js';
 import { FIELD_LIMITS, exceedsLimit } from '../utils/limits.js';
+import { submissionHash } from '../lib/submissionHash.js';
 
 // Protocol used to derive a P2PKH that the wallet recognises as its own.
 const RECOVERY_PROTOCOL: WalletProtocol = [2, 'brixit recovery'];
@@ -397,6 +398,69 @@ router.post('/:id/retry-anchor', requireAuth as any, async (req: AuthenticatedRe
   } catch (err) {
     console.error('[submissions/:id/retry-anchor] Error:', err);
     res.status(500).json({ error: 'Failed to retry timestamp' });
+  }
+});
+
+// --- Authenticated: POST /api/submissions/:id/resubmit ---
+// Returns a rejected reading to the pending queue. The reading must have
+// changed since it was rejected, otherwise the admin sees the same row again.
+router.post('/:id/resubmit', requireAuth as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const submissionId = req.params.id;
+
+    const submission = await prisma.submission.findUnique({ where: { id: submissionId } });
+    if (!submission) {
+      res.status(404).json({ error: 'Submission not found' });
+      return;
+    }
+    if (submission.userId !== req.user!.sub) {
+      res.status(403).json({ error: 'Not authorized to resubmit this submission' });
+      return;
+    }
+    if (!submission.rejectedAt) {
+      res.status(409).json({ error: 'This submission is not rejected.' });
+      return;
+    }
+    // A null hash predates the rejection-hash column; allow those through
+    // rather than stranding historical rejections.
+    if (submission.rejectionHash && submissionHash(submission) === submission.rejectionHash) {
+      res.status(409).json({ error: 'Change something about this reading before resubmitting it.' });
+      return;
+    }
+
+    // Tie the write to the state that was just validated: if an admin rejects
+    // or verifies in the meantime, this matches nothing and their decision stands.
+    const { count } = await prisma.submission.updateMany({
+      where: { id: submissionId, rejectedAt: submission.rejectedAt },
+      data: {
+        rejectedAt: null,
+        rejectedBy: null,
+        rejectionMessage: null,
+        rejectionHash: null,
+        // Back to pending — an admin decides again, so never auto-verified here.
+        verified: false,
+      },
+    });
+
+    if (count === 0) {
+      res.status(409).json({ error: 'This reading changed while you were resubmitting it. Reload and try again.' });
+      return;
+    }
+
+    const updated = await prisma.submission.findUnique({
+      where: { id: submissionId },
+      include: FULL_SUBMISSION_INCLUDE,
+    });
+
+    if (!updated) {
+      res.status(404).json({ error: 'Submission not found' });
+      return;
+    }
+
+    res.json(formatFullSubmission(updated, true));
+  } catch (err) {
+    console.error('[submissions/:id/resubmit] Error:', err);
+    res.status(500).json({ error: 'Failed to resubmit submission' });
   }
 });
 
