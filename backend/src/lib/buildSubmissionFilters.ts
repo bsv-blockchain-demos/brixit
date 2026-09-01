@@ -3,7 +3,9 @@
  * query params. Shared by `GET /api/submissions` (list) and
  * `GET /api/submissions/count` so they never disagree on filtering.
  *
- * Always pins `verified: true` — this endpoint family is the public view.
+ * Pins `verified: true` by default — the public endpoints only expose approved
+ * readings. The authenticated /mine routes pass `verifiedOnly: false`, since
+ * you are allowed to see your own readings while they are still pending.
  */
 
 export type SubmissionFilterQuery = {
@@ -23,8 +25,12 @@ export type SubmissionFilterQuery = {
   timestamped?: string;
 };
 
-export function buildSubmissionFilters(query: SubmissionFilterQuery): Record<string, any> {
-  const where: Record<string, any> = { verified: true };
+export function buildSubmissionFilters(
+  query: SubmissionFilterQuery,
+  options: { verifiedOnly?: boolean } = {},
+): Record<string, any> {
+  const { verifiedOnly = true } = options;
+  const where: Record<string, any> = verifiedOnly ? { verified: true } : {};
 
   // Timestamped = recorded on-chain (outpoint present).
   if (query.timestamped === 'true') {

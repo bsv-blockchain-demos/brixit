@@ -20,13 +20,15 @@ import {
 } from '../../hooks/useSubmissions';
 import { useFilters, DEFAULT_MAP_FILTERS } from '../../contexts/FilterContext';
 import { getFilterSummary, getActiveFilterList } from '../../lib/filterUtils';
-import { fetchFormattedSubmissionsPage, type PublicFormattedSubmissionsQuery } from '../../lib/fetchSubmissions';
+import { fetchFormattedSubmissionsPage, fetchMineFormattedSubmissionsPage, type PublicFormattedSubmissionsQuery } from '../../lib/fetchSubmissions';
 import { BrixDataPoint } from '../../types';
 import SubmissionTableRow from '../common/SubmissionTableRow';
 import { ColumnHint, ScoreHint, BRIX_HELP } from '../common/StatusBadges';
 import MobileSubmissionCard from '../common/MobileSubmissionCard';
 import DataPointDetailModal from '../common/DataPointDetailModal';
 import { useAuth } from '../../contexts/AuthContext';
+import { useRetryAnchor } from '@/hooks/useRetryAnchor';
+import type { SubmissionScope } from '../../hooks/useSubmissions';
 
 interface DataBrowserResultsProps {
   fromLeaderboard: boolean;
@@ -53,6 +55,13 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const highlightedSubmissionId = (location.state as any)?.highlightedSubmissionId as string | undefined;
+
+  // Seeded from the URL so /my-data can redirect straight into this scope,
+  // and so the choice survives a reload or a shared link.
+  const [scope, setScope] = useState<SubmissionScope>(
+    () => (new URLSearchParams(location.search).get('scope') === 'mine' ? 'mine' : 'all'),
+  );
+  const { retryAnchor, retryingId } = useRetryAnchor();
 
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const chunkSize = itemsPerPage;
@@ -92,7 +101,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
     } satisfies Omit<PublicFormattedSubmissionsQuery, 'limit' | 'offset'>;
   }, [filters, sortBy, sortOrder]);
 
-  const submissionsCountQuery = useFormattedSubmissionsCountQuery(countQuery);
+  const submissionsCountQuery = useFormattedSubmissionsCountQuery(countQuery, scope);
   const totalCount = submissionsCountQuery.data ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
 
@@ -105,7 +114,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
     [countQuery, chunkOffset],
   );
 
-  const submissionsPageQuery = useFormattedSubmissionsPageQuery(pageQuery);
+  const submissionsPageQuery = useFormattedSubmissionsPageQuery(pageQuery, scope);
   const chunkData = submissionsPageQuery.data ?? [];
 
   const shouldPrefetchNextChunk =
@@ -121,20 +130,22 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
   useEffect(() => {
     if (!shouldPrefetchNextChunk) return;
     queryClient.prefetchQuery({
-      queryKey: ['submissions', 'public_formatted', 'page', nextPageQuery],
+      queryKey: ['submissions', 'public_formatted', 'page', scope, nextPageQuery],
       // Must mirror the hook's mock branch. This writes into the same cache
       // key the hook reads, so calling the real fetch here would hand the
       // next page real (or failed) data while page 1 shows mock rows.
       queryFn: () =>
         import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === '1'
-          ? import('@/lib/devMockData').then((m) => m.mockSubmissionsPage(nextPageQuery))
-          : fetchFormattedSubmissionsPage(nextPageQuery),
+          ? import('@/lib/devMockData').then((m) => m.mockSubmissionsPage(nextPageQuery, scope))
+          : scope === 'mine'
+            ? fetchMineFormattedSubmissionsPage(nextPageQuery)
+            : fetchFormattedSubmissionsPage(nextPageQuery),
       staleTime: 60 * 60 * 1000,
     });
-  }, [nextPageQuery, queryClient, shouldPrefetchNextChunk]);
+  }, [nextPageQuery, queryClient, shouldPrefetchNextChunk, scope]);
 
   // Reset to page 1 whenever filters or sort change.
-  useEffect(() => { setCurrentPage(1); }, [filters, sortBy, sortOrder]);
+  useEffect(() => { setCurrentPage(1); }, [filters, sortBy, sortOrder, scope]);
 
   useEffect(() => { setFilteredCount(totalCount); }, [setFilteredCount, totalCount]);
 
@@ -217,13 +228,17 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
         </>
       ) : (
         <>
-          <p className="text-text-dark font-medium">No readings yet</p>
+          <p className="text-text-dark font-medium">
+            {scope === 'mine' ? 'You have no readings yet' : 'No readings yet'}
+          </p>
           <p className="text-sm text-text-mid max-w-sm">
-            Readings submitted by the community will show up here.
+            {scope === 'mine'
+              ? 'Readings you submit will show up here.'
+              : 'Readings submitted by the community will show up here.'}
           </p>
           {(user?.role === 'contributor' || user?.role === 'admin') && (
             <Button size="sm" onClick={() => navigate('/data-entry')}>
-              Add the first reading
+              {scope === 'mine' ? 'Add your first reading' : 'Add the first reading'}
             </Button>
           )}
         </>
@@ -285,8 +300,31 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
         )}
       <Card className="border-0 shadow-none rounded-none bg-transparent">
         <CardHeader className="px-3 sm:px-6">
-          <div className="flex items-center justify-between gap-3">
-            <CardTitle>{totalCount} {totalCount === 1 ? 'Result' : 'Results'}</CardTitle>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
+              <CardTitle>{totalCount} {totalCount === 1 ? 'Result' : 'Results'}</CardTitle>
+              {/* Replaces the old My Readings nav item. Only offered when
+                  signed in, since "mine" needs an authenticated request. */}
+              {user && (
+                <div role="group" aria-label="Whose readings to show" className="inline-flex rounded-lg border border-hairline overflow-hidden">
+                  {(['all', 'mine'] as const).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      aria-pressed={scope === s}
+                      onClick={() => setScope(s)}
+                      className={`px-3 py-1 text-sm font-medium transition-colors ${
+                        scope === s
+                          ? 'bg-select-bg text-select-fg'
+                          : 'bg-transparent text-text-mid hover:bg-surface-canvas'
+                      }`}
+                    >
+                      {s === 'all' ? 'Everyone' : 'Mine'}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <Select
               value={String(itemsPerPage)}
               onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}
@@ -383,6 +421,12 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
                         isOwner={isOwner}
                         canDeleteByOwner={canDeleteByOwner}
                         onOpenModal={handleOpenModal}
+                        onEdit={isOwner ? () => handleOpenModal(submission) : undefined}
+                        // Retry only makes sense on your own, not-yet-anchored rows.
+                        onRetry={isOwner && !submission.outpoint ? () => retryAnchor(submission) : undefined}
+                        isRetrying={retryingId === submission.id}
+                        // In the Mine scope every row is yours, so the badge is noise.
+                        showOwnerBadge={scope === 'all'}
                       />
                     );
                   })

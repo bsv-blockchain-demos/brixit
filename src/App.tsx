@@ -11,7 +11,6 @@ import MapView from "./pages/MapView";
 import Leaderboard from "./pages/Leaderboard";
 import DataBrowser from "./pages/DataBrowser";
 import DataEntry from "./pages/DataEntry";
-import YourData from "./pages/YourData";
 import WalletLogin from "./pages/WalletLogin";
 import CreateAccount from "./pages/CreateAccount";
 import WalletError from "./pages/WalletError";
@@ -107,14 +106,10 @@ const RootContent = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/my-data"
-          element={
-            <ProtectedRoute>
-              <YourData />
-            </ProtectedRoute>
-          }
-        />
+        {/* My Readings folded into the readings browser as a scope. Kept as a
+            redirect so existing links and bookmarks still land in the right
+            place. */}
+        <Route path="/my-data" element={<Navigate to="/data?scope=mine" replace />} />
         <Route
           path="/profile"
           element={

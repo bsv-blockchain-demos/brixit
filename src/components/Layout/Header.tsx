@@ -28,7 +28,6 @@ import {
   Sun,
   Moon,
   ArrowRight,
-  ClipboardList,
   Settings as SettingsIcon,
 } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
@@ -45,7 +44,6 @@ const NAV_LINKS = [
   { to: "/map", icon: Map, label: "Explorer" },
   { to: "/leaderboard", icon: Store, label: "Places" },
   { to: "/data", icon: Droplets, label: "Readings" },
-  { to: "/my-data", icon: ClipboardList, label: "My Readings" },
 ] as const;
 
 /**
@@ -382,7 +380,6 @@ const Header = () => {
                 { to: "/map", icon: Map, label: "Explorer" },
                 { to: "/leaderboard", icon: Store, label: "Places" },
                 { to: "/data", icon: Droplets, label: "Readings" },
-                { to: "/my-data", icon: ClipboardList, label: "My Readings" },
                 ...(hasRole("contributor") ? [{ to: "/data-entry", icon: Plus, label: "Submit", primary: true }] : []),
                 ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : []),
               ].map((item) => {

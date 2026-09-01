@@ -138,15 +138,21 @@ function applySort(rows: BrixDataPoint[], q: AnyQuery): BrixDataPoint[] {
   });
 }
 
-export function mockSubmissionsPage(q: AnyQuery): BrixDataPoint[] {
-  const rows = applySort(applyFilters(dataset(), q), q);
+/** The dev user's id, matching devAuth's makeDevUser. */
+const DEV_USER_ID = 'dev-user-0000-0000-0000-000000000000';
+
+const scoped = (rows: BrixDataPoint[], scope?: string) =>
+  scope === 'mine' ? rows.filter((r) => r.userId === DEV_USER_ID) : rows;
+
+export function mockSubmissionsPage(q: AnyQuery, scope?: string): BrixDataPoint[] {
+  const rows = applySort(applyFilters(scoped(dataset(), scope), q), q);
   const offset = (q.offset as number) ?? 0;
   const limit = (q.limit as number) ?? 50;
   return rows.slice(offset, offset + limit);
 }
 
-export function mockSubmissionsCount(q: AnyQuery): number {
-  return applyFilters(dataset(), q).length;
+export function mockSubmissionsCount(q: AnyQuery, scope?: string): number {
+  return applyFilters(scoped(dataset(), scope), q).length;
 }
 
 // ── Leaderboards ────────────────────────────────────────────────────────────
@@ -241,4 +247,21 @@ export function mockUserLeaderboard(f: MockBoardFilters = {}): MockLeaderboardEn
   )
     .sort((a, b) => b.submission_count - a.submission_count)
     .map((e, i) => ({ ...e, rank: i + 1 }));
+}
+
+// ── "Mine" stats, so Profile agrees with the browser's Mine scope ───────────
+
+const mineRows = () => dataset().filter((r) => r.userId === DEV_USER_ID);
+
+export function mockMineCount(verified?: boolean): number {
+  const rows = mineRows();
+  return verified === undefined ? rows.length : rows.filter((r) => r.verified === verified).length;
+}
+
+export function mockMineCropIds(): string[] {
+  return [...new Set(mineRows().map((r) => r.cropId))];
+}
+
+export function mockMineVenueIds(): string[] {
+  return [...new Set(mineRows().map((r) => r.placeId))];
 }

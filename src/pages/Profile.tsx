@@ -7,11 +7,17 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
-import { ArrowLeft, Shield, Eye, Sprout, Leaf, TreePine, Pencil } from 'lucide-react';
+import { ArrowLeft, Shield, Eye, Sprout, Leaf, TreePine, Pencil, ClipboardList, BadgeCheck, Store } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useToast } from '../hooks/use-toast';
 import LocationSelector from '../components/common/LocationSelector';
 import { IdentityKey } from '../components/common/IdentityKey';
+import { IconStatGrid } from '../components/common/IconStatGrid';
+import {
+  useMySubmissionsCountQuery,
+  useMySubmissionsCropIdsQuery,
+  useMySubmissionsVenueIdsQuery,
+} from '../hooks/useSubmissions';
 import Header from '../components/Layout/Header';
 
 interface LocationData {
@@ -57,6 +63,15 @@ const Profile = () => {
 
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Moved off the My Readings page: these describe you, so they belong with
+  // the level and rank rather than above a table of rows.
+  const totalQuery = useMySubmissionsCountQuery(user?.id ? { userId: user.id } : undefined);
+  const verifiedQuery = useMySubmissionsCountQuery(user?.id ? { userId: user.id, verified: true } : undefined);
+  const cropIdsQuery = useMySubmissionsCropIdsQuery(user?.id);
+  const venueIdsQuery = useMySubmissionsVenueIdsQuery(user?.id);
+  const uniqueCrops = new Set(cropIdsQuery.data ?? []).size;
+  const uniqueStores = new Set(venueIdsQuery.data ?? []).size;
 
   useEffect(() => {
     if (!user) navigate('/');
@@ -239,6 +254,27 @@ const Profile = () => {
                       style={{ width: `${progress}%` }}
                     />
                   </div>
+                </div>
+
+                <div className="border-t border-hairline" />
+
+                {/* Reading stats, moved here from the My Readings page. */}
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-display font-bold text-text-dark">Your readings</h3>
+                    <button
+                      onClick={() => navigate('/data?scope=mine')}
+                      className="text-sm font-medium text-action-primary hover:underline"
+                    >
+                      View all
+                    </button>
+                  </div>
+                  <IconStatGrid stats={[
+                    { icon: ClipboardList, value: totalQuery.data ?? 0,    label: 'Total Readings' },
+                    { icon: BadgeCheck,    value: verifiedQuery.data ?? 0, label: 'Verified Readings' },
+                    { icon: Sprout,        value: uniqueCrops,             label: 'Unique Crop Types' },
+                    { icon: Store,         value: uniqueStores,            label: 'Unique Stores' },
+                  ]} />
                 </div>
 
                 <div className="border-t border-hairline" />

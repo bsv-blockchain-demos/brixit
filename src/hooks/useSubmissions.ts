@@ -5,6 +5,8 @@ import {
   fetchFormattedSubmissionsCount,
   fetchFormattedSubmissionsInBounds,
   fetchFormattedSubmissionsPage,
+  fetchMineFormattedSubmissionsPage,
+  fetchMineFormattedSubmissionsCount,
   fetchFormattedSubmissionById,
   fetchMySubmissionsCount,
   fetchMySubmissionsCropIds,
@@ -37,13 +39,23 @@ export function useFormattedSubmissionsQuery() {
   });
 }
 
-export function useFormattedSubmissionsPageQuery(query: PublicFormattedSubmissionsQuery) {
+/** `scope` picks the public list or the signed-in user's own readings. */
+export type SubmissionScope = "all" | "mine";
+
+export function useFormattedSubmissionsPageQuery(
+  query: PublicFormattedSubmissionsQuery,
+  scope: SubmissionScope = "all",
+) {
   return useQuery<BrixDataPoint[]>({
-    queryKey: ["submissions", "public_formatted", "page", query],
+    // scope is part of the key: the two scopes are different result sets for
+    // an otherwise identical query.
+    queryKey: ["submissions", "public_formatted", "page", scope, query],
     queryFn: () =>
       import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === "1"
-        ? import("@/lib/devMockData").then((m) => m.mockSubmissionsPage(query))
-        : fetchFormattedSubmissionsPage(query),
+        ? import("@/lib/devMockData").then((m) => m.mockSubmissionsPage(query, scope))
+        : scope === "mine"
+          ? fetchMineFormattedSubmissionsPage(query)
+          : fetchFormattedSubmissionsPage(query),
     staleTime: ONE_HOUR_MS,
     gcTime: 2 * ONE_HOUR_MS,
     refetchOnWindowFocus: false,
@@ -53,14 +65,17 @@ export function useFormattedSubmissionsPageQuery(query: PublicFormattedSubmissio
 }
 
 export function useFormattedSubmissionsCountQuery(
-  query: Omit<PublicFormattedSubmissionsQuery, "limit" | "offset">
+  query: Omit<PublicFormattedSubmissionsQuery, "limit" | "offset">,
+  scope: SubmissionScope = "all",
 ) {
   return useQuery<number>({
-    queryKey: ["submissions", "public_formatted", "count", query],
+    queryKey: ["submissions", "public_formatted", "count", scope, query],
     queryFn: () =>
       import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === "1"
-        ? import("@/lib/devMockData").then((m) => m.mockSubmissionsCount(query))
-        : fetchFormattedSubmissionsCount(query),
+        ? import("@/lib/devMockData").then((m) => m.mockSubmissionsCount(query, scope))
+        : scope === "mine"
+          ? fetchMineFormattedSubmissionsCount(query)
+          : fetchFormattedSubmissionsCount(query),
     staleTime: ONE_HOUR_MS,
     gcTime: 2 * ONE_HOUR_MS,
     refetchOnWindowFocus: false,
@@ -143,7 +158,9 @@ export function useMySubmissionsCountQuery(query?: MySubmissionsCountQuery) {
     queryKey: ["submissions", "mine", "count", query || null],
     queryFn: () => {
       if (!query) return Promise.resolve(0);
-      return fetchMySubmissionsCount(query);
+      return import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === "1"
+        ? import("@/lib/devMockData").then((m) => m.mockMineCount(query.verified))
+        : fetchMySubmissionsCount(query);
     },
     enabled: !!query?.userId,
     staleTime: 5 * 60 * 1000,
@@ -158,7 +175,9 @@ export function useMySubmissionsCropIdsQuery(userId?: string) {
     queryKey: ["submissions", "mine", "crop_ids", userId || null],
     queryFn: () => {
       if (!userId) return Promise.resolve([]);
-      return fetchMySubmissionsCropIds(userId);
+      return import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === "1"
+        ? import("@/lib/devMockData").then((m) => m.mockMineCropIds())
+        : fetchMySubmissionsCropIds(userId);
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
@@ -173,7 +192,9 @@ export function useMySubmissionsVenueIdsQuery(userId?: string) {
     queryKey: ["submissions", "mine", "venue_ids", userId || null],
     queryFn: () => {
       if (!userId) return Promise.resolve([]);
-      return fetchMySubmissionsVenueIds(userId);
+      return import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === "1"
+        ? import("@/lib/devMockData").then((m) => m.mockMineVenueIds())
+        : fetchMySubmissionsVenueIds(userId);
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
