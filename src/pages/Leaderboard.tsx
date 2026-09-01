@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import Header from "../components/Layout/Header";
 import { PageBackground } from '../components/ui/PageBackground';
 import LocationSelector from "../components/common/LocationSelector";
@@ -80,6 +80,7 @@ const LeaderboardPage: React.FC = () => {
   //   isFetching   — filter change, keep stale data visible (dimmed)
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
+
 
   // Initializing location codes — we handle this silently (no spinner)
   const [isInitializing, setIsInitializing] = useState(!!user?.country);
@@ -260,12 +261,16 @@ const LeaderboardPage: React.FC = () => {
           setLocationHasMore(Array.isArray(loc) && loc.length === PAGE_SIZE);
           setBrandHasMore(Array.isArray(brand) && brand.length === PAGE_SIZE);
           setUserHasMore(Array.isArray(users) && users.length === PAGE_SIZE);
-          setIsFirstLoad(false);
         }
       } catch (err) {
         console.error("Error loading leaderboards:", err);
       } finally {
-        if (mounted) setIsFetching(false);
+        if (mounted) {
+          setIsFetching(false);
+          // In finally, not the try: a thrown fetch used to leave isFirstLoad
+          // true, pinning the full-screen overlay over the app with no way out.
+          setIsFirstLoad(false);
+        }
       }
     };
 
@@ -400,14 +405,6 @@ const LeaderboardPage: React.FC = () => {
 
   return (
     <PageBackground className="min-h-screen flex flex-col">
-      {isFirstLoad && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading leaderboards...</p>
-          </div>
-        </div>
-      )}
       <Header />
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pb-[var(--bottom-inset)]">
         {/* Page identity, shown on both mobile and desktop. Refresh lives here

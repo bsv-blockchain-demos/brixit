@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronDown, MapPin } from "lucide-react";
+import { ChevronDown, Loader2, MapPin } from "lucide-react";
 import { CardContent, CardHeader, CardTitle } from "../ui/card";
 import { LeaderboardEntry } from "../../lib/fetchLeaderboards";
 import { computeNormalizedScore } from "../../lib/getBrixColor";
@@ -173,7 +173,19 @@ export function LeaderboardCard({
       <CardContent className="px-0">
         <div className={isFirstLoad || isFetching ? 'opacity-50 pointer-events-none' : ''}>
           {data.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-sm text-text-muted-brown">No data available.</div>
+            // "No data available" is only true once loading has finished.
+            // While the first load is in flight the board is empty because
+            // nothing has arrived yet, so say that instead.
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-sm text-text-muted-brown">
+              {isFirstLoad ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <span>Loading...</span>
+                </>
+              ) : (
+                <span>No data available.</span>
+              )}
+            </div>
           ) : (
             <>
             <div className="lb-desktop-only">
