@@ -15,6 +15,7 @@ import {
   refreshAccessToken,
 } from "@/lib/api";
 import type { AuthProof } from "@/lib/authProof";
+import { DEV_AUTH_ENABLED, makeDevUser } from "@/lib/devAuth";
 
 interface UserProfile {
   id: string;
@@ -103,11 +104,16 @@ async function fetchUserProfile(): Promise<UserProfile | null> {
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // With the DEV bypass on, start already-authenticated and skip both loading
+  // gates so ProtectedRoute renders immediately instead of waiting on a
+  // refresh call that cannot succeed without a backend.
+  const [user, setUser] = useState<UserProfile | null>(
+    DEV_AUTH_ENABLED ? makeDevUser() : null
+  );
+  const [isAuthenticated, setIsAuthenticated] = useState(DEV_AUTH_ENABLED);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [profileLoading, setProfileLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!DEV_AUTH_ENABLED);
+  const [profileLoading, setProfileLoading] = useState(!DEV_AUTH_ENABLED);
 
   const isAdmin = user?.role === "admin";
 
@@ -148,6 +154,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    if (DEV_AUTH_ENABLED) {
+      console.info(
+        "[AuthContext] DEV auth bypass active — session is mocked, API calls still hit the real backend."
+      );
+      return;
+    }
     loadSession();
   }, []);
 
@@ -169,8 +181,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async (): Promise<void> => {
     try {
-      // Backend clears the HttpOnly refresh token cookie
-      await apiPost("/api/auth/logout", {}).catch(() => {});
+      // Nothing to revoke server-side when the session is mocked.
+      if (!DEV_AUTH_ENABLED) {
+        // Backend clears the HttpOnly refresh token cookie
+        await apiPost("/api/auth/logout", {}).catch(() => {});
+      }
     } finally {
       clearAccessToken();
       setUser(null);
@@ -183,6 +198,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) {
       setAuthError("Not authenticated.");
       return false;
+    }
+
+    if (DEV_AUTH_ENABLED) {
+      setUser({ ...user, display_name: newUsername });
+      return true;
     }
 
     try {
@@ -203,6 +223,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) {
       setAuthError("Not authenticated.");
       return false;
+    }
+
+    if (DEV_AUTH_ENABLED) {
+      setUser({ ...user, ...location });
+      return true;
     }
 
     try {
