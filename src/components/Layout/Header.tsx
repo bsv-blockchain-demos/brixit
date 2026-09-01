@@ -308,7 +308,8 @@ const Header = () => {
 
         {/* Mobile Navigation — full-height steel panel with its own header, nav
             list, and a bottom account card. Desktop nav + dropdown are untouched.
-            The Identity Key & Delete Account live only on the Profile page. */}
+            This panel carries no Identity Key (it is in the desktop dropdown and
+            on Profile) and no account deletion (that lives on Settings). */}
         {user && menuOpen && (
           <div className="md:hidden fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)]">
             {/* Panel header */}
