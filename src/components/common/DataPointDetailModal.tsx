@@ -563,7 +563,16 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
             />
 
             <div className="pt-4 border-t border-hairline">
-              <h3 className="text-lg font-bold font-display text-text-dark mb-2">Reading Details</h3>
+              {/* On the route page this heading sits on the blue page
+                  background, where text-dark is barely legible; inside the
+                  dialog it sits on a card, where it is correct. */}
+              <h3
+                className={`text-lg font-bold font-display mb-2 text-center ${
+                  presentation === 'page' ? 'text-on-bg-text' : 'text-text-dark'
+                }`}
+              >
+                Reading Details
+              </h3>
 
               <div className="space-y-4">
               <DetailSection icon={<Building className="w-3.5 h-3.5 text-text-mid" />} title="Source" columns={2}>

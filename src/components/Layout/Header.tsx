@@ -19,6 +19,7 @@ import {
   Store,
   Droplets,
   Info,
+  ShoppingCart,
   Plus,
   User,
   LogOut,
@@ -137,7 +138,7 @@ const Header = () => {
   // "from" transform, and measuring is deterministic besides.
   const navLinks = (
     <>
-      {NAV_LINKS.map(({ to, icon: Icon, label }) => {
+      {user && NAV_LINKS.map(({ to, icon: Icon, label }) => {
         const active = isActive(to);
         return (
           <Link
@@ -164,17 +165,37 @@ const Header = () => {
         );
       })}
 
-      {hasRole("contributor") && (
-        <Link to="/data-entry">
+      {/* Add and Buy read as one split control when both are present. Buy is
+          not gated on the contributor role: observers are exactly the people
+          who do not have a meter yet, so when Add is absent Buy stands alone
+          and takes the full rounding. */}
+      <div className="flex items-center">
+        {hasRole("contributor") && (
+          <Link to="/data-entry">
+            <Button
+              variant={isActive("/data-entry") ? "default" : "ghost"}
+              className="flex items-center space-x-2 justify-start rounded-l-lg rounded-r-none bg-action-primary hover:bg-action-primary-hover text-white hover:text-white"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add</span>
+            </Button>
+          </Link>
+        )}
+        <Link to="/buy">
           <Button
-            variant={isActive("/data-entry") ? "default" : "ghost"}
-            className="flex items-center space-x-2 w-full justify-start rounded-lg bg-action-primary hover:bg-action-primary-hover text-white hover:text-white"
+            variant="ghost"
+            // Inverts against the orange Add: the app surface colour with the
+            // app ink on it, so it flips with the theme rather than being a
+            // second accent competing for the same attention.
+            className={`flex items-center space-x-2 justify-start bg-card text-text-dark hover:bg-surface-canvas hover:text-text-dark ${
+              hasRole("contributor") ? "rounded-l-none rounded-r-lg" : "rounded-lg"
+            } ${isActive("/buy") ? "ring-2 ring-inset ring-white/50" : ""}`}
           >
-            <Plus className="w-4 h-4" />
-            <span>Add</span>
+            <ShoppingCart className="w-4 h-4" />
+            <span>Buy</span>
           </Button>
         </Link>
-      )}
+      </div>
 
       {isAdmin && (
         <Link to="/admin">
@@ -205,8 +226,10 @@ const Header = () => {
             <BrixLogo height="3rem" color="white" />
           </Link>
 
-          {/* Desktop Navigation */}
-          {user && (
+          {/* Desktop Navigation. Rendered for everyone: Buy lives in here and
+              is offered to signed-out visitors too. The destinations and the
+              underline are still signed-in only. */}
+          {
             // gap-4, not space-x-4: the latter sets margin-left on every child
             // after the first, which would also shove the absolutely positioned
             // indicator 16px right of its measured offset.
@@ -233,7 +256,7 @@ const Header = () => {
                 />
               )}
             </nav>
-          )}
+          }
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
@@ -369,6 +392,7 @@ const Header = () => {
                 { to: "/leaderboard", icon: Store, label: "Places" },
                 { to: "/data", icon: Droplets, label: "Readings" },
                 { to: "/about", icon: Info, label: "About" },
+                { to: "/buy", icon: ShoppingCart, label: "Buy" },
                 ...(hasRole("contributor") ? [{ to: "/data-entry", icon: Plus, label: "Add", primary: true }] : []),
                 ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Steward" }] : []),
               ].map((item) => {

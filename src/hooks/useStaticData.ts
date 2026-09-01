@@ -78,6 +78,12 @@ const normalizeToItems = (data: any[], type: string): DatabaseItem[] => {
 };
 
 async function fetchStaticData(): Promise<Pick<StaticData, 'crops' | 'brands' | 'locations'>> {
+  // Condition inlined on purpose; see the note in useSubmissions.ts.
+  if (import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === '1') {
+    const m = await import('@/lib/devMockData');
+    return m.mockStaticData();
+  }
+
   const [cropsResult, brandsResult, locationsResult] = await Promise.all([
     fetchCropTypes().catch(() => []),
     fetchBrands().catch(() => []),

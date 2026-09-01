@@ -41,6 +41,10 @@ interface DateFieldProps {
   placeholder?: string;
   'aria-label'?: string;
   className?: string;
+  /** Latest selectable day; later days render disabled. */
+  maxDate?: Date;
+  /** Renders the trigger in an error state, matching the form inputs. */
+  invalid?: boolean;
 }
 
 export function DateField({
@@ -49,6 +53,8 @@ export function DateField({
   onChange,
   placeholder = 'Any date',
   className,
+  maxDate,
+  invalid = false,
   ...rest
 }: DateFieldProps) {
   const [open, setOpen] = useState(false);
@@ -67,6 +73,7 @@ export function DateField({
             // native control put it on Chrome but not on Safari or Firefox.
             'w-full justify-between font-normal text-sm h-10 px-3',
             !selected && 'text-text-muted-brown',
+            invalid && 'border-destructive',
             className,
           )}
         >
@@ -101,6 +108,7 @@ export function DateField({
           mode="single"
           selected={selected}
           defaultMonth={selected}
+          disabled={maxDate ? { after: maxDate } : undefined}
           onSelect={(d) => {
             onChange(d ? toISODate(d) : '');
             setOpen(false);

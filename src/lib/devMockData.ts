@@ -281,3 +281,16 @@ export function mockMineVenueIds(): string[] {
 export function mockSubmissionById(id: string): BrixDataPoint | null {
   return dataset().find((r) => r.id === id) ?? null;
 }
+
+/** Crop / brand / place lists, so the filter dropdowns and search starters
+ *  have something to offer in dev. Derived from the same readings. */
+export function mockStaticData() {
+  const uniq = <T extends { id: string }>(xs: T[]) =>
+    [...new Map(xs.map((x) => [x.id, x])).values()];
+
+  return {
+    crops: uniq(CROPS.map((c) => ({ id: c.id, name: c.name, label: c.label }))),
+    brands: uniq(BRANDS.map((b) => ({ id: b.id, name: b.name, label: b.label }))),
+    locations: uniq(PLACES.map((p) => ({ id: p.id, name: p.name, label: p.name }))),
+  };
+}
