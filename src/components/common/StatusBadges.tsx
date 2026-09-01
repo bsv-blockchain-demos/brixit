@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CheckCircle, Clock, Stamp } from 'lucide-react';
+import { Check, CheckCircle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -14,6 +14,9 @@ import { cn } from '@/lib/utils';
  */
 
 const PILL = 'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap';
+// Icon-only variant: square-ish so the glyph stays centred without a label.
+// The state is carried by aria-label and the popover, not visible text.
+const PILL_ICON = 'inline-flex items-center justify-center rounded-full w-6 h-6';
 
 /**
  * Info bubble that is usable on every device. Radix Popover toggles on tap/click
@@ -22,7 +25,7 @@ const PILL = 'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs 
  * the click toggle, so a desktop click never fights the hover state; on touch the
  * click toggle is what opens it. Tapping outside or pressing Escape dismisses it.
  */
-function HintPopover({
+export function HintPopover({
   children,
   help,
   contentClassName,
@@ -79,10 +82,10 @@ export function VerifiedBadge({ verified }: { verified: boolean }) {
       <span
         tabIndex={0}
         role="button"
-        className={`${PILL} cursor-help ${verified ? 'bg-score-excellent-bg text-score-excellent' : 'bg-score-average-bg text-score-average'}`}
+        aria-label={verified ? 'Verified' : 'Pending review'}
+        className={`${PILL_ICON} cursor-help ${verified ? 'bg-score-excellent-bg text-score-excellent' : 'bg-score-average-bg text-score-average'}`}
       >
         {verified ? <CheckCircle className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
-        {verified ? 'Verified' : 'Pending'}
       </span>
     </HintPopover>
   );
@@ -100,10 +103,10 @@ export function BlockchainBadge({ secured }: { secured: boolean }) {
       <span
         tabIndex={0}
         role="button"
-        className={`${PILL} cursor-help ${secured ? 'bg-select-bg text-select-fg' : 'bg-badge-neutral-bg text-badge-neutral-text'}`}
+        aria-label={secured ? 'Timestamped on chain' : 'Timestamping pending'}
+        className={`${PILL_ICON} cursor-help ${secured ? 'bg-select-bg text-select-fg' : 'bg-badge-neutral-bg text-badge-neutral-text'}`}
       >
-        <Stamp className="w-3.5 h-3.5" />
-        {secured ? 'Timestamped' : 'Pending'}
+        {secured ? <Check className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
       </span>
     </HintPopover>
   );

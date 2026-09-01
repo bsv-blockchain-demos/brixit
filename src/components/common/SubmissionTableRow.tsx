@@ -8,9 +8,9 @@ import { MapPin, Calendar, CheckCircle, Edit, Trash2, Eye, MessageSquare, Stamp,
 import { gradeBrix } from '../../lib/getBrixColor';
 import { formatCityState } from '../../lib/formatAddress';
 import { titleCase } from '../../lib/titleCase';
-import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
+import { VerifiedBadge, BlockchainBadge, HintPopover } from './StatusBadges';
 import { ScoreGauge } from './ScoreGauge';
-import { formatHumanDate } from '../../lib/formatDate';
+import { formatHumanDate, formatRelativeTime } from '../../lib/formatDate';
 
 interface SubmissionTableRowProps {
   submission: BrixDataPoint;
@@ -43,7 +43,10 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       <TableCell className="py-3 px-4 whitespace-nowrap">
         <div className="flex items-center space-x-1 text-sm text-text-mid">
           <Calendar className="w-3.5 h-3.5 text-text-muted-brown" />
-          <span>{formatHumanDate(submission.submittedAt)}</span>
+          {/* Relative for scanning; exact date on hover for precision. */}
+          <span title={formatHumanDate(submission.submittedAt)}>
+            {formatRelativeTime(submission.submittedAt)}
+          </span>
         </div>
       </TableCell>
 
@@ -122,12 +125,20 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       </TableCell>
 
       {/* Cell 6 — Notes */}
-      <TableCell className="py-3 px-4 max-w-[150px]">
+      <TableCell className="py-3 px-4">
         {submission.outlier_notes ? (
-          <div className="flex items-center space-x-1 text-sm text-text-mid min-w-0">
-            <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 text-text-muted-brown" />
-            <span className="line-clamp-2 min-w-0" title={submission.outlier_notes}>{submission.outlier_notes}</span>
-          </div>
+          // Icon only; the note reads in a popover on hover (tap on touch)
+          // rather than as two clamped lines that stretch the row.
+          <HintPopover help={submission.outlier_notes}>
+            <span
+              tabIndex={0}
+              role="button"
+              aria-label="Show note"
+              className="inline-flex items-center justify-center w-6 h-6 rounded-full cursor-help text-text-muted-brown hover:bg-surface-canvas"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+            </span>
+          </HintPopover>
         ) : (
           <span className="text-text-muted-brown text-sm">--</span>
         )}

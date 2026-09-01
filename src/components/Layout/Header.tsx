@@ -16,12 +16,12 @@ import { useWallet } from "../../contexts/WalletContext";
 import { useWalletRelay } from "../../contexts/WalletRelayContext";
 import { formatUsername } from "../../lib/formatUsername";
 import {
-  Eye,
-  Database,
+  Map,
+  Store,
+  Droplets,
   Plus,
   User,
   LogOut,
-  Trophy,
   Menu,
   X,
   Shield,
@@ -39,9 +39,12 @@ import { IdentityKey } from "@/components/common/IdentityKey";
 // Plain destinations that share the sliding underline. Submit and Admin are
 // deliberately outside this list: they carry their own button treatment.
 const NAV_LINKS = [
-  { to: "/map", icon: Eye, label: "Explorer" },
-  { to: "/leaderboard", icon: Trophy, label: "Places" },
-  { to: "/data", icon: Database, label: "Readings" },
+  // Icons follow the renames: Map for the map, Store for the place rankings,
+  // Droplets for a refractometer reading. Trophy read as "leaderboard" and
+  // Database as "some table", neither of which is what these pages are now.
+  { to: "/map", icon: Map, label: "Explorer" },
+  { to: "/leaderboard", icon: Store, label: "Places" },
+  { to: "/data", icon: Droplets, label: "Readings" },
   { to: "/my-data", icon: ClipboardList, label: "My Readings" },
 ] as const;
 
@@ -376,9 +379,9 @@ const Header = () => {
             {/* Nav list */}
             <nav className="flex-1 overflow-y-auto px-4 pt-4 space-y-1">
               {[
-                { to: "/map", icon: Eye, label: "Explorer" },
-                { to: "/leaderboard", icon: Trophy, label: "Places" },
-                { to: "/data", icon: Database, label: "Readings" },
+                { to: "/map", icon: Map, label: "Explorer" },
+                { to: "/leaderboard", icon: Store, label: "Places" },
+                { to: "/data", icon: Droplets, label: "Readings" },
                 { to: "/my-data", icon: ClipboardList, label: "My Readings" },
                 ...(hasRole("contributor") ? [{ to: "/data-entry", icon: Plus, label: "Submit", primary: true }] : []),
                 ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : []),

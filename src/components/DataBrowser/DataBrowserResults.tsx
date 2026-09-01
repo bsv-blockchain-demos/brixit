@@ -353,11 +353,13 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
                     <ScoreHint variant="rating">Score</ScoreHint>
                   </TableHead>
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">Notes</TableHead>
+                  {/* Approval state: the badge is icon-only now, so the label
+                      is dropped and the explanation lives in its popover. */}
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">
-                    <ColumnHint help="Whether this reading is approved for public display. Most are approved automatically; outliers are reviewed by an admin.">Verified</ColumnHint>
+                    <span className="sr-only">Approval</span>
                   </TableHead>
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider">
-                    <ColumnHint help="Whether this reading is anchored to the BSV blockchain. 'Timestamped' means it has been anchored, giving a permanent, tamper-evident record; 'Pending' means anchoring is still in progress.">Blockchain</ColumnHint>
+                    <ColumnHint help="Whether this reading is anchored to the BSV blockchain. A checkmark means it has been anchored, giving a permanent, tamper-evident record; a clock means anchoring is still in progress.">Status</ColumnHint>
                   </TableHead>
                   <TableHead className="text-xs text-text-muted-brown uppercase tracking-wider text-right">Actions</TableHead>
                 </TableRow>
