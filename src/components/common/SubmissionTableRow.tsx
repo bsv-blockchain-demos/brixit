@@ -4,7 +4,7 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { BrixDataPoint } from '../../types';
-import { MapPin, Calendar, CheckCircle, Edit, Trash2, Eye, MessageSquare, Stamp, Lock, User, XCircle, Anchor } from 'lucide-react';
+import { MapPin, CheckCircle, Edit, Trash2, Eye, MessageSquare, Stamp, Lock, User, XCircle, Anchor } from 'lucide-react';
 import { gradeBrix } from '../../lib/getBrixColor';
 import { formatCityState } from '../../lib/formatAddress';
 import { titleCase } from '../../lib/titleCase';
@@ -41,13 +41,10 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
     >
       {/* Date */}
       <TableCell className="py-3 px-4 whitespace-nowrap">
-        <div className="flex items-center space-x-1 text-sm text-text-mid">
-          <Calendar className="w-3.5 h-3.5 text-text-muted-brown" />
-          {/* Relative for scanning; exact date on hover for precision. */}
-          <span title={formatHumanDate(submission.submittedAt)}>
-            {formatRelativeTime(submission.submittedAt)}
-          </span>
-        </div>
+        {/* Relative for scanning; exact date on hover for precision. */}
+        <span className="text-sm text-text-mid" title={formatHumanDate(submission.submittedAt)}>
+          {formatRelativeTime(submission.submittedAt)}
+        </span>
       </TableCell>
 
       {/* Crop */}
