@@ -17,10 +17,13 @@ test.describe('Leaderboard', () => {
 
   // The page renders responsive (mobile + desktop) layouts, so several texts
   // resolve to >1 element — scope with .first() to avoid strict-mode violations.
+  // Card headings are level 3. The page <h1> is also "Top places", and role-name
+  // matching is case-insensitive, so scope by level to keep this asserting on the
+  // card rather than the page title.
   test('renders the three leaderboard cards', async ({ authedPage }) => {
-    await expect(authedPage.getByRole('heading', { name: 'Top Places' }).first()).toBeVisible();
-    await expect(authedPage.getByRole('heading', { name: 'Top Brands' }).first()).toBeVisible();
-    await expect(authedPage.getByRole('heading', { name: 'Most Submissions' }).first()).toBeVisible();
+    await expect(authedPage.getByRole('heading', { name: 'Top Places', level: 3 }).first()).toBeVisible();
+    await expect(authedPage.getByRole('heading', { name: 'Top Brands', level: 3 }).first()).toBeVisible();
+    await expect(authedPage.getByRole('heading', { name: 'Most Submissions', level: 3 }).first()).toBeVisible();
   });
 
   test('displays brand entries from mock data', async ({ authedPage }) => {

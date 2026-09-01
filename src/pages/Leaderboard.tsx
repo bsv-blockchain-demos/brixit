@@ -415,7 +415,7 @@ const LeaderboardPage: React.FC = () => {
         <div className="mb-6 flex items-end justify-between gap-4">
           <div className="min-w-0">
             <h1 className="text-2xl font-display font-bold text-on-bg-text">
-              Leaderboard
+              Top places
             </h1>
             <p className="mt-1 text-on-bg-body">
               See where the community is finding the most nutritious produce, ranked by place, brand, and contributor.
