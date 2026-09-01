@@ -295,7 +295,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       {!hasSelected && value.length >= 2 && !isSearching && suggestions.length === 0 && (
         <div className="absolute z-50 w-full bg-card border border-border rounded-md shadow-lg mt-1 p-3">
           <div className="text-sm text-muted-foreground">
-            No locations found. Try a different search term.
+            No places found. Try a different search term.
           </div>
         </div>
       )}

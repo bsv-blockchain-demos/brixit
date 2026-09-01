@@ -307,14 +307,14 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
             <PopoverContent className="w-[300px] p-0">
               <Command>
                 <CommandInput
-                  placeholder="Search location..."
+                  placeholder="Search place..."
                   className="h-9"
                   value={locationQuery}
                   onValueChange={setLocationQuery}
-                  aria-label="Search location"
+                  aria-label="Search place"
                 />
                 <CommandList role="listbox" aria-label="Places">
-                  <CommandEmpty>No locations found.</CommandEmpty>
+                  <CommandEmpty>No places found.</CommandEmpty>
                   {filteredLocations.map((loc) => (
                     <CommandItem
                       key={loc.id}
@@ -431,7 +431,7 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted-brown" />
             <Input
-              placeholder="Search crop, location..."
+              placeholder="Search crop, place..."
               className="pl-9 pr-3 py-2 rounded-md border border-hairline focus-visible:ring-green-fresh/30"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -486,7 +486,7 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
         <div className="relative w-full md:w-1/3">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted-brown" />
           <Input
-            placeholder="Search by crop, submitter, location, notes..."
+            placeholder="Search by crop, submitter, place, notes..."
             className="pl-9 pr-3 py-2 rounded-md border border-hairline focus-visible:ring-green-fresh/30"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}

@@ -272,7 +272,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
                     className="text-xs text-text-muted-brown uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('locationName')}
                   >
-                    Location {sortBy === 'locationName' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    Place {sortBy === 'locationName' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </TableHead>
                   <TableHead
                     className="text-xs text-text-muted-brown uppercase tracking-wider text-center cursor-pointer"

@@ -393,8 +393,8 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
           const locationItem = safelocations.find(s => s?.name === locationName);
           if (!locationItem?.id) {
             toast({
-              title: 'Invalid location',
-              description: 'Please select a valid location from the list or clear the field.',
+              title: 'Invalid place',
+              description: 'Please select a valid place from the list or clear the field.',
               variant: 'destructive',
             });
             setSaving(false);

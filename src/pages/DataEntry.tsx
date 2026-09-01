@@ -205,7 +205,7 @@ const DataEntry = () => {
 
   const validateForm = (): boolean => {
     const e: Record<string, string> = {};
-    if (!session.location.trim()) e.location = 'Please enter a location';
+    if (!session.location.trim()) e.location = 'Please enter a place';
 
     const needsVenuePrompt = session.latitude !== 0 && !session.business_name && !session.poi_name;
     if (needsVenuePrompt && !session.venueChoice) {
@@ -266,7 +266,7 @@ const DataEntry = () => {
   // validated by validateForm() on submit, unchanged.
   const validateStep1 = (): boolean => {
     const e: Record<string, string> = {};
-    if (!session.location.trim()) e.location = 'Please enter a location';
+    if (!session.location.trim()) e.location = 'Please enter a place';
 
     const needsVenuePrompt = session.latitude !== 0 && !session.business_name && !session.poi_name;
     if (needsVenuePrompt && !session.venueChoice) {

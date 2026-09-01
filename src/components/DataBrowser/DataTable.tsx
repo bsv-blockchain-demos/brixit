@@ -48,7 +48,7 @@ const DataTable: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-on-bg-text">All Submissions</h1>
-          <p className="mt-1 text-on-bg-body">Browse community measurements across crops and locations</p>
+          <p className="mt-1 text-on-bg-body">Browse community measurements across crops and places</p>
         </div>
         <Button
           variant="ghost"

@@ -55,7 +55,7 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
           <>
             <img
               src={mapPreview.url}
-              alt="Map showing community BRIX score locations"
+              alt="Map showing community BRIX score places"
               className="w-full h-full object-cover"
               loading="eager"
             />

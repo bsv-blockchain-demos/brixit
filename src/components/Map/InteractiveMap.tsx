@@ -712,7 +712,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           <p className="text-sm text-text-muted-brown mt-2">
             <span className="md:hidden">Tap on a marker to view scores and rankings.</span>
             <span className="hidden md:inline">
-              Click on a marker to view scores and rankings for that location.
+              Click on a marker to view scores and rankings for that place.
             </span>
           </p>
         </div>
@@ -850,7 +850,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
               }
               setSearchValue('');
             }}
-            placeholder="Search any location..."
+            placeholder="Search any place..."
           />
         </div>
 

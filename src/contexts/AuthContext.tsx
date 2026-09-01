@@ -156,7 +156,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (DEV_AUTH_ENABLED) {
       console.info(
-        "[AuthContext] DEV auth bypass active — session is mocked, API calls still hit the real backend."
+        "[AuthContext] DEV auth bypass active: session is mocked, API calls still hit the real backend."
       );
       return;
     }
