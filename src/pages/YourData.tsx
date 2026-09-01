@@ -302,7 +302,7 @@ const YourData: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-display font-bold text-on-bg-text">
-              My Data
+              My Readings
             </h1>
             <p className="mt-1 text-on-bg-body">
               Manage and track your BRIX readings

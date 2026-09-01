@@ -122,7 +122,14 @@ export default function Admin() {
                   <TabsTrigger
                     key={t.value}
                     value={t.value}
+                    // Desktop only: inactive folder handles rest 3px lower, so
+                    // switching tabs eases the outgoing one down and the
+                    // incoming one up to sit flush with the canvas. Colours
+                    // tween alongside via the trigger's base transition-all.
+                    // motion-reduce keeps the movement off for those who ask.
                     className="shrink-0 whitespace-nowrap px-4 py-2 min-h-[40px] text-sm font-medium rounded-full sm:rounded-t-md sm:rounded-b-none border border-transparent
+                      duration-200 ease-out sm:translate-y-[3px] sm:data-[state=active]:translate-y-0
+                      motion-reduce:transition-none
                       text-white/80 hover:bg-white/10
                       data-[state=active]:shadow-none
                       data-[state=active]:bg-select-bg data-[state=active]:text-select-fg data-[state=active]:border-select-border

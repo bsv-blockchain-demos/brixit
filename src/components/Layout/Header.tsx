@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback } from "../ui/avatar";
@@ -28,11 +28,33 @@ import {
   Sun,
   Moon,
   ArrowRight,
+  ClipboardList,
   Settings as SettingsIcon,
 } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { useTheme } from "next-themes";
 import { BrixLogo } from "@/components/common/BrixLogo";
 import { IdentityKey } from "@/components/common/IdentityKey";
+
+// Plain destinations that share the sliding underline. Submit and Admin are
+// deliberately outside this list: they carry their own button treatment.
+const NAV_LINKS = [
+  { to: "/map", icon: Eye, label: "Explorer" },
+  { to: "/leaderboard", icon: Trophy, label: "Places" },
+  { to: "/data", icon: Database, label: "Readings" },
+  { to: "/my-data", icon: ClipboardList, label: "My Readings" },
+] as const;
+
+/**
+ * Last known underline geometry, kept at module scope on purpose.
+ *
+ * Every page renders its own <Header />, so a route change unmounts and
+ * remounts the whole header rather than reusing it. Component state cannot
+ * survive that, and without a previous position the indicator would mount
+ * already at its destination and appear to jump. Holding it here lets the
+ * fresh instance animate from where the old one left off.
+ */
+let lastIndicator: { left: number; width: number } | null = null;
 
 const Header = () => {
   const { user, logout, isAdmin } = useAuth();
@@ -41,6 +63,14 @@ const Header = () => {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+
+  // Geometry of the active desktop nav link, used to place the underline.
+  const navRef = useRef<HTMLElement>(null);
+  const [indicator, setIndicator] = useState(lastIndicator);
+  // Captured on first render, before the measuring effect overwrites the
+  // module value: where the underline sat on the route we came from.
+  const originRef = useRef(lastIndicator);
 
   // Lock background scroll while the full-screen mobile menu is open so the
   // header's close (X) stays reachable. Mobile-only (menuOpen is only set by the
@@ -53,6 +83,22 @@ const Header = () => {
   }, [menuOpen]);
 
   const isActive = (path: string) => location.pathname === path;
+
+  // Re-measure on route change, and on resize since the links reflow.
+  // useLayoutEffect so the first paint already has the underline in place.
+  useLayoutEffect(() => {
+    const measure = () => {
+      const nav = navRef.current;
+      const active = nav?.querySelector<HTMLElement>('[data-nav-active]');
+      // No underline on routes outside NAV_LINKS (Submit, Admin, Profile...).
+      const next = active ? { left: active.offsetLeft, width: active.offsetWidth } : null;
+      lastIndicator = next;
+      setIndicator(next);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [location.pathname, user, isAdmin]);
 
   // resolvedTheme collapses "system" to the theme actually applied, so the
   // label always names the mode the user would switch *to* and the toggle
@@ -84,55 +130,38 @@ const Header = () => {
     logout();
   };
 
-  const NavLinks = () => (
+  // One persistent indicator positioned from the active link's measured box,
+  // rather than a layoutId shared between mounting/unmounting elements. The
+  // shared-layout approach left the incoming element stuck on its inverted
+  // "from" transform, and measuring is deterministic besides.
+  const navLinks = (
     <>
-      <Link to="/map">
-        <Button
-          variant="ghost"
-          className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/map") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
-          }`}
-        >
-          <Eye className="w-4 h-4" />
-          <span>Explorer</span>
-        </Button>
-      </Link>
-
-      <Link to="/leaderboard">
-        <Button
-          variant="ghost"
-          className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/leaderboard") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
-          }`}
-        >
-          <Trophy className="w-4 h-4" />
-          <span>Places</span>
-        </Button>
-      </Link>
-
-      <Link to="/data">
-        <Button
-          variant="ghost"
-          className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/data") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
-          }`}
-        >
-          <Database className="w-4 h-4" />
-          <span>Readings</span>
-        </Button>
-      </Link>
-
-      <Link to="/my-data">
-        <Button
-          variant="ghost"
-          className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/my-data") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
-          }`}
-        >
-          <User className="w-4 h-4" />
-          <span>My Data</span>
-        </Button>
-      </Link>
+      {NAV_LINKS.map(({ to, icon: Icon, label }) => {
+        const active = isActive(to);
+        return (
+          <Link
+            key={to}
+            to={to}
+            data-nav-active={active || undefined}
+            // Full row height so the indicator's bottom-0 lands on the header's
+            // bottom edge instead of directly under the text.
+            className="relative flex items-center h-16"
+          >
+            <Button
+              variant="ghost"
+              // hover:text-white sits in the base, not the inactive branch, so
+              // it also displaces the ghost variant's hover:text-accent-foreground
+              // on the active link. Icons inherit via currentColor.
+              className={`flex items-center space-x-2 hover:bg-transparent hover:text-white ${
+                active ? "text-white" : "text-on-bg-text"
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              <span>{label}</span>
+            </Button>
+          </Link>
+        );
+      })}
 
       {hasRole("contributor") && (
         <Link to="/data-entry">
@@ -167,7 +196,7 @@ const Header = () => {
   return (
     // Frosted, borderless top bar. The translucency reveals PageBackground's
     // fixed wallpaper, which paints above the page fill and below this bar.
-    <header className="bg-background/80 backdrop-blur-md pt-[var(--safe-top)]">
+    <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md pt-[var(--safe-top)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo: signed-in users go to the app map; signed-out visitors go to the home/landing page */}
@@ -177,8 +206,31 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           {user && (
-            <nav className="hidden md:flex items-center space-x-4">
-              <NavLinks />
+            // gap-4, not space-x-4: the latter sets margin-left on every child
+            // after the first, which would also shove the absolutely positioned
+            // indicator 16px right of its measured offset.
+            <nav ref={navRef} className="relative hidden md:flex items-center h-16 gap-4">
+              {navLinks}
+              {indicator && (
+                <motion.span
+                  aria-hidden="true"
+                  className="absolute bottom-0 left-0 h-[3px] rounded-full bg-white"
+                  // Animate in from the previous route's position. On a cold
+                  // load there is none, so initial={false} puts it straight
+                  // under the active link instead of sliding in from the left.
+                  initial={
+                    originRef.current
+                      ? { x: originRef.current.left, width: originRef.current.width }
+                      : false
+                  }
+                  animate={{ x: indicator.left, width: indicator.width }}
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0 }
+                      : { type: "spring", stiffness: 500, damping: 40 }
+                  }
+                />
+              )}
             </nav>
           )}
 
@@ -327,7 +379,7 @@ const Header = () => {
                 { to: "/map", icon: Eye, label: "Explorer" },
                 { to: "/leaderboard", icon: Trophy, label: "Places" },
                 { to: "/data", icon: Database, label: "Readings" },
-                { to: "/my-data", icon: User, label: "My Data" },
+                { to: "/my-data", icon: ClipboardList, label: "My Readings" },
                 ...(hasRole("contributor") ? [{ to: "/data-entry", icon: Plus, label: "Submit", primary: true }] : []),
                 ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : []),
               ].map((item) => {
