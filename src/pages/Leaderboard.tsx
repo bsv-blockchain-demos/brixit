@@ -34,6 +34,7 @@ const emptyLocation = {
   city: "",
 };
 
+
 const PAGE_SIZE = 20;
 
 // Component
@@ -180,21 +181,30 @@ const LeaderboardPage: React.FC = () => {
         const fetchLoc = (f: any) =>
           queryClient.fetchQuery({
             queryKey: ['leaderboard', 'location', f],
-            queryFn: () => fetchLocationLeaderboard(f),
+            queryFn: () =>
+              import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === '1'
+                ? import('@/lib/devMockData').then((m) => m.mockLocationLeaderboard(f))
+                : fetchLocationLeaderboard(f),
             staleTime: 5 * 60 * 1000,
           });
 
         const fetchBrand = (f: any) =>
           queryClient.fetchQuery({
             queryKey: ['leaderboard', 'brand', f],
-            queryFn: () => fetchBrandLeaderboard(f),
+            queryFn: () =>
+              import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === '1'
+                ? import('@/lib/devMockData').then((m) => m.mockBrandLeaderboard(f))
+                : fetchBrandLeaderboard(f),
             staleTime: 5 * 60 * 1000,
           });
 
         const fetchUsers = (f: any) =>
           queryClient.fetchQuery({
             queryKey: ['leaderboard', 'user', f],
-            queryFn: () => fetchUserLeaderboard(f),
+            queryFn: () =>
+              import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === '1'
+                ? import('@/lib/devMockData').then((m) => m.mockUserLeaderboard(f))
+                : fetchUserLeaderboard(f),
             staleTime: 5 * 60 * 1000,
           });
 
@@ -293,6 +303,20 @@ const LeaderboardPage: React.FC = () => {
     setCrop("");
     setStore("");
   };
+
+  // Drives the empty state's wording: a board can be empty because the user
+  // narrowed it, or because nothing has been submitted yet.
+  //
+  // Measured against what resetFilters would restore, not against "empty".
+  // resetFilters puts the location back to the user's profile, so treating a
+  // profile location as an active filter would offer a Reset button that
+  // changes nothing and never let the second wording appear.
+  const hasActiveFilters =
+    !!crop ||
+    !!store ||
+    location.country !== (user?.country || ALL_COUNTRIES) ||
+    location.state !== (user?.state || "") ||
+    location.city !== (user?.city || "");
 
   const loadMore = async (type: 'location' | 'brand' | 'user') => {
     const filters = type === 'location' ? locationFetchFilters
@@ -396,6 +420,8 @@ const LeaderboardPage: React.FC = () => {
       loadMoreType={cfg.key}
       hasMore={cfg.hasMore}
       isFirstLoad={isFirstLoad}
+      hasActiveFilters={hasActiveFilters}
+      onResetFilters={resetFilters}
       isFetching={isFetching}
       isLoadingMore={cfg.isLoadingMore}
       onLoadMore={cfg.onLoadMore}
@@ -505,12 +531,18 @@ const LeaderboardPage: React.FC = () => {
           {/* Filters region */}
           <div className="p-4">
             <h2 className="text-lg font-semibold font-display text-text-dark mb-3">Filters</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl">
+            {/* One row on desktop. LocationSelector runs in `inline` layout so
+                its Country/State/City land as siblings of Crop and Store in
+                this grid rather than stacking inside a single cell. State and
+                City only render once their parent is chosen, so the row holds
+                between 3 and 5 controls. */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 desktop:grid-cols-5 gap-4 items-end">
               <LocationSelector
                 value={location}
                 onChange={setLocation}
                 required={false}
                 showAutoDetect={false}
+                layout="inline"
               />
               <div>
                 <Label htmlFor="crop">Crop</Label>

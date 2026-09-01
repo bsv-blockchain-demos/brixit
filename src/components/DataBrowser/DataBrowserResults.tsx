@@ -33,11 +33,7 @@ interface DataBrowserResultsProps {
   onBackToLeaderboard: () => void;
 }
 
-// Declared locally so the bundler folds it to false and drops the dynamic
-// import; see the note in useSubmissions.ts.
-const USE_MOCK_DATA =
-  import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === '1';
-
+// Condition inlined on purpose; see the note in useSubmissions.ts.
 // Mirrors the sortable column headers in the desktop table below.
 type MobileSortKey = 'submittedAt' | 'cropType' | 'locationName' | 'brixLevel';
 const MOBILE_SORT_OPTIONS: SortOption<MobileSortKey>[] = [
@@ -130,7 +126,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
       // key the hook reads, so calling the real fetch here would hand the
       // next page real (or failed) data while page 1 shows mock rows.
       queryFn: () =>
-        USE_MOCK_DATA
+        import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === '1'
           ? import('@/lib/devMockData').then((m) => m.mockSubmissionsPage(nextPageQuery))
           : fetchFormattedSubmissionsPage(nextPageQuery),
       staleTime: 60 * 60 * 1000,

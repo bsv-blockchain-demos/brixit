@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronDown, Loader2, MapPin } from "lucide-react";
+import { ChevronDown, Loader2, MapPin, SearchX, Trophy } from "lucide-react";
 import { CardContent, CardHeader, CardTitle } from "../ui/card";
 import { LeaderboardEntry } from "../../lib/fetchLeaderboards";
 import { computeNormalizedScore } from "../../lib/getBrixColor";
@@ -16,6 +16,8 @@ interface LeaderboardCardProps {
   loadMoreType: 'location' | 'brand' | 'user';
   hasMore: boolean;
   isFirstLoad: boolean;
+  hasActiveFilters?: boolean;
+  onResetFilters?: () => void;
   isFetching: boolean;
   isLoadingMore: boolean;
   onLoadMore: () => void;
@@ -156,7 +158,17 @@ export function LeaderboardCard({
   isLoadingMore,
   onLoadMore,
   onNavigate,
+  hasActiveFilters = false,
+  onResetFilters,
 }: LeaderboardCardProps) {
+  // Names what this specific board ranks, so three empty cards do not all read
+  // the same. Nothing here is a real error: it is either still loading, too
+  // narrow a filter, or genuinely no readings yet.
+  const noun =
+    labelKey === 'location' ? 'places'
+    : labelKey === 'brand' ? 'brands'
+    : 'contributors';
+
   return (
     <div className="w-full">
       <CardHeader className="pb-2">
@@ -176,14 +188,34 @@ export function LeaderboardCard({
             // "No data available" is only true once loading has finished.
             // While the first load is in flight the board is empty because
             // nothing has arrived yet, so say that instead.
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-sm text-text-muted-brown">
+            <div className="flex flex-col items-center justify-center gap-2 py-10 px-4 text-center text-sm text-text-muted-brown">
               {isFirstLoad ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin text-primary" />
                   <span>Loading...</span>
                 </>
+              ) : hasActiveFilters ? (
+                <>
+                  <SearchX className="h-6 w-6" aria-hidden="true" />
+                  <span className="font-medium text-text-dark">No {noun} match these filters</span>
+                  <span className="max-w-xs">Widen the area or clear the crop and place filters to see more.</span>
+                  {onResetFilters && (
+                    <button
+                      onClick={onResetFilters}
+                      className="mt-1 text-sm font-medium text-action-primary hover:underline"
+                    >
+                      Reset filters
+                    </button>
+                  )}
+                </>
               ) : (
-                <span>No data available.</span>
+                <>
+                  <Trophy className="h-6 w-6" aria-hidden="true" />
+                  <span className="font-medium text-text-dark">No {noun} ranked yet</span>
+                  <span className="max-w-xs">
+                    Rankings appear once the community has submitted enough readings here.
+                  </span>
+                </>
               )}
             </div>
           ) : (

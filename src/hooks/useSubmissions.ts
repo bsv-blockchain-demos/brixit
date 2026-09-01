@@ -18,13 +18,12 @@ import {
 } from "@/lib/fetchSubmissions";
 
 /**
- * Declared locally, not imported, so the bundler can fold it to `false` and
- * drop the dynamic import below. An imported flag stays opaque across module
- * boundaries and drags the whole mock dataset into the production bundle.
+ * The mock-data condition is written inline at each call site rather than
+ * hoisted into a const. A `const x = false` is not reliably propagated into
+ * nested closures by the minifier, which leaves the dynamic import reachable
+ * and ships the whole mock dataset. Inlined, it folds to `false ? ... : ...`
+ * before minification and the import is dropped.
  */
-const USE_MOCK_DATA =
-  import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === "1";
-
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
 export function useFormattedSubmissionsQuery() {
@@ -42,7 +41,7 @@ export function useFormattedSubmissionsPageQuery(query: PublicFormattedSubmissio
   return useQuery<BrixDataPoint[]>({
     queryKey: ["submissions", "public_formatted", "page", query],
     queryFn: () =>
-      USE_MOCK_DATA
+      import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === "1"
         ? import("@/lib/devMockData").then((m) => m.mockSubmissionsPage(query))
         : fetchFormattedSubmissionsPage(query),
     staleTime: ONE_HOUR_MS,
@@ -59,7 +58,7 @@ export function useFormattedSubmissionsCountQuery(
   return useQuery<number>({
     queryKey: ["submissions", "public_formatted", "count", query],
     queryFn: () =>
-      USE_MOCK_DATA
+      import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === "1"
         ? import("@/lib/devMockData").then((m) => m.mockSubmissionsCount(query))
         : fetchFormattedSubmissionsCount(query),
     staleTime: ONE_HOUR_MS,

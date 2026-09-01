@@ -148,3 +148,97 @@ export function mockSubmissionsPage(q: AnyQuery): BrixDataPoint[] {
 export function mockSubmissionsCount(q: AnyQuery): number {
   return applyFilters(dataset(), q).length;
 }
+
+// ── Leaderboards ────────────────────────────────────────────────────────────
+
+type MockLeaderboardEntry = Record<string, unknown> & {
+  submission_count: number;
+  rank: number;
+};
+
+/** Ranks the mock readings by average score, grouped by the given board key. */
+function rankBy(
+  rows0: BrixDataPoint[],
+  group: (r: BrixDataPoint) => { id: string; name: string; street?: string; city?: string; state?: string },
+  fields: (g: { id: string; name: string; street?: string; city?: string; state?: string }) => Record<string, unknown>,
+): MockLeaderboardEntry[] {
+  const buckets = new Map<string, { g: ReturnType<typeof group>; rows: BrixDataPoint[] }>();
+  for (const r of rows0) {
+    const g = group(r);
+    if (!buckets.has(g.id)) buckets.set(g.id, { g, rows: [] });
+    buckets.get(g.id)!.rows.push(r);
+  }
+
+  return [...buckets.values()]
+    .map(({ g, rows }) => {
+      const avgBrix = rows.reduce((s, r) => s + r.brixLevel, 0) / rows.length;
+      // Position within the crop's own poor..excellent band, matching how the
+      // real boards express a crop-relative rating rather than raw BRIX.
+      const avgNorm =
+        rows.reduce((s, r) => {
+          const poor = r.poorBrix ?? 0;
+          const excellent = r.excellentBrix ?? 1;
+          const span = Math.max(excellent - poor, 0.001);
+          return s + Math.min(Math.max((r.brixLevel - poor) / span, 0), 1) * 3;
+        }, 0) / rows.length;
+
+      return {
+        ...fields(g),
+        submission_count: rows.length,
+        average_brix: Math.round(avgBrix * 10) / 10,
+        average_normalized_score: Math.round(avgNorm * 100) / 100,
+        rank: 0,
+      } satisfies MockLeaderboardEntry;
+    })
+    .sort((a, b) => (b.average_normalized_score as number) - (a.average_normalized_score as number))
+    .map((e, i) => ({ ...e, rank: i + 1 }));
+}
+
+/** Board filters, so changing crop/place/area visibly re-ranks the mock data. */
+export interface MockBoardFilters {
+  country?: string;
+  state?: string;
+  city?: string;
+  crop?: string;
+  store?: string;
+}
+
+const ALL_COUNTRIES_SENTINEL = 'All Countries';
+
+function boardRows(f: MockBoardFilters = {}): BrixDataPoint[] {
+  return dataset().filter((r) => {
+    if (f.crop && r.cropType !== f.crop) return false;
+    if (f.store && r.locationName !== f.store) return false;
+    if (f.city && r.city !== f.city) return false;
+    if (f.state && r.state !== f.state) return false;
+    if (f.country && f.country !== ALL_COUNTRIES_SENTINEL && r.country !== f.country) return false;
+    return true;
+  });
+}
+
+export function mockLocationLeaderboard(f: MockBoardFilters = {}): MockLeaderboardEntry[] {
+  return rankBy(
+    boardRows(f),
+    (r) => ({ id: r.placeId, name: r.locationName, street: r.streetAddress, city: r.city, state: r.state }),
+    (g) => ({ location_id: g.id, location_name: g.name, location_label: g.name, street_address: g.street, city: g.city, state: g.state }),
+  );
+}
+
+export function mockBrandLeaderboard(f: MockBoardFilters = {}): MockLeaderboardEntry[] {
+  return rankBy(
+    boardRows(f),
+    (r) => ({ id: r.brandId, name: r.brandLabel ?? r.brandName }),
+    (g) => ({ brand_id: g.id, brand_name: g.name, brand_label: g.name }),
+  );
+}
+
+export function mockUserLeaderboard(f: MockBoardFilters = {}): MockLeaderboardEntry[] {
+  // The user board ranks by volume, not score.
+  return rankBy(
+    boardRows(f),
+    (r) => ({ id: r.submittedBy, name: r.submittedBy }),
+    (g) => ({ user_id: g.id, user_name: g.name, display_name: g.name, entity_name: g.name }),
+  )
+    .sort((a, b) => b.submission_count - a.submission_count)
+    .map((e, i) => ({ ...e, rank: i + 1 }));
+}
