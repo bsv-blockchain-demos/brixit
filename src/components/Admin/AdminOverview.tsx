@@ -5,6 +5,7 @@ import { CountUp } from '@/components/common/IconStatGrid';
 import { fetchAllUsers, fetchUnverifiedSubmissions, type UserWithRoles } from '@/lib/adminApi';
 import { fetchPendingSubmissions } from '@/lib/adminWalletApi';
 import { apiGet } from '@/lib/api';
+import { describeApiError } from '@/lib/describeApiError';
 
 async function fetchOverviewStats() {
   const [usersResult, pendingResult, countData] = await Promise.all([
@@ -123,7 +124,7 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="relative text-center">
         <div>
           <h2 className="text-xl font-display font-bold text-text-dark">Overview</h2>
           <p className="text-sm text-text-mid">Live snapshot of platform data</p>
@@ -132,14 +133,23 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
           onClick={handleRefresh}
           disabled={isFetching}
           aria-label="Refresh overview"
-          className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-text-mid hover:text-text-dark hover:bg-surface-canvas disabled:opacity-50"
+          className="absolute right-0 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-9 h-9 rounded-lg text-text-mid hover:text-text-dark hover:bg-surface-canvas disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
       {error && (
-        <p className="text-sm text-destructive">{(error as any)?.message ?? 'Failed to load stats'}</p>
+        <div className="rounded-lg border border-hairline bg-score-poor-bg px-4 py-3 text-sm">
+          <p className="font-medium text-text-dark">{describeApiError(error).title}</p>
+          <p className="mt-0.5 text-text-mid">{describeApiError(error).detail}</p>
+          <button
+            onClick={handleRefresh}
+            className="mt-2 text-sm font-medium text-action-primary hover:underline"
+          >
+            Try again
+          </button>
+        </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

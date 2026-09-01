@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Drawer, DrawerContent } from '../ui/drawer';
 import { Calendar, Filter, Search, ChevronDown, Check, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { DateField } from '@/components/common/DateField';
 import { useFilters, DEFAULT_MAP_FILTERS } from '../../contexts/FilterContext';
 import { getFilterSummary, getActiveFilterList } from '../../lib/filterUtils';
 import { titleCase } from '../../lib/titleCase';
@@ -360,24 +361,22 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label htmlFor="start-date-data" className="text-xs">From</Label>
-              <Input
+              <DateField
                 id="start-date-data"
-                type="date"
                 value={filters.dateRange[0]}
-                onChange={(e) => handleFilterChange('dateRange', [e.target.value, filters.dateRange[1]])}
-                className="text-sm"
+                onChange={(v) => handleFilterChange('dateRange', [v, filters.dateRange[1]])}
                 aria-label="Start date"
+                className="mt-1"
               />
             </div>
             <div>
               <Label htmlFor="end-date-data" className="text-xs">To</Label>
-              <Input
+              <DateField
                 id="end-date-data"
-                type="date"
                 value={filters.dateRange[1]}
-                onChange={(e) => handleFilterChange('dateRange', [filters.dateRange[0], e.target.value])}
-                className="text-sm"
+                onChange={(v) => handleFilterChange('dateRange', [filters.dateRange[0], v])}
                 aria-label="End date"
+                className="mt-1"
               />
             </div>
           </div>

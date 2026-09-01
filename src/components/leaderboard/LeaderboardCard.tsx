@@ -7,6 +7,7 @@ import { ScoreGauge } from "../common/ScoreGauge";
 import { ScoreHint, ColumnHint } from "../common/StatusBadges";
 import { formatUsername } from "../../lib/formatUsername";
 import { formatVenueLocation } from "../../lib/formatAddress";
+import { RankLaurel } from "../common/RankLaurel";
 
 interface LeaderboardCardProps {
   title: string;
@@ -24,20 +25,10 @@ interface LeaderboardCardProps {
   onNavigate: (entry: any, type: 'location' | 'brand' | 'user') => void;
 }
 
-// Rank medal styling — token-backed so it adapts to light/dark. Shared by the
-// desktop table and the mobile card list. 1st/2nd/3rd use rank tokens; 4th+
-// falls back to the neutral badge token.
-function getRankBadgeStyle(rank: number): React.CSSProperties {
-  if (rank === 1) return { backgroundColor: 'var(--rank-1-bg)', color: 'var(--rank-1-fg)' };
-  if (rank === 2) return { backgroundColor: 'var(--rank-2-bg)', color: 'var(--rank-2-fg)' };
-  if (rank === 3) return { backgroundColor: 'var(--rank-3-bg)', color: 'var(--rank-3-fg)' };
-  return { backgroundColor: 'var(--badge-neutral-bg)', color: 'var(--badge-neutral-text)' };
-}
-
 /* Mobile-only card list (≤640px). Presentation only; the rank/tie/score
    derivation mirrors the desktop table so displayed values match exactly.
-   All colors come from design tokens (Tailwind token classes, ScoreGauge,
-   and getRankBadgeStyle) so it renders correctly in light and dark mode. */
+   Colors come from design tokens (Tailwind token classes, ScoreGauge); the
+   laurel's medal tones are the documented exception. */
 function LeaderboardMobileList({
   data,
   labelKey,
@@ -99,12 +90,7 @@ function LeaderboardMobileList({
           >
             {/* Left: rank medal (+ tie label) */}
             <div className="flex flex-col items-center gap-0.5 shrink-0">
-              <span
-                className="w-[34px] h-[34px] rounded-full flex items-center justify-center font-bold text-sm"
-                style={getRankBadgeStyle(rank)}
-              >
-                {rank}
-              </span>
+              <RankLaurel rank={rank} />
               {isTie && <span className="text-[10px] leading-none text-text-muted-brown">(tie)</span>}
             </div>
 
@@ -295,12 +281,7 @@ export function LeaderboardCard({
                         }`}
                       >
                         <div className="flex flex-col items-center">
-                          <span
-                            className="px-3 py-1 text-sm font-semibold rounded-full"
-                            style={getRankBadgeStyle(rank)}
-                          >
-                            {rank}
-                          </span>
+                          <RankLaurel rank={rank} />
                           {isTie && (
                             <span className="text-xs text-text-muted-brown mt-1">(tie)</span>
                           )}
