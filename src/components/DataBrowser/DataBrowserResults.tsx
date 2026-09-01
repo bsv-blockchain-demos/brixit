@@ -8,7 +8,6 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from '
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Button } from '../ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { TableSortControl, type SortOption } from '@/components/common/TableSortControl';
@@ -28,7 +27,6 @@ import MobileSubmissionCard from '../common/MobileSubmissionCard';
 import DataPointDetailModal from '../common/DataPointDetailModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRetryAnchor } from '@/hooks/useRetryAnchor';
-import type { SubmissionScope } from '../../hooks/useSubmissions';
 
 interface DataBrowserResultsProps {
   fromLeaderboard: boolean;
@@ -49,21 +47,17 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
   fromLeaderboard,
   onBackToLeaderboard,
 }) => {
-  const { filters, isAdmin, setFilteredCount, setFilters } = useFilters();
+  const { filters, isAdmin, setFilteredCount, setFilters, scope } = useFilters();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const location = useLocation();
   const navigate = useNavigate();
   const highlightedSubmissionId = (location.state as any)?.highlightedSubmissionId as string | undefined;
 
-  // Seeded from the URL so /my-data can redirect straight into this scope,
-  // and so the choice survives a reload or a shared link.
-  const [scope, setScope] = useState<SubmissionScope>(
-    () => (new URLSearchParams(location.search).get('scope') === 'mine' ? 'mine' : 'all'),
-  );
   const { retryAnchor, retryingId } = useRetryAnchor();
 
-  const [itemsPerPage, setItemsPerPage] = useState(50);
+  // Fixed page size: the next chunk is prefetched, so a picker bought little.
+  const itemsPerPage = 50;
   const chunkSize = itemsPerPage;
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<keyof BrixDataPoint>('submittedAt');
@@ -301,43 +295,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
       <Card className="border-0 shadow-none rounded-none bg-transparent">
         <CardHeader className="px-3 sm:px-6">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-3">
-              <CardTitle>{totalCount} {totalCount === 1 ? 'Result' : 'Results'}</CardTitle>
-              {/* Replaces the old My Readings nav item. Only offered when
-                  signed in, since "mine" needs an authenticated request. */}
-              {user && (
-                <div role="group" aria-label="Whose readings to show" className="inline-flex rounded-lg border border-hairline overflow-hidden">
-                  {(['all', 'mine'] as const).map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      aria-pressed={scope === s}
-                      onClick={() => setScope(s)}
-                      className={`px-3 py-1 text-sm font-medium transition-colors ${
-                        scope === s
-                          ? 'bg-select-bg text-select-fg'
-                          : 'bg-transparent text-text-mid hover:bg-surface-canvas'
-                      }`}
-                    >
-                      {s === 'all' ? 'Everyone' : 'Mine'}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <Select
-              value={String(itemsPerPage)}
-              onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}
-            >
-              <SelectTrigger className="h-8 w-[120px] text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[50, 100, 200].map((n) => (
-                  <SelectItem key={n} value={String(n)}>Show {n}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CardTitle>{totalCount} {totalCount === 1 ? 'Result' : 'Results'}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="px-3 sm:px-6">

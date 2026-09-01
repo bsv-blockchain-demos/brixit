@@ -7,7 +7,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
@@ -19,6 +18,7 @@ import {
   Map,
   Store,
   Droplets,
+  Info,
   Plus,
   User,
   LogOut,
@@ -33,7 +33,6 @@ import {
 import { motion, useReducedMotion } from "framer-motion";
 import { useTheme } from "next-themes";
 import { BrixLogo } from "@/components/common/BrixLogo";
-import { IdentityKey } from "@/components/common/IdentityKey";
 
 // Plain destinations that share the sliding underline. Submit and Admin are
 // deliberately outside this list: they carry their own button treatment.
@@ -44,6 +43,7 @@ const NAV_LINKS = [
   { to: "/map", icon: Map, label: "Explorer" },
   { to: "/leaderboard", icon: Store, label: "Places" },
   { to: "/data", icon: Droplets, label: "Readings" },
+  { to: "/about", icon: Info, label: "About" },
 ] as const;
 
 /**
@@ -171,7 +171,7 @@ const Header = () => {
             className="flex items-center space-x-2 w-full justify-start rounded-lg bg-action-primary hover:bg-action-primary-hover text-white hover:text-white"
           >
             <Plus className="w-4 h-4" />
-            <span>Submit</span>
+            <span>Add</span>
           </Button>
         </Link>
       )}
@@ -187,7 +187,7 @@ const Header = () => {
             }`}
           >
             <Shield className="w-4 h-4" />
-            <span>Admin</span>
+            <span>Steward</span>
           </Button>
         </Link>
       )}
@@ -283,18 +283,6 @@ const Header = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Identity Key
-                  </DropdownMenuLabel>
-                  <div className="px-2 pb-2">
-                    <div className="flex items-center rounded-md bg-surface-canvas border border-hairline px-3 py-2">
-                      <IdentityKey
-                        value={user.identity_key}
-                        className="flex-1 text-card-foreground"
-                      />
-                    </div>
-                  </div>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     // Keep the menu open so the theme change is visible in place;
                     // a toggle that dismissed its own trigger would be awkward to
@@ -380,8 +368,9 @@ const Header = () => {
                 { to: "/map", icon: Map, label: "Explorer" },
                 { to: "/leaderboard", icon: Store, label: "Places" },
                 { to: "/data", icon: Droplets, label: "Readings" },
-                ...(hasRole("contributor") ? [{ to: "/data-entry", icon: Plus, label: "Submit", primary: true }] : []),
-                ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : []),
+                { to: "/about", icon: Info, label: "About" },
+                ...(hasRole("contributor") ? [{ to: "/data-entry", icon: Plus, label: "Add", primary: true }] : []),
+                ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Steward" }] : []),
               ].map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.to);

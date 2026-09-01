@@ -137,15 +137,18 @@ const Profile = () => {
                 </div>
 
                 {/* Identity key */}
-                <div>
+                {/* Sized to the key rather than the card, and centred with
+                    its label: the value is fixed-width, so a full-bleed box
+                    left a long empty run beside it. */}
+                <div className="flex flex-col items-center">
                   <p className="text-xs font-semibold uppercase tracking-wider text-text-muted-brown mb-1.5">
                     Public Identity Key
                   </p>
-                  <div className="flex items-center rounded-lg px-3 py-2 bg-surface-canvas border border-hairline">
+                  <div className="inline-flex items-center rounded-lg px-3 py-2 bg-surface-canvas border border-hairline">
                     <IdentityKey
                       value={user.identity_key}
                       label="Public identity key"
-                      className="flex-1 text-text-mid"
+                      className="text-text-mid"
                     />
                   </div>
                 </div>
@@ -231,7 +234,8 @@ const Profile = () => {
                       View all
                     </button>
                   </div>
-                  <IconStatGrid stats={[
+                  {/* Two rows of two rather than one wide row of four. */}
+                  <IconStatGrid className="grid-cols-2" stats={[
                     { icon: ClipboardList, value: totalQuery.data ?? 0,    label: 'Total Readings' },
                     { icon: BadgeCheck,    value: verifiedQuery.data ?? 0, label: 'Verified Readings' },
                     { icon: Sprout,        value: uniqueCrops,             label: 'Unique Crop Types' },

@@ -21,8 +21,14 @@ export const DEFAULT_MAP_FILTERS: MapFilter = {
   search: '',
 };
 
+/** Whose readings the browser is showing. Lives here, not in the results
+ *  component, because the toolbar that toggles it sits in a sibling. */
+export type SubmissionScope = 'all' | 'mine';
+
 interface FilterContextType {
   filters: MapFilter;
+  scope: SubmissionScope;
+  setScope: (scope: SubmissionScope) => void;
   setFilters: React.Dispatch<React.SetStateAction<MapFilter>>;
   isAdmin: boolean;
   totalSubmissions: number;
@@ -44,6 +50,15 @@ export const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
   // Initialize filters with the default values
   const [filters, setFilters] = useState<MapFilter>(DEFAULT_MAP_FILTERS);
 
+  // Seeded from the URL so /my-data can redirect straight into "mine", and so
+  // a shared link keeps the scope.
+  const [scope, setScope] = useState<SubmissionScope>(() =>
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('scope') === 'mine'
+      ? 'mine'
+      : 'all',
+  );
+
   // For non-admin users, always enforce verifiedOnly = true
   const updateFilters: React.Dispatch<React.SetStateAction<MapFilter>> = (action) => {
     setFilters(prevFilters => {
@@ -57,6 +72,8 @@ export const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
 
   const value: FilterContextType = {
     filters,
+    scope,
+    setScope,
     setFilters: updateFilters,
     isAdmin,
     totalSubmissions,

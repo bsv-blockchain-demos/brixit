@@ -19,6 +19,7 @@ import { Command, CommandInput, CommandItem, CommandList, CommandEmpty } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Drawer, DrawerContent } from '../ui/drawer';
 import { Calendar, Filter, Search, ChevronDown, Check, X } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import { useFilters, DEFAULT_MAP_FILTERS } from '../../contexts/FilterContext';
 import { getFilterSummary, getActiveFilterList } from '../../lib/filterUtils';
 import { titleCase } from '../../lib/titleCase';
@@ -114,7 +115,8 @@ function BrixRangeSlider({
 
 // ─── Filters component ──────────────────────────────────────────────────────
 export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLeaderboard?: boolean }) {
-  const { filters, setFilters, isAdmin, filteredCount } = useFilters();
+  const { filters, setFilters, isAdmin, filteredCount, scope, setScope } = useFilters();
+  const { user } = useAuth();
   const { crops, brands, locations } = useStaticData();
 
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
@@ -482,8 +484,34 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
   // ── Desktop (≥641px): unchanged ──
   return (
     <>
-      <div className="p-4 border-b border-hairline flex flex-col md:flex-row gap-4 items-center">
-        <div className="relative w-full md:w-1/3">
+      {/* One toolbar: whose readings, then the search, then the filter toggle.
+          Previously the scope toggle sat in the results header a region below,
+          which split one decision across two rows on desktop. */}
+      <div className="p-4 border-b border-hairline flex flex-col md:flex-row gap-4 md:items-center">
+        {user && (
+          <div
+            role="group"
+            aria-label="Whose readings to show"
+            className="inline-flex shrink-0 rounded-lg border border-hairline overflow-hidden self-start md:self-auto"
+          >
+            {(['all', 'mine'] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                aria-pressed={scope === s}
+                onClick={() => setScope(s)}
+                className={`px-3 py-2 text-sm font-medium transition-colors ${
+                  scope === s
+                    ? 'bg-select-bg text-select-fg'
+                    : 'bg-transparent text-text-mid hover:bg-surface-canvas'
+                }`}
+              >
+                {s === 'all' ? 'Everyone' : 'Mine'}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="relative w-full md:flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted-brown" />
           <Input
             placeholder="Search by crop, submitter, place, notes..."

@@ -20,6 +20,7 @@ import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
+import About from "./pages/About";
 import Settings from "./pages/Settings";
 import ProtectedRoute from "./components/misc/ProtectedRoute";
 import { FilterProvider } from './contexts/FilterContext'
@@ -76,6 +77,7 @@ const RootContent = () => {
         <Route path="/create-account" element={<CreateAccount />} />
         <Route path="/wallet-error" element={<WalletError />} />
         <Route path="/mobile-login" element={<MobileLogin />} />
+        <Route path="/about" element={<About />} />
         <Route path="/faq" element={<Help />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<NotFound />} />

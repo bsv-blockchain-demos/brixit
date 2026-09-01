@@ -90,9 +90,16 @@ function StatCard({ icon: Icon, value, label, index }: StatItem & { index: numbe
   );
 }
 
-export function IconStatGrid({ stats }: { stats: StatItem[] }) {
+export function IconStatGrid({
+  stats,
+  className = 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
+}: {
+  stats: StatItem[];
+  /** Column tracks. Override to force a shape, e.g. two rows of two. */
+  className?: string;
+}) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className={`grid gap-6 ${className}`}>
       {stats.map((s, i) => (
         <StatCard key={i} index={i} {...s} />
       ))}

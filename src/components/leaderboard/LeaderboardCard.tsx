@@ -147,6 +147,15 @@ function LeaderboardMobileList({
 }
 
 
+/**
+ * Desktop tracks. The place and brand boards get two extra columns: the
+ * reading count, which says how much evidence the rating rests on, and the
+ * mean BRIX behind it. The contributor board already ranks by count, so
+ * adding it again would just repeat the last column.
+ */
+const COLS_WITH_DETAIL = 'grid-cols-[3.5rem_1fr_6rem_6rem_5.5rem]';
+const COLS_PLAIN = 'grid-cols-[3.5rem_1fr_5.5rem]';
+
 export function LeaderboardCard({
   title,
   subtitle,
@@ -164,6 +173,11 @@ export function LeaderboardCard({
   // Names what this specific board ranks, so three empty cards do not all read
   // the same. Nothing here is a real error: it is either still loading, too
   // narrow a filter, or genuinely no readings yet.
+  // Contributors are ranked by reading count already, so the detail columns
+  // would restate the last column.
+  const showDetailColumns = labelKey !== 'user';
+  const DESKTOP_COLS = showDetailColumns ? COLS_WITH_DETAIL : COLS_PLAIN;
+
   const noun =
     labelKey === 'location' ? 'places'
     : labelKey === 'brand' ? 'brands'
@@ -221,11 +235,21 @@ export function LeaderboardCard({
           ) : (
             <>
             <div className="lb-desktop-only">
-              <div className="grid grid-cols-[3.5rem_1fr_5.5rem] gap-x-6 text-xs font-medium text-text-muted-brown uppercase tracking-wider border-b border-hairline px-4 py-2 bg-table-header">
+              <div className={`grid ${DESKTOP_COLS} gap-x-6 text-xs font-medium text-text-muted-brown uppercase tracking-wider border-b border-hairline px-4 py-2 bg-table-header`}>
                 <span className="text-center"><ColumnHint help="Where this entry places on the leaderboard. Entries that are tied share the same rank, shown as (tie).">Rank</ColumnHint></span>
                 <span className="text-left">
                   {labelKey === "location" ? "Store" : "Name"}
                 </span>
+                {showDetailColumns && (
+                  <>
+                    <span className="text-center">
+                      <ColumnHint help="How many readings this average is based on. A high score from two readings is weaker evidence than the same score from fifty.">Readings</ColumnHint>
+                    </span>
+                    <span className="text-center">
+                      <ColumnHint help="The mean raw refractometer value across those readings. Not comparable across crops on its own, which is what the rating is for.">Avg BRIX</ColumnHint>
+                    </span>
+                  </>
+                )}
                 <span className="text-center">
                   {labelKey === "user" ? "Readings" : <ScoreHint>Score</ScoreHint>}
                 </span>
@@ -266,7 +290,7 @@ export function LeaderboardCard({
                       <div
                         key={(entry as any)[`${labelKey}_id`] ?? label ?? idx}
                         onClick={() => onNavigate(entry, labelKey)}
-                        className={`grid grid-cols-[3.5rem_1fr_5.5rem] gap-x-6 items-center px-4 py-3 border-b border-hairline last:border-0 hover:bg-surface-canvas transition-colors text-sm ${
+                        className={`grid ${DESKTOP_COLS} gap-x-6 items-center px-4 py-3 border-b border-hairline last:border-0 hover:bg-surface-canvas transition-colors text-sm ${
                           labelKey !== "user" ? "cursor-pointer" : ""
                         }`}
                       >
@@ -289,10 +313,20 @@ export function LeaderboardCard({
                               {formatVenueLocation((entry as any).street_address, (entry as any).city, (entry as any).state)}
                             </div>
                           )}
-                          <div className="mt-1 text-xs text-text-muted-brown">
-                            {entry.submission_count ?? 0} readings
-                          </div>
                         </div>
+
+                        {showDetailColumns && (
+                          <>
+                            <div className="text-center tabular-nums text-text-mid">
+                              {entry.submission_count ?? 0}
+                            </div>
+                            <div className="text-center font-mono tabular-nums text-text-mid">
+                              {typeof entry.average_brix === 'number'
+                                ? entry.average_brix.toFixed(1)
+                                : <span className="text-text-muted-brown">--</span>}
+                            </div>
+                          </>
+                        )}
 
                         <div className="text-center">
                           {labelKey === "user" ? (
