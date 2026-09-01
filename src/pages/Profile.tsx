@@ -10,7 +10,6 @@ import { Avatar, AvatarFallback } from '../components/ui/avatar';
 import { ArrowLeft, Shield, Eye, Sprout, Leaf, TreePine, Pencil, ClipboardList, BadgeCheck, Store } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useToast } from '../hooks/use-toast';
-import LocationSelector from '../components/common/LocationSelector';
 import { IdentityKey } from '../components/common/IdentityKey';
 import { IconStatGrid } from '../components/common/IconStatGrid';
 import {
@@ -19,14 +18,6 @@ import {
   useMySubmissionsVenueIdsQuery,
 } from '../hooks/useSubmissions';
 import Header from '../components/Layout/Header';
-
-interface LocationData {
-  country: string;
-  countryCode: string;
-  state: string;
-  stateCode: string;
-  city: string;
-}
 
 const calculateLevel = (points: number) => Math.floor(points / 100) + 1;
 const calculateProgress = (points: number) => points % 100;
@@ -38,7 +29,7 @@ const getRank = (submissions: number) => {
 };
 
 const Profile = () => {
-  const { user, updateUsername, updateLocation } = useAuth();
+  const { user, updateUsername } = useAuth();
   const [displayName, setDisplayName] = useState(user?.display_name || '');
 
   const prefersReducedMotion = useReducedMotion();
@@ -49,17 +40,8 @@ const Profile = () => {
     setDisplayName(user?.display_name || '');
   }, [user?.display_name]);
 
-  // create a LocationData object compatible with LocationSelector
-  const [location, setLocation] = useState<LocationData>({
-    country: user?.country || '',
-    countryCode: '',
-    state: user?.state || '',
-    stateCode: '',
-    city: user?.city || '',
-  });
-
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState({ username: false, location: false });
+  const [loading, setLoading] = useState({ username: false });
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -90,26 +72,6 @@ const Profile = () => {
       toast({ title: 'Name updated!' });
     } else {
       setFormErrors({ username: 'Could not save your name. Please try again.' });
-    }
-  };
-
-  const handleLocationSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!location.country) {
-      setFormErrors({ location: 'Please select a country.' });
-      return;
-    }
-    setLoading(prev => ({ ...prev, location: true }));
-    const success = await updateLocation({
-      country: location.country,
-      state: location.state,
-      city: location.city,
-    });
-    setLoading(prev => ({ ...prev, location: false }));
-    if (success) {
-      toast({ title: 'Location updated!' });
-    } else {
-      setFormErrors({ location: 'Could not save your location. Please try again.' });
     }
   };
 
@@ -210,7 +172,7 @@ const Profile = () => {
             </Card>
           </motion.div>
 
-          {/* Settings: display name · progress · location */}
+          {/* Settings: display name · progress */}
           <motion.div {...fadeUp}>
             <Card className="border border-hairline rounded-2xl shadow-sm">
               <CardContent className="p-0">
@@ -277,29 +239,6 @@ const Profile = () => {
                   ]} />
                 </div>
 
-                <div className="border-t border-hairline" />
-
-                {/* Location */}
-                <div className="p-6">
-                  <h3 className="font-display font-bold text-text-dark mb-3">Location</h3>
-                  <form onSubmit={handleLocationSubmit} className="space-y-4">
-                    <LocationSelector
-                      value={location}
-                      onChange={setLocation}
-                      disabled={loading.location}
-                    />
-                    {formErrors.location && (
-                      <p className="text-sm text-destructive">{formErrors.location}</p>
-                    )}
-                    <Button
-                      type="submit"
-                      className="w-full bg-action-primary hover:bg-action-primary-hover text-white"
-                      disabled={loading.location}
-                    >
-                      {loading.location ? 'Saving…' : 'Update'}
-                    </Button>
-                  </form>
-                </div>
               </CardContent>
             </Card>
           </motion.div>
