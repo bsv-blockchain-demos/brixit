@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChevronLeft, Calendar, MapPin, CheckCircle, Clock, Trash2, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { IdentityKey } from '@/components/common/IdentityKey';
 import {
   fetchUserDetail,
   verifySubmission,
@@ -246,8 +247,9 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <h2 className="font-display font-bold text-xl text-text-dark">{user.display_name ?? user.id}</h2>
-            <p className="text-xs font-mono text-text-muted-brown mt-1 break-all">
-              Wallet identity: {user.identity_key ?? <span className="italic">no wallet identity</span>}
+            <p className="text-xs font-mono text-text-muted-brown mt-1 flex items-center gap-1 min-w-0">
+              <span className="shrink-0">Wallet identity:</span>
+              <IdentityKey value={user.identity_key} label="Wallet identity" />
             </p>
             <p className="text-xs font-mono text-text-muted-brown mt-0.5 break-all">UUID: {user.id}</p>
           </div>

@@ -7,10 +7,11 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
-import { Copy, Check, ArrowLeft, Shield, Eye, Sprout, Leaf, TreePine, Pencil } from 'lucide-react';
+import { ArrowLeft, Shield, Eye, Sprout, Leaf, TreePine, Pencil } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useToast } from '../hooks/use-toast';
 import LocationSelector from '../components/common/LocationSelector';
+import { IdentityKey } from '../components/common/IdentityKey';
 import Header from '../components/Layout/Header';
 
 interface LocationData {
@@ -33,7 +34,6 @@ const getRank = (submissions: number) => {
 const Profile = () => {
   const { user, updateUsername, updateLocation } = useAuth();
   const [displayName, setDisplayName] = useState(user?.display_name || '');
-  const [copied, setCopied] = useState(false);
 
   const prefersReducedMotion = useReducedMotion();
   const fadeUp = prefersReducedMotion ? {} : { initial: { opacity: 0, y: 24 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5 } };
@@ -61,13 +61,6 @@ const Profile = () => {
   useEffect(() => {
     if (!user) navigate('/');
   }, [user, navigate]);
-
-  const handleCopyKey = async () => {
-    if (!user?.identity_key) return;
-    await navigator.clipboard.writeText(user.identity_key);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,9 +105,6 @@ const Profile = () => {
   const RankIcon = rank.Icon;
   const level = calculateLevel(user.points ?? 0);
   const progress = calculateProgress(user.points ?? 0);
-  const shortKey = user.identity_key
-    ? `${user.identity_key.slice(0, 16)}…${user.identity_key.slice(-16)}`
-    : '';
 
   return (
     <div className="min-h-screen bg-surface-canvas">
@@ -174,19 +164,12 @@ const Profile = () => {
                   <p className="text-xs font-semibold uppercase tracking-wider text-text-muted-brown mb-1.5">
                     Public Identity Key
                   </p>
-                  <div className="flex items-center gap-2 rounded-lg px-3 py-2 bg-surface-canvas border border-hairline">
-                    <code className="flex-1 min-w-0 truncate text-xs font-mono text-text-mid">{shortKey}</code>
-                    <button
-                      onClick={handleCopyKey}
-                      className="shrink-0 p-1.5 rounded-md hover:bg-surface-canvas transition-colors"
-                      aria-label="Copy identity key"
-                    >
-                      {copied ? (
-                        <Check className="h-4 w-4 text-green-fresh" />
-                      ) : (
-                        <Copy className="h-4 w-4 text-text-muted-brown" />
-                      )}
-                    </button>
+                  <div className="flex items-center rounded-lg px-3 py-2 bg-surface-canvas border border-hairline">
+                    <IdentityKey
+                      value={user.identity_key}
+                      label="Public identity key"
+                      className="flex-1 text-text-mid"
+                    />
                   </div>
                 </div>
 

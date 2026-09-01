@@ -27,13 +27,12 @@ import {
   Shield,
   Sun,
   Moon,
-  Copy,
-  Check,
   ArrowRight,
   Settings as SettingsIcon,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { BrixLogo } from "@/components/common/BrixLogo";
+import { IdentityKey } from "@/components/common/IdentityKey";
 
 const Header = () => {
   const { user, logout, isAdmin } = useAuth();
@@ -42,14 +41,6 @@ const Header = () => {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyKey = async () => {
-    if (!user?.identity_key) return;
-    await navigator.clipboard.writeText(user.identity_key);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   // Lock background scroll while the full-screen mobile menu is open so the
   // header's close (X) stays reachable. Mobile-only (menuOpen is only set by the
@@ -241,21 +232,11 @@ const Header = () => {
                     Identity Key
                   </DropdownMenuLabel>
                   <div className="px-2 pb-2">
-                    <div className="flex items-center gap-2 rounded-md bg-surface-canvas border border-hairline px-3 py-2">
-                      <code className="flex-1 min-w-0 truncate text-xs font-mono text-card-foreground">
-                        {user.identity_key?.slice(0, 16)}…{user.identity_key?.slice(-16)}
-                      </code>
-                      <button
-                        onClick={handleCopyKey}
-                        className="shrink-0 p-1 rounded hover:bg-accent transition-colors"
-                        aria-label="Copy identity key"
-                      >
-                        {copied ? (
-                          <Check className="h-3.5 w-3.5 text-green-fresh" />
-                        ) : (
-                          <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-                        )}
-                      </button>
+                    <div className="flex items-center rounded-md bg-surface-canvas border border-hairline px-3 py-2">
+                      <IdentityKey
+                        value={user.identity_key}
+                        className="flex-1 text-card-foreground"
+                      />
                     </div>
                   </div>
                   <DropdownMenuSeparator />
