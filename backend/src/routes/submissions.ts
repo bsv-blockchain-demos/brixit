@@ -220,8 +220,15 @@ router.get('/mine', requireAuth as any, async (req: AuthenticatedRequest, res: R
       brix_value: { brixValue: sortOrder },
     };
 
+    // rejected=true → only rejected; rejected=false → only non-rejected;
+    // omitted → all.
+    const rejectedParam = req.query.rejected as string | undefined;
+    const where: Record<string, any> = { userId };
+    if (rejectedParam === 'true') where.rejectedAt = { not: null };
+    else if (rejectedParam === 'false') where.rejectedAt = null;
+
     const submissions = await prisma.submission.findMany({
-      where: { userId },
+      where,
       include: FULL_SUBMISSION_INCLUDE,
       orderBy: orderByMap[sortBy] || { assessmentDate: 'desc' },
       skip: offset,
@@ -243,6 +250,10 @@ router.get('/mine/count', requireAuth as any, async (req: AuthenticatedRequest, 
     if (req.query.verified !== undefined) {
       where.verified = req.query.verified === 'true';
     }
+    // Mirror the list filter so the total matches the rows actually shown.
+    const rejectedParam = req.query.rejected as string | undefined;
+    if (rejectedParam === 'true') where.rejectedAt = { not: null };
+    else if (rejectedParam === 'false') where.rejectedAt = null;
     const count = await prisma.submission.count({ where });
     res.json({ count });
   } catch (err) {
