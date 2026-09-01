@@ -19,7 +19,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { P2PKH, PublicKey, Utils, type WalletInterface, type WalletProtocol } from '@bsv/sdk';
 import prisma from '../db/client.js';
-import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js';
+import { requireAuth, optionalAuth, type AuthenticatedRequest } from '../middleware/auth.js';
 import serverWallet, { SERVER_WALLET_CHAIN } from '../serverWallet.js';
 import { createSubmissionTx, type SubmissionEntry } from '../lib/createSubmissionTx.js';
 import { getTransaction } from '../lib/getTransaction.js';
@@ -97,13 +97,26 @@ export function formatPublicSubmission(s: any) {
   };
 }
 
-/** Public shape plus the submitter/verifier identities. */
-export function formatFullSubmission(s: any) {
+/**
+ * Public shape plus the submitter/verifier identities.
+ *
+ * Rejection state is opt-in: the reason is private between the admin and the
+ * submitter, so only a caller proven to be the owner or an admin may see it.
+ */
+export function formatFullSubmission(s: any, includeRejection = false) {
   return {
     ...formatPublicSubmission(s),
     user_id: s.user?.id ?? null,
     user_display_name: s.user?.displayName ?? null,
     verified_by_display_name: s.verifier?.displayName ?? null,
+    // rejectionHash stays server-side; it is the comparison value for resubmit.
+    ...(includeRejection
+      ? {
+          rejected: !!s.rejectedAt,
+          rejected_at: s.rejectedAt ?? null,
+          rejection_message: s.rejectionMessage ?? null,
+        }
+      : {}),
   };
 }
 
@@ -215,7 +228,7 @@ router.get('/mine', requireAuth as any, async (req: AuthenticatedRequest, res: R
       take: limit,
     });
 
-    res.json(submissions.map(formatFullSubmission));
+    res.json(submissions.map((s) => formatFullSubmission(s, true)));
   } catch (err) {
     console.error('[submissions/mine] Error:', err);
     res.status(500).json({ error: 'Failed to fetch your submissions' });
@@ -377,7 +390,7 @@ router.post('/:id/retry-anchor', requireAuth as any, async (req: AuthenticatedRe
 });
 
 // --- Public: GET /api/submissions/:id ---
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', optionalAuth as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const submission = await prisma.submission.findUnique({
       where: { id: req.params.id },
@@ -389,7 +402,11 @@ router.get('/:id', async (req: Request, res: Response) => {
       return;
     }
 
-    res.json(formatFullSubmission(submission));
+    // The rejection reason is for the submitter and admins, not the public.
+    const isOwner = !!req.user && submission.userId === req.user.sub;
+    const isAdmin = !!req.user && (req.user.roles || []).includes('admin');
+
+    res.json(formatFullSubmission(submission, isOwner || isAdmin));
   } catch (err) {
     console.error('[submissions/:id] Error:', err);
     res.status(500).json({ error: 'Failed to fetch submission' });
@@ -547,7 +564,7 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
       });
     }
 
-    res.json(formatFullSubmission(updated));
+    res.json(formatFullSubmission(updated, true));
   } catch (err) {
     console.error('[submissions/:id PUT] Error:', err);
     res.status(500).json({ error: 'Failed to update submission' });
