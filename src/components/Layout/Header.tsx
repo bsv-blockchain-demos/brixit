@@ -165,7 +165,9 @@ const Header = () => {
   );
 
   return (
-    <header className="bg-background border-b border-white/30 pt-[var(--safe-top)]">
+    // Frosted, borderless top bar. The translucency reveals PageBackground's
+    // fixed wallpaper, which paints above the page fill and below this bar.
+    <header className="bg-background/80 backdrop-blur-md pt-[var(--safe-top)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo: signed-in users go to the app map; signed-out visitors go to the home/landing page */}
