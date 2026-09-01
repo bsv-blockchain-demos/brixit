@@ -2,6 +2,7 @@
 import { BrixDataPoint } from '../../types';
 import { useMaxWidth } from '@/hooks/use-mobile';
 import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
+import { CropIcon } from './CropIcon';
 import { Button } from '../ui/button';
 import {
   Dialog,
@@ -563,14 +564,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
             />
 
             <div className="pt-4 border-t border-hairline">
-              {/* On the route page this heading sits on the blue page
-                  background, where text-dark is barely legible; inside the
-                  dialog it sits on a card, where it is correct. */}
-              <h3
-                className={`text-lg font-bold font-display mb-2 text-center ${
-                  presentation === 'page' ? 'text-on-bg-text' : 'text-text-dark'
-                }`}
-              >
+              <h3 className="text-lg font-bold font-display mb-2 text-center text-text-dark">
                 Reading Details
               </h3>
 
@@ -611,7 +605,10 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                   {isEditing ? (
                     <Combobox items={Array.isArray(crops) ? crops : []} value={cropType} onSelect={setCropType} placeholder="Select Crop" />
                   ) : (
-                    getDisplayLabel(crops, initialDataPoint.cropType)
+                    <span className="flex items-center gap-1.5">
+                      <CropIcon name={initialDataPoint.cropType} />
+                      {getDisplayLabel(crops, initialDataPoint.cropType)}
+                    </span>
                   )}
                 </DetailRow>
                 {/* Read-only: this shows posType, and the PUT body has no

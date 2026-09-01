@@ -1,6 +1,7 @@
 ﻿import React from 'react';
 import { BrixDataPoint } from '../../types';
 import { gradeBrix } from '../../lib/getBrixColor';
+import { CropIcon } from './CropIcon';
 import { titleCase } from '../../lib/titleCase';
 import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
 import { ScoreGauge } from './ScoreGauge';
@@ -40,7 +41,10 @@ const MobileSubmissionCard: React.FC<{
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-lg font-bold text-text-dark truncate">{titleCase(submission.cropLabel ?? submission.cropType)}</p>
+          <p className="flex items-center gap-1.5 text-lg font-bold text-text-dark truncate">
+            <CropIcon name={submission.cropType} className="h-5 w-5" />
+            {titleCase(submission.cropLabel ?? submission.cropType)}
+          </p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {hasActions && (

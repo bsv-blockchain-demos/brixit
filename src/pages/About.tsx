@@ -6,7 +6,6 @@ const About = () => (
   <WebviewPage
     url="https://www.bionutrient.org/brixit"
     title="About BRIX, from the Bionutrient Food Association"
-    linkLabel="Open on bionutrient.org"
   />
 );
 

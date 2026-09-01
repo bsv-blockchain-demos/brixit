@@ -10,6 +10,7 @@ import { formatCityState } from '../../lib/formatAddress';
 import { titleCase } from '../../lib/titleCase';
 import { VerifiedBadge, BlockchainBadge, HintPopover } from './StatusBadges';
 import { ScoreGauge } from './ScoreGauge';
+import { CropIcon } from './CropIcon';
 import { formatHumanDate, formatRelativeTime } from '../../lib/formatDate';
 
 interface SubmissionTableRowProps {
@@ -50,11 +51,17 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       {/* Crop */}
       <TableCell className="py-3 px-4">
         <div>
-          <span className="text-sm text-text-mid">{titleCase(submission.cropLabel ?? submission.cropType)}</span>
+          <span className="flex items-center gap-1.5 text-sm text-text-mid">
+            <CropIcon name={submission.cropType} />
+            {titleCase(submission.cropLabel ?? submission.cropType)}
+          </span>
+          {/* bg-card, not transparent: the row tints on hover and a transparent
+              badge took the tint with it, which read as the badge itself
+              lighting up. */}
           {showOwnerBadge && isOwner && (
-            <Badge className="flex items-center space-x-1 px-2 py-0.5 rounded-md border border-hairline bg-transparent text-text-mid font-medium text-xs mt-1 w-fit">
+            <Badge className="flex items-center space-x-1 px-2 py-0.5 rounded-md border border-hairline bg-card text-text-mid font-medium text-xs mt-1 w-fit">
               <User className="w-3 h-3" />
-              <span>Your Reading</span>
+              <span>Yours</span>
             </Badge>
           )}
         </div>

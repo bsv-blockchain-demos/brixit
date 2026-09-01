@@ -91,14 +91,18 @@ const ReadingDetail = () => {
             </Link>
           </div>
         ) : (
-          <DataPointDetailModal
-            presentation="page"
-            dataPoint={reading}
-            isOpen
-            onClose={handleClose}
-            onDeleteSuccess={handleDeleteSuccess}
-            onUpdateSuccess={handleUpdateSuccess}
-          />
+          // Same panel as the readings table, so the detail reads as the same
+          // surface you clicked from rather than loose content on the backdrop.
+          <div className="bg-card text-card-foreground border border-hairline rounded-2xl shadow-sm overflow-hidden p-4 sm:p-6">
+            <DataPointDetailModal
+              presentation="page"
+              dataPoint={reading}
+              isOpen
+              onClose={handleClose}
+              onDeleteSuccess={handleDeleteSuccess}
+              onUpdateSuccess={handleUpdateSuccess}
+            />
+          </div>
         )}
       </main>
     </PageBackground>
