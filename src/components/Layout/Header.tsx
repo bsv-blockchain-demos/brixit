@@ -38,7 +38,7 @@ const Header = () => {
   const { user, logout, isAdmin } = useAuth();
   const { resetWalletState } = useWallet();
   const { cancelSession } = useWalletRelay();
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -61,6 +61,12 @@ const Header = () => {
   }, [menuOpen]);
 
   const isActive = (path: string) => location.pathname === path;
+
+  // resolvedTheme collapses "system" to the theme actually applied, so the
+  // label always names the mode the user would switch *to* and the toggle
+  // never no-ops on a system-themed session.
+  const isDark = (resolvedTheme ?? theme) === "dark";
+  const toggleTheme = () => setTheme(isDark ? "light" : "dark");
 
   const hasRole = (role: string): boolean => {
     if (!user) return false;
@@ -184,16 +190,21 @@ const Header = () => {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              aria-label="Toggle dark mode"
-              className="relative"
-            >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-transform dark:rotate-90 dark:scale-0" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
-            </Button>
+            {/* Signed-in users toggle the theme from the account menu below.
+                Signed-out visitors (/map is public) have no account menu, so
+                they keep the standalone control. */}
+            {!user && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleTheme}
+                aria-label="Toggle dark mode"
+                className="relative"
+              >
+                <Sun className="h-5 w-5 rotate-0 scale-100 transition-transform dark:rotate-90 dark:scale-0" />
+                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
+              </Button>
+            )}
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -241,6 +252,23 @@ const Header = () => {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    // Keep the menu open so the theme change is visible in place;
+                    // a toggle that dismissed its own trigger would be awkward to
+                    // flip back.
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      toggleTheme();
+                    }}
+                    className="cursor-pointer"
+                  >
+                    {isDark ? (
+                      <Sun className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Moon className="mr-2 h-4 w-4" />
+                    )}
+                    {isDark ? "Light mode" : "Dark mode"}
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
