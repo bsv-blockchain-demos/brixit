@@ -1,0 +1,150 @@
+/**
+ * DEV-only mock readings, so the data browser has something to render
+ * without a backend.
+ *
+ * Enable with VITE_DEV_MOCK_DATA=1 in your local .env.
+ *
+ * Safety: gated on `import.meta.env.DEV`, which is statically false in a
+ * production build, so the flag folds to `false` and the generator is dropped
+ * as dead code. It cannot be switched on in a shipped bundle.
+ *
+ * Scope: sorting, pagination, and the cheap filters (search, crop, BRIX
+ * range, blockchain) are simulated so the table behaves believably. Geographic
+ * and date filters are not, and neither is anything that writes.
+ */
+import type { BrixDataPoint } from '@/types';
+import type { PublicFormattedSubmissionsQuery } from './fetchSubmissions';
+
+const CROPS = [
+  { id: 'crop-tomato', name: 'tomato', label: 'Tomato', category: 'Vegetable', poor: 4, avg: 6, good: 8, excellent: 12 },
+  { id: 'crop-carrot', name: 'carrot', label: 'Carrot', category: 'Vegetable', poor: 4, avg: 6, good: 12, excellent: 18 },
+  { id: 'crop-spinach', name: 'spinach', label: 'Spinach', category: 'Leafy Green', poor: 4, avg: 6, good: 8, excellent: 12 },
+  { id: 'crop-apple', name: 'apple', label: 'Apple', category: 'Fruit', poor: 6, avg: 10, good: 14, excellent: 18 },
+  { id: 'crop-grape', name: 'grape', label: 'Grape', category: 'Fruit', poor: 8, avg: 12, good: 16, excellent: 20 },
+  { id: 'crop-kale', name: 'kale', label: 'Kale', category: 'Leafy Green', poor: 4, avg: 6, good: 10, excellent: 14 },
+];
+
+const BRANDS = [
+  { id: 'brand-1', name: "Olivia's Organics", label: "Olivia's Organics" },
+  { id: 'brand-2', name: 'Sunridge Farm', label: 'Sunridge Farm' },
+  { id: 'brand-3', name: 'Green Valley', label: 'Green Valley' },
+  { id: 'brand-4', name: 'Harvest Roots', label: 'Harvest Roots' },
+];
+
+const PLACES = [
+  { id: 'place-1', name: 'City Market Co-op', street: '82 S Winooski Ave', city: 'Burlington', state: 'Vermont', lat: 44.4759, lng: -73.2121 },
+  { id: 'place-2', name: 'Healthy Living', street: '222 Dorset St', city: 'South Burlington', state: 'Vermont', lat: 44.4526, lng: -73.1918 },
+  { id: 'place-3', name: 'Union Square Greenmarket', street: 'E 17th St', city: 'New York', state: 'New York', lat: 40.7359, lng: -73.9911 },
+  { id: 'place-4', name: 'Ferry Plaza Farmers Market', street: '1 Ferry Building', city: 'San Francisco', state: 'California', lat: 37.7955, lng: -122.3937 },
+];
+
+const SUBMITTERS = ['Dev Explorer', 'Test Contributor', 'Ada L.', 'Grace H.', 'Rosalind F.'];
+const POS_TYPES = ['Supermarket', 'Farmers Market', 'Farm Direct'];
+
+/** Deterministic pseudo-random so the table is stable across reloads. */
+function seeded(i: number, salt: number) {
+  const x = Math.sin(i * 12.9898 + salt * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+// Built on first use rather than at module load: no top-level work means
+// nothing here has side effects for the bundler to preserve.
+let cached: BrixDataPoint[] | null = null;
+const buildDataset = (): BrixDataPoint[] => Array.from({ length: 137 }, (_, i) => {
+  const crop = CROPS[i % CROPS.length];
+  const brand = BRANDS[Math.floor(seeded(i, 1) * BRANDS.length)];
+  const place = PLACES[Math.floor(seeded(i, 2) * PLACES.length)];
+  const brix = Math.round((crop.poor + seeded(i, 3) * (crop.excellent + 2 - crop.poor)) * 10) / 10;
+  const submittedAt = new Date(Date.now() - i * 8.5 * 3600 * 1000).toISOString();
+  const verified = seeded(i, 4) > 0.35;
+
+  return {
+    id: `mock-${String(i + 1).padStart(4, '0')}`,
+    brixLevel: brix,
+    verified,
+    verifiedAt: verified ? submittedAt : null,
+    variety: '',
+    cropType: crop.name,
+    category: crop.category,
+    latitude: place.lat,
+    longitude: place.lng,
+    locationName: place.name,
+    placeName: place.name,
+    streetAddress: place.street,
+    city: place.city,
+    state: place.state,
+    country: 'United States',
+    brandName: brand.name,
+    submittedBy: SUBMITTERS[Math.floor(seeded(i, 5) * SUBMITTERS.length)],
+    userId: i % 4 === 0 ? 'dev-user-0000-0000-0000-000000000000' : `mock-user-${i % 7}`,
+    verifiedBy: verified ? 'Dev Explorer' : '',
+    submittedAt,
+    outlier_notes: seeded(i, 6) > 0.85 ? 'Sampled from the middle of the batch.' : '',
+    images: [],
+    poorBrix: crop.poor,
+    averageBrix: crop.avg,
+    goodBrix: crop.good,
+    excellentBrix: crop.excellent,
+    purchaseDate: submittedAt,
+    posType: POS_TYPES[Math.floor(seeded(i, 7) * POS_TYPES.length)],
+    cropId: crop.id,
+    placeId: place.id,
+    brandId: brand.id,
+    verifiedByUserId: verified ? 'dev-user-0000-0000-0000-000000000000' : '',
+    cropLabel: crop.label,
+    brandLabel: brand.label,
+    outpoint: seeded(i, 8) > 0.5 ? `${'a'.repeat(64)}_${i}` : null,
+  } satisfies BrixDataPoint;
+});
+
+const dataset = (): BrixDataPoint[] => (cached ??= buildDataset());
+
+type AnyQuery = Partial<PublicFormattedSubmissionsQuery> & Record<string, unknown>;
+
+/** Applies the filters worth simulating; see the scope note at the top. */
+function applyFilters(rows: BrixDataPoint[], q: AnyQuery): BrixDataPoint[] {
+  let out = rows;
+
+  const crops = q.cropTypes as string[] | undefined;
+  if (crops?.length) out = out.filter((r) => crops.includes(r.cropType) || crops.includes(r.cropId));
+
+  if (q.brixMin != null) out = out.filter((r) => r.brixLevel >= (q.brixMin as number));
+  if (q.brixMax != null) out = out.filter((r) => r.brixLevel <= (q.brixMax as number));
+  if (q.timestamped) out = out.filter((r) => !!r.outpoint);
+
+  const search = (q.search as string | undefined)?.trim().toLowerCase();
+  if (search) {
+    out = out.filter((r) =>
+      [r.cropLabel, r.brandLabel, r.locationName, r.submittedBy, r.outlier_notes]
+        .some((v) => (v ?? '').toLowerCase().includes(search)),
+    );
+  }
+  return out;
+}
+
+function applySort(rows: BrixDataPoint[], q: AnyQuery): BrixDataPoint[] {
+  const dir = q.sortOrder === 'asc' ? 1 : -1;
+  const key = q.sortBy as string | undefined;
+  const pick = (r: BrixDataPoint) =>
+    key === 'brix_value' ? r.brixLevel
+    : key === 'crop_name' ? (r.cropLabel ?? r.cropType)
+    : key === 'place_label' ? r.locationName
+    : r.submittedAt;
+
+  return [...rows].sort((a, b) => {
+    const av = pick(a), bv = pick(b);
+    if (av === bv) return 0;
+    return (av > bv ? 1 : -1) * dir;
+  });
+}
+
+export function mockSubmissionsPage(q: AnyQuery): BrixDataPoint[] {
+  const rows = applySort(applyFilters(dataset(), q), q);
+  const offset = (q.offset as number) ?? 0;
+  const limit = (q.limit as number) ?? 50;
+  return rows.slice(offset, offset + limit);
+}
+
+export function mockSubmissionsCount(q: AnyQuery): number {
+  return applyFilters(dataset(), q).length;
+}

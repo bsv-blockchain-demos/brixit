@@ -17,6 +17,14 @@ import {
   type PublicFormattedSubmissionsBoundsQuery,
 } from "@/lib/fetchSubmissions";
 
+/**
+ * Declared locally, not imported, so the bundler can fold it to `false` and
+ * drop the dynamic import below. An imported flag stays opaque across module
+ * boundaries and drags the whole mock dataset into the production bundle.
+ */
+const USE_MOCK_DATA =
+  import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === "1";
+
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
 export function useFormattedSubmissionsQuery() {
@@ -33,7 +41,10 @@ export function useFormattedSubmissionsQuery() {
 export function useFormattedSubmissionsPageQuery(query: PublicFormattedSubmissionsQuery) {
   return useQuery<BrixDataPoint[]>({
     queryKey: ["submissions", "public_formatted", "page", query],
-    queryFn: () => fetchFormattedSubmissionsPage(query),
+    queryFn: () =>
+      USE_MOCK_DATA
+        ? import("@/lib/devMockData").then((m) => m.mockSubmissionsPage(query))
+        : fetchFormattedSubmissionsPage(query),
     staleTime: ONE_HOUR_MS,
     gcTime: 2 * ONE_HOUR_MS,
     refetchOnWindowFocus: false,
@@ -47,7 +58,10 @@ export function useFormattedSubmissionsCountQuery(
 ) {
   return useQuery<number>({
     queryKey: ["submissions", "public_formatted", "count", query],
-    queryFn: () => fetchFormattedSubmissionsCount(query),
+    queryFn: () =>
+      USE_MOCK_DATA
+        ? import("@/lib/devMockData").then((m) => m.mockSubmissionsCount(query))
+        : fetchFormattedSubmissionsCount(query),
     staleTime: ONE_HOUR_MS,
     gcTime: 2 * ONE_HOUR_MS,
     refetchOnWindowFocus: false,

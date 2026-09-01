@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Button } from '../ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { TableSortControl, type SortOption } from '@/components/common/TableSortControl';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, SearchX } from 'lucide-react';
 import {
   useFormattedSubmissionsCountQuery,
   useFormattedSubmissionsPageQuery,
@@ -33,6 +33,11 @@ interface DataBrowserResultsProps {
   onBackToLeaderboard: () => void;
 }
 
+// Declared locally so the bundler folds it to false and drops the dynamic
+// import; see the note in useSubmissions.ts.
+const USE_MOCK_DATA =
+  import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === '1';
+
 // Mirrors the sortable column headers in the desktop table below.
 type MobileSortKey = 'submittedAt' | 'cropType' | 'locationName' | 'brixLevel';
 const MOBILE_SORT_OPTIONS: SortOption<MobileSortKey>[] = [
@@ -50,6 +55,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const location = useLocation();
+  const navigate = useNavigate();
   const highlightedSubmissionId = (location.state as any)?.highlightedSubmissionId as string | undefined;
 
   const [itemsPerPage, setItemsPerPage] = useState(50);
@@ -120,7 +126,13 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
     if (!shouldPrefetchNextChunk) return;
     queryClient.prefetchQuery({
       queryKey: ['submissions', 'public_formatted', 'page', nextPageQuery],
-      queryFn: () => fetchFormattedSubmissionsPage(nextPageQuery),
+      // Must mirror the hook's mock branch. This writes into the same cache
+      // key the hook reads, so calling the real fetch here would hand the
+      // next page real (or failed) data while page 1 shows mock rows.
+      queryFn: () =>
+        USE_MOCK_DATA
+          ? import('@/lib/devMockData').then((m) => m.mockSubmissionsPage(nextPageQuery))
+          : fetchFormattedSubmissionsPage(nextPageQuery),
       staleTime: 60 * 60 * 1000,
     });
   }, [nextPageQuery, queryClient, shouldPrefetchNextChunk]);
@@ -184,6 +196,44 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
   const filterSummary = getFilterSummary(filters, isAdmin);
   const activeFilterChips = getActiveFilterList(filters, isAdmin);
   const clearAllFilters = useCallback(() => setFilters(DEFAULT_MAP_FILTERS), [setFilters]);
+
+  // Two different situations were both reported as "No data found for the
+  // current filters": a filter combination that matches nothing, and a
+  // genuinely empty dataset. Only the first has an action worth offering, and
+  // saying "for the current filters" when none are set is just wrong.
+  // getActiveFilterList does not account for the free-text search, so a
+  // search-only query would otherwise report no active filters and show the
+  // "nothing here yet" copy while the user is staring at their own query.
+  const hasNarrowedResults = activeFilterChips.length > 0 || !!filters.search;
+
+  const emptyState = (
+    <div className="flex flex-col items-center gap-3 py-12 px-4 text-center">
+      <SearchX className="h-8 w-8 text-text-muted-brown" aria-hidden="true" />
+      {hasNarrowedResults ? (
+        <>
+          <p className="text-text-dark font-medium">No readings match these filters</p>
+          <p className="text-sm text-text-mid max-w-sm">
+            Try widening the BRIX range or removing a filter to see more of the community's readings.
+          </p>
+          <Button variant="outline" size="sm" onClick={clearAllFilters}>
+            Clear all filters
+          </Button>
+        </>
+      ) : (
+        <>
+          <p className="text-text-dark font-medium">No readings yet</p>
+          <p className="text-sm text-text-mid max-w-sm">
+            Readings submitted by the community will show up here.
+          </p>
+          {(user?.role === 'contributor' || user?.role === 'admin') && (
+            <Button size="sm" onClick={() => navigate('/data-entry')}>
+              Add the first reading
+            </Button>
+          )}
+        </>
+      )}
+    </div>
+  );
 
   return (
     <>
@@ -319,8 +369,8 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
               <TableBody>
                 {currentItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-text-mid">
-                      No data found for the current filters.
+                    <TableCell colSpan={10} className="p-0">
+                      {emptyState}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -346,7 +396,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
           {/* Mobile card list */}
           <div className="desktop:hidden space-y-3">
             {currentItems.length === 0 ? (
-              <p className="text-center py-8 text-text-mid">No data found for the current filters.</p>
+              emptyState
             ) : (
               currentItems.map((submission) => (
                 <MobileSubmissionCard
