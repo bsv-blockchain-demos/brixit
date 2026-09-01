@@ -152,8 +152,12 @@ model Submission {
   verifiedAt      DateTime? @map("verified_at") @db.Timestamptz
   // Soft rejection (admin decline). Distinct from delete: the row is kept,
   // hidden from the public, and reversible. Rejected when rejectedAt is set.
-  rejectedBy      String?   @map("rejected_by") @db.Uuid
-  rejectedAt      DateTime? @map("rejected_at") @db.Timestamptz
+  rejectedBy       String?   @map("rejected_by") @db.Uuid
+  rejectedAt       DateTime? @map("rejected_at") @db.Timestamptz
+  // The admin's reason, surfaced to the submitter. The hash covers the
+  // user-editable fields at rejection time; resubmit compares against it.
+  rejectionMessage String?   @map("rejection_message")
+  rejectionHash    String?   @map("rejection_hash")
 
   // 'txid.vout' of this reading's PushDrop UTXO. NULL while pending/failed.
   // Siblings in the same session share the txid prefix.
