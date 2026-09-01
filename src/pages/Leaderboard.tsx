@@ -375,12 +375,12 @@ const LeaderboardPage: React.FC = () => {
   const boardConfigs = [
     { key: 'location' as const, title: 'Top Places', subtitle: 'Where the highest-scoring produce is being found', data: locationData, hasMore: locationHasMore, isLoadingMore: loadingMore.location, onLoadMore: () => loadMore('location') },
     { key: 'brand' as const, title: 'Top Brands', subtitle: 'Farms and brands with the best average scores', data: brandData, hasMore: brandHasMore, isLoadingMore: loadingMore.brand, onLoadMore: () => loadMore('brand') },
-    { key: 'user' as const, title: 'Most Submissions', subtitle: 'The community’s most active contributors', data: userData, hasMore: userHasMore, isLoadingMore: loadingMore.user, onLoadMore: () => loadMore('user') },
+    { key: 'user' as const, title: 'Most Readings', subtitle: 'The community’s most active contributors', data: userData, hasMore: userHasMore, isLoadingMore: loadingMore.user, onLoadMore: () => loadMore('user') },
   ];
   const filterTabs = ([
     { key: 'location', label: 'Places' },
     { key: 'brand', label: 'Brands' },
-    { key: 'user', label: 'Submissions' },
+    { key: 'user', label: 'Readings' },
   ] as const);
   const renderBoard = (cfg: typeof boardConfigs[number]) => (
     <LeaderboardCard

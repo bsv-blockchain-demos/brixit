@@ -79,7 +79,7 @@ export default function AdminCrops() {
       required: true,
       slug: true,
       placeholder: 'e.g. bell_pepper',
-      help: 'The permanent identifier used in the database and across the app (submissions, score lookups). Lowercase letters, numbers and underscores only, no spaces. Avoid changing it on existing crops, as it can break linked data.',
+      help: 'The permanent identifier used in the database and across the app (readings, score lookups). Lowercase letters, numbers and underscores only, no spaces. Avoid changing it on existing crops, as it can break linked data.',
     },
     { key: 'category', label: 'Category', type: 'select', options: categoryOptions },
     { key: 'poor_brix', label: 'Poor Brix threshold', type: 'number', step: '0.01', placeholder: '0.00' },

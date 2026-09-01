@@ -121,7 +121,7 @@ function PendingViewModal({ id, onClose, onCopy }: { id: string; onClose: () => 
         {isLoading ? (
           <p className="text-sm text-text-mid">Loading…</p>
         ) : !dp || !score ? (
-          <p className="text-sm text-destructive">Couldn't load this submission.</p>
+          <p className="text-sm text-destructive">Couldn't load this reading.</p>
         ) : (
           <div className="space-y-4">
             <div className="flex items-center gap-4">
@@ -142,7 +142,7 @@ function PendingViewModal({ id, onClose, onCopy }: { id: string; onClose: () => 
               </Row>
               <Row label="ID">
                 <button
-                  onClick={() => onCopy(dp.id, 'Submission ID')}
+                  onClick={() => onCopy(dp.id, 'Reading ID')}
                   className="inline-flex items-center gap-1 font-mono text-xs text-text-muted-brown hover:text-text-mid break-all text-left"
                 >
                   {dp.id}
@@ -333,7 +333,7 @@ export default function AdminTreasury() {
         <div>
           <h2 className="text-xl font-display font-bold text-text-dark">Treasury Wallet</h2>
           <p className="text-sm text-text-mid">
-            Balance, identity and on-chain activity for the wallet that anchors submissions.
+            Balance, identity and on-chain activity for the wallet that anchors readings.
           </p>
         </div>
         <button
@@ -537,7 +537,7 @@ export default function AdminTreasury() {
                 </span>
               )}
             </div>
-            <p className="text-sm text-text-mid mt-0.5">Submissions not yet timestamped on the blockchain</p>
+            <p className="text-sm text-text-mid mt-0.5">Readings not yet timestamped on the blockchain</p>
           </div>
           {pendingQ.data && pendingQ.data.total > 0 && (
             <p className="text-xs text-text-muted-brown shrink-0 whitespace-nowrap">
@@ -550,10 +550,10 @@ export default function AdminTreasury() {
           <p className="px-5 pb-5 text-sm text-text-mid">Loading…</p>
         ) : pendingQ.error ? (
           <p className="px-5 pb-5 text-sm text-destructive">
-            {(pendingQ.error as any)?.message ?? 'Failed to load pending submissions'}
+            {(pendingQ.error as any)?.message ?? 'Failed to load pending readings'}
           </p>
         ) : pendingQ.data?.total === 0 ? (
-          <p className="px-5 pb-5 text-sm text-text-mid">No pending records. Every submission is timestamped on the blockchain.</p>
+          <p className="px-5 pb-5 text-sm text-text-mid">No pending records. Every reading is timestamped on the blockchain.</p>
         ) : pendingQ.data ? (
           <>
             {/* Desktop table */}
@@ -586,7 +586,7 @@ export default function AdminTreasury() {
                       <td className="py-3 pr-5 text-right">
                         <button
                           onClick={(e) => { e.stopPropagation(); setViewId(r.id); }}
-                          aria-label="View submission"
+                          aria-label="View reading"
                           className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-text-mid hover:text-text-dark hover:bg-card"
                         >
                           <Eye className="w-4 h-4" />

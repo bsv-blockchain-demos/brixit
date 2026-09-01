@@ -235,15 +235,15 @@ const YourData: React.FC = () => {
     try {
       const success = await deleteSubmission(id);
       if (success) {
-        toast({ title: 'Submission deleted successfully!', variant: 'default' });
+        toast({ title: 'Reading deleted successfully!', variant: 'default' });
         queryClient.invalidateQueries({ queryKey: ['submissions', 'mine'] });
         handleCloseModal(); // Close the modal
       } else {
-        toast({ title: 'Failed to delete submission.', description: 'Please try again.', variant: 'destructive' });
+        toast({ title: 'Failed to delete reading.', description: 'Please try again.', variant: 'destructive' });
       }
     } catch (error) {
       console.error('Error during deletion process:', error);
-      toast({ title: 'An error occurred.', description: 'Could not delete submission.', variant: 'destructive' });
+      toast({ title: 'An error occurred.', description: 'Could not delete reading.', variant: 'destructive' });
     }
   };
 
@@ -256,7 +256,7 @@ const YourData: React.FC = () => {
             <CardContent className="text-center py-12">
               <h2 className="text-2xl font-bold text-text-dark mb-2">Please Log In</h2>
               <p className="text-text-dark mb-6">
-                You need to be logged in to view your data submissions.
+                You need to be logged in to view your readings.
               </p>
               <Link to="/">
                 <Button>Log In</Button>
@@ -276,7 +276,7 @@ const YourData: React.FC = () => {
         <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-[var(--bottom-inset)] text-center">
           <div className="flex items-center justify-center gap-2">
             <Loader2 className="w-5 h-5 text-green-mid animate-spin" />
-            <p className="text-on-bg-body">Loading your submissions...</p>
+            <p className="text-on-bg-body">Loading your readings...</p>
           </div>
         </main>
       </PageBackground>
@@ -288,7 +288,7 @@ const YourData: React.FC = () => {
       <PageBackground className="min-h-screen">
         <Header />
         <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 pb-[var(--bottom-inset)] text-center">
-          <p className="text-red-600">Error: Failed to load your submissions.</p>
+          <p className="text-red-600">Error: Failed to load your readings.</p>
         </main>
       </PageBackground>
     );
@@ -305,7 +305,7 @@ const YourData: React.FC = () => {
               My Data
             </h1>
             <p className="mt-1 text-on-bg-body">
-              Manage and track your BRIX measurement submissions
+              Manage and track your BRIX readings
             </p>
           </div>
 
@@ -314,7 +314,7 @@ const YourData: React.FC = () => {
               <Link to="/data-entry">
                 <Button className="flex items-center space-x-2 bg-action-primary hover:bg-action-primary-hover text-white">
                   <Plus className="w-4 h-4" />
-                  <span>Add New Measurement</span>
+                  <span>Add New Reading</span>
                 </Button>
               </Link>
             ) : (
@@ -324,7 +324,7 @@ const YourData: React.FC = () => {
                 onClick={handleAttemptSubmit}
               >
                 <Lock className="w-4 h-4" />
-                <span>Submissions Disabled</span>
+                <span>Submitting Disabled</span>
               </Button>
             )}
             <Button
@@ -332,7 +332,7 @@ const YourData: React.FC = () => {
               size="icon"
               onClick={handleRefresh}
               disabled={isRefreshing}
-              aria-label={isRefreshing ? 'Refreshing your submissions' : 'Refresh your submissions'}
+              aria-label={isRefreshing ? 'Refreshing your readings' : 'Refresh your readings'}
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
@@ -343,8 +343,8 @@ const YourData: React.FC = () => {
         <section className="mb-6 space-y-4">
           <h2 className="text-xl font-display font-bold text-on-bg-text">Statistics</h2>
           <IconStatGrid stats={[
-            { icon: ClipboardList, value: totalCount,           label: 'Total Submissions' },
-            { icon: BadgeCheck,    value: verifiedCount,        label: 'Verified Measurements' },
+            { icon: ClipboardList, value: totalCount,           label: 'Total Readings' },
+            { icon: BadgeCheck,    value: verifiedCount,        label: 'Verified Readings' },
             { icon: Sprout,        value: uniqueCropTypesCount, label: 'Unique Crop Types' },
             { icon: Store,         value: uniqueStoresCount,    label: 'Unique Stores' },
           ]} />
@@ -354,7 +354,7 @@ const YourData: React.FC = () => {
         <div className="bg-card text-card-foreground border border-hairline rounded-2xl shadow-sm overflow-hidden">
           <CardHeader className="px-3 sm:px-6">
             <div className="flex items-center justify-between gap-3">
-              <CardTitle>Submitted Measurements ({totalCount})</CardTitle>
+              <CardTitle>Readings ({totalCount})</CardTitle>
               <Select
                 value={String(itemsPerPage)}
                 onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}
@@ -376,23 +376,23 @@ const YourData: React.FC = () => {
                     {canSubmit ? (
                       <>
                         <Beaker className="w-16 h-16 text-green-fresh mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-text-dark mb-2">No submissions yet</h3>
+                        <h3 className="text-lg font-semibold text-text-dark mb-2">No readings yet</h3>
                         <p className="text-text-mid mb-6">
-                          Start contributing by submitting your first BRIX measurement!
+                          Start contributing by submitting your first BRIX reading!
                         </p>
                         <Link to="/data-entry">
                           <Button className="bg-action-primary hover:bg-action-primary-hover text-primary-foreground">
                             <Plus className="w-4 h-4 mr-2" />
-                            Submit First Measurement
+                            Submit First Reading
                           </Button>
                         </Link>
                       </>
                     ) : (
                       <>
                         <AlertCircle className="w-16 h-16 text-text-muted-brown mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-text-dark mb-2">Submissions are disabled</h3>
+                        <h3 className="text-lg font-semibold text-text-dark mb-2">Submitting is disabled</h3>
                         <p className="text-text-mid mb-6">
-                          Your account currently has observer access, so you can browse data but can't submit measurements yet.
+                          Your account currently has observer access, so you can browse data but can't submit readings yet.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                           <Button variant="outline" onClick={handleAttemptSubmit}>
@@ -527,7 +527,7 @@ const YourData: React.FC = () => {
         <AlertDialog open={isSubmitInfoOpen} onOpenChange={setIsSubmitInfoOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Submissions are disabled for your account</AlertDialogTitle>
+              <AlertDialogTitle>Submitting is disabled for your account</AlertDialogTitle>
               <AlertDialogDescription>
                 Your current role is observer, so you can view and manage existing entries but you can't submit new measurements yet.
                 Ask an admin to upgrade your role to contributor.
@@ -550,7 +550,7 @@ const YourData: React.FC = () => {
         <AlertDialog open={deleteTargetId !== null} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete this submission?</AlertDialogTitle>
+              <AlertDialogTitle>Delete this reading?</AlertDialogTitle>
               <AlertDialogDescription>
                 This action cannot be undone.
               </AlertDialogDescription>

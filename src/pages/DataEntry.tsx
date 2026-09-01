@@ -470,7 +470,7 @@ const DataEntry = () => {
         style={{ paddingBottom: 'calc(7rem + var(--bottom-inset))' }}
       >
         <div className="mb-6">
-          <h1 className="text-2xl font-display font-bold text-on-bg-text">New Measurement Entry</h1>
+          <h1 className="text-2xl font-display font-bold text-on-bg-text">New Reading</h1>
           <p className="mt-1 text-on-bg-body">
             Record one or more refractometer readings from a single shopping session
           </p>
@@ -489,7 +489,7 @@ const DataEntry = () => {
                 <div className="p-2 rounded-xl" style={{ backgroundColor: 'var(--blue-deep)' }}>
                   <Upload className="w-6 h-6 text-white" />
                 </div>
-                <span>New Measurement Entry</span>
+                <span>New Reading</span>
               </CardTitle>
             </CardHeader>
 
@@ -531,7 +531,7 @@ const DataEntry = () => {
                 {/* ── Section 1: Session context (mobile Step 1) ── */}
                 <motion.div {...staggerChild} className={step !== 1 ? 'hidden' : ''}>
                   <div>
-                    <FormSectionHeader title="Where did you shop?" required description="Pick the store or market this trip's produce came from. One shop per submission." />
+                    <FormSectionHeader title="Where did you shop?" required description="Pick the store or market this trip's produce came from. One shop per reading." />
 
                     <div className="mb-6">
                       {/* Location */}

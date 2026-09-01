@@ -37,7 +37,7 @@ function useSubmissionActions(invalidateKeys: string[]) {
     try {
       const res = await verifySubmission(submissionId, verify);
       if (res.success) {
-        toast({ title: verify ? 'Submission verified' : 'Submission unverified' });
+        toast({ title: verify ? 'Reading verified' : 'Reading unverified' });
         if (verify) {
           const newTotalPages = Math.max(1, Math.ceil((total - 1) / PAGE_SIZE));
           if (page > newTotalPages) setPage(newTotalPages);
@@ -54,7 +54,7 @@ function useSubmissionActions(invalidateKeys: string[]) {
   const handleDelete = async (submissionId: string, total: number, page: number, setPage: (p: number) => void) => {
     try {
       await deleteSubmission(submissionId);
-      toast({ title: 'Submission deleted' });
+      toast({ title: 'Reading deleted' });
       const newTotalPages = Math.max(1, Math.ceil((total - 1) / PAGE_SIZE));
       if (page > newTotalPages) setPage(newTotalPages);
       invalidate();
@@ -69,7 +69,7 @@ function useSubmissionActions(invalidateKeys: string[]) {
     try {
       const res = await rejectSubmission(submissionId, reject);
       if (res.success) {
-        toast({ title: reject ? 'Submission rejected' : 'Submission restored to pending' });
+        toast({ title: reject ? 'Reading rejected' : 'Reading restored to pending' });
         const newTotalPages = Math.max(1, Math.ceil((total - 1) / PAGE_SIZE));
         if (page > newTotalPages) setPage(newTotalPages);
         invalidate();
@@ -336,7 +336,7 @@ function SubmissionCard({
   );
 }
 
-// All Submissions tab
+// All Readings tab
 
 function AllSubmissionsTab({ onOpenDetail }: { onOpenDetail: (id: string) => void }) {
   const [search, setSearch] = useState('');
@@ -383,7 +383,7 @@ function AllSubmissionsTab({ onOpenDetail }: { onOpenDetail: (id: string) => voi
         <p className="text-sm text-text-mid">Loading...</p>
       ) : submissions.length === 0 ? (
         <p className="text-sm text-text-mid">
-          {committedSearch ? 'No submissions match your search.' : 'No submissions found.'}
+          {committedSearch ? 'No readings match your search.' : 'No readings found.'}
         </p>
       ) : (
         <div className={`space-y-3 ${isFetching ? 'opacity-60 pointer-events-none' : ''}`}>
@@ -428,7 +428,7 @@ function PendingTab({ onOpenDetail }: { onOpenDetail: (id: string) => void }) {
       {isLoading ? (
         <p className="text-sm text-text-mid">Loading...</p>
       ) : submissions.length === 0 ? (
-        <p className="text-sm text-text-mid">No pending submissions to review.</p>
+        <p className="text-sm text-text-mid">No pending readings to review.</p>
       ) : (
         <div className={`space-y-3 ${isFetching ? 'opacity-60 pointer-events-none' : ''}`}>
           {submissions.map((s) => (
@@ -472,7 +472,7 @@ function RejectedTab({ onOpenDetail }: { onOpenDetail: (id: string) => void }) {
       {isLoading ? (
         <p className="text-sm text-text-mid">Loading...</p>
       ) : submissions.length === 0 ? (
-        <p className="text-sm text-text-mid">No rejected submissions.</p>
+        <p className="text-sm text-text-mid">No rejected readings.</p>
       ) : (
         <div className={`space-y-3 ${isFetching ? 'opacity-60 pointer-events-none' : ''}`}>
           {submissions.map((s) => (
@@ -525,7 +525,7 @@ export default function AdminSubmissionQueue() {
       {/* Section header */}
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-xl font-display font-bold text-text-dark">Submissions</h2>
+          <h2 className="text-xl font-display font-bold text-text-dark">Readings</h2>
           <p className="text-sm text-text-mid">Review community readings before they go public</p>
         </div>
         <HeaderRefresh onClick={refreshAll} busy={headFetching} />
@@ -556,7 +556,7 @@ export default function AdminSubmissionQueue() {
             className="flex-1 sm:flex-initial rounded-lg border-b-0 mb-0 px-4 py-2 text-sm font-medium text-blue-mid data-[state=active]:bg-card data-[state=active]:text-card-foreground data-[state=active]:border data-[state=active]:border-blue-light data-[state=active]:shadow-sm"
           >
             <span className="sm:hidden">All</span>
-            <span className="hidden sm:inline">All Submissions</span>
+            <span className="hidden sm:inline">All Readings</span>
           </TabsTrigger>
         </TabsList>
         {tab === 'pending' && (

@@ -145,7 +145,7 @@ const VenuePrompt: React.FC<VenuePromptProps> = ({ latitude, longitude, onSelect
           </p>
           <p className="text-xs mt-0.5" style={{ color: 'var(--text-mid)' }}>
             {hasVerified
-              ? 'Pick the venue for this submission.'
+              ? 'Pick the venue for this reading.'
               : 'Pick a nearby place or register a new one so this entry can group later.'}
           </p>
         </div>

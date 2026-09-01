@@ -23,7 +23,7 @@ test.describe('Leaderboard', () => {
   test('renders the three leaderboard cards', async ({ authedPage }) => {
     await expect(authedPage.getByRole('heading', { name: 'Top Places', level: 3 }).first()).toBeVisible();
     await expect(authedPage.getByRole('heading', { name: 'Top Brands', level: 3 }).first()).toBeVisible();
-    await expect(authedPage.getByRole('heading', { name: 'Most Submissions', level: 3 }).first()).toBeVisible();
+    await expect(authedPage.getByRole('heading', { name: 'Most Readings', level: 3 }).first()).toBeVisible();
   });
 
   test('displays brand entries from mock data', async ({ authedPage }) => {
@@ -46,12 +46,12 @@ test.describe('Leaderboard', () => {
     await expect(authedPage.locator('text=/%/').filter({ visible: true })).toHaveCount(0);
   });
 
-  test('Most Submissions leaderboard shows submission counts', async ({ authedPage }) => {
+  test('Most Readings leaderboard shows reading counts', async ({ authedPage }) => {
     await expect(authedPage.getByText('Loading leaderboards...')).not.toBeVisible({ timeout: 5000 });
     // Scope to <main> — "Test Contributor" also appears in the header user menu.
     const main = authedPage.getByRole('main');
     await expect(main.getByText('Test Contributor').filter({ visible: true }).first()).toBeVisible();
-    await expect(main.getByText('5 submissions', { exact: true }).filter({ visible: true }).first()).toBeVisible();
+    await expect(main.getByText('5 readings', { exact: true }).filter({ visible: true }).first()).toBeVisible();
   });
 
   test('unauthenticated user is redirected to the landing page', async ({ page }) => {

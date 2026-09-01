@@ -188,7 +188,7 @@ const Profile = () => {
                   </div>
                   <div className="flex flex-col items-center justify-center gap-1">
                     <span className="text-2xl font-bold font-display text-text-dark leading-none">{user.submission_count ?? 0}</span>
-                    <span className="text-xs text-text-muted-brown">Submissions</span>
+                    <span className="text-xs text-text-muted-brown">Readings</span>
                   </div>
                 </div>
               </CardContent>

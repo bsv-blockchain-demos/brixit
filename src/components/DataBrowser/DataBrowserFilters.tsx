@@ -392,7 +392,7 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
             onCheckedChange={(val) => handleFilterChange('hasImage', val)}
             aria-checked={filters.hasImage}
             role="switch"
-            aria-label="Filter by measurements with images"
+            aria-label="Filter by readings with images"
           />
         </div>
 
@@ -403,7 +403,7 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
             onCheckedChange={(val) => handleFilterChange('timestamped', val)}
             aria-checked={filters.timestamped}
             role="switch"
-            aria-label="Show only measurements timestamped on the blockchain"
+            aria-label="Show only readings timestamped on the blockchain"
           />
         </div>
 
@@ -415,7 +415,7 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
               onCheckedChange={(val) => handleFilterChange('verifiedOnly', val)}
               aria-checked={filters.verifiedOnly}
               role="switch"
-              aria-label="Show only verified measurements"
+              aria-label="Show only verified readings"
             />
           </div>
         )}

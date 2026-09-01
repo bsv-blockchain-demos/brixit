@@ -54,7 +54,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
           {showOwnerBadge && isOwner && (
             <Badge className="flex items-center space-x-1 px-2 py-0.5 rounded-md border border-hairline bg-transparent text-text-mid font-medium text-xs mt-1 w-fit">
               <User className="w-3 h-3" />
-              <span>Your Submission</span>
+              <span>Your Reading</span>
             </Badge>
           )}
         </div>
@@ -167,7 +167,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
               <Button
                 variant="ghost"
                 size="sm"
-                aria-label="View submission details"
+                aria-label="View reading details"
                 onClick={() => onOpenModal(submission)}
               >
                 <Eye className="w-5 h-5" />
@@ -182,7 +182,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
                 <Button
                   variant="ghost"
                   size="sm"
-                  aria-label="Edit submission"
+                  aria-label="Edit reading"
                   onClick={(e) => { e.stopPropagation(); onEdit(); }}
                 >
                   <Edit className="w-5 h-5" />
@@ -200,7 +200,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
                   size="sm"
                   onClick={() => onDelete(submission.id)}
                   className="text-destructive hover:text-destructive/80"
-                  aria-label="Delete submission"
+                  aria-label="Delete reading"
                 >
                   <Trash2 className="w-5 h-5" />
                 </Button>
@@ -209,7 +209,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
             </Tooltip>
           ) : (
             isOwner && submission.verified && (
-              <span title="Verified submissions cannot be deleted by non-admins." className="cursor-not-allowed">
+              <span title="Verified readings cannot be deleted by non-admins." className="cursor-not-allowed">
                 <Button variant="ghost" size="sm" className="text-text-muted-brown opacity-70 cursor-not-allowed" disabled>
                   <Lock className="w-5 h-5" />
                 </Button>

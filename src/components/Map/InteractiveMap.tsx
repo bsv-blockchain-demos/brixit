@@ -696,7 +696,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           {filteredSubmissions.length > 0 ? (
             filteredSubmissions.map((sub) => renderSubmissionItem(sub, sub.id, true))
           ) : (
-            <div className="text-center text-text-muted-brown py-8">No submissions found.</div>
+            <div className="text-center text-text-muted-brown py-8">No readings found.</div>
           )}
         </div>
       </div>
@@ -857,7 +857,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         {isMapLoaded && zoomLevel > 0 && zoomLevel < MIN_ZOOM_TO_QUERY && (
           <div className="absolute inset-0 z-10 flex items-start justify-center pointer-events-none">
             <div className="mt-16 bg-card/90 backdrop-blur border border-border text-card-foreground px-4 py-2 rounded-md shadow-sm text-sm">
-              Zoom in to load submissions
+              Zoom in to load readings
             </div>
           </div>
         )}

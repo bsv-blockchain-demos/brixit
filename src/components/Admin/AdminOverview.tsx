@@ -156,7 +156,7 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
           )}
         </StatCard>
 
-        <StatCard index={1} label="Total Submissions" icon={ClipboardList} accentBg="bg-green-mid" accentGhost="text-green-mid" value={isLoading ? '-' : stats?.totalSubmissions}>
+        <StatCard index={1} label="Total Readings" icon={ClipboardList} accentBg="bg-green-mid" accentGhost="text-green-mid" value={isLoading ? '-' : stats?.totalSubmissions}>
           <p className="text-xs text-text-mid mt-2">Verified &amp; publicly visible</p>
         </StatCard>
 
@@ -169,7 +169,7 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
           value={isLoading ? '-' : pending}
         >
           <p className="text-xs text-text-mid mt-2">
-            {pending ? 'Awaiting verification' : 'All submissions verified'}
+            {pending ? 'Awaiting verification' : 'All readings verified'}
           </p>
         </StatCard>
 
@@ -182,7 +182,7 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
           value={isLoading ? '-' : anchors}
         >
           <p className="text-xs text-text-mid mt-2">
-            {anchors ? 'Awaiting blockchain confirmation' : 'All submissions timestamped'}
+            {anchors ? 'Awaiting blockchain confirmation' : 'All readings timestamped'}
           </p>
         </StatCard>
       </div>

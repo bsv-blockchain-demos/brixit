@@ -58,7 +58,7 @@ function LeaderboardMobileList({
         <div className="flex items-center gap-4 px-4 py-2 text-xs font-medium uppercase tracking-wider text-text-muted-brown bg-table-header border-b border-hairline">
           <span className="shrink-0 w-[34px] text-center"><ColumnHint help="Where this entry places on the leaderboard. Entries that are tied share the same rank, shown as (tie).">Rank</ColumnHint></span>
           <span className="flex-1">{labelKey === 'location' ? 'Store' : 'Name'}</span>
-          <span className="shrink-0">{labelKey === 'user' ? 'Submissions' : <ScoreHint>Score</ScoreHint>}</span>
+          <span className="shrink-0">{labelKey === 'user' ? 'Readings' : <ScoreHint>Score</ScoreHint>}</span>
         </div>
       )}
       {data.map((entry, idx) => {
@@ -115,7 +115,7 @@ function LeaderboardMobileList({
                   <span className="truncate">{locationLine}</span>
                 </div>
               )}
-              <div className="mt-0.5 text-xs text-text-muted-brown">{subs} submissions</div>
+              <div className="mt-0.5 text-xs text-text-muted-brown">{subs} readings</div>
             </div>
 
             {/* Right: score badge (boards) or submission count (user board) */}
@@ -183,7 +183,7 @@ export function LeaderboardCard({
                   {labelKey === "location" ? "Store" : "Name"}
                 </span>
                 <span className="text-center">
-                  {labelKey === "user" ? "Submissions" : <ScoreHint>Score</ScoreHint>}
+                  {labelKey === "user" ? "Readings" : <ScoreHint>Score</ScoreHint>}
                 </span>
               </div>
 
@@ -246,7 +246,7 @@ export function LeaderboardCard({
                             </div>
                           )}
                           <div className="mt-1 text-xs text-text-muted-brown">
-                            {entry.submission_count ?? 0} submissions
+                            {entry.submission_count ?? 0} readings
                           </div>
                         </div>
 

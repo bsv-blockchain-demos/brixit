@@ -50,7 +50,7 @@ const MobileSubmissionCard: React.FC<{
                   type="button"
                   className="p-1.5 -m-1 rounded-lg hover:bg-surface-canvas transition-colors"
                   onClick={(e) => e.stopPropagation()}
-                  aria-label="Submission actions"
+                  aria-label="Reading actions"
                 >
                   <MoreVertical className="w-4 h-4 text-text-mid" />
                 </button>
@@ -117,7 +117,7 @@ const MobileSubmissionCard: React.FC<{
       {isOwner && (
         <Badge className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-hairline bg-transparent text-text-mid font-medium text-xs">
           <User className="w-3 h-3" />
-          Your Submission
+          Your Reading
         </Badge>
       )}
     </div>

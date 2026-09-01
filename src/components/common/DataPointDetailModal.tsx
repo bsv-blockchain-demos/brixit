@@ -240,7 +240,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
       if (success) {
         toast({
           title: 'Success',
-          description: 'Submission deleted successfully',
+          description: 'Reading deleted successfully',
         });
         onDeleteSuccess?.(initialDataPoint.id);
         onClose();
@@ -251,7 +251,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
       console.error('Delete error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete submission',
+        description: 'Failed to delete reading',
         variant: 'destructive',
       });
     } finally {
@@ -270,7 +270,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
         setVerified(next);
         const nextVerifiedAt = next ? new Date().toISOString() : null;
         setVerifiedAt(nextVerifiedAt ?? '');
-        toast({ title: next ? 'Submission verified' : 'Submission rejected' });
+        toast({ title: next ? 'Reading verified' : 'Reading rejected' });
         onUpdateSuccess?.({ ...initialDataPoint, verified: next, verifiedAt: nextVerifiedAt });
       } else {
         toast({ title: 'Action failed', description: res?.error ?? 'Please try again.', variant: 'destructive' });
@@ -290,7 +290,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
     try {
       const res = await rejectSubmission(initialDataPoint.id, true);
       if (res?.success) {
-        toast({ title: 'Submission rejected' });
+        toast({ title: 'Reading rejected' });
         onUpdateSuccess?.({ ...initialDataPoint, verified: false });
         onClose();
       } else {
@@ -467,7 +467,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
 
       toast({
         title: 'Success',
-        description: 'Submission updated successfully',
+        description: 'Reading updated successfully',
       });
 
       // Build updated data point for UI
@@ -572,7 +572,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
             />
 
             <div className="pt-4 border-t border-hairline">
-              <h3 className="text-lg font-bold font-display text-text-dark mb-2">Submission Details</h3>
+              <h3 className="text-lg font-bold font-display text-text-dark mb-2">Reading Details</h3>
 
               <div className="space-y-4">
               <DetailSection icon={<Building className="w-3.5 h-3.5 text-text-mid" />} title="Source" columns={2}>
@@ -644,7 +644,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                   {isEditing ? (
                     <Textarea value={outlierNotes} onChange={e => setOutlierNotes(e.target.value)} rows={4} />
                   ) : (
-                    <span className="font-normal">{initialDataPoint.outlier_notes || 'No notes for this submission.'}</span>
+                    <span className="font-normal">{initialDataPoint.outlier_notes || 'No notes for this reading.'}</span>
                   )}
                 </DetailRow>
               </DetailSection>
@@ -696,7 +696,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                       <span className="ml-3 text-sm text-text-muted">Loading images...</span>
                     </div>
                   ) : imageUrls.length === 0 ? (
-                    <p className="text-sm text-text-muted italic">No images added for this submission.</p>
+                    <p className="text-sm text-text-muted italic">No images added for this reading.</p>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {imageUrls.map((url: string, index: number) => (
@@ -783,7 +783,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
             canDelete && (
               <Button variant="outline" onClick={handleDelete} disabled={isDeleting} className="h-auto py-3 px-6 text-sm font-medium rounded-xl border-hairline text-action-danger hover:bg-score-poor-bg">
                 <Trash2 className="w-4 h-4 mr-2" />
-                {isDeleting ? 'Deleting...' : 'Delete Submission'}
+                {isDeleting ? 'Deleting...' : 'Delete Reading'}
               </Button>
             )
           )}
@@ -847,7 +847,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
           )}
         </DialogTitle>
           <DialogDescription className="sr-only">
-            View and edit a BRIX measurement submission.
+            View and edit a BRIX reading.
           </DialogDescription>
         </DialogHeader>
 

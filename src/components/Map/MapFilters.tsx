@@ -468,7 +468,7 @@ const MapFilters: React.FC = () => {
             onCheckedChange={(val) => updateFilters('hasImage', val)}
             aria-checked={filters.hasImage}
             role="switch"
-            aria-label="Filter by measurements with images"
+            aria-label="Filter by readings with images"
           />
         </div>
 
@@ -481,14 +481,14 @@ const MapFilters: React.FC = () => {
               onCheckedChange={(val) => updateFilters('verifiedOnly', val)}
               aria-checked={filters.verifiedOnly}
               role="switch"
-              aria-label="Show only verified measurements"
+              aria-label="Show only verified readings"
             />
           </div>
         )}
 
         {/* Summary */}
         <div className="pt-4 border-t">
-          <p className="text-xs text-muted-foreground">Showing filtered measurements on map</p>
+          <p className="text-xs text-muted-foreground">Showing filtered readings on map</p>
         </div>
       </CardContent>
     </Card>

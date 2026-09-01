@@ -74,7 +74,7 @@ function SubmissionModal({
       if (res.success) {
         setVerified(verify);
         onVerified(submission.id, verify);
-        toast({ title: verify ? 'Submission verified' : 'Submission unverified' });
+        toast({ title: verify ? 'Reading verified' : 'Reading unverified' });
       } else {
         toast({ title: 'Action failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
       }
@@ -89,7 +89,7 @@ function SubmissionModal({
     setLoading(true);
     try {
       await deleteSubmission(submission.id);
-      toast({ title: 'Submission deleted' });
+      toast({ title: 'Reading deleted' });
       onDeleted(submission.id);
       onClose();
     } catch (e: any) {
@@ -257,7 +257,7 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
         </div>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-text-mid border-t border-hairline pt-3">
           <span><strong className="font-semibold text-text-dark">{user.points ?? 0}</strong> points</span>
-          <span><strong className="font-semibold text-text-dark">{user.submission_count ?? 0}</strong> submissions</span>
+          <span><strong className="font-semibold text-text-dark">{user.submission_count ?? 0}</strong> readings</span>
           {user.created_at && (
             <span className="inline-flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-text-muted-brown" />
@@ -279,7 +279,7 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
           Recent Submissions ({user.submissions.length}{user.submissions.length === 50 ? '+' : ''})
         </h3>
         {user.submissions.length === 0 ? (
-          <p className="text-sm text-text-mid">No submissions yet.</p>
+          <p className="text-sm text-text-mid">No readings yet.</p>
         ) : (
           <div className="space-y-3">
             {user.submissions.map((s) => {
