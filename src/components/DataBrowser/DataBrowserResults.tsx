@@ -11,14 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { TableSortControl, type SortOption } from '@/components/common/TableSortControl';
-import { ChevronLeft, ChevronRight, SearchX } from 'lucide-react';
+import { ChevronLeft, ChevronRight, SearchX, X } from 'lucide-react';
 import {
   useFormattedSubmissionsCountQuery,
   useFormattedSubmissionsPageQuery,
   useFormattedSubmissionByIdQuery,
 } from '../../hooks/useSubmissions';
 import { useFilters, DEFAULT_MAP_FILTERS } from '../../contexts/FilterContext';
-import { getFilterSummary, getActiveFilterList } from '../../lib/filterUtils';
+import { getFilterSummary, getActiveFilterList, getRemovableFilters } from '../../lib/filterUtils';
 import { fetchFormattedSubmissionsPage, fetchMineFormattedSubmissionsPage, type PublicFormattedSubmissionsQuery } from '../../lib/fetchSubmissions';
 import { BrixDataPoint } from '../../types';
 import SubmissionTableRow from '../common/SubmissionTableRow';
@@ -196,6 +196,7 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
 
   const filterSummary = getFilterSummary(filters, isAdmin);
   const activeFilterChips = getActiveFilterList(filters, isAdmin);
+  const removableFilters = getRemovableFilters(filters, isAdmin);
   const clearAllFilters = useCallback(() => setFilters(DEFAULT_MAP_FILTERS), [setFilters]);
 
   // Two different situations were both reported as "No data found for the
@@ -261,10 +262,33 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
 
       {/* Summary is styled for the steel background, so it's desktop-only; on mobile
           the Filters button's count badge conveys active filters instead. */}
-      {filterSummary !== 'No active filters' && (
-        <p className="text-sm text-text-mid p-4 border-b border-hairline lb-desktop-only">
-          Applying filters: <span className="font-semibold text-text-dark">{filterSummary}</span>
-        </p>
+      {removableFilters.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 p-4 border-b border-hairline lb-desktop-only">
+          <span className="text-sm text-text-mid">Applying filters:</span>
+          {removableFilters.map((f) => (
+            <span
+              key={f.id}
+              className="inline-flex items-center gap-1 rounded-full border border-hairline bg-surface-canvas pl-3 pr-1 py-0.5 text-sm text-text-dark"
+            >
+              {f.label}
+              <button
+                type="button"
+                onClick={() => setFilters((prev) => ({ ...prev, ...f.reset }))}
+                aria-label={`Remove filter ${f.label}`}
+                className="rounded-full p-0.5 text-text-muted-brown hover:text-text-dark hover:bg-hairline transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="text-sm font-medium text-action-primary hover:underline"
+          >
+            Clear all
+          </button>
+        </div>
       )}
 
       {/* Mobile filter-context region (≤640px) — flat, hairline-divided from results.

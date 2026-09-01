@@ -22,7 +22,6 @@ import {
   Clock,
   Edit,
   Package,
-  FileText,
   Building,
   ExternalLink,
 } from 'lucide-react';
@@ -33,7 +32,6 @@ import { deleteSubmission } from '../../lib/fetchSubmissions';
 import { verifySubmission, rejectSubmission } from '../../lib/adminApi';
 import { useToast } from '../ui/use-toast';
 import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import { apiPut } from '../../lib/api';
 import { useImageUrls } from '../../hooks/useImageUrls';
@@ -576,14 +574,14 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
 
               <div className="space-y-4">
               <DetailSection icon={<Building className="w-3.5 h-3.5 text-text-mid" />} title="Source" columns={2}>
-                <DetailRow label="Place (Store)">
+                <DetailRow label="Place">
                   {isEditing ? (
                     <Combobox items={Array.isArray(locations) ? locations : []} value={locationName} onSelect={setLocationName} placeholder="Select Store" />
                   ) : (
                     getDisplayLabel(locations, initialDataPoint.locationName)
                   )}
                 </DetailRow>
-                <DetailRow label="Place (Address)">
+                <DetailRow label="Address">
                   {/* Read-only (the address lives on the venue). Show the human address
                       (street, city, state); never the raw coordinates. */}
                   <span className="block break-words leading-relaxed">
@@ -597,7 +595,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     formatHumanDate(initialDataPoint.purchaseDate)
                   )}
                 </DetailRow>
-                <DetailRow label="Assessment Date" last>
+                <DetailRow label="Test Date" last>
                   {isEditing ? (
                     <Input type="date" value={measurementDate} onChange={e => setMeasurementDate(e.target.value)} />
                   ) : (
@@ -614,12 +612,11 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                     getDisplayLabel(crops, initialDataPoint.cropType)
                   )}
                 </DetailRow>
-                <DetailRow label="Variety">
-                  {isEditing ? (
-                    <Input type="text" value={variety} onChange={e => setVariety(e.target.value)} />
-                  ) : (
-                    initialDataPoint.variety || initialDataPoint.posType || 'N/A'
-                  )}
+                {/* Read-only: this shows posType, and the PUT body has no
+                    field for it. The variety state is still submitted as
+                    crop_variety, so editing other fields leaves it intact. */}
+                <DetailRow label="Purchase Type">
+                  {initialDataPoint.posType || 'N/A'}
                 </DetailRow>
                 <DetailRow label="Brand">
                   {isEditing ? (
@@ -639,16 +636,6 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
               </div>
 
               <div className="mt-4 space-y-4">
-              <DetailSection icon={<FileText className="w-3.5 h-3.5 text-text-mid" />} title="Notes">
-                <DetailRow label="Outlier Notes" last>
-                  {isEditing ? (
-                    <Textarea value={outlierNotes} onChange={e => setOutlierNotes(e.target.value)} rows={4} />
-                  ) : (
-                    <span className="font-normal">{initialDataPoint.outlier_notes || 'No notes for this reading.'}</span>
-                  )}
-                </DetailRow>
-              </DetailSection>
-
               <DetailSection icon={<CheckCircle className="w-3.5 h-3.5 text-text-mid" />} title="Provenance" columns={2}>
                 <DetailRow label="Verified">
                   {isAdmin && isEditing ? (

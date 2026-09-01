@@ -8,9 +8,10 @@
  * production build, so the flag folds to `false` and the generator is dropped
  * as dead code. It cannot be switched on in a shipped bundle.
  *
- * Scope: sorting, pagination, and the cheap filters (search, crop, BRIX
- * range, blockchain) are simulated so the table behaves believably. Geographic
- * and date filters are not, and neither is anything that writes.
+ * Scope: sorting, pagination, and most filters (search, crop, brand, place,
+ * city/state/country, BRIX range, blockchain) are simulated so the table
+ * behaves believably. Date filters are not, and neither is anything that
+ * writes.
  */
 import type { BrixDataPoint } from '@/types';
 import type { PublicFormattedSubmissionsQuery } from './fetchSubmissions';
@@ -107,6 +108,16 @@ function applyFilters(rows: BrixDataPoint[], q: AnyQuery): BrixDataPoint[] {
 
   const crops = q.cropTypes as string[] | undefined;
   if (crops?.length) out = out.filter((r) => crops.includes(r.cropType) || crops.includes(r.cropId));
+
+  const brand = q.brand as string | undefined;
+  if (brand) out = out.filter((r) => (r.brandLabel ?? r.brandName) === brand);
+
+  const place = (q.place ?? q.location) as string | undefined;
+  if (place) out = out.filter((r) => r.locationName === place);
+
+  if (q.city) out = out.filter((r) => r.city === q.city);
+  if (q.state) out = out.filter((r) => r.state === q.state);
+  if (q.country) out = out.filter((r) => r.country === q.country);
 
   if (q.brixMin != null) out = out.filter((r) => r.brixLevel >= (q.brixMin as number));
   if (q.brixMax != null) out = out.filter((r) => r.brixLevel <= (q.brixMax as number));
