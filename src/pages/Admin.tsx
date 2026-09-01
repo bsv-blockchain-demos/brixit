@@ -98,12 +98,12 @@ export default function Admin() {
             style={{ backgroundImage: "url('/backdrop/backdropwallpaper.svg')" }}
           />
           <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-5">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="relative flex items-center justify-center mb-4">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate(-1)}
-                className="h-8 w-8 text-white hover:bg-white/10"
+                className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-8 text-white hover:bg-white/10"
                 aria-label="Back"
               >
                 <ArrowLeft className="h-4 w-4" />

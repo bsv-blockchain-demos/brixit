@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { BrixDataPoint } from '../../types';
+import { useMaxWidth } from '@/hooks/use-mobile';
 import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
 import { Button } from '../ui/button';
 import {
@@ -9,6 +10,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '../ui/dialog';
+import { Drawer, DrawerContent, DrawerTitle } from '../ui/drawer';
 import {
   ArrowLeft,
   User,
@@ -72,22 +74,6 @@ function DetailRow({ label, children, last = false, valueClassName = '' }: { lab
 }
 
 // Mobile detail breakpoint: ≤640px renders a full-screen page (no modal/overlay);
-// ≥641px keeps the desktop modal exactly as before.
-function useMaxWidth(px: number): boolean {
-  const query = `(max-width: ${px}px)`;
-  const [matches, setMatches] = React.useState(
-    () => typeof window !== 'undefined' && window.matchMedia(query).matches,
-  );
-  React.useEffect(() => {
-    const mql = window.matchMedia(query);
-    const onChange = () => setMatches(mql.matches);
-    mql.addEventListener('change', onChange);
-    onChange();
-    return () => mql.removeEventListener('change', onChange);
-  }, [query]);
-  return matches;
-}
-
 interface DataPointDetailModalProps {
   dataPoint: BrixDataPoint | null;
   isOpen: boolean;
@@ -95,6 +81,12 @@ interface DataPointDetailModalProps {
   onDeleteSuccess?: (id: string) => void;
   onUpdateSuccess?: (dataPoint: BrixDataPoint) => void;
   initialEditMode?: boolean;
+  /**
+   * 'page' renders the content bare, for a route that supplies its own header
+   * and breadcrumbs. 'auto' keeps the overlay: a bottom sheet on mobile, a
+   * dialog on desktop.
+   */
+  presentation?: 'auto' | 'page';
 }
 
 const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
@@ -103,6 +95,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   onClose,
   onDeleteSuccess,
   onUpdateSuccess,
+  presentation = 'auto',
   initialEditMode = false,
 }) => {
   const { isAdmin, user } = useAuth();
@@ -777,11 +770,22 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
     </div>
   );
 
-  // ── Mobile (≤640px): full-screen page, not a modal/overlay ──
-  if (isMobilePage) {
-    if (!isOpen) return null;
+  // ── Route page: the surrounding page owns the chrome ──
+  if (presentation === 'page') {
     return (
-      <div className="fixed inset-0 z-50 bg-surface-canvas flex flex-col pt-[var(--safe-top)]">
+      <div>
+        {detailContent}
+        {detailFooter}
+      </div>
+    );
+  }
+
+  // ── Mobile (≤640px): bottom sheet covering the page ──
+  if (isMobilePage) {
+    return (
+      <Drawer open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+        <DrawerContent className="h-[96%] bg-surface-canvas">
+          <DrawerTitle className="sr-only">Reading details</DrawerTitle>
         <div className="flex items-center gap-1 h-14 px-2 shrink-0 border-b border-hairline bg-card text-card-foreground">
           <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0">
             <ArrowLeft className="w-5 h-5" />
@@ -797,9 +801,10 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
             </Button>
           )}
         </div>
-        <div className="flex-1 overflow-y-auto px-3 py-4">{detailContent}</div>
+        <div className="flex-1 overflow-y-auto scrollbar-panel px-3 py-4">{detailContent}</div>
         <div className="shrink-0 px-3 bg-card">{detailFooter}</div>
-      </div>
+        </DrawerContent>
+      </Drawer>
     );
   }
 
@@ -838,7 +843,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[80vh] overflow-y-auto px-1">{detailContent}</div>
+        <div className="max-h-[80vh] overflow-y-auto scrollbar-panel px-1">{detailContent}</div>
         {detailFooter}
       </DialogContent>
     </Dialog>

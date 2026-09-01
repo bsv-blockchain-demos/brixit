@@ -27,6 +27,7 @@ import MobileSubmissionCard from '../common/MobileSubmissionCard';
 import DataPointDetailModal from '../common/DataPointDetailModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRetryAnchor } from '@/hooks/useRetryAnchor';
+import { useMaxWidth } from '@/hooks/use-mobile';
 
 interface DataBrowserResultsProps {
   fromLeaderboard: boolean;
@@ -165,10 +166,18 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
     }
   }, [highlightedQuery.data]);
 
+  // Desktop opens the reading at its own address, so it can be linked and the
+  // back button works. Narrow screens keep the sheet, which leaves the list in
+  // place behind it.
+  const isNarrow = useMaxWidth(640);
   const handleOpenModal = useCallback((dp: BrixDataPoint) => {
+    if (!isNarrow) {
+      navigate(`/readings/${dp.id}${scope === 'mine' ? '?scope=mine' : ''}`);
+      return;
+    }
     setSelectedDataPoint(dp);
     setIsModalOpen(true);
-  }, []);
+  }, [isNarrow, navigate, scope]);
 
   const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);

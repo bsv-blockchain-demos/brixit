@@ -276,3 +276,8 @@ export function mockMineCropIds(): string[] {
 export function mockMineVenueIds(): string[] {
   return [...new Set(mineRows().map((r) => r.placeId))];
 }
+
+/** Single reading by id, for the reading detail route. */
+export function mockSubmissionById(id: string): BrixDataPoint | null {
+  return dataset().find((r) => r.id === id) ?? null;
+}

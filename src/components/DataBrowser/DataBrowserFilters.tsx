@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Drawer, DrawerContent } from '../ui/drawer';
 import { Calendar, Filter, Search, ChevronDown, Check, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useMaxWidth } from '@/hooks/use-mobile';
 import { DateField } from '@/components/common/DateField';
 import { useFilters, DEFAULT_MAP_FILTERS } from '../../contexts/FilterContext';
 import { getFilterSummary, getActiveFilterList } from '../../lib/filterUtils';
@@ -29,21 +30,6 @@ import { fetchCropCategories } from '../../lib/fetchCropCategories';
 import { MapFilter } from '../../types';
 
 // Mobile render branch at the 640px task breakpoint (lazy-init avoids a flash).
-function useMaxWidth(px: number): boolean {
-  const query = `(max-width: ${px}px)`;
-  const [matches, setMatches] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia(query).matches,
-  );
-  useEffect(() => {
-    const mql = window.matchMedia(query);
-    const onChange = () => setMatches(mql.matches);
-    mql.addEventListener('change', onChange);
-    onChange();
-    return () => mql.removeEventListener('change', onChange);
-  }, [query]);
-  return matches;
-}
-
 // ─── Brix range (inline) ─────────────────────────────────────────────────────
 const STEP = 0.5;
 const MIN_BRIX = 0;

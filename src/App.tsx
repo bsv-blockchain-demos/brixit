@@ -21,6 +21,7 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
 import About from "./pages/About";
+import ReadingDetail from "./pages/ReadingDetail";
 import Settings from "./pages/Settings";
 import ProtectedRoute from "./components/misc/ProtectedRoute";
 import { FilterProvider } from './contexts/FilterContext'
@@ -117,6 +118,14 @@ const RootContent = () => {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/readings/:id"
+          element={
+            <ProtectedRoute>
+              <ReadingDetail />
             </ProtectedRoute>
           }
         />

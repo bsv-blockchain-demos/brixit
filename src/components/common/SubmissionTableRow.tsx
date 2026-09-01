@@ -4,7 +4,7 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { BrixDataPoint } from '../../types';
-import { MapPin, CheckCircle, Edit, Trash2, Eye, MessageSquare, Stamp, Lock, User, XCircle, Anchor } from 'lucide-react';
+import { MapPin, CheckCircle, Edit, Trash2, MessageSquare, Stamp, Lock, User, XCircle, Anchor } from 'lucide-react';
 import { gradeBrix } from '../../lib/getBrixColor';
 import { formatCityState } from '../../lib/formatAddress';
 import { titleCase } from '../../lib/titleCase';
@@ -170,20 +170,6 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
               <TooltipContent>Retry timestamp</TooltipContent>
             </Tooltip>
           )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label="View reading details"
-                onClick={() => onOpenModal(submission)}
-              >
-                <Eye className="w-5 h-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>View</TooltipContent>
-          </Tooltip>
-
           {canEdit && onEdit && (
             <Tooltip>
               <TooltipTrigger asChild>

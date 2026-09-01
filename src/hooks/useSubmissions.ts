@@ -218,7 +218,9 @@ export function useFormattedSubmissionByIdQuery(
     queryKey: ["submissions", "public_formatted", "by_id", safeId || null],
     queryFn: () => {
       if (!safeId) return Promise.resolve(null);
-      return fetchFormattedSubmissionById(safeId);
+      return import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === "1"
+        ? import("@/lib/devMockData").then((m) => m.mockSubmissionById(safeId))
+        : fetchFormattedSubmissionById(safeId);
     },
     enabled: enabled && !!safeId,
     staleTime,

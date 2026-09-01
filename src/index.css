@@ -342,6 +342,35 @@
   background-color: var(--blue-light);
 }
 
+/* Panel scrollbar — for long scrolling surfaces like the reading detail, where
+   the 5px global bar is hard to grab and easy to miss. Wider, with the thumb
+   inset by a transparent border so it reads as a rounded pill rather than a
+   line against the edge. Both colours are theme tokens, so it inverts. */
+.scrollbar-panel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--blue-light) transparent;
+}
+
+.scrollbar-panel::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.scrollbar-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-panel::-webkit-scrollbar-thumb {
+  background-color: var(--blue-pale);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 9999px;
+}
+
+.scrollbar-panel::-webkit-scrollbar-thumb:hover {
+  background-color: var(--blue-light);
+}
+
 /* ── Leaderboard mobile responsiveness (additive, mobile-only ≤640px) ──────────
    New utility classes used only by the Leaderboard. They have zero effect at
    ≥641px, so the desktop layout renders byte-for-byte unchanged. */
