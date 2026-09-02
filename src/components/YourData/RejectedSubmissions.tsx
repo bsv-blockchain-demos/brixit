@@ -70,11 +70,11 @@ const RejectedSubmissions: React.FC<{ userId: string }> = ({ userId }) => {
                 <ScoreGauge thresholds={cropThresholds} value={item.brixLevel} quality={quality} className="shrink-0" />
               </div>
 
-              <div className="mt-3 rounded-xl border border-hairline bg-card p-3 flex gap-2">
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-text-mid" />
+              <div className="mt-3 rounded-xl border border-score-average bg-score-average-bg p-3 flex gap-2">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-score-average" />
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-text-mid">Why this was flagged</p>
-                  <p className="mt-1 text-sm text-text-mid">{item.rejectionMessage}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-score-average">Why this was flagged</p>
+                  <p className="mt-1 text-sm text-text-dark">{item.rejectionMessage}</p>
                 </div>
               </div>
 

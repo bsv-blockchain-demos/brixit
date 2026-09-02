@@ -42,6 +42,17 @@ const ResubmitSubmission: React.FC<ResubmitSubmissionProps> = ({
   const handleResubmit = async () => {
     if (!dataPoint) return;
 
+    // Nothing edited means the server would refuse with a 409 anyway; catch it
+    // here so a stray click doesn't pay for a write and an on-chain anchor for nothing.
+    if (!editState.isDirty) {
+      toast({
+        title: 'Nothing changed yet',
+        description: 'Adjust the reading before sending it back for review.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const built = buildSubmissionUpdate({ values: editState.values, dataPoint, crops, brands, locations });
     if ('error' in built) {
       toast({ title: built.errorTitle, description: built.error, variant: 'destructive' });
@@ -129,11 +140,11 @@ const ResubmitSubmission: React.FC<ResubmitSubmissionProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-2xl border border-hairline bg-card p-4 flex gap-3">
-          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-text-mid" />
+        <div className="rounded-2xl border border-score-average bg-score-average-bg p-4 flex gap-3">
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-score-average" />
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-text-mid">Why this needs changing</p>
-            <p className="mt-1 text-sm text-text-mid">{dataPoint.rejectionMessage}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-score-average">Why this needs changing</p>
+            <p className="mt-1 text-sm text-text-dark">{dataPoint.rejectionMessage}</p>
           </div>
         </div>
 

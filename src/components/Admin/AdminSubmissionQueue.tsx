@@ -566,6 +566,9 @@ export default function AdminSubmissionQueue() {
     queryClient.invalidateQueries({ queryKey: ['admin-unverified'] });
     queryClient.invalidateQueries({ queryKey: ['admin-all-submissions'] });
     queryClient.invalidateQueries({ queryKey: ['admin-rejected'] });
+    // The detail modal reads a separately-cached by-id query; without this an
+    // admin action leaves it showing the pre-action state for its 10-minute staleTime.
+    queryClient.invalidateQueries({ queryKey: ['submissions', 'public_formatted', 'by_id'] });
   };
 
   return (

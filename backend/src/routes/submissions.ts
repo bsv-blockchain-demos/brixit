@@ -494,9 +494,10 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
     const userId = req.user!.sub;
     const roles = req.user!.roles || [];
 
+    // Full row: the rejected-reading check below hashes the post-update values,
+    // and a narrow select would silently drop a field the hash covers.
     const submission = await prisma.submission.findUnique({
       where: { id: req.params.id },
-      select: { userId: true, verified: true, outpoint: true },
     });
 
     if (!submission) {
@@ -545,6 +546,17 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
       if (body.verified !== undefined) data.verified = body.verified;
       if (body.verified_by !== undefined) data.verifiedBy = body.verified_by;
       if (body.verified_at !== undefined) data.verifiedAt = body.verified_at ? new Date(body.verified_at) : null;
+    }
+
+    // A rejected reading must genuinely change before it goes back for review.
+    // Checked here rather than after the write, so an unchanged edit costs
+    // neither a database update nor a broadcast anchor.
+    if (submission.rejectedAt && submission.rejectionHash) {
+      const next = { ...submission, ...data };
+      if (submissionHash(next) === submission.rejectionHash) {
+        res.status(409).json({ error: 'Change something about this reading before resubmitting it.' });
+        return;
+      }
     }
 
     // ── On-chain re-anchor (if signing fields present) ─────────────────────

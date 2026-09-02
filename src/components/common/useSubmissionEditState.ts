@@ -2,7 +2,7 @@
  * Edit-form state for a submission, plus the name-to-id resolution the update
  * endpoint expects. Shared by the detail modal and the resubmit view.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BrixDataPoint } from '../../types';
 
 export interface SubmissionEditValues {
@@ -30,24 +30,50 @@ export function useSubmissionEditState(dataPoint: BrixDataPoint | null) {
   const [purchaseDate, setPurchaseDate] = useState('');
   const [outlierNotes, setOutlierNotes] = useState('');
 
-  const reset = useCallback(() => {
-    if (!dataPoint) return;
-    setBrixLevel(dataPoint.brixLevel ?? '');
-    setCropType(dataPoint.cropType ?? '');
-    setVariety(dataPoint.variety ?? '');
-    setBrand(dataPoint.brandName ?? '');
-    setLocationName(dataPoint.locationName ?? '');
-    setMeasurementDate(toDateInput(dataPoint.submittedAt));
-    setPurchaseDate(toDateInput(dataPoint.purchaseDate));
-    setOutlierNotes(dataPoint.outlier_notes ?? '');
+  // The normalised values a fresh form should start from, or null when there's
+  // nothing to edit yet. Single source of truth for both `reset` and `isDirty`.
+  const pristine = useMemo((): SubmissionEditValues | null => {
+    if (!dataPoint) return null;
+    return {
+      brixLevel: dataPoint.brixLevel ?? '',
+      cropType: dataPoint.cropType ?? '',
+      variety: dataPoint.variety ?? '',
+      brand: dataPoint.brandName ?? '',
+      locationName: dataPoint.locationName ?? '',
+      measurementDate: toDateInput(dataPoint.submittedAt),
+      purchaseDate: toDateInput(dataPoint.purchaseDate),
+      outlierNotes: dataPoint.outlier_notes ?? '',
+    };
   }, [dataPoint]);
+
+  const reset = useCallback(() => {
+    if (!pristine) return;
+    setBrixLevel(pristine.brixLevel);
+    setCropType(pristine.cropType);
+    setVariety(pristine.variety);
+    setBrand(pristine.brand);
+    setLocationName(pristine.locationName);
+    setMeasurementDate(pristine.measurementDate);
+    setPurchaseDate(pristine.purchaseDate);
+    setOutlierNotes(pristine.outlierNotes);
+  }, [pristine]);
 
   useEffect(() => { reset(); }, [reset]);
 
+  const values = { brixLevel, cropType, variety, brand, locationName, measurementDate, purchaseDate, outlierNotes };
+
+  // False whenever there's no pristine baseline yet, so a not-yet-loaded form
+  // can never be reported as changed.
+  const isDirty = useMemo(
+    () => !!pristine && (Object.keys(pristine) as (keyof SubmissionEditValues)[]).some((k) => values[k] !== pristine[k]),
+    [values, pristine],
+  );
+
   return {
-    values: { brixLevel, cropType, variety, brand, locationName, measurementDate, purchaseDate, outlierNotes },
+    values,
     setters: { setBrixLevel, setCropType, setVariety, setBrand, setLocationName, setMeasurementDate, setPurchaseDate, setOutlierNotes },
     reset,
+    isDirty,
   };
 }
 
