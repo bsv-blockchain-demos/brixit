@@ -21,6 +21,7 @@ import { useCropThresholds } from '@/contexts/CropThresholdContext';
 import { scoreBrix } from '@/lib/getBrixColor';
 import { titleCase } from '@/lib/titleCase';
 import { VerifiedBadge, BlockchainBadge } from '@/components/common/StatusBadges';
+import RejectSubmissionDialog from './RejectSubmissionDialog';
 
 const PAGE_SIZE = 20;
 
@@ -65,9 +66,9 @@ function useSubmissionActions(invalidateKeys: string[]) {
 
   // Soft decline (reject=true) or restore to pending (reject=false). Either way
   // the item leaves the current list, so adjust the page like verify/delete do.
-  const handleReject = async (submissionId: string, reject: boolean, total: number, page: number, setPage: (p: number) => void) => {
+  const handleReject = async (submissionId: string, reject: boolean, total: number, page: number, setPage: (p: number) => void, message?: string) => {
     try {
-      const res = await rejectSubmission(submissionId, reject);
+      const res = await rejectSubmission(submissionId, reject, message);
       if (res.success) {
         toast({ title: reject ? 'Submission rejected' : 'Submission restored to pending' });
         const newTotalPages = Math.max(1, Math.ceil((total - 1) / PAGE_SIZE));
@@ -342,6 +343,7 @@ function AllSubmissionsTab({ onOpenDetail }: { onOpenDetail: (id: string) => voi
   const [search, setSearch] = useState('');
   const [committedSearch, setCommittedSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [rejectTargetId, setRejectTargetId] = useState<string | null>(null);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['admin-all-submissions', committedSearch, page],
@@ -361,6 +363,7 @@ function AllSubmissionsTab({ onOpenDetail }: { onOpenDetail: (id: string) => voi
   };
 
   return (
+    <>
     <div className="space-y-4">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
@@ -392,7 +395,11 @@ function AllSubmissionsTab({ onOpenDetail }: { onOpenDetail: (id: string) => voi
               key={s.id}
               s={s}
               onVerify={(id, verify) => handleVerify(id, verify, total, page, setPage)}
-              onReject={(id, reject) => handleReject(id, reject, total, page, setPage)}
+              onReject={(id, reject) =>
+                reject
+                  ? setRejectTargetId(id)
+                  : handleReject(id, false, total, page, setPage)
+              }
               onDelete={(id) => handleDelete(id, total, page, setPage)}
               onOpen={() => onOpenDetail(s.id)}
             />
@@ -402,6 +409,16 @@ function AllSubmissionsTab({ onOpenDetail }: { onOpenDetail: (id: string) => voi
 
       <Pagination page={page} totalPages={totalPages} isFetching={isFetching} onPage={setPage} />
     </div>
+
+      <RejectSubmissionDialog
+        open={!!rejectTargetId}
+        onOpenChange={(open) => { if (!open) setRejectTargetId(null); }}
+        onConfirm={(message) => {
+          if (rejectTargetId) handleReject(rejectTargetId, true, total, page, setPage, message);
+          setRejectTargetId(null);
+        }}
+      />
+    </>
   );
 }
 
@@ -409,6 +426,7 @@ function AllSubmissionsTab({ onOpenDetail }: { onOpenDetail: (id: string) => voi
 
 function PendingTab({ onOpenDetail }: { onOpenDetail: (id: string) => void }) {
   const [page, setPage] = useState(1);
+  const [rejectTargetId, setRejectTargetId] = useState<string | null>(null);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['admin-unverified', page],
@@ -424,6 +442,7 @@ function PendingTab({ onOpenDetail }: { onOpenDetail: (id: string) => void }) {
   const { handleVerify, handleReject, handleDelete } = useSubmissionActions(['admin-unverified', 'admin-all-submissions', 'admin-rejected']);
 
   return (
+    <>
     <div className="space-y-4">
       {isLoading ? (
         <p className="text-sm text-text-mid">Loading...</p>
@@ -436,7 +455,11 @@ function PendingTab({ onOpenDetail }: { onOpenDetail: (id: string) => void }) {
               key={s.id}
               s={{ ...s, verified: false } as AdminSubmission}
               onVerify={(id, verify) => handleVerify(id, verify, total, page, setPage)}
-              onReject={(id, reject) => handleReject(id, reject, total, page, setPage)}
+              onReject={(id, reject) =>
+                reject
+                  ? setRejectTargetId(id)
+                  : handleReject(id, false, total, page, setPage)
+              }
               onDelete={(id) => handleDelete(id, total, page, setPage)}
               onOpen={() => onOpenDetail(s.id)}
             />
@@ -446,6 +469,16 @@ function PendingTab({ onOpenDetail }: { onOpenDetail: (id: string) => void }) {
 
       <Pagination page={page} totalPages={totalPages} isFetching={isFetching} onPage={setPage} />
     </div>
+
+      <RejectSubmissionDialog
+        open={!!rejectTargetId}
+        onOpenChange={(open) => { if (!open) setRejectTargetId(null); }}
+        onConfirm={(message) => {
+          if (rejectTargetId) handleReject(rejectTargetId, true, total, page, setPage, message);
+          setRejectTargetId(null);
+        }}
+      />
+    </>
   );
 }
 
@@ -453,6 +486,7 @@ function PendingTab({ onOpenDetail }: { onOpenDetail: (id: string) => void }) {
 
 function RejectedTab({ onOpenDetail }: { onOpenDetail: (id: string) => void }) {
   const [page, setPage] = useState(1);
+  const [rejectTargetId, setRejectTargetId] = useState<string | null>(null);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['admin-rejected', page],
@@ -468,6 +502,7 @@ function RejectedTab({ onOpenDetail }: { onOpenDetail: (id: string) => void }) {
   const { handleVerify, handleReject, handleDelete } = useSubmissionActions(['admin-rejected', 'admin-unverified', 'admin-all-submissions']);
 
   return (
+    <>
     <div className="space-y-4">
       {isLoading ? (
         <p className="text-sm text-text-mid">Loading...</p>
@@ -480,7 +515,11 @@ function RejectedTab({ onOpenDetail }: { onOpenDetail: (id: string) => void }) {
               key={s.id}
               s={s}
               onVerify={(id, verify) => handleVerify(id, verify, total, page, setPage)}
-              onReject={(id, reject) => handleReject(id, reject, total, page, setPage)}
+              onReject={(id, reject) =>
+                reject
+                  ? setRejectTargetId(id)
+                  : handleReject(id, false, total, page, setPage)
+              }
               onDelete={(id) => handleDelete(id, total, page, setPage)}
               onOpen={() => onOpenDetail(s.id)}
             />
@@ -490,6 +529,16 @@ function RejectedTab({ onOpenDetail }: { onOpenDetail: (id: string) => void }) {
 
       <Pagination page={page} totalPages={totalPages} isFetching={isFetching} onPage={setPage} />
     </div>
+
+      <RejectSubmissionDialog
+        open={!!rejectTargetId}
+        onOpenChange={(open) => { if (!open) setRejectTargetId(null); }}
+        onConfirm={(message) => {
+          if (rejectTargetId) handleReject(rejectTargetId, true, total, page, setPage, message);
+          setRejectTargetId(null);
+        }}
+      />
+    </>
   );
 }
 
@@ -517,6 +566,9 @@ export default function AdminSubmissionQueue() {
     queryClient.invalidateQueries({ queryKey: ['admin-unverified'] });
     queryClient.invalidateQueries({ queryKey: ['admin-all-submissions'] });
     queryClient.invalidateQueries({ queryKey: ['admin-rejected'] });
+    // The detail modal reads a separately-cached by-id query; without this an
+    // admin action leaves it showing the pre-action state for its 10-minute staleTime.
+    queryClient.invalidateQueries({ queryKey: ['submissions', 'public_formatted', 'by_id'] });
   };
 
   return (

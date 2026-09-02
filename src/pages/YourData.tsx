@@ -15,6 +15,7 @@ import { buildSubmissionPayload } from '@/lib/buildSubmissionPayload';
 import { useMySubmissionsCountQuery, useMySubmissionsCropIdsQuery, useMySubmissionsVenueIdsQuery, useMySubmissionsPageQuery } from '../hooks/useSubmissions';
 
 import SubmissionTableRow from '../components/common/SubmissionTableRow';
+import RejectedSubmissions from '../components/YourData/RejectedSubmissions';
 import { ColumnHint, ScoreHint, BRIX_HELP } from '../components/common/StatusBadges';
 import MobileSubmissionCard from '../components/common/MobileSubmissionCard';
 import { BrixDataPoint } from '../types';
@@ -59,7 +60,7 @@ const YourData: React.FC = () => {
   const inChunkStart = ((currentPage - 1) * itemsPerPage) - chunkOffset;
 
   const submissionsCountQuery = useMySubmissionsCountQuery(
-    user?.id ? { userId: user.id } : undefined
+    user?.id ? { userId: user.id, rejected: false } : undefined
   );
   const verifiedCountQuery = useMySubmissionsCountQuery(
     user?.id ? { userId: user.id, verified: true } : undefined
@@ -73,6 +74,7 @@ const YourData: React.FC = () => {
           offset: chunkOffset,
           sortBy: 'assessment_date',
           sortOrder: 'desc',
+          rejected: false,
         }
       : undefined
   );
@@ -117,6 +119,7 @@ const YourData: React.FC = () => {
           offset: chunkOffset + chunkSize,
           sortBy: 'assessment_date' as const,
           sortOrder: 'desc' as const,
+          rejected: false,
         }
       : undefined;
   }, [chunkOffset, user?.id]);
@@ -336,6 +339,8 @@ const YourData: React.FC = () => {
             { icon: Store,         value: uniqueStoresCount,    label: 'Unique Stores' },
           ]} />
         </section>
+
+        {user?.id && <RejectedSubmissions userId={user.id} />}
 
         {/* Submitted measurements */}
         <div className="bg-card text-card-foreground border border-hairline rounded-2xl shadow-sm overflow-hidden">

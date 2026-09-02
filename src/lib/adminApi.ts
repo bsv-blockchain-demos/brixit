@@ -169,8 +169,8 @@ export async function verifySubmission(submissionId: string, verify = true) {
 }
 
 // Soft decline (reject) or restore (reject=false). Distinct from deleteSubmission.
-export async function rejectSubmission(submissionId: string, reject = true) {
-  return apiPost<AdminResponse>(`/api/admin/submissions/${submissionId}/reject`, { reject });
+export async function rejectSubmission(submissionId: string, reject = true, message?: string) {
+  return apiPost<AdminResponse>(`/api/admin/submissions/${submissionId}/reject`, { reject, message });
 }
 
 export async function deleteSubmission(submissionId: string) {

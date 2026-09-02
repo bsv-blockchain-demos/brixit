@@ -29,6 +29,8 @@ function makePoint(overrides: Partial<BrixDataPoint> = {}): BrixDataPoint {
     verifiedBy: 'admin',
     submittedAt: '2024-06-15T12:00:00.000Z',
     outlier_notes: '',
+    rejected: false,
+    rejectionMessage: null,
     images: [],
     poorBrix: 4,
     averageBrix: 8,

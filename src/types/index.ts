@@ -21,6 +21,8 @@ export interface BrixDataPoint {
   verifiedBy: string;
   submittedAt: string;
   outlier_notes: string;
+  rejected: boolean;
+  rejectionMessage: string | null;
   images: string[];
   poorBrix: number | null;
   averageBrix: number | null;
