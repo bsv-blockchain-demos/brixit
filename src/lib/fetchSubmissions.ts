@@ -265,7 +265,9 @@ export async function fetchFormattedSubmissionById(id: string): Promise<BrixData
   if (!safeId) return null;
 
   try {
-    const row = await apiGet<ApiSubmissionRow>(`/api/submissions/${safeId}`, { skipAuth: true });
+    // Authenticated when possible: the endpoint reveals rejection state only
+    // to the owner or an admin.
+    const row = await apiGet<ApiSubmissionRow>(`/api/submissions/${safeId}`);
     return formatApiRow(row);
   } catch (error) {
     console.error('Error fetching public submission by id:', error);
