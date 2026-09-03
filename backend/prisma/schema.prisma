@@ -162,6 +162,9 @@ model Submission {
   // 'txid.vout' of this reading's PushDrop UTXO. NULL while pending/failed.
   // Siblings in the same session share the txid prefix.
   outpoint        String?   @map("outpoint")
+  // Set when the most recent EDIT/DELETE/retry anchor task threw, so a stale
+  // `outpoint` doesn't read as anchored. Cleared on the next successful anchor.
+  anchorFailedAt  DateTime? @map("anchor_failed_at") @db.Timestamptz
 
   // Relations
   user     User?     @relation("UserSubmissions", fields: [userId], references: [id])

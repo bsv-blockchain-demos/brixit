@@ -125,6 +125,7 @@ router.get('/users/:id', async (req: AuthenticatedRequest, res: Response) => {
         place_state: s.venue?.state ?? null,
         timestamped: !!s.outpoint,
         rejected: !!s.rejectedAt,
+        anchor_failed: !!s.anchorFailedAt,
         rejection_message: s.rejectionMessage ?? null,
       })),
     });
@@ -192,6 +193,7 @@ router.get('/submissions', async (req: AuthenticatedRequest, res: Response) => {
       user_id: s.user?.id ?? null,
       timestamped: !!s.outpoint,
       rejected: !!s.rejectedAt,
+      anchor_failed: !!s.anchorFailedAt,
       rejection_message: s.rejectionMessage ?? null,
     }));
 
@@ -243,6 +245,7 @@ router.get('/submissions/unverified', async (req: AuthenticatedRequest, res: Res
       user_id: s.user?.id ?? null,
       timestamped: !!s.outpoint,
       rejected: !!s.rejectedAt,
+      anchor_failed: !!s.anchorFailedAt,
       rejection_message: s.rejectionMessage ?? null,
     }));
 

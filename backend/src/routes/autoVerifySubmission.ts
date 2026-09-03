@@ -404,13 +404,26 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
           anchor.results.map((r) =>
             prisma.submission.update({
               where: { id: r.submissionUuid },
-              data: { outpoint: r.pushDropOutpoint ?? null },
+              data: { outpoint: r.pushDropOutpoint ?? null, anchorFailedAt: null },
             }),
           ),
         );
         console.log(`[anchor] ${entries.length} reading(s) → ${anchor.txid}`);
       } catch (err) {
         console.error('[anchor] failed for session', entries.map((e) => e.submissionUuid), err);
+        // Guarded: this write must not itself throw out of a fire-and-forget task.
+        try {
+          await prisma.$transaction(
+            entries.map((e) =>
+              prisma.submission.update({
+                where: { id: e.submissionUuid },
+                data: { anchorFailedAt: new Date() },
+              }),
+            ),
+          );
+        } catch (writeErr) {
+          console.error('[anchor] failed to record anchor_failed_at for session', entries.map((e) => e.submissionUuid), writeErr);
+        }
       }
     });
 
