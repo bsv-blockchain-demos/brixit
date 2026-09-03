@@ -185,7 +185,7 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
                 <span className="ml-3 text-text-mid">Loading images...</span>
               </div>
             ) : imageUrls.length === 0 ? (
-              <p className="text-text-muted-brown italic">No images available for this submission.</p>
+              <p className="text-text-muted-brown italic">No images available for this reading.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {imageUrls.map((url: string, index: number) => (

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChevronLeft, Calendar, MapPin, CheckCircle, Clock, Trash2, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { IdentityKey } from '@/components/common/IdentityKey';
 import {
   fetchUserDetail,
   verifySubmission,
@@ -73,7 +74,7 @@ function SubmissionModal({
       if (res.success) {
         setVerified(verify);
         onVerified(submission.id, verify);
-        toast({ title: verify ? 'Submission verified' : 'Submission unverified' });
+        toast({ title: verify ? 'Reading verified' : 'Reading unverified' });
       } else {
         toast({ title: 'Action failed', description: res.error ?? 'Unknown error', variant: 'destructive' });
       }
@@ -88,7 +89,7 @@ function SubmissionModal({
     setLoading(true);
     try {
       await deleteSubmission(submission.id);
-      toast({ title: 'Submission deleted' });
+      toast({ title: 'Reading deleted' });
       onDeleted(submission.id);
       onClose();
     } catch (e: any) {
@@ -246,8 +247,9 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <h2 className="font-display font-bold text-xl text-text-dark">{user.display_name ?? user.id}</h2>
-            <p className="text-xs font-mono text-text-muted-brown mt-1 break-all">
-              Wallet identity: {user.identity_key ?? <span className="italic">no wallet identity</span>}
+            <p className="text-xs font-mono text-text-muted-brown mt-1 flex items-center gap-1 min-w-0">
+              <span className="shrink-0">Wallet identity:</span>
+              <IdentityKey value={user.identity_key} label="Wallet identity" />
             </p>
             <p className="text-xs font-mono text-text-muted-brown mt-0.5 break-all">UUID: {user.id}</p>
           </div>
@@ -255,7 +257,7 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
         </div>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-text-mid border-t border-hairline pt-3">
           <span><strong className="font-semibold text-text-dark">{user.points ?? 0}</strong> points</span>
-          <span><strong className="font-semibold text-text-dark">{user.submission_count ?? 0}</strong> submissions</span>
+          <span><strong className="font-semibold text-text-dark">{user.submission_count ?? 0}</strong> readings</span>
           {user.created_at && (
             <span className="inline-flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-text-muted-brown" />
@@ -277,7 +279,7 @@ export default function AdminUserDetail({ userId, onBack }: Props) {
           Recent Submissions ({user.submissions.length}{user.submissions.length === 50 ? '+' : ''})
         </h3>
         {user.submissions.length === 0 ? (
-          <p className="text-sm text-text-mid">No submissions yet.</p>
+          <p className="text-sm text-text-mid">No readings yet.</p>
         ) : (
           <div className="space-y-3">
             {user.submissions.map((s) => {

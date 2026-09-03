@@ -1,7 +1,7 @@
 export function FormSectionHeader({ title, required, description }: { title: string; required?: boolean; description?: string }) {
   return (
-    <div className="mb-6">
-      <div className="flex items-center gap-3">
+    <div className="mb-6 text-center">
+      <div className="flex items-center justify-center gap-3">
         <h3 className="text-xl font-display font-bold leading-none" style={{ color: 'var(--text-dark)' }}>{title}</h3>
         {required && (
           <span

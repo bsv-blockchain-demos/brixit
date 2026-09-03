@@ -72,7 +72,7 @@ const Index = () => {
               Sign in to continue
             </CardTitle>
             <p className="text-center text-sm text-text-mid">
-              Access your BRIX measurement data and contribute to the community.
+              Access your BRIX readings and contribute to the community.
             </p>
           </CardHeader>
           

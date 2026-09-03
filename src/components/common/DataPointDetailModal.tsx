@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { BrixDataPoint } from '../../types';
+import { useMaxWidth } from '@/hooks/use-mobile';
 import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
 import { Button } from '../ui/button';
 import {
@@ -9,6 +10,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '../ui/dialog';
+import { Drawer, DrawerContent, DrawerTitle } from '../ui/drawer';
 import {
   ArrowLeft,
   User,
@@ -19,8 +21,6 @@ import {
   Trash2,
   Image as ImageIcon,
   Loader2,
-  X,
-  Clock,
   Edit,
   ExternalLink,
 } from 'lucide-react';
@@ -49,22 +49,6 @@ import {
 } from './useSubmissionEditState';
 
 // Mobile detail breakpoint: ≤640px renders a full-screen page (no modal/overlay);
-// ≥641px keeps the desktop modal exactly as before.
-function useMaxWidth(px: number): boolean {
-  const query = `(max-width: ${px}px)`;
-  const [matches, setMatches] = React.useState(
-    () => typeof window !== 'undefined' && window.matchMedia(query).matches,
-  );
-  React.useEffect(() => {
-    const mql = window.matchMedia(query);
-    const onChange = () => setMatches(mql.matches);
-    mql.addEventListener('change', onChange);
-    onChange();
-    return () => mql.removeEventListener('change', onChange);
-  }, [query]);
-  return matches;
-}
-
 interface DataPointDetailModalProps {
   dataPoint: BrixDataPoint | null;
   isOpen: boolean;
@@ -72,6 +56,12 @@ interface DataPointDetailModalProps {
   onDeleteSuccess?: (id: string) => void;
   onUpdateSuccess?: (dataPoint: BrixDataPoint) => void;
   initialEditMode?: boolean;
+  /**
+   * 'page' renders the content bare, for a route that supplies its own header
+   * and breadcrumbs. 'auto' keeps the overlay: a bottom sheet on mobile, a
+   * dialog on desktop.
+   */
+  presentation?: 'auto' | 'page';
 }
 
 const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
@@ -80,6 +70,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   onClose,
   onDeleteSuccess,
   onUpdateSuccess,
+  presentation = 'auto',
   initialEditMode = false,
 }) => {
   const { isAdmin, user } = useAuth();
@@ -203,7 +194,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
       if (success) {
         toast({
           title: 'Success',
-          description: 'Submission deleted successfully',
+          description: 'Reading deleted successfully',
         });
         onDeleteSuccess?.(initialDataPoint.id);
         onClose();
@@ -214,7 +205,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
       console.error('Delete error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete submission',
+        description: 'Failed to delete reading',
         variant: 'destructive',
       });
     } finally {
@@ -233,7 +224,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
         setVerified(next);
         const nextVerifiedAt = next ? new Date().toISOString() : null;
         setVerifiedAt(nextVerifiedAt ?? '');
-        toast({ title: next ? 'Submission verified' : 'Submission rejected' });
+        toast({ title: next ? 'Reading verified' : 'Reading rejected' });
         onUpdateSuccess?.({ ...initialDataPoint, verified: next, verifiedAt: nextVerifiedAt });
       } else {
         toast({ title: 'Action failed', description: res?.error ?? 'Please try again.', variant: 'destructive' });
@@ -254,7 +245,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
     try {
       const res = await rejectSubmission(initialDataPoint.id, true, message);
       if (res?.success) {
-        toast({ title: 'Submission rejected' });
+        toast({ title: 'Reading rejected' });
         onUpdateSuccess?.({ ...initialDataPoint, verified: false, rejected: true, rejectionMessage: message });
         onClose();
       } else {
@@ -274,7 +265,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
     try {
       const res = await rejectSubmission(initialDataPoint.id, false);
       if (res?.success) {
-        toast({ title: 'Submission restored to pending' });
+        toast({ title: 'Reading restored to pending' });
         onUpdateSuccess?.({ ...initialDataPoint, rejected: false, rejectionMessage: null });
         onClose();
       } else {
@@ -384,7 +375,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
 
       toast({
         title: 'Success',
-        description: 'Submission updated successfully',
+        description: 'Reading updated successfully',
       });
 
       // Build updated data point for UI
@@ -490,7 +481,9 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
             />
 
             <div className="pt-4 border-t border-hairline">
-              <h3 className="text-lg font-bold font-display text-text-dark mb-2">Submission Details</h3>
+              <h3 className="text-lg font-bold font-display mb-2 text-center text-text-dark">
+                Reading Details
+              </h3>
 
               <SubmissionEditFields
                 state={editState}
@@ -557,7 +550,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                       <span className="ml-3 text-sm text-text-muted">Loading images...</span>
                     </div>
                   ) : imageUrls.length === 0 ? (
-                    <p className="text-sm text-text-muted italic">No images added for this submission.</p>
+                    <p className="text-sm text-text-muted italic">No images added for this reading.</p>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {imageUrls.map((url: string, index: number) => (
@@ -660,14 +653,14 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
             canDelete && (
               <Button variant="outline" onClick={handleDelete} disabled={isDeleting} className="h-auto py-3 px-6 text-sm font-medium rounded-xl border-hairline text-action-danger hover:bg-score-poor-bg">
                 <Trash2 className="w-4 h-4 mr-2" />
-                {isDeleting ? 'Deleting...' : 'Delete Submission'}
+                {isDeleting ? 'Deleting...' : 'Delete Reading'}
               </Button>
             )
           )}
     </div>
   );
 
-  // Shared by both layouts below; collects the required reason.
+  // Shared by all three layouts below; collects the required reason.
   const rejectDialog = (
     <RejectSubmissionDialog
       open={rejectDialogOpen}
@@ -680,30 +673,43 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
     />
   );
 
-  // ── Mobile (≤640px): full-screen page, not a modal/overlay ──
+  // ── Route page: the surrounding page owns the chrome ──
+  if (presentation === 'page') {
+    return (
+      <div>
+        {detailContent}
+        {detailFooter}
+        {rejectDialog}
+      </div>
+    );
+  }
+
+  // ── Mobile (≤640px): bottom sheet covering the page ──
   if (isMobilePage) {
-    if (!isOpen) return null;
     return (
       <>
-        <div className="fixed inset-0 z-50 bg-surface-canvas flex flex-col pt-[var(--safe-top)]">
-          <div className="flex items-center gap-1 h-14 px-2 shrink-0 border-b border-hairline bg-card text-card-foreground">
-            <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0">
-              <ArrowLeft className="w-5 h-5" />
-              <span className="sr-only">Back</span>
-            </Button>
-            <span className="flex-1 min-w-0 truncate text-base font-bold font-display text-text-dark">
-              {`${isEditing ? 'Edit' : 'View'}: ${getDisplayLabel(crops, initialDataPoint.cropType)}${initialDataPoint.locationName ? ` · ${getDisplayLabel(locations, initialDataPoint.locationName)}` : ''}`}
-            </span>
-            {!isEditing && canEdit && (
-              <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)} className="shrink-0">
-                <Edit className="w-5 h-5" />
-                <span className="sr-only">Edit</span>
+        <Drawer open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+          <DrawerContent className="h-[96%] bg-surface-canvas">
+            <DrawerTitle className="sr-only">Reading details</DrawerTitle>
+            <div className="flex items-center gap-1 h-14 px-2 shrink-0 border-b border-hairline bg-card text-card-foreground">
+              <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0">
+                <ArrowLeft className="w-5 h-5" />
+                <span className="sr-only">Back</span>
               </Button>
-            )}
-          </div>
-          <div className="flex-1 overflow-y-auto px-3 py-4">{detailContent}</div>
-          <div className="shrink-0 px-3 bg-card">{detailFooter}</div>
-        </div>
+              <span className="flex-1 min-w-0 truncate text-base font-bold font-display text-text-dark">
+                {`${isEditing ? 'Edit' : 'View'}: ${getDisplayLabel(crops, initialDataPoint.cropType)}${initialDataPoint.locationName ? ` · ${getDisplayLabel(locations, initialDataPoint.locationName)}` : ''}`}
+              </span>
+              {!isEditing && canEdit && (
+                <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)} className="shrink-0">
+                  <Edit className="w-5 h-5" />
+                  <span className="sr-only">Edit</span>
+                </Button>
+              )}
+            </div>
+            <div className="flex-1 overflow-y-auto scrollbar-panel px-3 py-4">{detailContent}</div>
+            <div className="shrink-0 px-3 bg-card">{detailFooter}</div>
+          </DrawerContent>
+        </Drawer>
         {rejectDialog}
       </>
     );
@@ -741,11 +747,11 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
             )}
           </DialogTitle>
             <DialogDescription className="sr-only">
-              View and edit a BRIX measurement submission.
+              View and edit a BRIX reading.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="max-h-[80vh] overflow-y-auto px-1">{detailContent}</div>
+          <div className="max-h-[80vh] overflow-y-auto scrollbar-panel px-1">{detailContent}</div>
           {detailFooter}
         </DialogContent>
       </Dialog>

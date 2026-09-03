@@ -31,6 +31,12 @@ interface LocationSelectorProps {
   disabled?: boolean;
   required?: boolean;
   showAutoDetect?: boolean;
+  /**
+   * 'inline' makes the root `display: contents`, so Country/State/City become
+   * direct grid items of the caller's own grid rather than a stacked column
+   * inside one cell. Lets a filter bar lay them out on a single row.
+   */
+  layout?: 'stacked' | 'inline';
 }
 
 const LocationSelector: React.FC<LocationSelectorProps> = ({
@@ -38,7 +44,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   onChange,
   disabled = false,
   required = false,
-  showAutoDetect = true
+  showAutoDetect = true,
+  layout = 'stacked'
 }) => {
   const [countries, setCountries] = useState<Country[]>([]);
   const [states, setStates] = useState<State[]>([]);
@@ -347,7 +354,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
     : cities.slice(0, 100);
 
   return (
-    <div className="space-y-4">
+    <div className={layout === 'inline' ? 'contents' : 'space-y-4'}>
 
       {showAutoDetect && (
         <div className="flex justify-center">

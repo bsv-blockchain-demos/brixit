@@ -202,3 +202,86 @@ export function getFilterSummary(filters: MapFilter, isAdmin: boolean): string {
   const activeFilters = getActiveFilterList(filters, isAdmin);
   return activeFilters.length > 0 ? activeFilters.join(', ') : 'No active filters';
 }
+
+/**
+ * Active filters as structured entries, so each can be shown as a chip and
+ * removed on its own.
+ *
+ * getActiveFilterList returns display strings, which is enough to say "these
+ * filters are on" but not enough to undo one of them. `reset` is the patch that
+ * clears just that filter, so a chip's dismiss is `setFilters(f => ({...f, ...reset}))`.
+ *
+ * Unlike getActiveFilterList this counts the free-text search, which is a
+ * filter the user very much thinks they applied.
+ */
+export interface RemovableFilter {
+  id: string;
+  label: string;
+  reset: Partial<MapFilter>;
+}
+
+export function getRemovableFilters(filters: MapFilter, isAdmin: boolean): RemovableFilter[] {
+  const out: RemovableFilter[] = [];
+  const D = DEFAULT_MAP_FILTERS;
+
+  if (filters.search) {
+    out.push({ id: 'search', label: `Search: ${filters.search}`, reset: { search: '' } });
+  }
+  if (filters.cropTypes.length > 0) {
+    out.push({
+      id: 'cropTypes',
+      label: `${filters.cropTypes.length} crop type${filters.cropTypes.length > 1 ? 's' : ''}`,
+      reset: { cropTypes: [] },
+    });
+  }
+  if (filters.category && filters.category !== D.category) {
+    out.push({ id: 'category', label: `Category: ${filters.category}`, reset: { category: '' } });
+  }
+  if (filters.brand && filters.brand !== D.brand) {
+    out.push({ id: 'brand', label: `Brand: ${filters.brand}`, reset: { brand: '' } });
+  }
+  if (filters.place && filters.place !== D.place) {
+    out.push({ id: 'place', label: `Place: ${filters.place}`, reset: { place: '' } });
+  }
+  if (filters.brixRange[0] !== D.brixRange[0] || filters.brixRange[1] !== D.brixRange[1]) {
+    out.push({
+      id: 'brixRange',
+      label: `BRIX ${filters.brixRange[0].toFixed(1)}–${filters.brixRange[1].toFixed(1)}`,
+      reset: { brixRange: [...D.brixRange] as [number, number] },
+    });
+  }
+  if (filters.dateRange[0] || filters.dateRange[1]) {
+    out.push({
+      id: 'dateRange',
+      label: `${filters.dateRange[0] || 'start'} → ${filters.dateRange[1] || 'end'}`,
+      reset: { dateRange: [...D.dateRange] as [string, string] },
+    });
+  }
+  if (filters.hasImage && filters.hasImage !== D.hasImage) {
+    out.push({ id: 'hasImage', label: 'With images', reset: { hasImage: false } });
+  }
+  if (filters.timestamped && filters.timestamped !== D.timestamped) {
+    out.push({ id: 'timestamped', label: 'On chain', reset: { timestamped: false } });
+  }
+  if (filters.submittedBy && filters.submittedBy !== D.submittedBy) {
+    out.push({ id: 'submittedBy', label: `By: ${filters.submittedBy}`, reset: { submittedBy: '' } });
+  }
+  // Admins can turn the verified pin off; for everyone else it is not a choice,
+  // so showing a chip they cannot act on would be noise.
+  if (isAdmin && filters.verifiedOnly !== D.verifiedOnly) {
+    out.push({ id: 'verifiedOnly', label: 'Including unverified', reset: { verifiedOnly: true } });
+  }
+
+  // One chip for the area: the three parts are chosen together in the
+  // LocationSelector and clearing only the city would leave a stale state.
+  const areaParts = [filters.city, filters.state, filters.country].filter(Boolean);
+  if (areaParts.length > 0) {
+    out.push({
+      id: 'area',
+      label: areaParts.join(', '),
+      reset: { city: '', state: '', country: '' },
+    });
+  }
+
+  return out;
+}

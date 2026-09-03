@@ -11,7 +11,6 @@ import MapView from "./pages/MapView";
 import Leaderboard from "./pages/Leaderboard";
 import DataBrowser from "./pages/DataBrowser";
 import DataEntry from "./pages/DataEntry";
-import YourData from "./pages/YourData";
 import WalletLogin from "./pages/WalletLogin";
 import CreateAccount from "./pages/CreateAccount";
 import WalletError from "./pages/WalletError";
@@ -21,6 +20,10 @@ import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
+import About from "./pages/About";
+import ReadingDetail from "./pages/ReadingDetail";
+import Buy from "./pages/Buy";
+import Settings from "./pages/Settings";
 import ProtectedRoute from "./components/misc/ProtectedRoute";
 import { FilterProvider } from './contexts/FilterContext'
 import { CropThresholdProvider } from './contexts/CropThresholdContext';
@@ -76,6 +79,8 @@ const RootContent = () => {
         <Route path="/create-account" element={<CreateAccount />} />
         <Route path="/wallet-error" element={<WalletError />} />
         <Route path="/mobile-login" element={<MobileLogin />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/buy" element={<Buy />} />
         <Route path="/faq" element={<Help />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<NotFound />} />
@@ -106,19 +111,31 @@ const RootContent = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/my-data"
-          element={
-            <ProtectedRoute>
-              <YourData />
-            </ProtectedRoute>
-          }
-        />
+        {/* My Readings folded into the readings browser as a scope. Kept as a
+            redirect so existing links and bookmarks still land in the right
+            place. */}
+        <Route path="/my-data" element={<Navigate to="/data?scope=mine" replace />} />
         <Route
           path="/profile"
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/readings/:id"
+          element={
+            <ProtectedRoute>
+              <ReadingDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
             </ProtectedRoute>
           }
         />

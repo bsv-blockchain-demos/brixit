@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { Search, ChevronLeft, ChevronRight, RefreshCw, Copy, Check } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   fetchAllUsers,
@@ -13,11 +13,11 @@ import {
 } from '@/lib/adminApi';
 import AdminUserDetail from './AdminUserDetail';
 import { RoleChip } from '@/components/common/RoleChip';
+import { IdentityKey } from '@/components/common/IdentityKey';
 
 const PAGE_SIZE = 20;
 const QUERY_KEY = 'admin-users';
 
-const short = (k: string) => `${k.slice(0, 8)}…${k.slice(-6)}`;
 
 export default function AdminUserManagement() {
   const queryClient = useQueryClient();
@@ -28,7 +28,6 @@ export default function AdminUserManagement() {
   const [committedSearch, setCommittedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: [QUERY_KEY, committedSearch, page],
@@ -69,12 +68,6 @@ export default function AdminUserManagement() {
     } catch (e: any) {
       toast({ title: 'Error', description: e?.message ?? 'Please try again.', variant: 'destructive' });
     }
-  };
-
-  const copyKey = async (key: string, id: string) => {
-    await navigator.clipboard.writeText(key);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 2000);
   };
 
   const getUserRole = (roles: string[] | null | undefined): 'user' | 'contributor' | 'admin' => {
@@ -164,17 +157,15 @@ export default function AdminUserManagement() {
               </div>
             );
 
-            const wallet = u.identity_key ? (
-              <button
-                onClick={(e) => { e.stopPropagation(); copyKey(u.identity_key!, u.id); }}
-                className="inline-flex items-center gap-1 font-mono text-xs text-text-muted hover:text-text-mid"
-                title="Copy wallet identity"
-              >
-                {short(u.identity_key)}
-                {copiedId === u.id ? <Check className="w-3 h-3 text-green-mid" /> : <Copy className="w-3 h-3" />}
-              </button>
-            ) : (
-              <span className="text-xs italic text-text-muted">no wallet identity</span>
+            const wallet = (
+              <IdentityKey
+                value={u.identity_key}
+                head={8}
+                tail={6}
+                label="Wallet identity"
+                className="text-text-muted"
+                fallback={<span className="text-xs italic text-text-muted">no wallet identity</span>}
+              />
             );
 
             const subs = u.submission_count != null

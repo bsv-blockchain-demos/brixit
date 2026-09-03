@@ -4,13 +4,14 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { BrixDataPoint } from '../../types';
-import { MapPin, Calendar, CheckCircle, Edit, Trash2, Eye, MessageSquare, Stamp, Lock, User, XCircle, Anchor } from 'lucide-react';
+import { MapPin, CheckCircle, Edit, Trash2, MessageSquare, Stamp, Lock, User, XCircle, Anchor } from 'lucide-react';
 import { gradeBrix } from '../../lib/getBrixColor';
 import { formatCityState } from '../../lib/formatAddress';
 import { titleCase } from '../../lib/titleCase';
-import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
+import { VerifiedBadge, BlockchainBadge, HintPopover } from './StatusBadges';
 import { ScoreGauge } from './ScoreGauge';
-import { formatHumanDate } from '../../lib/formatDate';
+import { CropIcon } from './CropIcon';
+import { formatHumanDate, formatRelativeTime } from '../../lib/formatDate';
 
 interface SubmissionTableRowProps {
   submission: BrixDataPoint;
@@ -41,20 +42,26 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
     >
       {/* Date */}
       <TableCell className="py-3 px-4 whitespace-nowrap">
-        <div className="flex items-center space-x-1 text-sm text-text-mid">
-          <Calendar className="w-3.5 h-3.5 text-text-muted-brown" />
-          <span>{formatHumanDate(submission.submittedAt)}</span>
-        </div>
+        {/* Relative for scanning; exact date on hover for precision. */}
+        <span className="text-sm text-text-mid" title={formatHumanDate(submission.submittedAt)}>
+          {formatRelativeTime(submission.submittedAt)}
+        </span>
       </TableCell>
 
       {/* Crop */}
       <TableCell className="py-3 px-4">
         <div>
-          <span className="text-sm text-text-mid">{titleCase(submission.cropLabel ?? submission.cropType)}</span>
+          <span className="flex items-center gap-1.5 text-sm text-text-mid">
+            <CropIcon name={submission.cropType} />
+            {titleCase(submission.cropLabel ?? submission.cropType)}
+          </span>
+          {/* bg-card, not transparent: the row tints on hover and a transparent
+              badge took the tint with it, which read as the badge itself
+              lighting up. */}
           {showOwnerBadge && isOwner && (
-            <Badge className="flex items-center space-x-1 px-2 py-0.5 rounded-md border border-hairline bg-transparent text-text-mid font-medium text-xs mt-1 w-fit">
+            <Badge className="flex items-center space-x-1 px-2 py-0.5 rounded-md border border-hairline bg-card text-text-mid font-medium text-xs mt-1 w-fit">
               <User className="w-3 h-3" />
-              <span>Your Submission</span>
+              <span>Yours</span>
             </Badge>
           )}
         </div>
@@ -122,12 +129,20 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
       </TableCell>
 
       {/* Cell 6 — Notes */}
-      <TableCell className="py-3 px-4 max-w-[150px]">
+      <TableCell className="py-3 px-4">
         {submission.outlier_notes ? (
-          <div className="flex items-center space-x-1 text-sm text-text-mid min-w-0">
-            <MessageSquare className="w-3.5 h-3.5 flex-shrink-0 text-text-muted-brown" />
-            <span className="line-clamp-2 min-w-0" title={submission.outlier_notes}>{submission.outlier_notes}</span>
-          </div>
+          // Icon only; the note reads in a popover on hover (tap on touch)
+          // rather than as two clamped lines that stretch the row.
+          <HintPopover help={submission.outlier_notes}>
+            <span
+              tabIndex={0}
+              role="button"
+              aria-label="Show note"
+              className="inline-flex items-center justify-center w-6 h-6 rounded-full cursor-help text-text-muted-brown hover:bg-surface-canvas"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+            </span>
+          </HintPopover>
         ) : (
           <span className="text-text-muted-brown text-sm">--</span>
         )}
@@ -162,27 +177,13 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
               <TooltipContent>Retry timestamp</TooltipContent>
             </Tooltip>
           )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label="View submission details"
-                onClick={() => onOpenModal(submission)}
-              >
-                <Eye className="w-5 h-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>View</TooltipContent>
-          </Tooltip>
-
           {canEdit && onEdit && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
-                  aria-label="Edit submission"
+                  aria-label="Edit reading"
                   onClick={(e) => { e.stopPropagation(); onEdit(); }}
                 >
                   <Edit className="w-5 h-5" />
@@ -200,7 +201,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
                   size="sm"
                   onClick={() => onDelete(submission.id)}
                   className="text-destructive hover:text-destructive/80"
-                  aria-label="Delete submission"
+                  aria-label="Delete reading"
                 >
                   <Trash2 className="w-5 h-5" />
                 </Button>
@@ -209,7 +210,7 @@ const SubmissionTableRow: React.FC<SubmissionTableRowProps> = ({ submission, onD
             </Tooltip>
           ) : (
             isOwner && submission.verified && (
-              <span title="Verified submissions cannot be deleted by non-admins." className="cursor-not-allowed">
+              <span title="Verified readings cannot be deleted by non-admins." className="cursor-not-allowed">
                 <Button variant="ghost" size="sm" className="text-text-muted-brown opacity-70 cursor-not-allowed" disabled>
                   <Lock className="w-5 h-5" />
                 </Button>

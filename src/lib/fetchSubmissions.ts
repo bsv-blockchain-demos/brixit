@@ -188,6 +188,10 @@ export type PublicFormattedSubmissionsQuery = {
   dateEnd?: string;
   search?: string;
   timestamped?: boolean;
+  // Only meaningful on the authenticated /mine routes: false excludes rejected
+  // readings, which the flagged section lists separately. The public routes
+  // pin verified:true and never return rejected rows.
+  rejected?: boolean;
   sortBy?: 'assessment_date' | 'brix_value' | 'crop_name' | 'place_label';
   sortOrder?: 'asc' | 'desc';
 };
@@ -222,6 +226,7 @@ function buildSubmissionsQueryString(query: Partial<PublicFormattedSubmissionsQu
   if (query.dateEnd) params.set('dateEnd', query.dateEnd);
   if (query.search) params.set('search', query.search);
   if (query.timestamped) params.set('timestamped', 'true');
+  if (typeof query.rejected === 'boolean') params.set('rejected', String(query.rejected));
   return params.toString();
 }
 
@@ -235,6 +240,39 @@ export async function fetchFormattedSubmissionsPage(
   } catch (error) {
     console.error('Error fetching public submissions page:', error);
     return [];
+  }
+}
+
+/**
+ * The same filtered/sorted list as fetchFormattedSubmissionsPage, scoped to the
+ * signed-in user. Hits the authenticated /mine route rather than adding a
+ * userId to the public one: /mine is already bound to req.user, so no caller
+ * can ask for somebody else's rows, and it does not pin verified:true, so your
+ * own pending readings stay visible.
+ */
+export async function fetchMineFormattedSubmissionsPage(
+  query: PublicFormattedSubmissionsQuery
+): Promise<BrixDataPoint[]> {
+  try {
+    const qs = buildSubmissionsQueryString(query);
+    const rows = await apiGet<ApiSubmissionRow[]>(`/api/submissions/mine?${qs}`);
+    return rows.map(formatApiRow);
+  } catch (error) {
+    console.error('Error fetching your submissions page:', error);
+    return [];
+  }
+}
+
+export async function fetchMineFormattedSubmissionsCount(
+  query: Omit<PublicFormattedSubmissionsQuery, 'limit' | 'offset'>
+): Promise<number> {
+  try {
+    const qs = buildSubmissionsQueryString(query);
+    const data = await apiGet<{ count: number }>(`/api/submissions/mine/count?${qs}`);
+    return data.count;
+  } catch (error) {
+    console.error('Error counting your submissions:', error);
+    return 0;
   }
 }
 

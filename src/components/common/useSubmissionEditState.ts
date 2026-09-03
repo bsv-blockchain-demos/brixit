@@ -146,7 +146,7 @@ export function buildSubmissionUpdate(args: {
     } else {
       const locationItem = safelocations.find(s => s?.name === locationName);
       if (!locationItem?.id) {
-        return { errorTitle: 'Invalid location', error: 'Please select a valid location from the list or clear the field.' };
+        return { errorTitle: 'Invalid place', error: 'Please select a valid place from the list or clear the field.' };
       }
       locationIdToSet = locationItem.id;
     }

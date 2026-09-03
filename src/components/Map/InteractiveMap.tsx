@@ -696,7 +696,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           {filteredSubmissions.length > 0 ? (
             filteredSubmissions.map((sub) => renderSubmissionItem(sub, sub.id, true))
           ) : (
-            <div className="text-center text-text-muted-brown py-8">No submissions found.</div>
+            <div className="text-center text-text-muted-brown py-8">No readings found.</div>
           )}
         </div>
       </div>
@@ -712,7 +712,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           <p className="text-sm text-text-muted-brown mt-2">
             <span className="md:hidden">Tap on a marker to view scores and rankings.</span>
             <span className="hidden md:inline">
-              Click on a marker to view scores and rankings for that location.
+              Click on a marker to view scores and rankings for that place.
             </span>
           </p>
         </div>
@@ -850,14 +850,14 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
               }
               setSearchValue('');
             }}
-            placeholder="Search any location..."
+            placeholder="Search any place..."
           />
         </div>
 
         {isMapLoaded && zoomLevel > 0 && zoomLevel < MIN_ZOOM_TO_QUERY && (
           <div className="absolute inset-0 z-10 flex items-start justify-center pointer-events-none">
             <div className="mt-16 bg-card/90 backdrop-blur border border-border text-card-foreground px-4 py-2 rounded-md shadow-sm text-sm">
-              Zoom in to load submissions
+              Zoom in to load readings
             </div>
           </div>
         )}
@@ -868,7 +868,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         <div className="p-4 flex-shrink-0 flex flex-row items-start justify-between border-b">
           <div className="min-w-0">
             <h2 className="text-lg font-display font-semibold truncate">
-              {locTitle || 'Location details'}
+              {locTitle || 'Place details'}
             </h2>
             {selectedPoint && (
               <p className="text-sm text-text-muted-brown mt-1 truncate">
@@ -895,7 +895,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           <BottomSheet
             open={mobileSheetOpen}
             onOpenChange={setMobileSheetOpen}
-            title={locTitle || 'Location details'}
+            title={locTitle || 'Place details'}
             className="pointer-events-auto h-[60vh]"
           >
             <div className="mb-4">{renderLeaderboard()}</div>

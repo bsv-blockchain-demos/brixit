@@ -17,19 +17,22 @@ test.describe('Leaderboard', () => {
 
   // The page renders responsive (mobile + desktop) layouts, so several texts
   // resolve to >1 element — scope with .first() to avoid strict-mode violations.
+  // Card headings are level 3. The page <h1> is also "Top places", and role-name
+  // matching is case-insensitive, so scope by level to keep this asserting on the
+  // card rather than the page title.
   test('renders the three leaderboard cards', async ({ authedPage }) => {
-    await expect(authedPage.getByRole('heading', { name: 'Top Locations' }).first()).toBeVisible();
-    await expect(authedPage.getByRole('heading', { name: 'Top Brands' }).first()).toBeVisible();
-    await expect(authedPage.getByRole('heading', { name: 'Most Submissions' }).first()).toBeVisible();
+    await expect(authedPage.getByRole('heading', { name: 'Top Places', level: 3 }).first()).toBeVisible();
+    await expect(authedPage.getByRole('heading', { name: 'Top Brands', level: 3 }).first()).toBeVisible();
+    await expect(authedPage.getByRole('heading', { name: 'Most Readings', level: 3 }).first()).toBeVisible();
   });
 
   test('displays brand entries from mock data', async ({ authedPage }) => {
-    await expect(authedPage.getByText('Loading leaderboards...')).not.toBeVisible({ timeout: 5000 });
+    await expect(authedPage.getByText('Loading...').first()).not.toBeVisible({ timeout: 5000 });
     await expect(authedPage.getByText("Olivia's Organics").filter({ visible: true }).first()).toBeVisible();
   });
 
   test('scores display as a quality rating, not raw BRIX', async ({ authedPage }) => {
-    await expect(authedPage.getByText('Loading leaderboards...')).not.toBeVisible({ timeout: 5000 });
+    await expect(authedPage.getByText('Loading...').first()).not.toBeVisible({ timeout: 5000 });
     // Aggregate scores render as a crop-relative quality rating (ScoreGauge tier
     // label), never raw BRIX. Brand "Olivia's Organics" has average_brix 16.1.
     const rating = authedPage.getByText(/^(Poor|Average|Good|Excellent)$/).filter({ visible: true });
@@ -38,17 +41,17 @@ test.describe('Leaderboard', () => {
   });
 
   test('aggregate scores never show a percentage', async ({ authedPage }) => {
-    await expect(authedPage.getByText('Loading leaderboards...')).not.toBeVisible({ timeout: 5000 });
+    await expect(authedPage.getByText('Loading...').first()).not.toBeVisible({ timeout: 5000 });
     // The leaderboard gauge is a tier label + slider only — no percentage number.
     await expect(authedPage.locator('text=/%/').filter({ visible: true })).toHaveCount(0);
   });
 
-  test('Most Submissions leaderboard shows submission counts', async ({ authedPage }) => {
-    await expect(authedPage.getByText('Loading leaderboards...')).not.toBeVisible({ timeout: 5000 });
+  test('Most Readings leaderboard shows reading counts', async ({ authedPage }) => {
+    await expect(authedPage.getByText('Loading...').first()).not.toBeVisible({ timeout: 5000 });
     // Scope to <main> — "Test Contributor" also appears in the header user menu.
     const main = authedPage.getByRole('main');
     await expect(main.getByText('Test Contributor').filter({ visible: true }).first()).toBeVisible();
-    await expect(main.getByText('5 submissions', { exact: true }).filter({ visible: true }).first()).toBeVisible();
+    await expect(main.getByText('5 readings', { exact: true }).filter({ visible: true }).first()).toBeVisible();
   });
 
   test('unauthenticated user is redirected to the landing page', async ({ page }) => {

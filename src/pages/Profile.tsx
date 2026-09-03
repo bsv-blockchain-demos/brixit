@@ -7,19 +7,17 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
-import { Copy, Check, ArrowLeft, Shield, Eye, Sprout, Leaf, TreePine, Trash2, Pencil } from 'lucide-react';
+import { ArrowLeft, Shield, Eye, Sprout, Leaf, TreePine, Pencil, ClipboardList, BadgeCheck, Store } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useToast } from '../hooks/use-toast';
-import LocationSelector from '../components/common/LocationSelector';
+import { IdentityKey } from '../components/common/IdentityKey';
+import { IconStatGrid } from '../components/common/IconStatGrid';
+import {
+  useMySubmissionsCountQuery,
+  useMySubmissionsCropIdsQuery,
+  useMySubmissionsVenueIdsQuery,
+} from '../hooks/useSubmissions';
 import Header from '../components/Layout/Header';
-
-interface LocationData {
-  country: string;
-  countryCode: string;
-  state: string;
-  stateCode: string;
-  city: string;
-}
 
 const calculateLevel = (points: number) => Math.floor(points / 100) + 1;
 const calculateProgress = (points: number) => points % 100;
@@ -31,9 +29,8 @@ const getRank = (submissions: number) => {
 };
 
 const Profile = () => {
-  const { user, updateUsername, updateLocation } = useAuth();
+  const { user, updateUsername } = useAuth();
   const [displayName, setDisplayName] = useState(user?.display_name || '');
-  const [copied, setCopied] = useState(false);
 
   const prefersReducedMotion = useReducedMotion();
   const fadeUp = prefersReducedMotion ? {} : { initial: { opacity: 0, y: 24 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5 } };
@@ -43,31 +40,24 @@ const Profile = () => {
     setDisplayName(user?.display_name || '');
   }, [user?.display_name]);
 
-  // create a LocationData object compatible with LocationSelector
-  const [location, setLocation] = useState<LocationData>({
-    country: user?.country || '',
-    countryCode: '',
-    state: user?.state || '',
-    stateCode: '',
-    city: user?.city || '',
-  });
-
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState({ username: false, location: false });
+  const [loading, setLoading] = useState({ username: false });
 
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Moved off the My Readings page: these describe you, so they belong with
+  // the level and rank rather than above a table of rows.
+  const totalQuery = useMySubmissionsCountQuery(user?.id ? { userId: user.id } : undefined);
+  const verifiedQuery = useMySubmissionsCountQuery(user?.id ? { userId: user.id, verified: true } : undefined);
+  const cropIdsQuery = useMySubmissionsCropIdsQuery(user?.id);
+  const venueIdsQuery = useMySubmissionsVenueIdsQuery(user?.id);
+  const uniqueCrops = new Set(cropIdsQuery.data ?? []).size;
+  const uniqueStores = new Set(venueIdsQuery.data ?? []).size;
+
   useEffect(() => {
     if (!user) navigate('/');
   }, [user, navigate]);
-
-  const handleCopyKey = async () => {
-    if (!user?.identity_key) return;
-    await navigator.clipboard.writeText(user.identity_key);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,26 +75,6 @@ const Profile = () => {
     }
   };
 
-  const handleLocationSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!location.country) {
-      setFormErrors({ location: 'Please select a country.' });
-      return;
-    }
-    setLoading(prev => ({ ...prev, location: true }));
-    const success = await updateLocation({
-      country: location.country,
-      state: location.state,
-      city: location.city,
-    });
-    setLoading(prev => ({ ...prev, location: false }));
-    if (success) {
-      toast({ title: 'Location updated!' });
-    } else {
-      setFormErrors({ location: 'Could not save your location. Please try again.' });
-    }
-  };
-
   if (!user) return null;
 
   const isHexKey = (user.display_name?.length ?? 0) > 20;
@@ -112,9 +82,6 @@ const Profile = () => {
   const RankIcon = rank.Icon;
   const level = calculateLevel(user.points ?? 0);
   const progress = calculateProgress(user.points ?? 0);
-  const shortKey = user.identity_key
-    ? `${user.identity_key.slice(0, 16)}…${user.identity_key.slice(-16)}`
-    : '';
 
   return (
     <div className="min-h-screen bg-surface-canvas">
@@ -170,23 +137,19 @@ const Profile = () => {
                 </div>
 
                 {/* Identity key */}
-                <div>
+                {/* Sized to the key rather than the card, and centred with
+                    its label: the value is fixed-width, so a full-bleed box
+                    left a long empty run beside it. */}
+                <div className="flex flex-col items-center">
                   <p className="text-xs font-semibold uppercase tracking-wider text-text-muted-brown mb-1.5">
                     Public Identity Key
                   </p>
-                  <div className="flex items-center gap-2 rounded-lg px-3 py-2 bg-surface-canvas border border-hairline">
-                    <code className="flex-1 min-w-0 truncate text-xs font-mono text-text-mid">{shortKey}</code>
-                    <button
-                      onClick={handleCopyKey}
-                      className="shrink-0 p-1.5 rounded-md hover:bg-surface-canvas transition-colors"
-                      aria-label="Copy identity key"
-                    >
-                      {copied ? (
-                        <Check className="h-4 w-4 text-green-fresh" />
-                      ) : (
-                        <Copy className="h-4 w-4 text-text-muted-brown" />
-                      )}
-                    </button>
+                  <div className="inline-flex items-center rounded-lg px-3 py-2 bg-surface-canvas border border-hairline">
+                    <IdentityKey
+                      value={user.identity_key}
+                      label="Public identity key"
+                      className="text-text-mid"
+                    />
                   </div>
                 </div>
 
@@ -205,14 +168,14 @@ const Profile = () => {
                   </div>
                   <div className="flex flex-col items-center justify-center gap-1">
                     <span className="text-2xl font-bold font-display text-text-dark leading-none">{user.submission_count ?? 0}</span>
-                    <span className="text-xs text-text-muted-brown">Submissions</span>
+                    <span className="text-xs text-text-muted-brown">Readings</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
 
-          {/* Settings: display name · progress · location */}
+          {/* Settings: display name · progress */}
           <motion.div {...fadeUp}>
             <Card className="border border-hairline rounded-2xl shadow-sm">
               <CardContent className="p-0">
@@ -260,51 +223,30 @@ const Profile = () => {
 
                 <div className="border-t border-hairline" />
 
-                {/* Location */}
+                {/* Reading stats, moved here from the My Readings page. */}
                 <div className="p-6">
-                  <h3 className="font-display font-bold text-text-dark mb-3">Location</h3>
-                  <form onSubmit={handleLocationSubmit} className="space-y-4">
-                    <LocationSelector
-                      value={location}
-                      onChange={setLocation}
-                      disabled={loading.location}
-                    />
-                    {formErrors.location && (
-                      <p className="text-sm text-destructive">{formErrors.location}</p>
-                    )}
-                    <Button
-                      type="submit"
-                      className="w-full bg-action-primary hover:bg-action-primary-hover text-white"
-                      disabled={loading.location}
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-display font-bold text-text-dark">Your readings</h3>
+                    <button
+                      onClick={() => navigate('/data?scope=mine')}
+                      className="text-sm font-medium text-action-primary hover:underline"
                     >
-                      {loading.location ? 'Saving…' : 'Update'}
-                    </Button>
-                  </form>
+                      View all
+                    </button>
+                  </div>
+                  {/* Two rows of two rather than one wide row of four. */}
+                  <IconStatGrid className="grid-cols-2" stats={[
+                    { icon: ClipboardList, value: totalQuery.data ?? 0,    label: 'Total Readings' },
+                    { icon: BadgeCheck,    value: verifiedQuery.data ?? 0, label: 'Verified Readings' },
+                    { icon: Sprout,        value: uniqueCrops,             label: 'Unique Crop Types' },
+                    { icon: Store,         value: uniqueStores,            label: 'Unique Stores' },
+                  ]} />
                 </div>
+
               </CardContent>
             </Card>
           </motion.div>
 
-          {/* Danger Zone */}
-          <motion.div {...fadeUp}>
-            <Card className="border border-hairline rounded-2xl shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-1">
-                  <Trash2 className="w-4 h-4 text-action-primary" />
-                  <p className="text-sm font-semibold text-action-primary">Danger Zone</p>
-                </div>
-                <p className="text-sm text-text-muted-brown mb-4">
-                  Account deletion is not available at this time.
-                </p>
-                <Button
-                  disabled
-                  className="w-full bg-surface-canvas text-text-muted-brown border border-hairline hover:bg-surface-canvas"
-                >
-                  Delete Account
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
         </div>
       </div>
     </div>

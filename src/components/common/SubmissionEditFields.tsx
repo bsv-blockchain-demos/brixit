@@ -8,6 +8,7 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import Combobox from '../ui/combo-box';
 import { Package, FileText, Building } from 'lucide-react';
+import { CropIcon } from './CropIcon';
 import { formatHumanDate } from '../../lib/formatDate';
 import { formatFullLocation } from '../../lib/formatAddress';
 import { NamedItem, SubmissionEditState } from './useSubmissionEditState';
@@ -68,21 +69,21 @@ const SubmissionEditFields: React.FC<SubmissionEditFieldsProps> = ({
   locations,
   getDisplayLabel,
 }) => {
-  const { brixLevel, cropType, variety, brand, locationName, measurementDate, purchaseDate, outlierNotes } = state.values;
-  const { setBrixLevel, setCropType, setVariety, setBrand, setLocationName, setMeasurementDate, setPurchaseDate, setOutlierNotes } = state.setters;
+  const { brixLevel, cropType, brand, locationName, measurementDate, purchaseDate, outlierNotes } = state.values;
+  const { setBrixLevel, setCropType, setBrand, setLocationName, setMeasurementDate, setPurchaseDate, setOutlierNotes } = state.setters;
 
   return (
     <>
       <div className="space-y-4">
       <DetailSection icon={<Building className="w-3.5 h-3.5 text-text-mid" />} title="Source" columns={2}>
-        <DetailRow label="Location (Store)">
+        <DetailRow label="Place">
           {isEditing ? (
             <Combobox items={Array.isArray(locations) ? locations : []} value={locationName} onSelect={setLocationName} placeholder="Select Store" />
           ) : (
             getDisplayLabel(locations, initialDataPoint.locationName)
           )}
         </DetailRow>
-        <DetailRow label="Place (Address)">
+        <DetailRow label="Address">
           {/* Read-only (the address lives on the venue). Show the human address
               (street, city, state); never the raw coordinates. */}
           <span className="block break-words leading-relaxed">
@@ -96,7 +97,7 @@ const SubmissionEditFields: React.FC<SubmissionEditFieldsProps> = ({
             formatHumanDate(initialDataPoint.purchaseDate)
           )}
         </DetailRow>
-        <DetailRow label="Assessment Date" last>
+        <DetailRow label="Test Date" last>
           {isEditing ? (
             <Input type="date" value={measurementDate} onChange={e => setMeasurementDate(e.target.value)} />
           ) : (
@@ -110,15 +111,17 @@ const SubmissionEditFields: React.FC<SubmissionEditFieldsProps> = ({
           {isEditing ? (
             <Combobox items={Array.isArray(crops) ? crops : []} value={cropType} onSelect={setCropType} placeholder="Select Crop" />
           ) : (
-            getDisplayLabel(crops, initialDataPoint.cropType)
+            <span className="flex items-center gap-1.5">
+              <CropIcon name={initialDataPoint.cropType} />
+              {getDisplayLabel(crops, initialDataPoint.cropType)}
+            </span>
           )}
         </DetailRow>
-        <DetailRow label="Variety">
-          {isEditing ? (
-            <Input type="text" value={variety} onChange={e => setVariety(e.target.value)} />
-          ) : (
-            initialDataPoint.variety || initialDataPoint.posType || 'N/A'
-          )}
+        {/* Read-only: this shows posType, and the PUT body has no
+            field for it. The variety state is still submitted as
+            crop_variety, so editing other fields leaves it intact. */}
+        <DetailRow label="Purchase Type">
+          {initialDataPoint.posType || 'N/A'}
         </DetailRow>
         <DetailRow label="Brand">
           {isEditing ? (
@@ -137,17 +140,17 @@ const SubmissionEditFields: React.FC<SubmissionEditFieldsProps> = ({
       </DetailSection>
       </div>
 
-      <div className="mt-4 space-y-4">
-      <DetailSection icon={<FileText className="w-3.5 h-3.5 text-text-mid" />} title="Notes">
-        <DetailRow label="Outlier Notes" last>
-          {isEditing ? (
-            <Textarea value={outlierNotes} onChange={e => setOutlierNotes(e.target.value)} rows={4} />
-          ) : (
-            <span className="font-normal">{initialDataPoint.outlier_notes || 'No notes for this submission.'}</span>
-          )}
-        </DetailRow>
-      </DetailSection>
-      </div>
+        <div className="mt-4 space-y-4">
+        <DetailSection icon={<FileText className="w-3.5 h-3.5 text-text-mid" />} title="Notes">
+          <DetailRow label="Outlier Notes" last>
+            {isEditing ? (
+              <Textarea value={outlierNotes} onChange={e => setOutlierNotes(e.target.value)} rows={4} />
+            ) : (
+              <span className="font-normal">{initialDataPoint.outlier_notes || 'No notes for this reading.'}</span>
+            )}
+          </DetailRow>
+        </DetailSection>
+        </div>
     </>
   );
 };

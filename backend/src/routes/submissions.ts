@@ -219,12 +219,22 @@ router.get('/mine', requireAuth as any, async (req: AuthenticatedRequest, res: R
     const orderByMap: Record<string, any> = {
       assessment_date: { assessmentDate: sortOrder },
       brix_value: { brixValue: sortOrder },
+      crop_name: { crop: { name: sortOrder } },
+      place_label: { venue: { name: sortOrder } },
+    };
+
+    // Same filters as the public list so the browser's "Mine" scope keeps
+    // every filter. verifiedOnly is off: these are your own readings, so
+    // pending ones must stay visible. userId is applied last and cannot be
+    // overridden by a query param.
+    const where: Record<string, any> = {
+      ...buildSubmissionFilters(req.query as Record<string, string | undefined>, { verifiedOnly: false }),
+      userId,
     };
 
     // rejected=true → only rejected; rejected=false → only non-rejected;
     // omitted → all.
     const rejectedParam = req.query.rejected as string | undefined;
-    const where: Record<string, any> = { userId };
     if (rejectedParam === 'true') where.rejectedAt = { not: null };
     else if (rejectedParam === 'false') where.rejectedAt = null;
 
@@ -247,7 +257,11 @@ router.get('/mine', requireAuth as any, async (req: AuthenticatedRequest, res: R
 router.get('/mine/count', requireAuth as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.sub;
-    const where: any = { userId };
+    const where: any = {
+      ...buildSubmissionFilters(req.query as Record<string, string | undefined>, { verifiedOnly: false }),
+      userId,
+    };
+    // Explicit ?verified= still wins; the stats row uses it to count approved.
     if (req.query.verified !== undefined) {
       where.verified = req.query.verified === 'true';
     }

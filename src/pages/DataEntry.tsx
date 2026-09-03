@@ -6,6 +6,7 @@ import Header from '../components/Layout/Header';
 import { PageBackground } from '../components/ui/PageBackground';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
+import { DateField } from '@/components/common/DateField';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import {
@@ -205,7 +206,7 @@ const DataEntry = () => {
 
   const validateForm = (): boolean => {
     const e: Record<string, string> = {};
-    if (!session.location.trim()) e.location = 'Please enter a location';
+    if (!session.location.trim()) e.location = 'Please enter a place';
 
     const needsVenuePrompt = session.latitude !== 0 && !session.business_name && !session.poi_name;
     if (needsVenuePrompt && !session.venueChoice) {
@@ -266,7 +267,7 @@ const DataEntry = () => {
   // validated by validateForm() on submit, unchanged.
   const validateStep1 = (): boolean => {
     const e: Record<string, string> = {};
-    if (!session.location.trim()) e.location = 'Please enter a location';
+    if (!session.location.trim()) e.location = 'Please enter a place';
 
     const needsVenuePrompt = session.latitude !== 0 && !session.business_name && !session.poi_name;
     if (needsVenuePrompt && !session.venueChoice) {
@@ -438,7 +439,7 @@ const DataEntry = () => {
       queryClient.invalidateQueries({ queryKey: ['staticData'] });
       queryClient.invalidateQueries({ queryKey: ['submissions', 'mine'] });
       queryClient.invalidateQueries({ queryKey: ['submissions', 'public_formatted'] });
-      navigate('/my-data');
+      navigate('/data?scope=mine');
     } catch (err: any) {
       toast({ title: err.message || 'Something went wrong', variant: 'destructive' });
     } finally {
@@ -469,8 +470,8 @@ const DataEntry = () => {
         className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8 max-[640px]:px-3"
         style={{ paddingBottom: 'calc(7rem + var(--bottom-inset))' }}
       >
-        <div className="mb-6">
-          <h1 className="text-2xl font-display font-bold text-on-bg-text">New Measurement Entry</h1>
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-display font-bold text-on-bg-text">New Reading</h1>
           <p className="mt-1 text-on-bg-body">
             Record one or more refractometer readings from a single shopping session
           </p>
@@ -483,13 +484,13 @@ const DataEntry = () => {
               style={{ backgroundColor: 'var(--surface-canvas)', borderColor: 'var(--hairline)' }}
             >
               <CardTitle
-                className="flex items-center space-x-3 text-xl font-display font-bold"
+                className="flex items-center justify-center space-x-3 text-xl font-display font-bold"
                 style={{ color: 'var(--text-dark)' }}
               >
                 <div className="p-2 rounded-xl" style={{ backgroundColor: 'var(--blue-deep)' }}>
                   <Upload className="w-6 h-6 text-white" />
                 </div>
-                <span>New Measurement Entry</span>
+                <span>New Reading</span>
               </CardTitle>
             </CardHeader>
 
@@ -531,7 +532,7 @@ const DataEntry = () => {
                 {/* ── Section 1: Session context (mobile Step 1) ── */}
                 <motion.div {...staggerChild} className={step !== 1 ? 'hidden' : ''}>
                   <div>
-                    <FormSectionHeader title="Where did you shop?" required description="Pick the store or market this trip's produce came from. One shop per submission." />
+                    <FormSectionHeader title="Where did you shop?" required description="Pick the store or market this trip's produce came from. One shop per reading." />
 
                     <div className="mb-6">
                       {/* Location */}
@@ -541,7 +542,7 @@ const DataEntry = () => {
                           style={{ color: 'var(--text-mid)' }}
                         >
                           <MapPin className="w-4 h-4" />
-                          Location <span className="text-destructive">*</span>
+                          Place <span className="text-destructive">*</span>
                         </Label>
                         <LocationSearch
                           value={session.location}
@@ -627,14 +628,15 @@ const DataEntry = () => {
                           <Calendar className="w-4 h-4" />
                           Purchase Date <span className="text-destructive">*</span>
                         </Label>
-                        <Input
+                        <DateField
                           id="purchaseDate"
-                          type="date"
                           value={session.purchaseDate}
-                          onChange={e => setSessionField('purchaseDate', e.target.value)}
-                          max={new Date().toISOString().split('T')[0]}
-                          className={`w-full border-2 rounded-xl px-4 py-3 bg-card transition-colors focus:outline-none ${errors.purchaseDate ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh'}`}
-                          style={{ color: 'var(--text-dark)' }}
+                          onChange={(v) => setSessionField('purchaseDate', v)}
+                          maxDate={new Date()}
+                          invalid={!!errors.purchaseDate}
+                          placeholder="Pick a date"
+                          aria-label="Purchase date"
+                          className="h-auto border-2 rounded-xl px-4 py-3"
                         />
                         {errors.purchaseDate && (
                           <p className="text-destructive text-sm mt-2 flex items-center gap-1">
@@ -705,7 +707,7 @@ const DataEntry = () => {
                 {/* ── Section 3: Optional (mobile Step 2) ── */}
                 <motion.div {...staggerChild} className={step !== 2 ? 'hidden' : ''}>
                   <div>
-                    <h3 className="text-xl font-display font-bold mb-6" style={{ color: 'var(--text-dark)' }}>
+                    <h3 className="text-xl font-display font-bold mb-6 text-center" style={{ color: 'var(--text-dark)' }}>
                       Additional Information
                     </h3>
 
@@ -715,16 +717,17 @@ const DataEntry = () => {
                         style={{ color: 'var(--text-mid)' }}
                       >
                         <Clock className="w-4 h-4" />
-                        Assessment Date
+                        Test Date
                       </Label>
-                      <Input
+                      <DateField
                         id="measurementDate"
-                        type="date"
                         value={session.measurementDate}
-                        onChange={e => setSessionField('measurementDate', e.target.value)}
-                        max={new Date().toISOString().split('T')[0]}
-                        className={`w-full border-2 rounded-xl px-4 py-3 bg-card transition-colors focus:outline-none ${errors.measurementDate ? 'border-destructive bg-red-50' : 'border-input focus:border-green-fresh'}`}
-                        style={{ color: 'var(--text-dark)' }}
+                        onChange={(v) => setSessionField('measurementDate', v)}
+                        maxDate={new Date()}
+                        invalid={!!errors.measurementDate}
+                        placeholder="Pick a date"
+                        aria-label="Test date"
+                        className="h-auto border-2 rounded-xl px-4 py-3"
                       />
                       {errors.measurementDate && (
                         <p className="text-destructive text-sm mt-2 flex items-center gap-1">
@@ -772,8 +775,10 @@ const DataEntry = () => {
             </Button>
           </div>
 
-          {/* Mobile — 2-step controls (same handlers; submit is unchanged) */}
-          <div>
+          {/* 2-step controls. The desktop block above is hidden, so these render
+              at every width; capped and centred so the primary action is not a
+              1900px bar on a wide monitor. */}
+          <div className="mx-auto w-full max-w-md">
             {step === 1 ? (
               <Button
                 onClick={handleNext}

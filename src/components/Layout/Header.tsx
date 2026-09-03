@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback } from "../ui/avatar";
@@ -7,7 +7,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
@@ -16,39 +15,64 @@ import { useWallet } from "../../contexts/WalletContext";
 import { useWalletRelay } from "../../contexts/WalletRelayContext";
 import { formatUsername } from "../../lib/formatUsername";
 import {
-  Eye,
-  Database,
+  Map,
+  Store,
+  Droplets,
+  Info,
+  ShoppingCart,
   Plus,
   User,
   LogOut,
-  Trophy,
   Menu,
   X,
   Shield,
   Sun,
   Moon,
-  Copy,
-  Check,
   ArrowRight,
+  Settings as SettingsIcon,
 } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { useTheme } from "next-themes";
 import { BrixLogo } from "@/components/common/BrixLogo";
+
+// Plain destinations that share the sliding underline. Submit and Admin are
+// deliberately outside this list: they carry their own button treatment.
+const NAV_LINKS = [
+  // Icons follow the renames: Map for the map, Store for the place rankings,
+  // Droplets for a refractometer reading. Trophy read as "leaderboard" and
+  // Database as "some table", neither of which is what these pages are now.
+  { to: "/map", icon: Map, label: "Explorer" },
+  { to: "/leaderboard", icon: Store, label: "Places" },
+  { to: "/data", icon: Droplets, label: "Readings" },
+  { to: "/about", icon: Info, label: "About" },
+] as const;
+
+/**
+ * Last known underline geometry, kept at module scope on purpose.
+ *
+ * Every page renders its own <Header />, so a route change unmounts and
+ * remounts the whole header rather than reusing it. Component state cannot
+ * survive that, and without a previous position the indicator would mount
+ * already at its destination and appear to jump. Holding it here lets the
+ * fresh instance animate from where the old one left off.
+ */
+let lastIndicator: { left: number; width: number } | null = null;
 
 const Header = () => {
   const { user, logout, isAdmin } = useAuth();
   const { resetWalletState } = useWallet();
   const { cancelSession } = useWalletRelay();
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
-  const handleCopyKey = async () => {
-    if (!user?.identity_key) return;
-    await navigator.clipboard.writeText(user.identity_key);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  // Geometry of the active desktop nav link, used to place the underline.
+  const navRef = useRef<HTMLElement>(null);
+  const [indicator, setIndicator] = useState(lastIndicator);
+  // Captured on first render, before the measuring effect overwrites the
+  // module value: where the underline sat on the route we came from.
+  const originRef = useRef(lastIndicator);
 
   // Lock background scroll while the full-screen mobile menu is open so the
   // header's close (X) stays reachable. Mobile-only (menuOpen is only set by the
@@ -61,6 +85,28 @@ const Header = () => {
   }, [menuOpen]);
 
   const isActive = (path: string) => location.pathname === path;
+
+  // Re-measure on route change, and on resize since the links reflow.
+  // useLayoutEffect so the first paint already has the underline in place.
+  useLayoutEffect(() => {
+    const measure = () => {
+      const nav = navRef.current;
+      const active = nav?.querySelector<HTMLElement>('[data-nav-active]');
+      // No underline on routes outside NAV_LINKS (Submit, Admin, Profile...).
+      const next = active ? { left: active.offsetLeft, width: active.offsetWidth } : null;
+      lastIndicator = next;
+      setIndicator(next);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [location.pathname, user, isAdmin]);
+
+  // resolvedTheme collapses "system" to the theme actually applied, so the
+  // label always names the mode the user would switch *to* and the toggle
+  // never no-ops on a system-themed session.
+  const isDark = (resolvedTheme ?? theme) === "dark";
+  const toggleTheme = () => setTheme(isDark ? "light" : "dark");
 
   const hasRole = (role: string): boolean => {
     if (!user) return false;
@@ -86,67 +132,70 @@ const Header = () => {
     logout();
   };
 
-  const NavLinks = () => (
+  // One persistent indicator positioned from the active link's measured box,
+  // rather than a layoutId shared between mounting/unmounting elements. The
+  // shared-layout approach left the incoming element stuck on its inverted
+  // "from" transform, and measuring is deterministic besides.
+  const navLinks = (
     <>
-      <Link to="/map">
-        <Button
-          variant="ghost"
-          className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/map") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
-          }`}
-        >
-          <Eye className="w-4 h-4" />
-          <span>Explorer</span>
-        </Button>
-      </Link>
-
-      <Link to="/leaderboard">
-        <Button
-          variant="ghost"
-          className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/leaderboard") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
-          }`}
-        >
-          <Trophy className="w-4 h-4" />
-          <span>Leaderboard</span>
-        </Button>
-      </Link>
-
-      <Link to="/data">
-        <Button
-          variant="ghost"
-          className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/data") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
-          }`}
-        >
-          <Database className="w-4 h-4" />
-          <span>Data</span>
-        </Button>
-      </Link>
-
-      <Link to="/my-data">
-        <Button
-          variant="ghost"
-          className={`flex items-center space-x-2 w-full justify-start ${
-            isActive("/my-data") ? "text-white border-b-2 border-white rounded-b-none pb-1" : "text-on-bg-text hover:text-accent-foreground"
-          }`}
-        >
-          <User className="w-4 h-4" />
-          <span>My Data</span>
-        </Button>
-      </Link>
-
-      {hasRole("contributor") && (
-        <Link to="/data-entry">
-          <Button
-            variant={isActive("/data-entry") ? "default" : "ghost"}
-            className="flex items-center space-x-2 w-full justify-start rounded-lg bg-action-primary hover:bg-action-primary-hover text-white hover:text-white"
+      {user && NAV_LINKS.map(({ to, icon: Icon, label }) => {
+        const active = isActive(to);
+        return (
+          <Link
+            key={to}
+            to={to}
+            data-nav-active={active || undefined}
+            // Full row height so the indicator's bottom-0 lands on the header's
+            // bottom edge instead of directly under the text.
+            className="relative flex items-center h-16"
           >
-            <Plus className="w-4 h-4" />
-            <span>Submit</span>
+            <Button
+              variant="ghost"
+              // hover:text-white sits in the base, not the inactive branch, so
+              // it also displaces the ghost variant's hover:text-accent-foreground
+              // on the active link. Icons inherit via currentColor.
+              className={`flex items-center space-x-2 hover:bg-transparent hover:text-white ${
+                active ? "text-white" : "text-on-bg-text"
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              <span>{label}</span>
+            </Button>
+          </Link>
+        );
+      })}
+
+      {/* Add and Buy read as one split control when both are present. Buy is
+          not gated on the contributor role: observers are exactly the people
+          who do not have a meter yet, so when Add is absent Buy stands alone
+          and takes the full rounding. */}
+      <div className="flex items-center">
+        {hasRole("contributor") && (
+          <Link to="/data-entry">
+            <Button
+              variant={isActive("/data-entry") ? "default" : "ghost"}
+              className="flex items-center space-x-2 justify-start rounded-l-lg rounded-r-none bg-action-primary hover:bg-action-primary-hover text-white hover:text-white"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add</span>
+            </Button>
+          </Link>
+        )}
+        <Link to="/buy">
+          <Button
+            variant="ghost"
+            // Inverts against the orange Add: the app surface colour with the
+            // app ink on it, so it flips with the theme rather than being a
+            // second accent competing for the same attention.
+            className={`flex items-center space-x-2 justify-start bg-card text-text-dark hover:bg-surface-canvas hover:text-text-dark ${
+              hasRole("contributor") ? "rounded-l-none rounded-r-lg" : "rounded-lg"
+            } ${isActive("/buy") ? "ring-2 ring-inset ring-white/50" : ""}`}
+          >
+            <ShoppingCart className="w-4 h-4" />
+            <span>Buy</span>
           </Button>
         </Link>
-      )}
+      </div>
 
       {isAdmin && (
         <Link to="/admin">
@@ -159,7 +208,7 @@ const Header = () => {
             }`}
           >
             <Shield className="w-4 h-4" />
-            <span>Admin</span>
+            <span>Steward</span>
           </Button>
         </Link>
       )}
@@ -167,7 +216,9 @@ const Header = () => {
   );
 
   return (
-    <header className="bg-background border-b border-white/30 pt-[var(--safe-top)]">
+    // Frosted, borderless top bar. The translucency reveals PageBackground's
+    // fixed wallpaper, which paints above the page fill and below this bar.
+    <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md pt-[var(--safe-top)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo: signed-in users go to the app map; signed-out visitors go to the home/landing page */}
@@ -175,25 +226,55 @@ const Header = () => {
             <BrixLogo height="3rem" color="white" />
           </Link>
 
-          {/* Desktop Navigation */}
-          {user && (
-            <nav className="hidden md:flex items-center space-x-4">
-              <NavLinks />
+          {/* Desktop Navigation. Rendered for everyone: Buy lives in here and
+              is offered to signed-out visitors too. The destinations and the
+              underline are still signed-in only. */}
+          {
+            // gap-4, not space-x-4: the latter sets margin-left on every child
+            // after the first, which would also shove the absolutely positioned
+            // indicator 16px right of its measured offset.
+            <nav ref={navRef} className="relative hidden md:flex items-center h-16 gap-4">
+              {navLinks}
+              {indicator && (
+                <motion.span
+                  aria-hidden="true"
+                  className="absolute bottom-0 left-0 h-[3px] rounded-full bg-white"
+                  // Animate in from the previous route's position. On a cold
+                  // load there is none, so initial={false} puts it straight
+                  // under the active link instead of sliding in from the left.
+                  initial={
+                    originRef.current
+                      ? { x: originRef.current.left, width: originRef.current.width }
+                      : false
+                  }
+                  animate={{ x: indicator.left, width: indicator.width }}
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0 }
+                      : { type: "spring", stiffness: 500, damping: 40 }
+                  }
+                />
+              )}
             </nav>
-          )}
+          }
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              aria-label="Toggle dark mode"
-              className="relative"
-            >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-transform dark:rotate-90 dark:scale-0" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
-            </Button>
+            {/* Signed-in users toggle the theme from the account menu below.
+                Signed-out visitors (/map is public) have no account menu, so
+                they keep the standalone control. */}
+            {!user && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleTheme}
+                aria-label="Toggle dark mode"
+                className="relative"
+              >
+                <Sun className="h-5 w-5 rotate-0 scale-100 transition-transform dark:rotate-90 dark:scale-0" />
+                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
+              </Button>
+            )}
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -218,29 +299,30 @@ const Header = () => {
                       Profile
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings" className="cursor-pointer">
+                      <SettingsIcon className="mr-2 h-4 w-4" />
+                      Settings
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Identity Key
-                  </DropdownMenuLabel>
-                  <div className="px-2 pb-2">
-                    <div className="flex items-center gap-2 rounded-md bg-surface-canvas border border-hairline px-3 py-2">
-                      <code className="flex-1 min-w-0 truncate text-xs font-mono text-card-foreground">
-                        {user.identity_key?.slice(0, 16)}…{user.identity_key?.slice(-16)}
-                      </code>
-                      <button
-                        onClick={handleCopyKey}
-                        className="shrink-0 p-1 rounded hover:bg-accent transition-colors"
-                        aria-label="Copy identity key"
-                      >
-                        {copied ? (
-                          <Check className="h-3.5 w-3.5 text-green-fresh" />
-                        ) : (
-                          <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    // Keep the menu open so the theme change is visible in place;
+                    // a toggle that dismissed its own trigger would be awkward to
+                    // flip back.
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      toggleTheme();
+                    }}
+                    className="cursor-pointer"
+                  >
+                    {isDark ? (
+                      <Sun className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Moon className="mr-2 h-4 w-4" />
+                    )}
+                    {isDark ? "Light mode" : "Dark mode"}
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
@@ -273,7 +355,8 @@ const Header = () => {
 
         {/* Mobile Navigation — full-height steel panel with its own header, nav
             list, and a bottom account card. Desktop nav + dropdown are untouched.
-            The Identity Key & Delete Account live only on the Profile page. */}
+            This panel carries no Identity Key (it is in the desktop dropdown and
+            on Profile) and no account deletion (that lives on Settings). */}
         {user && menuOpen && (
           <div className="md:hidden fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)]">
             {/* Panel header */}
@@ -305,12 +388,13 @@ const Header = () => {
             {/* Nav list */}
             <nav className="flex-1 overflow-y-auto px-4 pt-4 space-y-1">
               {[
-                { to: "/map", icon: Eye, label: "Explorer" },
-                { to: "/leaderboard", icon: Trophy, label: "Leaderboard" },
-                { to: "/data", icon: Database, label: "Data" },
-                { to: "/my-data", icon: User, label: "My Data" },
-                ...(hasRole("contributor") ? [{ to: "/data-entry", icon: Plus, label: "Submit", primary: true }] : []),
-                ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : []),
+                { to: "/map", icon: Map, label: "Explorer" },
+                { to: "/leaderboard", icon: Store, label: "Places" },
+                { to: "/data", icon: Droplets, label: "Readings" },
+                { to: "/about", icon: Info, label: "About" },
+                { to: "/buy", icon: ShoppingCart, label: "Buy" },
+                ...(hasRole("contributor") ? [{ to: "/data-entry", icon: Plus, label: "Add", primary: true }] : []),
+                ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Steward" }] : []),
               ].map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.to);

@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import Header from "../components/Layout/Header";
 import { PageBackground } from '../components/ui/PageBackground';
 import LocationSelector from "../components/common/LocationSelector";
@@ -33,6 +33,7 @@ const emptyLocation = {
   stateCode: "",
   city: "",
 };
+
 
 const PAGE_SIZE = 20;
 
@@ -80,6 +81,7 @@ const LeaderboardPage: React.FC = () => {
   //   isFetching   — filter change, keep stale data visible (dimmed)
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
+
 
   // Initializing location codes — we handle this silently (no spinner)
   const [isInitializing, setIsInitializing] = useState(!!user?.country);
@@ -179,21 +181,30 @@ const LeaderboardPage: React.FC = () => {
         const fetchLoc = (f: any) =>
           queryClient.fetchQuery({
             queryKey: ['leaderboard', 'location', f],
-            queryFn: () => fetchLocationLeaderboard(f),
+            queryFn: () =>
+              import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === '1'
+                ? import('@/lib/devMockData').then((m) => m.mockLocationLeaderboard(f))
+                : fetchLocationLeaderboard(f),
             staleTime: 5 * 60 * 1000,
           });
 
         const fetchBrand = (f: any) =>
           queryClient.fetchQuery({
             queryKey: ['leaderboard', 'brand', f],
-            queryFn: () => fetchBrandLeaderboard(f),
+            queryFn: () =>
+              import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === '1'
+                ? import('@/lib/devMockData').then((m) => m.mockBrandLeaderboard(f))
+                : fetchBrandLeaderboard(f),
             staleTime: 5 * 60 * 1000,
           });
 
         const fetchUsers = (f: any) =>
           queryClient.fetchQuery({
             queryKey: ['leaderboard', 'user', f],
-            queryFn: () => fetchUserLeaderboard(f),
+            queryFn: () =>
+              import.meta.env.DEV && import.meta.env.VITE_DEV_MOCK_DATA === '1'
+                ? import('@/lib/devMockData').then((m) => m.mockUserLeaderboard(f))
+                : fetchUserLeaderboard(f),
             staleTime: 5 * 60 * 1000,
           });
 
@@ -260,12 +271,16 @@ const LeaderboardPage: React.FC = () => {
           setLocationHasMore(Array.isArray(loc) && loc.length === PAGE_SIZE);
           setBrandHasMore(Array.isArray(brand) && brand.length === PAGE_SIZE);
           setUserHasMore(Array.isArray(users) && users.length === PAGE_SIZE);
-          setIsFirstLoad(false);
         }
       } catch (err) {
         console.error("Error loading leaderboards:", err);
       } finally {
-        if (mounted) setIsFetching(false);
+        if (mounted) {
+          setIsFetching(false);
+          // In finally, not the try: a thrown fetch used to leave isFirstLoad
+          // true, pinning the full-screen overlay over the app with no way out.
+          setIsFirstLoad(false);
+        }
       }
     };
 
@@ -288,6 +303,20 @@ const LeaderboardPage: React.FC = () => {
     setCrop("");
     setStore("");
   };
+
+  // Drives the empty state's wording: a board can be empty because the user
+  // narrowed it, or because nothing has been submitted yet.
+  //
+  // Measured against what resetFilters would restore, not against "empty".
+  // resetFilters puts the location back to the user's profile, so treating a
+  // profile location as an active filter would offer a Reset button that
+  // changes nothing and never let the second wording appear.
+  const hasActiveFilters =
+    !!crop ||
+    !!store ||
+    location.country !== (user?.country || ALL_COUNTRIES) ||
+    location.state !== (user?.state || "") ||
+    location.city !== (user?.city || "");
 
   const loadMore = async (type: 'location' | 'brand' | 'user') => {
     const filters = type === 'location' ? locationFetchFilters
@@ -373,14 +402,14 @@ const LeaderboardPage: React.FC = () => {
   const PANEL = "bg-card text-card-foreground border border-hairline rounded-2xl shadow-sm overflow-hidden";
 
   const boardConfigs = [
-    { key: 'location' as const, title: 'Top Locations', subtitle: 'Where the highest-scoring produce is being found', data: locationData, hasMore: locationHasMore, isLoadingMore: loadingMore.location, onLoadMore: () => loadMore('location') },
+    { key: 'location' as const, title: 'Top Places', subtitle: 'Where the highest-scoring produce is being found', data: locationData, hasMore: locationHasMore, isLoadingMore: loadingMore.location, onLoadMore: () => loadMore('location') },
     { key: 'brand' as const, title: 'Top Brands', subtitle: 'Farms and brands with the best average scores', data: brandData, hasMore: brandHasMore, isLoadingMore: loadingMore.brand, onLoadMore: () => loadMore('brand') },
-    { key: 'user' as const, title: 'Most Submissions', subtitle: 'The community’s most active contributors', data: userData, hasMore: userHasMore, isLoadingMore: loadingMore.user, onLoadMore: () => loadMore('user') },
+    { key: 'user' as const, title: 'Most Readings', subtitle: 'The community’s most active contributors', data: userData, hasMore: userHasMore, isLoadingMore: loadingMore.user, onLoadMore: () => loadMore('user') },
   ];
   const filterTabs = ([
-    { key: 'location', label: 'Locations' },
+    { key: 'location', label: 'Places' },
     { key: 'brand', label: 'Brands' },
-    { key: 'user', label: 'Submissions' },
+    { key: 'user', label: 'Readings' },
   ] as const);
   const renderBoard = (cfg: typeof boardConfigs[number]) => (
     <LeaderboardCard
@@ -391,6 +420,8 @@ const LeaderboardPage: React.FC = () => {
       loadMoreType={cfg.key}
       hasMore={cfg.hasMore}
       isFirstLoad={isFirstLoad}
+      hasActiveFilters={hasActiveFilters}
+      onResetFilters={resetFilters}
       isFetching={isFetching}
       isLoadingMore={cfg.isLoadingMore}
       onLoadMore={cfg.onLoadMore}
@@ -400,32 +431,24 @@ const LeaderboardPage: React.FC = () => {
 
   return (
     <PageBackground className="min-h-screen flex flex-col">
-      {isFirstLoad && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading leaderboards...</p>
-          </div>
-        </div>
-      )}
       <Header />
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pb-[var(--bottom-inset)]">
         {/* Page identity, shown on both mobile and desktop. Refresh lives here
             (data freshness, not a filter) so it sits with the section, not the filters. */}
-        <div className="mb-6 flex items-end justify-between gap-4">
+        <div className="mb-6 relative text-center">
           <div className="min-w-0">
             <h1 className="text-2xl font-display font-bold text-on-bg-text">
-              Leaderboard
+              Top places
             </h1>
             <p className="mt-1 text-on-bg-body">
-              See where the community is finding the most nutritious produce, ranked by location, brand, and contributor.
+              See where the community is finding the most nutritious produce, ranked by place, brand, and contributor.
             </p>
           </div>
           <button
             onClick={handleRefresh}
             disabled={!canRefresh}
             aria-label="Refresh leaderboards"
-            className={`shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-lg ${canRefresh ? 'text-on-bg-body hover:text-on-bg-text hover:bg-white/10' : 'text-on-bg-muted'}`}
+            className={`absolute right-0 top-1/2 -translate-y-1/2 shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-lg ${canRefresh ? 'text-on-bg-body hover:text-on-bg-text hover:bg-white/10' : 'text-on-bg-muted'}`}
           >
             <RefreshCw className="h-4 w-4" />
           </button>
@@ -508,12 +531,18 @@ const LeaderboardPage: React.FC = () => {
           {/* Filters region */}
           <div className="p-4">
             <h2 className="text-lg font-semibold font-display text-text-dark mb-3">Filters</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl">
+            {/* One row on desktop. LocationSelector runs in `inline` layout so
+                its Country/State/City land as siblings of Crop and Store in
+                this grid rather than stacking inside a single cell. State and
+                City only render once their parent is chosen, so the row holds
+                between 3 and 5 controls. */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 desktop:grid-cols-5 gap-4 items-end">
               <LocationSelector
                 value={location}
                 onChange={setLocation}
                 required={false}
                 showAutoDetect={false}
+                layout="inline"
               />
               <div>
                 <Label htmlFor="crop">Crop</Label>
