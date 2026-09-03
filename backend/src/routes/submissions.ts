@@ -54,7 +54,7 @@ async function markAnchorFailed(submissionId: string): Promise<void> {
       data: { anchorFailedAt: new Date() },
     });
   } catch (err) {
-    console.error(`[anchor] failed to record anchor_failed_at for ${submissionId}:`, err);
+    console.error('[anchor] failed to record anchor_failed_at for %s:', submissionId, err);
   }
 }
 
