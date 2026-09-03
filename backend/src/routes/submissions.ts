@@ -44,6 +44,20 @@ async function derivePayoutScript(wallet: WalletInterface, submissionUuid: strin
   return new P2PKH().lock(address).toHex();
 }
 
+// Records that an anchor task failed so a stale outpoint doesn't read as
+// current. Swallows its own errors — a DELETE's row is already gone by the
+// time its anchor task runs, so this write is expected to no-op there.
+async function markAnchorFailed(submissionId: string): Promise<void> {
+  try {
+    await prisma.submission.update({
+      where: { id: submissionId },
+      data: { anchorFailedAt: new Date() },
+    });
+  } catch (err) {
+    console.error(`[anchor] failed to record anchor_failed_at for ${submissionId}:`, err);
+  }
+}
+
 const router = Router();
 
 // Public submission shape. `images` is part of it — every detail surface shows them.
@@ -400,11 +414,12 @@ router.post('/:id/retry-anchor', requireAuth as any, async (req: AuthenticatedRe
         const anchor = await createSubmissionTx({ op: 'NEW', wallet: serverWallet, entries: [entry] });
         await prisma.submission.update({
           where: { id: submissionUuid },
-          data: { outpoint: anchor.results[0].pushDropOutpoint ?? null },
+          data: { outpoint: anchor.results[0].pushDropOutpoint ?? null, anchorFailedAt: null },
         });
         console.log(`[anchor retry] ${submissionUuid} → ${anchor.txid}`);
       } catch (err) {
         console.error(`[anchor retry] failed for ${submissionUuid}:`, err);
+        await markAnchorFailed(submissionUuid);
       }
     });
 
@@ -635,7 +650,7 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
           let outpoint: string | undefined;
           if (previousOutpoint) {
             // EDIT — spend the previous PushDrop, produce a new one.
-            const previous = await getTransaction(serverWallet, previousOutpoint);
+            const previous = await getTransaction(serverWallet, previousOutpoint, submissionUuid);
             const anchor = await createSubmissionTx({
               op: 'EDIT',
               wallet: serverWallet,
@@ -657,10 +672,11 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
           }
           await prisma.submission.update({
             where: { id: submissionUuid },
-            data: { outpoint: outpoint ?? null },
+            data: { outpoint: outpoint ?? null, anchorFailedAt: null },
           });
         } catch (err) {
           console.error(`[anchor edit] failed for ${submissionUuid}:`, err);
+          await markAnchorFailed(submissionUuid);
         }
       });
     }
@@ -706,7 +722,7 @@ router.delete('/:id', requireAuth as any, async (req: AuthenticatedRequest, res:
       const submissionUuid = req.params.id;
       void enqueueWalletTask(async () => {
         try {
-          const previous = await getTransaction(serverWallet, previousOutpoint);
+          const previous = await getTransaction(serverWallet, previousOutpoint, submissionUuid);
           const payoutScript = await derivePayoutScript(serverWallet, submissionUuid);
           const payoutCustomInstructions = JSON.stringify({
             protocolID: RECOVERY_PROTOCOL,
@@ -725,6 +741,7 @@ router.delete('/:id', requireAuth as any, async (req: AuthenticatedRequest, res:
           console.log(`[anchor delete] ${submissionUuid} → ${anchor.txid}`);
         } catch (err) {
           console.error(`[anchor delete] failed for ${submissionUuid}:`, err);
+          await markAnchorFailed(submissionUuid);
         }
       });
     }

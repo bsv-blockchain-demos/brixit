@@ -37,6 +37,7 @@ export interface UnverifiedSubmission {
   user_id: string;
   timestamped: boolean;
   rejected: boolean;
+  anchor_failed: boolean;
 }
 
 export interface AdminSubmission extends UnverifiedSubmission {
