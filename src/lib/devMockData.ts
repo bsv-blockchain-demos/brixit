@@ -95,6 +95,8 @@ const buildDataset = (): BrixDataPoint[] => Array.from({ length: 137 }, (_, i) =
     cropLabel: crop.label,
     brandLabel: brand.label,
     outpoint: seeded(i, 8) > 0.5 ? `${'a'.repeat(64)}_${i}` : null,
+    rejected: false,
+    rejectionMessage: null,
   } satisfies BrixDataPoint;
 });
 

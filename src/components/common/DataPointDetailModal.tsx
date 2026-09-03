@@ -2,7 +2,6 @@
 import { BrixDataPoint } from '../../types';
 import { useMaxWidth } from '@/hooks/use-mobile';
 import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
-import { CropIcon } from './CropIcon';
 import { Button } from '../ui/button';
 import {
   Dialog,
@@ -18,14 +17,11 @@ import {
   CheckCircle,
   AlertCircle,
   Ban,
+  RotateCcw,
   Trash2,
   Image as ImageIcon,
   Loader2,
-  X,
-  Clock,
   Edit,
-  Package,
-  Building,
   ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -33,46 +29,24 @@ import { useWallet } from '../../contexts/WalletContext';
 import { signSubmissionPayload } from '../../lib/signSubmissionPayload';
 import { deleteSubmission } from '../../lib/fetchSubmissions';
 import { verifySubmission, rejectSubmission } from '../../lib/adminApi';
+import RejectSubmissionDialog from '../Admin/RejectSubmissionDialog';
 import { useToast } from '../ui/use-toast';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { apiPut } from '../../lib/api';
 import { useImageUrls } from '../../hooks/useImageUrls';
 import { formatUsername } from '../../lib/formatUsername';
-import { formatHumanDate } from '../../lib/formatDate';
-import { formatFullLocation } from '../../lib/formatAddress';
 import { gradeBrix } from '../../lib/getBrixColor';
 import { RefractometerReading } from './RefractometerReading';
 import { useCropThresholds } from '../../contexts/CropThresholdContext';
-import Combobox from '../ui/combo-box';
 import { useStaticData } from '../../hooks/useStaticData';
-
-// Grouped detail card: one icon-headed section holding a list of label/value rows.
-// All colors go through inverting tokens (card, hairline, blue-deep, text-*) so the
-// whole thing flips correctly in dark mode.
-function DetailSection({ icon, title, children, columns = 1 }: { icon: React.ReactNode; title: string; children: React.ReactNode; columns?: 1 | 2 }) {
-  return (
-    <section className="rounded-2xl border border-hairline bg-card shadow-sm overflow-hidden">
-      <div className="flex items-center gap-1.5 px-4 pt-4 pb-1">
-        {icon}
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-text-mid">{title}</h4>
-      </div>
-      {/* columns=2 → 2-col grid (mobile + desktop); drop per-row dividers since the grid gap separates cells. */}
-      <div className={`px-4 pb-1 ${columns === 2 ? 'grid grid-cols-2 gap-x-6 [&>div]:border-b-0' : ''}`}>{children}</div>
-    </section>
-  );
-}
-
-// One row: muted label on top, prominent value below. `children` is either a plain
-// value (view mode) or an input/combobox (edit mode).
-function DetailRow({ label, children, last = false, valueClassName = '' }: { label: string; children: React.ReactNode; last?: boolean; valueClassName?: string }) {
-  return (
-    <div className={last ? 'py-3' : 'py-3 border-b border-hairline'}>
-      <p className="text-xs font-medium text-text-mid">{label}</p>
-      <div className={`mt-1 text-sm font-medium text-text-dark ${valueClassName}`}>{children}</div>
-    </div>
-  );
-}
+import SubmissionEditFields, { DetailSection, DetailRow, getDisplayLabel } from './SubmissionEditFields';
+import {
+  useSubmissionEditState,
+  buildSubmissionUpdate,
+  normalizeBrix,
+  toISODateOrExisting,
+} from './useSubmissionEditState';
 
 // Mobile detail breakpoint: ≤640px renders a full-screen page (no modal/overlay);
 interface DataPointDetailModalProps {
@@ -116,20 +90,11 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   // Use the shared static data hook and destructure the new 'locations' property
   const { crops, brands, locations, isLoading: staticDataLoading, error: staticDataError } = useStaticData();
 
-  // Resolve display label from static data, falling back to title-cased name
-  const getDisplayLabel = (items: { name: string; label?: string }[], name: string | undefined) => {
-    if (!name) return 'N/A';
-    const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, '');
-    const match = items.find(i => normalize(i.name) === normalize(name));
-    const raw = match?.label || match?.name || name;
-    // Labels are stored lowercase — always render with a capital first letter.
-    return raw.replace(/\b\w/g, c => c.toUpperCase());
-  };
-
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [rejecting, setRejecting] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Image URLs come from a React Query cache keyed by submission id so the
@@ -149,23 +114,20 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   const [isInitializing, setIsInitializing] = useState(true);
 
   // State for form data
-  const [brixLevel, setBrixLevel] = useState<number | ''>('');
-  const [cropType, setCropType] = useState('');
-  const [variety, setVariety] = useState('');
+  const editState = useSubmissionEditState(initialDataPoint);
+  const { brixLevel, cropType, variety, brand, locationName, measurementDate, purchaseDate, outlierNotes } = editState.values;
+  const { setBrixLevel, setCropType, setVariety, setBrand, setLocationName, setMeasurementDate, setPurchaseDate, setOutlierNotes } = editState.setters;
   const [placeName, setPlaceName] = useState('');
-  const [locationName, setLocationName] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
-  const [measurementDate, setMeasurementDate] = useState('');
-  const [purchaseDate, setPurchaseDate] = useState('');
-  const [outlierNotes, setOutlierNotes] = useState('');
-  const [brand, setBrand] = useState('');
   const [verified, setVerified] = useState(false);
   const [verifiedBy, setVerifiedBy] = useState('');
   const [verifiedAt, setVerifiedAt] = useState('');
 
   useEffect(() => {
     async function initializeModalData() {
+      // Keep: the hook's reset has no isOpen awareness, so only this block
+      // clears the form on close. It also normalises dates differently.
       if (!isOpen || !initialDataPoint) {
         setIsInitializing(false);
         // Reset state when modal is not open to prepare for next opening
@@ -276,14 +238,35 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
 
   // Soft decline: keeps the record (reversible from the admin Rejected tab),
   // distinct from permanent Delete. Closes the modal and refreshes the lists.
-  const handleRejectSubmission = async () => {
+  // Always called from RejectSubmissionDialog — the reason is required.
+  const handleRejectSubmission = async (message: string) => {
     if (!initialDataPoint) return;
     setRejecting(true);
     try {
-      const res = await rejectSubmission(initialDataPoint.id, true);
+      const res = await rejectSubmission(initialDataPoint.id, true, message);
       if (res?.success) {
         toast({ title: 'Reading rejected' });
-        onUpdateSuccess?.({ ...initialDataPoint, verified: false });
+        onUpdateSuccess?.({ ...initialDataPoint, verified: false, rejected: true, rejectionMessage: message });
+        onClose();
+      } else {
+        toast({ title: 'Action failed', description: res?.error ?? 'Please try again.', variant: 'destructive' });
+      }
+    } catch (err: any) {
+      toast({ title: 'Error', description: err?.message ?? 'Please try again.', variant: 'destructive' });
+    } finally {
+      setRejecting(false);
+    }
+  };
+
+  // Back to pending, via the reject endpoint with reject: false. Needs no message.
+  const handleRestoreSubmission = async () => {
+    if (!initialDataPoint) return;
+    setRejecting(true);
+    try {
+      const res = await rejectSubmission(initialDataPoint.id, false);
+      if (res?.success) {
+        toast({ title: 'Reading restored to pending' });
+        onUpdateSuccess?.({ ...initialDataPoint, rejected: false, rejectionMessage: null });
         onClose();
       } else {
         toast({ title: 'Action failed', description: res?.error ?? 'Please try again.', variant: 'destructive' });
@@ -308,11 +291,6 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
     }
 
     // Normalize and validate BRIX
-    const normalizeBrix = (val: number | ''): number | null => {
-      if (val === '') return null;
-      const n = typeof val === 'number' ? val : Number(val);
-      return Number.isFinite(n) ? n : null;
-    };
     const newBrix = normalizeBrix(brixLevel);
     const brixToSave = newBrix ?? initialDataPoint.brixLevel;
 
@@ -325,91 +303,29 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
       return;
     }
 
-    // Validate date strings
-    const toISODateOrExisting = (dateStr: string, existingISO: string) => {
-      if (!dateStr) return existingISO;
-      const d = new Date(`${dateStr}T00:00:00.000Z`);
-      return isNaN(d.getTime()) ? existingISO : d.toISOString();
-    };
-
     setSaving(true);
     try {
       console.log('Looking for matching items in static data...');
 
-      const safecrops = Array.isArray(crops) ? crops : [];
-      const safebrands = Array.isArray(brands) ? brands : [];
-      const safelocations = Array.isArray(locations) ? locations : []; // Updated variable name
+      const built = buildSubmissionUpdate({
+        values: editState.values,
+        dataPoint: initialDataPoint,
+        crops,
+        brands,
+        locations,
+      });
 
-      // Resolve IDs only when values changed; crop is required if changed
-      let cropIdToSet: string | undefined;
-      let brandIdToSet: string | null | undefined;
-      let locationIdToSet: string | null | undefined;
-      let placeIdToSet: string | null | undefined;
-
-      if (cropType !== initialDataPoint.cropType) {
-        const cropItem = safecrops.find(c => c?.name === cropType);
-        if (!cropItem?.id) {
-          toast({
-            title: 'Invalid crop',
-            description: 'Please select a valid crop from the list.',
-            variant: 'destructive',
-          });
-          setSaving(false);
-          return;
-        }
-        cropIdToSet = cropItem.id;
+      if ('error' in built) {
+        toast({
+          title: built.errorTitle,
+          description: built.error,
+          variant: 'destructive',
+        });
+        setSaving(false);
+        return;
       }
 
-      if (brand !== initialDataPoint.brandName) {
-        if (!brand) {
-          brandIdToSet = null; // allow clearing brand
-        } else {
-          const brandItem = safebrands.find(b => b?.name === brand);
-          if (!brandItem?.id) {
-            toast({
-              title: 'Invalid brand',
-              description: 'Please select a valid brand from the list or clear the field.',
-              variant: 'destructive',
-            });
-            setSaving(false);
-            return;
-          }
-          brandIdToSet = brandItem.id;
-        }
-      }
-
-      if (locationName !== initialDataPoint.locationName) {
-        if (!locationName) {
-          locationIdToSet = null;
-        } else {
-          const locationItem = safelocations.find(s => s?.name === locationName);
-          if (!locationItem?.id) {
-            toast({
-              title: 'Invalid place',
-              description: 'Please select a valid place from the list or clear the field.',
-              variant: 'destructive',
-            });
-            setSaving(false);
-            return;
-          }
-          locationIdToSet = locationItem.id;
-        }
-      }
-
-      // Build update payload (only include fields that can change)
-      const updateData: Record<string, any> = {
-        brix_value: brixToSave,
-        crop_variety: variety || null,
-        assessment_date: toISODateOrExisting(measurementDate, initialDataPoint.submittedAt),
-        purchase_date: purchaseDate || null,
-        outlier_notes: outlierNotes || null,
-      };
-
-      if (typeof cropIdToSet === 'string') updateData.crop_id = cropIdToSet;
-      if (brandIdToSet !== undefined) updateData.brand_id = brandIdToSet;
-      // Backend stores locations in the venues table — wire `location_id`
-      // selections to the PUT body's `venue_id`.
-      if (locationIdToSet !== undefined) updateData.venue_id = locationIdToSet;
+      const updateData = built.body;
 
       // Only admin can update verification status
       if (isAdmin) {
@@ -530,6 +446,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   // people's readings; they verify/reject and can delete (see canDelete).
   const canEdit = isOwner && !initialDataPoint.verified;
   const canDelete = isAdmin || (isOwner && !initialDataPoint.verified);
+  const isRejected = !!initialDataPoint.rejected;
 
   const cropThresholds = initialDataPoint.cropType
     ? (getThresholds(initialDataPoint.cropType) ?? {
@@ -568,74 +485,25 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                 Reading Details
               </h3>
 
-              <div className="space-y-4">
-              <DetailSection icon={<Building className="w-3.5 h-3.5 text-text-mid" />} title="Source" columns={2}>
-                <DetailRow label="Place">
-                  {isEditing ? (
-                    <Combobox items={Array.isArray(locations) ? locations : []} value={locationName} onSelect={setLocationName} placeholder="Select Store" />
-                  ) : (
-                    getDisplayLabel(locations, initialDataPoint.locationName)
-                  )}
-                </DetailRow>
-                <DetailRow label="Address">
-                  {/* Read-only (the address lives on the venue). Show the human address
-                      (street, city, state); never the raw coordinates. */}
-                  <span className="block break-words leading-relaxed">
-                    {formatFullLocation(initialDataPoint.streetAddress, initialDataPoint.city, initialDataPoint.state, initialDataPoint.country) || 'N/A'}
-                  </span>
-                </DetailRow>
-                <DetailRow label="Purchase Date">
-                  {isEditing ? (
-                    <Input type="date" value={purchaseDate} onChange={e => setPurchaseDate(e.target.value)} />
-                  ) : (
-                    formatHumanDate(initialDataPoint.purchaseDate)
-                  )}
-                </DetailRow>
-                <DetailRow label="Test Date" last>
-                  {isEditing ? (
-                    <Input type="date" value={measurementDate} onChange={e => setMeasurementDate(e.target.value)} />
-                  ) : (
-                    formatHumanDate(initialDataPoint.submittedAt)
-                  )}
-                </DetailRow>
-              </DetailSection>
-
-              <DetailSection icon={<Package className="w-3.5 h-3.5 text-text-mid" />} title="Product" columns={2}>
-                <DetailRow label="Crop Type">
-                  {isEditing ? (
-                    <Combobox items={Array.isArray(crops) ? crops : []} value={cropType} onSelect={setCropType} placeholder="Select Crop" />
-                  ) : (
-                    <span className="flex items-center gap-1.5">
-                      <CropIcon name={initialDataPoint.cropType} />
-                      {getDisplayLabel(crops, initialDataPoint.cropType)}
-                    </span>
-                  )}
-                </DetailRow>
-                {/* Read-only: this shows posType, and the PUT body has no
-                    field for it. The variety state is still submitted as
-                    crop_variety, so editing other fields leaves it intact. */}
-                <DetailRow label="Purchase Type">
-                  {initialDataPoint.posType || 'N/A'}
-                </DetailRow>
-                <DetailRow label="Brand">
-                  {isEditing ? (
-                    <Combobox items={Array.isArray(brands) ? brands : []} value={brand} onSelect={setBrand} placeholder="Select Brand" />
-                  ) : (
-                    getDisplayLabel(brands, initialDataPoint.brandName)
-                  )}
-                </DetailRow>
-                <DetailRow label="BRIX Level" last>
-                  {isEditing ? (
-                    <Input type="number" value={brixLevel} onChange={e => setBrixLevel(e.target.value === '' ? '' : Number(e.target.value))} min={0} step={0.1} />
-                  ) : (
-                    initialDataPoint.brixLevel
-                  )}
-                </DetailRow>
-              </DetailSection>
-              </div>
+              <SubmissionEditFields
+                state={editState}
+                isEditing={isEditing}
+                dataPoint={initialDataPoint}
+                crops={crops}
+                brands={brands}
+                locations={locations}
+                getDisplayLabel={getDisplayLabel}
+              />
 
               <div className="mt-4 space-y-4">
               <DetailSection icon={<CheckCircle className="w-3.5 h-3.5 text-text-mid" />} title="Provenance" columns={2}>
+                {isRejected && (
+                  <DetailRow label="Rejected">
+                    <span className="block break-words leading-relaxed text-text-mid">
+                      {initialDataPoint.rejectionMessage || 'No reason given.'}
+                    </span>
+                  </DetailRow>
+                )}
                 <DetailRow label="Verified">
                   {isAdmin && isEditing ? (
                     <Input id="verified-checkbox" type="checkbox" checked={verified} onChange={(e) => setVerified(e.target.checked)} className="w-4 h-4" />
@@ -724,7 +592,23 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
             </>
           ) : isAdmin ? (
             <div className="flex items-center gap-2 flex-wrap">
-              {!verified ? (
+              {isRejected ? (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={handleRestoreSubmission}
+                    disabled={rejecting || isDeleting}
+                    className="h-auto py-3 px-6 text-sm font-medium rounded-xl border-hairline"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    {rejecting ? 'Restoring...' : 'Restore'}
+                  </Button>
+                  <Button variant="outline" onClick={handleDelete} disabled={isDeleting || rejecting} className="h-auto py-3 px-6 text-sm font-medium rounded-xl border-hairline text-action-danger hover:bg-score-poor-bg">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </Button>
+                </>
+              ) : !verified ? (
                 <>
                   <Button
                     onClick={() => handleSetVerified(true)}
@@ -736,7 +620,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={handleRejectSubmission}
+                    onClick={() => setRejectDialogOpen(true)}
                     disabled={rejecting || verifying || isDeleting}
                     className="h-auto py-3 px-6 text-sm font-medium rounded-xl border-hairline text-score-average hover:bg-score-average-bg"
                   >
@@ -776,12 +660,26 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
     </div>
   );
 
+  // Shared by all three layouts below; collects the required reason.
+  const rejectDialog = (
+    <RejectSubmissionDialog
+      open={rejectDialogOpen}
+      onOpenChange={setRejectDialogOpen}
+      busy={rejecting}
+      onConfirm={(message) => {
+        setRejectDialogOpen(false);
+        void handleRejectSubmission(message);
+      }}
+    />
+  );
+
   // ── Route page: the surrounding page owns the chrome ──
   if (presentation === 'page') {
     return (
       <div>
         {detailContent}
         {detailFooter}
+        {rejectDialog}
       </div>
     );
   }
@@ -789,70 +687,76 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   // ── Mobile (≤640px): bottom sheet covering the page ──
   if (isMobilePage) {
     return (
-      <Drawer open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-        <DrawerContent className="h-[96%] bg-surface-canvas">
-          <DrawerTitle className="sr-only">Reading details</DrawerTitle>
-        <div className="flex items-center gap-1 h-14 px-2 shrink-0 border-b border-hairline bg-card text-card-foreground">
-          <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0">
-            <ArrowLeft className="w-5 h-5" />
-            <span className="sr-only">Back</span>
-          </Button>
-          <span className="flex-1 min-w-0 truncate text-base font-bold font-display text-text-dark">
-            {`${isEditing ? 'Edit' : 'View'}: ${getDisplayLabel(crops, initialDataPoint.cropType)}${initialDataPoint.locationName ? ` · ${getDisplayLabel(locations, initialDataPoint.locationName)}` : ''}`}
-          </span>
-          {!isEditing && canEdit && (
-            <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)} className="shrink-0">
-              <Edit className="w-5 h-5" />
-              <span className="sr-only">Edit</span>
-            </Button>
-          )}
-        </div>
-        <div className="flex-1 overflow-y-auto scrollbar-panel px-3 py-4">{detailContent}</div>
-        <div className="shrink-0 px-3 bg-card">{detailFooter}</div>
-        </DrawerContent>
-      </Drawer>
+      <>
+        <Drawer open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+          <DrawerContent className="h-[96%] bg-surface-canvas">
+            <DrawerTitle className="sr-only">Reading details</DrawerTitle>
+            <div className="flex items-center gap-1 h-14 px-2 shrink-0 border-b border-hairline bg-card text-card-foreground">
+              <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0">
+                <ArrowLeft className="w-5 h-5" />
+                <span className="sr-only">Back</span>
+              </Button>
+              <span className="flex-1 min-w-0 truncate text-base font-bold font-display text-text-dark">
+                {`${isEditing ? 'Edit' : 'View'}: ${getDisplayLabel(crops, initialDataPoint.cropType)}${initialDataPoint.locationName ? ` · ${getDisplayLabel(locations, initialDataPoint.locationName)}` : ''}`}
+              </span>
+              {!isEditing && canEdit && (
+                <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)} className="shrink-0">
+                  <Edit className="w-5 h-5" />
+                  <span className="sr-only">Edit</span>
+                </Button>
+              )}
+            </div>
+            <div className="flex-1 overflow-y-auto scrollbar-panel px-3 py-4">{detailContent}</div>
+            <div className="shrink-0 px-3 bg-card">{detailFooter}</div>
+          </DrawerContent>
+        </Drawer>
+        {rejectDialog}
+      </>
     );
   }
 
   // ── Desktop (≥641px): unchanged modal ──
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md md:max-w-3xl rounded-2xl">
-        <DialogHeader className="pr-8">
-        <DialogTitle className="flex items-center justify-between text-2xl font-bold font-display">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="shrink-0 hover:bg-surface-canvas -ml-2"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="sr-only">Back</span>
-            </Button>
-            <span>{`${isEditing ? 'Edit' : 'View'}: ${getDisplayLabel(crops, initialDataPoint.cropType)}${initialDataPoint.locationName ? ` · ${getDisplayLabel(locations, initialDataPoint.locationName)}` : ''}`}</span>
-          </div>
-          {!isEditing && canEdit && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsEditing(true)}
-              className="hover:bg-surface-canvas"
-            >
-              <Edit className="w-5 h-5" />
-              <span className="sr-only">Edit</span>
-            </Button>
-          )}
-        </DialogTitle>
-          <DialogDescription className="sr-only">
-            View and edit a BRIX reading.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-md md:max-w-3xl rounded-2xl">
+          <DialogHeader className="pr-8">
+          <DialogTitle className="flex items-center justify-between text-2xl font-bold font-display">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="shrink-0 hover:bg-surface-canvas -ml-2"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span className="sr-only">Back</span>
+              </Button>
+              <span>{`${isEditing ? 'Edit' : 'View'}: ${getDisplayLabel(crops, initialDataPoint.cropType)}${initialDataPoint.locationName ? ` · ${getDisplayLabel(locations, initialDataPoint.locationName)}` : ''}`}</span>
+            </div>
+            {!isEditing && canEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsEditing(true)}
+                className="hover:bg-surface-canvas"
+              >
+                <Edit className="w-5 h-5" />
+                <span className="sr-only">Edit</span>
+              </Button>
+            )}
+          </DialogTitle>
+            <DialogDescription className="sr-only">
+              View and edit a BRIX reading.
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="max-h-[80vh] overflow-y-auto scrollbar-panel px-1">{detailContent}</div>
-        {detailFooter}
-      </DialogContent>
-    </Dialog>
+          <div className="max-h-[80vh] overflow-y-auto scrollbar-panel px-1">{detailContent}</div>
+          {detailFooter}
+        </DialogContent>
+      </Dialog>
+      {rejectDialog}
+    </>
   );
 };
 

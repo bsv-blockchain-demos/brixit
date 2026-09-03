@@ -13,6 +13,9 @@ const row = {
   purchaseDate: null,
   skipVenuePrompt: false,
   outpoint: 'abc.0',
+  rejectedAt: new Date('2026-05-03T00:00:00Z'),
+  rejectionMessage: 'BRIX value reading too high for this crop',
+  rejectionHash: 'deadbeef',
   crop: { id: 'c1', name: 'apple', label: 'Apple', poorBrix: '6', averageBrix: '10', goodBrix: '14', excellentBrix: '18', category: 'fruit' },
   brand: { id: 'b1', name: 'acme', label: 'Acme' },
   venue: { id: 'v1', name: 'Market', posType: 'store', latitude: 1, longitude: 2, streetAddress: '1 St', city: 'Town', state: 'ST', country: 'US' },
@@ -54,6 +57,13 @@ describe('formatPublicSubmission', () => {
     expect(out.poor_brix).toBe(6);
     expect(out.excellent_brix).toBe(18);
   });
+
+  it('keeps rejection state off the public payload', () => {
+    const out = formatPublicSubmission(row) as Record<string, unknown>;
+    expect(out).not.toHaveProperty('rejected');
+    expect(out).not.toHaveProperty('rejected_at');
+    expect(out).not.toHaveProperty('rejection_message');
+  });
 });
 
 describe('formatFullSubmission', () => {
@@ -68,5 +78,32 @@ describe('formatFullSubmission', () => {
     expect(out.user_id).toBe('u1');
     expect(out.user_display_name).toBe('Ada');
     expect(out.verified_by_display_name).toBe('Admin');
+  });
+
+  it('reports rejection state', () => {
+    const out = formatFullSubmission(row, true);
+    expect(out.rejected).toBe(true);
+    expect(out.rejection_message).toBe('BRIX value reading too high for this crop');
+    expect(out.rejected_at).toEqual(new Date('2026-05-03T00:00:00Z'));
+  });
+
+  it('reports a submission that was never rejected', () => {
+    const out = formatFullSubmission({ ...row, rejectedAt: null, rejectionMessage: null }, true);
+    expect(out.rejected).toBe(false);
+    expect(out.rejection_message).toBeNull();
+  });
+
+  it('never leaks the rejection hash', () => {
+    const out = formatFullSubmission(row, true) as Record<string, unknown>;
+    expect(out).not.toHaveProperty('rejection_hash');
+    expect(out).not.toHaveProperty('rejectionHash');
+  });
+
+  it('omits rejection state unless the caller is entitled to it', () => {
+    const out = formatFullSubmission(row) as Record<string, unknown>;
+    expect(out).not.toHaveProperty('rejected');
+    expect(out).not.toHaveProperty('rejected_at');
+    expect(out).not.toHaveProperty('rejection_message');
+    expect(out.user_id).toBe('u1');
   });
 });

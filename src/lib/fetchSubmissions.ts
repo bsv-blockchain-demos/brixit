@@ -37,6 +37,8 @@ interface ApiSubmissionRow {
   verified_by_display_name?: string | null;
   images?: string[];
   outpoint?: string | null;
+  rejected?: boolean;
+  rejection_message?: string | null;
 }
 
 function formatApiRow(r: ApiSubmissionRow): BrixDataPoint {
@@ -63,6 +65,8 @@ function formatApiRow(r: ApiSubmissionRow): BrixDataPoint {
     verifiedBy: r.verified_by_display_name ?? '',
     submittedAt: r.assessment_date,
     outlier_notes: r.outlier_notes ?? '',
+    rejected: !!r.rejected,
+    rejectionMessage: r.rejection_message ?? null,
     purchaseDate: r.purchase_date ?? null,
     images: r.images ?? [],
     poorBrix: r.poor_brix ?? null,
@@ -96,11 +100,13 @@ export type MySubmissionsPageQuery = {
   offset: number;
   sortBy?: 'assessment_date' | 'brix_value';
   sortOrder?: 'asc' | 'desc';
+  rejected?: boolean;
 };
 
 export type MySubmissionsCountQuery = {
   userId: string;
   verified?: boolean;
+  rejected?: boolean;
 };
 
 export async function fetchMySubmissionsPage(
@@ -119,6 +125,7 @@ export async function fetchMySubmissionsPage(
     sortBy,
     sortOrder,
   });
+  if (query.rejected !== undefined) params.set('rejected', String(query.rejected));
 
   try {
     const rows = await apiGet<ApiSubmissionRow[]>(`/api/submissions/mine?${params}`);
@@ -132,9 +139,10 @@ export async function fetchMySubmissionsPage(
 export async function fetchMySubmissionsCount(
   query: MySubmissionsCountQuery
 ): Promise<number> {
-  const { verified } = query;
+  const { verified, rejected } = query;
   const params = new URLSearchParams();
   if (typeof verified === 'boolean') params.set('verified', String(verified));
+  if (typeof rejected === 'boolean') params.set('rejected', String(rejected));
 
   try {
     const data = await apiGet<{ count: number }>(`/api/submissions/mine/count?${params}`);
@@ -180,6 +188,10 @@ export type PublicFormattedSubmissionsQuery = {
   dateEnd?: string;
   search?: string;
   timestamped?: boolean;
+  // Only meaningful on the authenticated /mine routes: false excludes rejected
+  // readings, which the flagged section lists separately. The public routes
+  // pin verified:true and never return rejected rows.
+  rejected?: boolean;
   sortBy?: 'assessment_date' | 'brix_value' | 'crop_name' | 'place_label';
   sortOrder?: 'asc' | 'desc';
 };
@@ -214,6 +226,7 @@ function buildSubmissionsQueryString(query: Partial<PublicFormattedSubmissionsQu
   if (query.dateEnd) params.set('dateEnd', query.dateEnd);
   if (query.search) params.set('search', query.search);
   if (query.timestamped) params.set('timestamped', 'true');
+  if (typeof query.rejected === 'boolean') params.set('rejected', String(query.rejected));
   return params.toString();
 }
 
@@ -290,7 +303,9 @@ export async function fetchFormattedSubmissionById(id: string): Promise<BrixData
   if (!safeId) return null;
 
   try {
-    const row = await apiGet<ApiSubmissionRow>(`/api/submissions/${safeId}`, { skipAuth: true });
+    // Authenticated when possible: the endpoint reveals rejection state only
+    // to the owner or an admin.
+    const row = await apiGet<ApiSubmissionRow>(`/api/submissions/${safeId}`);
     return formatApiRow(row);
   } catch (error) {
     console.error('Error fetching public submission by id:', error);
@@ -358,4 +373,10 @@ export async function retrySubmissionAnchor(
   signature: RetryAnchorSignature,
 ): Promise<void> {
   await apiPost(`/api/submissions/${submissionId}/retry-anchor`, signature);
+}
+
+/** Returns a rejected reading to the pending queue. Throws if nothing changed. */
+export async function resubmitSubmission(id: string): Promise<BrixDataPoint> {
+  const row = await apiPost<ApiSubmissionRow>(`/api/submissions/${id}/resubmit`, {});
+  return formatApiRow(row);
 }

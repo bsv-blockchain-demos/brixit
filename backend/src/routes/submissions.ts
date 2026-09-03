@@ -19,7 +19,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { P2PKH, PublicKey, Utils, type WalletInterface, type WalletProtocol } from '@bsv/sdk';
 import prisma from '../db/client.js';
-import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js';
+import { requireAuth, optionalAuth, type AuthenticatedRequest } from '../middleware/auth.js';
 import serverWallet, { SERVER_WALLET_CHAIN } from '../serverWallet.js';
 import { createSubmissionTx, type SubmissionEntry } from '../lib/createSubmissionTx.js';
 import { getTransaction } from '../lib/getTransaction.js';
@@ -27,6 +27,7 @@ import { buildSubmissionFilters } from '../lib/buildSubmissionFilters.js';
 import { enqueueWalletTask } from '../lib/walletQueue.js';
 import { anyoneWallet } from '../lib/anyoneWallet.js';
 import { FIELD_LIMITS, exceedsLimit } from '../utils/limits.js';
+import { submissionHash } from '../lib/submissionHash.js';
 
 // Protocol used to derive a P2PKH that the wallet recognises as its own.
 const RECOVERY_PROTOCOL: WalletProtocol = [2, 'brixit recovery'];
@@ -97,13 +98,26 @@ export function formatPublicSubmission(s: any) {
   };
 }
 
-/** Public shape plus the submitter/verifier identities. */
-export function formatFullSubmission(s: any) {
+/**
+ * Public shape plus the submitter/verifier identities.
+ *
+ * Rejection state is opt-in: the reason is private between the admin and the
+ * submitter, so only a caller proven to be the owner or an admin may see it.
+ */
+export function formatFullSubmission(s: any, includeRejection = false) {
   return {
     ...formatPublicSubmission(s),
     user_id: s.user?.id ?? null,
     user_display_name: s.user?.displayName ?? null,
     verified_by_display_name: s.verifier?.displayName ?? null,
+    // rejectionHash stays server-side; it is the comparison value for resubmit.
+    ...(includeRejection
+      ? {
+          rejected: !!s.rejectedAt,
+          rejected_at: s.rejectedAt ?? null,
+          rejection_message: s.rejectionMessage ?? null,
+        }
+      : {}),
   };
 }
 
@@ -213,10 +227,16 @@ router.get('/mine', requireAuth as any, async (req: AuthenticatedRequest, res: R
     // every filter. verifiedOnly is off: these are your own readings, so
     // pending ones must stay visible. userId is applied last and cannot be
     // overridden by a query param.
-    const where = {
+    const where: Record<string, any> = {
       ...buildSubmissionFilters(req.query as Record<string, string | undefined>, { verifiedOnly: false }),
       userId,
     };
+
+    // rejected=true → only rejected; rejected=false → only non-rejected;
+    // omitted → all.
+    const rejectedParam = req.query.rejected as string | undefined;
+    if (rejectedParam === 'true') where.rejectedAt = { not: null };
+    else if (rejectedParam === 'false') where.rejectedAt = null;
 
     const submissions = await prisma.submission.findMany({
       where,
@@ -226,7 +246,7 @@ router.get('/mine', requireAuth as any, async (req: AuthenticatedRequest, res: R
       take: limit,
     });
 
-    res.json(submissions.map(formatFullSubmission));
+    res.json(submissions.map((s) => formatFullSubmission(s, true)));
   } catch (err) {
     console.error('[submissions/mine] Error:', err);
     res.status(500).json({ error: 'Failed to fetch your submissions' });
@@ -245,6 +265,10 @@ router.get('/mine/count', requireAuth as any, async (req: AuthenticatedRequest, 
     if (req.query.verified !== undefined) {
       where.verified = req.query.verified === 'true';
     }
+    // Mirror the list filter so the total matches the rows actually shown.
+    const rejectedParam = req.query.rejected as string | undefined;
+    if (rejectedParam === 'true') where.rejectedAt = { not: null };
+    else if (rejectedParam === 'false') where.rejectedAt = null;
     const count = await prisma.submission.count({ where });
     res.json({ count });
   } catch (err) {
@@ -391,8 +415,71 @@ router.post('/:id/retry-anchor', requireAuth as any, async (req: AuthenticatedRe
   }
 });
 
+// --- Authenticated: POST /api/submissions/:id/resubmit ---
+// Returns a rejected reading to the pending queue. The reading must have
+// changed since it was rejected, otherwise the admin sees the same row again.
+router.post('/:id/resubmit', requireAuth as any, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const submissionId = req.params.id;
+
+    const submission = await prisma.submission.findUnique({ where: { id: submissionId } });
+    if (!submission) {
+      res.status(404).json({ error: 'Submission not found' });
+      return;
+    }
+    if (submission.userId !== req.user!.sub) {
+      res.status(403).json({ error: 'Not authorized to resubmit this submission' });
+      return;
+    }
+    if (!submission.rejectedAt) {
+      res.status(409).json({ error: 'This submission is not rejected.' });
+      return;
+    }
+    // A null hash predates the rejection-hash column; allow those through
+    // rather than stranding historical rejections.
+    if (submission.rejectionHash && submissionHash(submission) === submission.rejectionHash) {
+      res.status(409).json({ error: 'Change something about this reading before resubmitting it.' });
+      return;
+    }
+
+    // Tie the write to the state that was just validated: if an admin rejects
+    // or verifies in the meantime, this matches nothing and their decision stands.
+    const { count } = await prisma.submission.updateMany({
+      where: { id: submissionId, rejectedAt: submission.rejectedAt },
+      data: {
+        rejectedAt: null,
+        rejectedBy: null,
+        rejectionMessage: null,
+        rejectionHash: null,
+        // Back to pending — an admin decides again, so never auto-verified here.
+        verified: false,
+      },
+    });
+
+    if (count === 0) {
+      res.status(409).json({ error: 'This reading changed while you were resubmitting it. Reload and try again.' });
+      return;
+    }
+
+    const updated = await prisma.submission.findUnique({
+      where: { id: submissionId },
+      include: FULL_SUBMISSION_INCLUDE,
+    });
+
+    if (!updated) {
+      res.status(404).json({ error: 'Submission not found' });
+      return;
+    }
+
+    res.json(formatFullSubmission(updated, true));
+  } catch (err) {
+    console.error('[submissions/:id/resubmit] Error:', err);
+    res.status(500).json({ error: 'Failed to resubmit submission' });
+  }
+});
+
 // --- Public: GET /api/submissions/:id ---
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', optionalAuth as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const submission = await prisma.submission.findUnique({
       where: { id: req.params.id },
@@ -404,7 +491,11 @@ router.get('/:id', async (req: Request, res: Response) => {
       return;
     }
 
-    res.json(formatFullSubmission(submission));
+    // The rejection reason is for the submitter and admins, not the public.
+    const isOwner = !!req.user && submission.userId === req.user.sub;
+    const isAdmin = !!req.user && (req.user.roles || []).includes('admin');
+
+    res.json(formatFullSubmission(submission, isOwner || isAdmin));
   } catch (err) {
     console.error('[submissions/:id] Error:', err);
     res.status(500).json({ error: 'Failed to fetch submission' });
@@ -417,9 +508,10 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
     const userId = req.user!.sub;
     const roles = req.user!.roles || [];
 
+    // Full row: the rejected-reading check below hashes the post-update values,
+    // and a narrow select would silently drop a field the hash covers.
     const submission = await prisma.submission.findUnique({
       where: { id: req.params.id },
-      select: { userId: true, verified: true, outpoint: true },
     });
 
     if (!submission) {
@@ -468,6 +560,17 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
       if (body.verified !== undefined) data.verified = body.verified;
       if (body.verified_by !== undefined) data.verifiedBy = body.verified_by;
       if (body.verified_at !== undefined) data.verifiedAt = body.verified_at ? new Date(body.verified_at) : null;
+    }
+
+    // A rejected reading must genuinely change before it goes back for review.
+    // Checked here rather than after the write, so an unchanged edit costs
+    // neither a database update nor a broadcast anchor.
+    if (submission.rejectedAt && submission.rejectionHash) {
+      const next = { ...submission, ...data };
+      if (submissionHash(next) === submission.rejectionHash) {
+        res.status(409).json({ error: 'Change something about this reading before resubmitting it.' });
+        return;
+      }
     }
 
     // ── On-chain re-anchor (if signing fields present) ─────────────────────
@@ -562,7 +665,7 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
       });
     }
 
-    res.json(formatFullSubmission(updated));
+    res.json(formatFullSubmission(updated, true));
   } catch (err) {
     console.error('[submissions/:id PUT] Error:', err);
     res.status(500).json({ error: 'Failed to update submission' });

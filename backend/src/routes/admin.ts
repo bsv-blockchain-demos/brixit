@@ -15,6 +15,8 @@ import { Router } from 'express';
 import type { Response } from 'express';
 import prisma from '../db/client.js';
 import { requireAuth, requireAdmin, type AuthenticatedRequest } from '../middleware/auth.js';
+import { submissionHash } from '../lib/submissionHash.js';
+import { validateRejectionMessage } from '../lib/rejectionMessage.js';
 
 const router = Router();
 
@@ -123,6 +125,7 @@ router.get('/users/:id', async (req: AuthenticatedRequest, res: Response) => {
         place_state: s.venue?.state ?? null,
         timestamped: !!s.outpoint,
         rejected: !!s.rejectedAt,
+        rejection_message: s.rejectionMessage ?? null,
       })),
     });
   } catch (err) {
@@ -189,6 +192,7 @@ router.get('/submissions', async (req: AuthenticatedRequest, res: Response) => {
       user_id: s.user?.id ?? null,
       timestamped: !!s.outpoint,
       rejected: !!s.rejectedAt,
+      rejection_message: s.rejectionMessage ?? null,
     }));
 
     res.json({ data, total });
@@ -239,6 +243,7 @@ router.get('/submissions/unverified', async (req: AuthenticatedRequest, res: Res
       user_id: s.user?.id ?? null,
       timestamped: !!s.outpoint,
       rejected: !!s.rejectedAt,
+      rejection_message: s.rejectionMessage ?? null,
     }));
 
     res.json({ data, total });
@@ -347,6 +352,14 @@ router.post('/submissions/:id/reject', async (req: AuthenticatedRequest, res: Re
     const reject = req.body.reject !== false; // default true
     const adminUserId = req.user!.sub;
 
+    // A rejection the submitter cannot act on is the problem this endpoint
+    // exists to avoid, so the reason is mandatory. Restoring needs none.
+    const message = reject ? validateRejectionMessage(req.body.message) : null;
+    if (reject && !message) {
+      res.status(400).json({ success: false, error: 'A rejection reason is required.' });
+      return;
+    }
+
     await prisma.$transaction(async (tx) => {
       const submission = await tx.submission.findUnique({ where: { id: submissionId } });
       if (!submission) {
@@ -358,6 +371,10 @@ router.post('/submissions/:id/reject', async (req: AuthenticatedRequest, res: Re
         data: {
           rejectedAt: reject ? new Date() : null,
           rejectedBy: reject ? adminUserId : null,
+          rejectionMessage: message,
+          // Snapshot of the editable fields, so resubmit can tell whether the
+          // submitter actually changed anything.
+          rejectionHash: reject ? submissionHash(submission) : null,
           // Rejecting unpublishes the reading; restoring returns it to pending
           // (not auto-verified; an admin still decides).
           verified: reject ? false : undefined,

@@ -25,6 +25,7 @@ import SubmissionTableRow from '../common/SubmissionTableRow';
 import { ColumnHint, ScoreHint, BRIX_HELP } from '../common/StatusBadges';
 import MobileSubmissionCard from '../common/MobileSubmissionCard';
 import DataPointDetailModal from '../common/DataPointDetailModal';
+import RejectedSubmissions from '../YourData/RejectedSubmissions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRetryAnchor } from '@/hooks/useRetryAnchor';
 import { useMaxWidth } from '@/hooks/use-mobile';
@@ -91,10 +92,15 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
       dateEnd: filters.dateRange?.[1] || undefined,
       search: filters.search || undefined,
       timestamped: filters.timestamped || undefined,
+      // Rejected readings live in the flagged section above, so they are kept
+      // out of the list here and out of the count that pages it. Only the
+      // authenticated /mine routes understand the parameter; the public ones
+      // never return rejected rows anyway.
+      ...(scope === 'mine' ? { rejected: false } : {}),
       sortBy: serverSortBy,
       sortOrder,
     } satisfies Omit<PublicFormattedSubmissionsQuery, 'limit' | 'offset'>;
-  }, [filters, sortBy, sortOrder]);
+  }, [filters, sortBy, sortOrder, scope]);
 
   const submissionsCountQuery = useFormattedSubmissionsCountQuery(countQuery, scope);
   const totalCount = submissionsCountQuery.data ?? 0;
@@ -325,6 +331,11 @@ const DataBrowserResultsImpl: React.FC<DataBrowserResultsProps> = ({
             </div>
           </div>
         )}
+      {scope === 'mine' && user?.id && (
+        <div className="px-3 sm:px-6 pt-4">
+          <RejectedSubmissions userId={user.id} />
+        </div>
+      )}
       <Card className="border-0 shadow-none rounded-none bg-transparent">
         <CardHeader className="px-3 sm:px-6">
           <div className="flex items-center justify-between gap-3 flex-wrap">
