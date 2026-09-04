@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { RoleChip } from "@/components/common/RoleChip";
@@ -355,10 +356,18 @@ const Header = () => {
 
         {/* Mobile Navigation — full-height steel panel with its own header, nav
             list, and a bottom account card. Desktop nav + dropdown are untouched.
+            Portalled to <body>: the header's backdrop-blur makes it the containing
+            block for fixed descendants, so rendered in place this "inset-0" panel
+            would only cover the 4rem bar and spill its content over the page.
             This panel carries no Identity Key (it is in the desktop dropdown and
             on Profile) and no account deletion (that lives on Settings). */}
-        {user && menuOpen && (
-          <div className="md:hidden fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)]">
+        {user && menuOpen && createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu"
+            className="md:hidden fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)]"
+          >
             {/* Panel header */}
             <div className="flex items-center justify-between h-16 px-4 shrink-0 border-b border-white/20">
               <BrixLogo height="2rem" color="white" />
@@ -477,7 +486,8 @@ const Header = () => {
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
       </div>
     </header>
