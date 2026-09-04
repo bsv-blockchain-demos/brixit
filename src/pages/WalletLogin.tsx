@@ -242,11 +242,20 @@ export default function WalletLogin() {
   return (
     <>
       {/* Header */}
-      <div className="relative overflow-hidden" style={{ backgroundColor: 'hsl(var(--background))' }}>
+      {/* --blue-deep, not hsl(var(--background)): the on-bg-* text hierarchy
+          (index.css) is calibrated for WCAG AA against this dark surface.
+          --background (blue-mid) can't clear 4.5:1 with white text at any
+          opacity, even 100%. See AuthBackground.tsx for the same fix. */}
+      <div className="relative overflow-hidden" style={{ backgroundColor: 'var(--blue-deep)' }}>
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-cover bg-center pointer-events-none select-none opacity-[0.55]"
+          className="absolute inset-0 bg-cover bg-center pointer-events-none select-none opacity-30"
           style={{ backgroundImage: "url('/backdrop/backdropwallpaper.svg')" }}
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(120% 90% at 50% -10%, rgba(255,255,255,0.08), transparent 55%), linear-gradient(180deg, rgba(8,16,24,0.2), rgba(8,16,24,0.45))' }}
         />
 
         <header className="relative">
@@ -293,8 +302,10 @@ export default function WalletLogin() {
             {/* Content row */}
             <div className="grid desktop:grid-cols-2 gap-6 desktop:gap-16 items-center mb-8">
 
-              {/* Left: copy + CTAs */}
-              <motion.div {...fadeUp}>
+              {/* Left: copy + CTAs. Centered on mobile (one column, nothing to
+                  align against); back to the default left-aligned column once
+                  the map preview sits beside it at the desktop breakpoint. */}
+              <motion.div {...fadeUp} className="text-center desktop:text-left">
                 <p className="uppercase tracking-[0.2em] text-sm font-medium mb-4 text-on-bg-subtle">
                   Real food. Real nutrition.
                 </p>
@@ -306,10 +317,12 @@ export default function WalletLogin() {
                   <em className="italic" style={{ color: 'white' }}>nutritious</em>{' '}
                   your food is.
                 </h1>
-                <p className="text-base desktop:text-lg leading-relaxed text-on-bg-body mb-8">
-                  BRIXit measures the refraction of fresh produce - you can use a refractometer to shop smarter, feed your family better, and share what you discover.
+                <p className="text-base desktop:text-lg leading-relaxed text-on-bg-body mb-8 text-center">
+                  BRIXit measures the refraction of fresh produce.
+                  <br />
+                  You can use a refractometer to shop smarter, feed your family better, and share what you discover.
                 </p>
-                <div className="flex flex-col gap-3 max-w-md">
+                <div className="flex flex-col gap-3 max-w-md mx-auto desktop:mx-0">
                   <Button
                     onClick={handleCTA}
                     size="lg"
@@ -484,7 +497,7 @@ export default function WalletLogin() {
         {/* ═══ Section 4b: Mission ═══════════════════════════════ */}
         {/* The one saturated full-bleed block in this run of the page. No CTA of
             its own — the Connect section below is the single conversion. */}
-        <section className="relative overflow-hidden py-20 desktop:py-32" style={{ backgroundColor: 'hsl(var(--background))' }}>
+        <section className="relative overflow-hidden py-20 desktop:py-32" style={{ backgroundColor: 'var(--blue-deep)' }}>
           {/* faint depth glow so the flat steel feels alive, not a paint chip */}
           <div
             className="pointer-events-none absolute inset-0"
@@ -659,7 +672,10 @@ export default function WalletLogin() {
         </section>
 
         {/* ═══ Section 6: Footer ═════════════════════════════════ */}
-        <footer className="py-5" style={{ backgroundColor: 'var(--green-fresh)', paddingBottom: 'calc(1.25rem + var(--bottom-inset))' }}>
+        {/* --blue-deep, not --green-fresh: green-fresh tops out at ~3.5:1
+            with white text even at full opacity — structurally incapable of
+            AA. blue-deep also bookends the page against the hero above. */}
+        <footer className="py-5" style={{ backgroundColor: 'var(--blue-deep)', paddingBottom: 'calc(1.25rem + var(--bottom-inset))' }}>
           <div className="max-w-5xl mx-auto px-5 grid grid-cols-3 items-center">
             <img src="/logos/BRIXit-footer.svg" alt="BRIXit" className="h-6" />
             <nav className="flex items-center justify-center gap-6 text-sm text-on-bg-muted">

@@ -65,17 +65,22 @@ export default function MobileLogin() {
               Mycelia is the app that holds your secure identity. No passwords, just your phone.
             </p>
 
-            <ol className="space-y-5">
+            {/* Solid card, not translucent-on-photo: these are the steps a
+                first-time user must actually follow, so they get the same
+                "score card on dark background" treatment as the rest of the
+                app — opaque surface, dark text, guaranteed contrast in both
+                themes, instead of low-opacity white over a busy backdrop. */}
+            <ol className="space-y-4 rounded-2xl bg-card border border-hairline shadow-lg p-5">
               {[
-                { n: '1', text: <>Download the <strong className="text-white font-medium">Mycelia app</strong> on your phone if you haven't already.</> },
-                { n: '2', text: <>Open Mycelia, tap <strong className="text-white font-medium">Scan QR</strong>, and point your camera at the code.</> },
+                { n: '1', text: <>Download the <strong className="text-text-dark font-semibold">Mycelia app</strong> on your phone if you haven't already.</> },
+                { n: '2', text: <>Open Mycelia, tap <strong className="text-text-dark font-semibold">Scan QR</strong>, and point your camera at the code.</> },
                 { n: '3', text: <>Approve the connection request, and you're in.</> },
               ].map(({ n, text }) => (
                 <li key={n} className="flex items-start gap-3">
-                  <span className="shrink-0 w-6 h-6 rounded-full bg-white/10 text-white text-xs flex items-center justify-center font-semibold mt-0.5">
+                  <span className="shrink-0 w-6 h-6 rounded-full bg-green-mid text-white text-xs flex items-center justify-center font-semibold mt-0.5">
                     {n}
                   </span>
-                  <p className="text-sm text-on-bg-body leading-relaxed">{text}</p>
+                  <p className="text-sm text-text-mid leading-relaxed">{text}</p>
                 </li>
               ))}
             </ol>
@@ -143,11 +148,12 @@ export default function MobileLogin() {
                   )}
                 </div>
 
-                <span className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  isConnected
-                    ? 'bg-green-fresh/20 text-green-light'
-                    : 'bg-white/10 text-on-bg-body'
+                <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium text-white transition-colors ${
+                  isConnected ? 'bg-green-mid/70' : 'bg-white/10'
                 }`}>
+                  {isConnected && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-light shrink-0" aria-hidden="true" />
+                  )}
                   {isConnected ? 'Connected, verifying...' : 'Waiting for Mycelia scan…'}
                 </span>
               </>

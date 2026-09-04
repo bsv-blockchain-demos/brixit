@@ -434,24 +434,28 @@ const LeaderboardPage: React.FC = () => {
       <Header />
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pb-[var(--bottom-inset)]">
         {/* Page identity, shown on both mobile and desktop. Refresh lives here
-            (data freshness, not a filter) so it sits with the section, not the filters. */}
-        <div className="mb-6 relative text-center">
-          <div className="min-w-0">
+            (data freshness, not a filter) so it sits with the section, not the filters.
+            The relative/absolute pairing is scoped to just the title row, not the
+            whole block: centering the button against the title+subtitle block as a
+            unit put it at the wrapper's vertical midpoint, which lands inside the
+            subtitle once that text wraps to 2-3 lines on narrow screens. */}
+        <div className="mb-6 text-center">
+          <div className="relative min-w-0">
             <h1 className="text-2xl font-display font-bold text-on-bg-text">
               Top places
             </h1>
-            <p className="mt-1 text-on-bg-body">
-              See where the community is finding the most nutritious produce, ranked by place, brand, and contributor.
-            </p>
+            <button
+              onClick={handleRefresh}
+              disabled={!canRefresh}
+              aria-label="Refresh leaderboards"
+              className={`absolute right-0 top-1/2 -translate-y-1/2 shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-lg ${canRefresh ? 'text-on-bg-body hover:text-on-bg-text hover:bg-white/10' : 'text-on-bg-muted'}`}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={!canRefresh}
-            aria-label="Refresh leaderboards"
-            className={`absolute right-0 top-1/2 -translate-y-1/2 shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-lg ${canRefresh ? 'text-on-bg-body hover:text-on-bg-text hover:bg-white/10' : 'text-on-bg-muted'}`}
-          >
-            <RefreshCw className="h-4 w-4" />
-          </button>
+          <p className="mt-1 text-on-bg-body">
+            See where the community is finding the most nutritious produce, ranked by place, brand, and contributor.
+          </p>
         </div>
         {/* ── Mobile (≤640px): one merged panel — filters · tabs · active board ── */}
         <div className={`lb-mobile-only -mx-1 mb-4 ${PANEL}`}>

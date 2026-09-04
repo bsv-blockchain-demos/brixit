@@ -124,19 +124,22 @@ export default function AdminOverview({ onReviewPending }: { onReviewPending?: (
 
   return (
     <div className="space-y-5">
-      <div className="relative text-center">
-        <div>
+      {/* relative/absolute scoped to the title row only — see Leaderboard.tsx
+          and DataTable.tsx for the same fix and why (button would otherwise
+          center against the whole block and land inside a wrapped subtitle). */}
+      <div className="text-center">
+        <div className="relative">
           <h2 className="text-xl font-display font-bold text-text-dark">Overview</h2>
-          <p className="text-sm text-text-mid">Live snapshot of platform data</p>
+          <button
+            onClick={handleRefresh}
+            disabled={isFetching}
+            aria-label="Refresh overview"
+            className="absolute right-0 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-9 h-9 rounded-lg text-text-mid hover:text-text-dark hover:bg-surface-canvas disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+          </button>
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={isFetching}
-          aria-label="Refresh overview"
-          className="absolute right-0 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-9 h-9 rounded-lg text-text-mid hover:text-text-dark hover:bg-surface-canvas disabled:opacity-50"
-        >
-          <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
-        </button>
+        <p className="text-sm text-text-mid">Live snapshot of platform data</p>
       </div>
 
       {error && (

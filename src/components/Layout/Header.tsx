@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback } from "../ui/avatar";
@@ -23,7 +24,6 @@ import {
   Plus,
   User,
   LogOut,
-  Menu,
   X,
   Shield,
   Sun,
@@ -222,18 +222,31 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo: signed-in users go to the app map; signed-out visitors go to the home/landing page */}
-          <Link to={user ? '/map' : '/'} className="flex items-center">
-            <BrixLogo height="3rem" color="white" />
+          <Link to={user ? '/map' : '/'} className="flex items-center py-2">
+            <BrixLogo height="2.5rem" color="white" />
           </Link>
 
           {/* Desktop Navigation. Rendered for everyone: Buy lives in here and
               is offered to signed-out visitors too. The destinations and the
-              underline are still signed-in only. */}
+              underline are still signed-in only.
+
+              Signed-out visitors only ever get the lone Buy button here — the
+              destination links above are gated on `user`. With the row's
+              default justify-start (and the outer bar's justify-between
+              splitting its free space across all three children), that one
+              button floated in the dead space near the middle of the header,
+              nowhere near the logo or the login control. flex-1 + justify-end
+              (signed-out only) instead has it hug the right side, next to
+              theme toggle/Login, since there's nothing left of it to align
+              against. */}
           {
             // gap-4, not space-x-4: the latter sets margin-left on every child
             // after the first, which would also shove the absolutely positioned
             // indicator 16px right of its measured offset.
-            <nav ref={navRef} className="relative hidden md:flex items-center h-16 gap-4">
+            <nav
+              ref={navRef}
+              className={`relative hidden md:flex items-center h-16 gap-4 ${user ? '' : 'flex-1 justify-end'}`}
+            >
               {navLinks}
               {indicator && (
                 <motion.span
@@ -339,15 +352,44 @@ const Header = () => {
               </div>
             )}
 
-            {/* Mobile menu toggle */}
+            {/* Mobile menu toggle. Bars animate into an X (and back) instead of
+                swapping icons outright — this is the same control the panel's
+                own close button is, in its other state, so it gets the same
+                text-white hover:bg-white/10 treatment rather than the ghost
+                variant's light-surface default (hover:bg-accent reads as a
+                pale, near-white blob against this dark, translucent bar). */}
             {user && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="md:hidden"
+                className="md:hidden text-white hover:bg-white/10"
                 onClick={() => setMenuOpen(!menuOpen)}
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={menuOpen}
+                // The portaled panel has its own close button once open, and
+                // fully covers this one — without this it'd sit reachable by
+                // keyboard (tab order ignores z-index) and duplicate that
+                // button's "Close menu" label in the a11y tree.
+                aria-hidden={menuOpen}
+                tabIndex={menuOpen ? -1 : 0}
               >
-                {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                <span className="relative w-6 h-6 flex items-center justify-center" aria-hidden="true">
+                  <motion.span
+                    className="absolute h-0.5 w-5 rounded-full bg-current"
+                    animate={menuOpen ? { y: 0, rotate: 45 } : { y: -6, rotate: 0 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.25, ease: "easeInOut" }}
+                  />
+                  <motion.span
+                    className="absolute h-0.5 w-5 rounded-full bg-current"
+                    animate={menuOpen ? { opacity: 0, scale: 0.6 } : { opacity: 1, scale: 1 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15, ease: "easeInOut" }}
+                  />
+                  <motion.span
+                    className="absolute h-0.5 w-5 rounded-full bg-current"
+                    animate={menuOpen ? { y: 0, rotate: -45 } : { y: 6, rotate: 0 }}
+                    transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.25, ease: "easeInOut" }}
+                  />
+                </span>
               </Button>
             )}
           </div>
@@ -356,8 +398,16 @@ const Header = () => {
         {/* Mobile Navigation — full-height steel panel with its own header, nav
             list, and a bottom account card. Desktop nav + dropdown are untouched.
             This panel carries no Identity Key (it is in the desktop dropdown and
-            on Profile) and no account deletion (that lives on Settings). */}
-        {user && menuOpen && (
+            on Profile) and no account deletion (that lives on Settings).
+
+            Portaled to <body>: `header` has `backdrop-blur-md`, and
+            `backdrop-filter` (like `filter`/`transform`) makes its element the
+            containing block for `position: fixed` descendants. Left in place,
+            this panel's `inset-0` resolved against the *header's* 64px box
+            instead of the viewport — the whole menu rendered squashed into
+            the header's own height, with the map page showing through below
+            it. Portaling escapes that containing block entirely. */}
+        {user && menuOpen && createPortal(
           <div className="md:hidden fixed inset-0 z-50 bg-background flex flex-col pt-[var(--safe-top)]">
             {/* Panel header */}
             <div className="flex items-center justify-between h-16 px-4 shrink-0 border-b border-white/20">
@@ -385,65 +435,67 @@ const Header = () => {
               </div>
             </div>
 
-            {/* Nav list */}
-            <nav className="flex-1 overflow-y-auto px-4 pt-4 space-y-1">
-              {[
-                { to: "/map", icon: Map, label: "Explorer" },
-                { to: "/leaderboard", icon: Store, label: "Places" },
-                { to: "/data", icon: Droplets, label: "Readings" },
-                { to: "/about", icon: Info, label: "About" },
-                { to: "/buy", icon: ShoppingCart, label: "Buy" },
-                ...(hasRole("contributor") ? [{ to: "/data-entry", icon: Plus, label: "Add", primary: true }] : []),
-                ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Steward" }] : []),
-              ].map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.to);
-                if (item.primary) {
+            {/* Nav list. Two groups, not one flat map: the plain destination
+                links center in whatever space is left above Add/Steward,
+                which stay pinned to the bottom of the panel (just above the
+                account card) instead of scrolling around in the middle of
+                the list with everything else. */}
+            <nav className="flex-1 overflow-y-auto px-4 pt-4 flex flex-col">
+              <div className="flex-1 flex flex-col justify-center space-y-1">
+                {[
+                  { to: "/map", icon: Map, label: "Explorer" },
+                  { to: "/leaderboard", icon: Store, label: "Places" },
+                  { to: "/data", icon: Droplets, label: "Readings" },
+                  { to: "/about", icon: Info, label: "About" },
+                  { to: "/buy", icon: ShoppingCart, label: "Buy" },
+                ].map(({ to, icon: Icon, label }) => {
+                  const active = isActive(to);
                   return (
                     <Link
-                      key={item.to}
-                      to={item.to}
+                      key={to}
+                      to={to}
+                      onClick={() => setMenuOpen(false)}
+                      aria-current={active ? "page" : undefined}
+                      className="flex items-center justify-center min-h-[48px] text-[17px] text-white"
+                    >
+                      <span className={`inline-flex items-center gap-3 ${active ? "border-b-2 border-white pb-1 pr-3 font-bold" : ""}`}>
+                        <Icon className="w-5 h-5 shrink-0" />
+                        <span>{label}</span>
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {(hasRole("contributor") || isAdmin) && (
+                <div className="space-y-1 pt-2 pb-1">
+                  {hasRole("contributor") && (
+                    <Link
+                      to="/data-entry"
                       onClick={() => setMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-3 my-1 rounded-lg bg-action-primary hover:bg-action-primary-hover text-white font-semibold text-[17px]"
                     >
-                      <Icon className="w-5 h-5 shrink-0" />
-                      <span>{item.label}</span>
+                      <Plus className="w-5 h-5 shrink-0" />
+                      <span>Add</span>
                     </Link>
-                  );
-                }
-                if (item.to === "/admin") {
-                  return (
+                  )}
+                  {isAdmin && (
                     <Link
-                      key={item.to}
-                      to={item.to}
+                      to="/admin"
                       onClick={() => setMenuOpen(false)}
-                      aria-current={active ? "page" : undefined}
+                      aria-current={isActive("/admin") ? "page" : undefined}
                       className={`flex items-center gap-3 px-4 py-3 my-1 rounded-lg border text-white font-semibold text-[17px] ${
-                        active
+                        isActive("/admin")
                           ? "bg-white/20 border-white/30"
                           : "bg-menu-surface border-menu-surface-border hover:bg-white/15"
                       }`}
                     >
-                      <Icon className="w-5 h-5 shrink-0" />
-                      <span>{item.label}</span>
+                      <Shield className="w-5 h-5 shrink-0" />
+                      <span>Steward</span>
                     </Link>
-                  );
-                }
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    onClick={() => setMenuOpen(false)}
-                    aria-current={active ? "page" : undefined}
-                    className="flex items-center min-h-[48px] text-[17px] text-white"
-                  >
-                    <span className={`inline-flex items-center gap-3 ${active ? "border-b-2 border-white pb-1 pr-3 font-bold" : ""}`}>
-                      <Icon className="w-5 h-5 shrink-0" />
-                      <span>{item.label}</span>
-                    </span>
-                  </Link>
-                );
-              })}
+                  )}
+                </div>
+              )}
             </nav>
 
             {/* Account card pinned to bottom */}
@@ -477,7 +529,8 @@ const Header = () => {
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </header>
