@@ -78,6 +78,7 @@ export default {
 				'blue-deep': 'var(--blue-deep)',
 				'green-mid': 'var(--green-mid)',
 				'green-fresh': 'var(--green-fresh)',
+				'green-light': 'var(--green-light)',
 				'blue-light': 'var(--blue-light)',
 				'blue-pale': 'var(--blue-pale)',
 				'blue-mid': 'var(--blue-mid)',

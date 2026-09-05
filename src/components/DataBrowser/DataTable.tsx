@@ -45,21 +45,25 @@ const DataTable: React.FC = () => {
 
   return (
     <div>
-      <div className="relative text-center mb-6">
-        <div>
+      {/* The relative/absolute pairing is scoped to just the title row, not the
+          whole block: centering the button against the title+subtitle block as a
+          unit put it at the wrapper's vertical midpoint, which lands inside the
+          subtitle once that text wraps to 2 lines on narrow screens. */}
+      <div className="text-center mb-6">
+        <div className="relative">
           <h1 className="text-2xl font-display font-bold text-on-bg-text">All Readings</h1>
-          <p className="mt-1 text-on-bg-body">Browse community readings across crops and places</p>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-0 top-1/2 -translate-y-1/2"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            aria-label={isRefreshing ? 'Refreshing readings' : 'Refresh readings'}
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-0 top-1/2 -translate-y-1/2"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          aria-label={isRefreshing ? 'Refreshing readings' : 'Refresh readings'}
-        >
-          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-        </Button>
+        <p className="mt-1 text-on-bg-body">Browse community readings across crops and places</p>
       </div>
 
       {/* One continuous panel on all sizes: filters, context and results merged

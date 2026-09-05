@@ -44,10 +44,14 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
 
   return (
     <motion.div
-      className="flex flex-col gap-2 mt-4 desktop:mt-0"
+      className="flex flex-col gap-2 mt-4 desktop:mt-0 text-center desktop:text-left"
       {...(prefersReducedMotion ? {} : { initial: { opacity: 0, x: 40 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true }, transition: { duration: 0.6, delay: 0.2 } })}
     >
-      <p className="text-xs font-medium uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.45)' }}>
+      {/* text-on-bg-subtle, not a hand-rolled rgba(255,255,255,0.45): that
+          opacity only clears ~3.3:1 against --blue-deep, well short of the
+          4.5:1 WCAG AA floor this text-xs caption needs. The on-bg-* scale
+          is calibrated to actually pass — see index.css. */}
+      <p className="text-xs font-medium uppercase tracking-widest text-on-bg-subtle">
         Where people are testing their food
       </p>
       <div className="relative rounded-2xl overflow-hidden shadow-xl h-[200px] desktop:h-[260px]">
@@ -155,7 +159,9 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
           <div className="w-full h-full bg-white/5 animate-pulse" />
         )}
       </div>
-      <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+      {/* text-on-bg-muted, not rgba(255,255,255,0.35): that only clears
+          ~2.6:1 against --blue-deep, badly short of 4.5:1. */}
+      <p className="text-xs text-on-bg-muted">
         Verified scores from real growers and shoppers.{' '}
         <button
           onClick={() => navigate('/map')}

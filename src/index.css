@@ -53,6 +53,7 @@
     /* Brand & score greens */
     --green-fresh:    #639647;  /* brand green — links, secondary actions      */
     --green-mid:      #1f6b3f;  /* excellent score color                       */
+    --green-light:    #74c69d;  /* success/connected accent on dark backgrounds */
     --green-700:      #4a7533;  /* deep green accent (Vision eyebrow), not a score color */
     --green-tint:     #eef5e8;  /* soft, unsaturated green section wash         */
     --score-excellent: #1f6b3f;
@@ -133,13 +134,19 @@
     --score-ink: #2a2118;          /* text on amber average              */
 
     /* ── On-background text hierarchy ────────────────── *
-     * White-at-opacity scale for text sitting on the blue
-     * page background. Change these to retone all pages.  */
-    --on-bg-text:   rgba(255,255,255,0.80);  /* nav items, usernames          */
-    --on-bg-body:   rgba(255,255,255,0.75);  /* body paragraphs, subtitles    */
-    --on-bg-subtle: rgba(255,255,255,0.65);  /* eyebrow labels, section labels */
-    --on-bg-muted:  rgba(255,255,255,0.55);  /* footer nav, fine print        */
-    --on-bg-faint:  rgba(255,255,255,0.40);  /* footer legal, ghost text      */
+     * White-at-opacity scale for text sitting on --blue-deep (the
+     * unconnected/auth flow's hero, mission, and footer surfaces —
+     * see AuthBackground.tsx). Every tier is floored at 0.66, the
+     * minimum opacity that still clears WCAG AA 4.5:1 against
+     * --blue-deep in both themes; below that floor no amount of
+     * white-on-blue-mid ever reaches 4.5:1 (max achievable there is
+     * ~3.9:1 even at 100% opacity), so this hierarchy must never be
+     * applied over --blue-mid or --green-fresh. Change together. */
+    --on-bg-text:   rgba(255,255,255,0.94);  /* nav items, usernames          */
+    --on-bg-body:   rgba(255,255,255,0.86);  /* body paragraphs, subtitles    */
+    --on-bg-subtle: rgba(255,255,255,0.78);  /* eyebrow labels, section labels */
+    --on-bg-muted:  rgba(255,255,255,0.70);  /* footer nav, fine print        */
+    --on-bg-faint:  rgba(255,255,255,0.66);  /* footer legal, fine print      */
 
     /* ── Typography ───────────────────────────────────── */
     --font-display: 'Lora', Georgia, serif;
@@ -196,6 +203,7 @@
 
     --green-fresh:     #7ab35b;   /* brighter brand green for dark            */
     --green-mid:       #2a9460;   /* brighter excellent for dark              */
+    --green-light:     #8fd6ae;   /* success/connected accent on dark backgrounds */
     --green-700:       #93c97a;   /* lifted green accent for dark             */
     --green-tint:      #15271b;   /* deep green-tinted canvas for dark        */
     --score-excellent: #2a9460;
