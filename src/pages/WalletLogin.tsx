@@ -300,7 +300,7 @@ export default function WalletLogin() {
         <section className="relative flex items-center overflow-hidden">
           <div className="w-full max-w-6xl mx-auto px-5 py-20 desktop:py-28">
             {/* Content row */}
-            <div className="grid desktop:grid-cols-2 gap-6 desktop:gap-16 items-center mb-8">
+            <div className="grid desktop:grid-cols-2 gap-6 desktop:gap-16 items-center mb-8 [&>*]:min-w-0">
 
               {/* Left: copy + CTAs. Centered on mobile (one column, nothing to
                   align against); back to the default left-aligned column once
@@ -317,9 +317,8 @@ export default function WalletLogin() {
                   <em className="italic" style={{ color: 'white' }}>nutritious</em>{' '}
                   your food is.
                 </h1>
-                <p className="text-base desktop:text-lg leading-relaxed text-on-bg-body mb-8 text-center">
+                <p className="text-base desktop:text-lg leading-relaxed text-on-bg-body mb-8 max-w-prose mx-auto desktop:mx-0">
                   BRIXit measures the refraction of fresh produce.
-                  <br />
                   You can use a refractometer to shop smarter, feed your family better, and share what you discover.
                 </p>
                 <div className="flex flex-col gap-3 max-w-md mx-auto desktop:mx-0">

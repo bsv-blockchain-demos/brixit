@@ -44,7 +44,7 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
 
   return (
     <motion.div
-      className="flex flex-col gap-2 mt-4 desktop:mt-0 text-center desktop:text-left"
+      className="flex flex-col gap-2 mt-4 desktop:mt-0 min-w-0 text-center desktop:text-left"
       {...(prefersReducedMotion ? {} : { initial: { opacity: 0, x: 40 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true }, transition: { duration: 0.6, delay: 0.2 } })}
     >
       {/* text-on-bg-subtle, not a hand-rolled rgba(255,255,255,0.45): that
