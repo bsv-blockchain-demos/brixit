@@ -6,6 +6,7 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   apiPost,
   apiGet,
@@ -104,6 +105,8 @@ async function fetchUserProfile(): Promise<UserProfile | null> {
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const queryClient = useQueryClient();
+
   // With the DEV bypass on, start already-authenticated and skip both loading
   // gates so ProtectedRoute renders immediately instead of waiting on a
   // refresh call that cannot succeed without a backend.
@@ -191,6 +194,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setIsAuthenticated(false);
       setAuthError(null);
+      // Cached submission pages carry the outgoing user's private photo keys,
+      // and the presigned-URL cache carries live links. Without this they would
+      // survive into whoever signs in next on this tab.
+      queryClient.clear();
     }
   };
 

@@ -1,20 +1,27 @@
 /**
  * POST /api/images  →  batch presigned GET URLs for submission image keys.
- * Public — submissions are public-facing so anyone browsing can fetch the URLs.
+ *
+ * Photos attached to a reading are private: only the submitter and admins may
+ * resolve a key to a fetchable URL. This is the enforcement point — a presigned
+ * URL is the only way to read the object, so gating here is what actually keeps
+ * other users out, independent of what any client does with the key list.
+ *
  * 1-hour TTL on the URLs; client refetches when they expire.
  */
 import { Router } from 'express';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { getS3Client, getS3BucketName, isSubmissionImageKey } from '../lib/s3.js';
+import prisma from '../db/client.js';
+import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js';
+import { getS3Client, getS3BucketName, isSubmissionImageKey, submissionIdFromKey } from '../lib/s3.js';
 
 const router = Router();
 
 const PRESIGNED_GET_TTL_SECONDS = 3600;
 const MAX_KEYS_PER_REQUEST = 50;
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireAuth as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { keys } = req.body ?? {};
 
@@ -26,9 +33,33 @@ router.post('/', async (req: Request, res: Response) => {
       res.status(400).json({ error: `Too many keys (max ${MAX_KEYS_PER_REQUEST} per request)` });
       return;
     }
+
+    // Every key must be shaped like one we issued and name a submission.
+    const submissionIds = new Set<string>();
     for (const k of keys) {
       if (!isSubmissionImageKey(k)) {
         res.status(400).json({ error: 'All keys must be submission image keys' });
+        return;
+      }
+      const submissionId = submissionIdFromKey(k);
+      if (!submissionId) {
+        res.status(400).json({ error: 'Could not derive submission id from key' });
+        return;
+      }
+      submissionIds.add(submissionId);
+    }
+
+    // Admins see every reading's photos; everyone else only their own. An
+    // all-or-nothing check keeps a batch from half-succeeding and leaking which
+    // of the requested keys exist.
+    const isAdmin = (req.user!.roles || []).includes('admin');
+    if (!isAdmin) {
+      const owned = await prisma.submission.findMany({
+        where: { id: { in: [...submissionIds] }, userId: req.user!.sub },
+        select: { id: true },
+      });
+      if (owned.length !== submissionIds.size) {
+        res.status(403).json({ error: 'Not authorized to view these images' });
         return;
       }
     }

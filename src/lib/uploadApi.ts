@@ -44,13 +44,16 @@ export async function finalizeUpload(
   return apiPost('/api/upload/finalize', { submission_id: submissionId, keys });
 }
 
-/** Batch presigned GET URLs for display. Public endpoint. */
+/**
+ * Batch presigned GET URLs for display. Authenticated: the server only signs
+ * keys belonging to the caller's own readings (or any reading, for admins), so
+ * the JWT has to go with the request.
+ */
 export async function getImageUrls(keys: string[]): Promise<Record<string, string>> {
   if (keys.length === 0) return {};
   const result = await apiPost<{ urls: Record<string, string>; expiresIn: number }>(
     '/api/images',
     { keys },
-    { skipAuth: true },
   );
   return result.urls;
 }

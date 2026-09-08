@@ -34,6 +34,7 @@ import { useToast } from '../ui/use-toast';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { apiPut } from '../../lib/api';
+import { imageCountOf } from '../../lib/filterUtils';
 import { useImageUrls } from '../../hooks/useImageUrls';
 import { formatUsername } from '../../lib/formatUsername';
 import { gradeBrix } from '../../lib/getBrixColor';
@@ -109,6 +110,10 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   const imageUrlsQuery = useImageUrls(initialDataPoint?.id, imageKeys);
   const imageUrls = imageUrlsQuery.data ?? [];
   const imagesLoading = imageUrlsQuery.isLoading;
+  // No keys but a non-zero count means the server withheld them: photos belong
+  // to the submitter and admins only.
+  const imagesArePrivate =
+    imageKeys.length === 0 && !!initialDataPoint && imageCountOf(initialDataPoint) > 0;
 
   // Remove the isLoading state since we're using staticDataLoading
   const [isInitializing, setIsInitializing] = useState(true);
@@ -549,6 +554,10 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
                       <Loader2 className="w-8 h-8 animate-spin text-green-mid" />
                       <span className="ml-3 text-sm text-text-muted">Loading images...</span>
                     </div>
+                  ) : imagesArePrivate ? (
+                    <p className="text-sm text-text-muted italic">
+                      Photos for this reading are private to the person who submitted it.
+                    </p>
                   ) : imageUrls.length === 0 ? (
                     <p className="text-sm text-text-muted italic">No images added for this reading.</p>
                   ) : (

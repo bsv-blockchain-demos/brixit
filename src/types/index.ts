@@ -23,7 +23,10 @@ export interface BrixDataPoint {
   outlier_notes: string;
   rejected: boolean;
   rejectionMessage: string | null;
+  /** Photo keys, present only for the submitter and admins. */
   images: string[];
+  /** How many photos the reading has, regardless of who may open them. */
+  imageCount?: number;
   poorBrix: number | null;
   averageBrix: number | null;
   goodBrix: number | null;

@@ -62,7 +62,8 @@ async function markAnchorFailed(submissionId: string): Promise<void> {
 
 const router = Router();
 
-// Public submission shape. `images` is part of it — every detail surface shows them.
+// Public submission shape. The `images` relation is always selected, but the
+// keys only reach privileged viewers — see formatPublicSubmission.
 const PUBLIC_SUBMISSION_INCLUDE = {
   crop: { select: { id: true, name: true, label: true, poorBrix: true, averageBrix: true, goodBrix: true, excellentBrix: true, category: true } },
   brand: { select: { id: true, name: true, label: true } },
@@ -77,8 +78,30 @@ const FULL_SUBMISSION_INCLUDE = {
   verifier: { select: { id: true, displayName: true } },
 } as const;
 
-/** The public submission payload — every public endpoint formats through here, so they can't drift. */
-export function formatPublicSubmission(s: any) {
+/** Who is asking. `undefined` is an anonymous caller. */
+export type SubmissionViewer = { sub: string; roles?: string[] } | undefined;
+
+/**
+ * True when the caller may see a submission's private parts — the photos and
+ * the rejection reason. Both belong to the submitter and to admins; nobody
+ * else, authenticated or not, gets them.
+ */
+export function canSeePrivateFields(s: { userId?: string | null }, viewer: SubmissionViewer): boolean {
+  if (!viewer) return false;
+  if ((viewer.roles ?? []).includes('admin')) return true;
+  return !!s.userId && s.userId === viewer.sub;
+}
+
+/**
+ * The public submission payload — every public endpoint formats through here,
+ * so they can't drift.
+ *
+ * `includePrivate` gates the photo keys. Everyone still gets `image_count`, so
+ * the "with images" filter and photo badges keep working for readings whose
+ * pictures the viewer cannot open.
+ */
+export function formatPublicSubmission(s: any, includePrivate = false) {
+  const imageKeys: string[] = s.images?.map((i: any) => i.imageUrl) ?? [];
   return {
     id: s.id,
     assessment_date: s.assessmentDate,
@@ -110,24 +133,26 @@ export function formatPublicSubmission(s: any) {
     pos_type: s.venue?.posType ?? null,
     skip_venue_prompt: s.skipVenuePrompt ?? false,
     outpoint: s.outpoint ?? null,
-    images: s.images?.map((i: any) => i.imageUrl) ?? [],
+    image_count: imageKeys.length,
+    images: includePrivate ? imageKeys : [],
   };
 }
 
 /**
  * Public shape plus the submitter/verifier identities.
  *
- * Rejection state is opt-in: the reason is private between the admin and the
- * submitter, so only a caller proven to be the owner or an admin may see it.
+ * `includePrivate` is opt-in: the rejection reason and the photo keys are
+ * private between the admin and the submitter, so only a caller proven to be
+ * the owner or an admin may see them.
  */
-export function formatFullSubmission(s: any, includeRejection = false) {
+export function formatFullSubmission(s: any, includePrivate = false) {
   return {
-    ...formatPublicSubmission(s),
+    ...formatPublicSubmission(s, includePrivate),
     user_id: s.user?.id ?? null,
     user_display_name: s.user?.displayName ?? null,
     verified_by_display_name: s.verifier?.displayName ?? null,
     // rejectionHash stays server-side; it is the comparison value for resubmit.
-    ...(includeRejection
+    ...(includePrivate
       ? {
           rejected: !!s.rejectedAt,
           rejected_at: s.rejectedAt ?? null,
@@ -138,7 +163,9 @@ export function formatFullSubmission(s: any, includeRejection = false) {
 }
 
 // --- Public: GET /api/submissions (paginated, filtered via public_submission_details view) ---
-router.get('/', async (req: Request, res: Response) => {
+// optionalAuth so a signed-in caller still gets the photo keys on their own
+// rows (and on every row when they are an admin); anonymous callers get none.
+router.get('/', optionalAuth as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const limit = Math.max(1, Math.min(Number(req.query.limit) || 50, 200));
     const offset = Math.max(0, Number(req.query.offset) || 0);
@@ -164,7 +191,9 @@ router.get('/', async (req: Request, res: Response) => {
     });
 
     // Public view: no user PII (formatPublicSubmission omits the user joins).
-    const result = submissions.map(formatPublicSubmission);
+    const result = submissions.map((sub) =>
+      formatPublicSubmission(sub, canSeePrivateFields(sub, req.user)),
+    );
 
     res.json(result);
   } catch (err) {
@@ -186,7 +215,7 @@ router.get('/count', async (req: Request, res: Response) => {
 });
 
 // --- Public: GET /api/submissions/bounds ---
-router.get('/bounds', async (req: Request, res: Response) => {
+router.get('/bounds', optionalAuth as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const west = Number(req.query.west);
     const south = Number(req.query.south);
@@ -214,7 +243,9 @@ router.get('/bounds', async (req: Request, res: Response) => {
       take: limit,
     });
 
-    const result = submissions.map(formatPublicSubmission);
+    const result = submissions.map((sub) =>
+      formatPublicSubmission(sub, canSeePrivateFields(sub, req.user)),
+    );
 
     res.json(result);
   } catch (err) {
@@ -508,11 +539,9 @@ router.get('/:id', optionalAuth as any, async (req: AuthenticatedRequest, res: R
       return;
     }
 
-    // The rejection reason is for the submitter and admins, not the public.
-    const isOwner = !!req.user && submission.userId === req.user.sub;
-    const isAdmin = !!req.user && (req.user.roles || []).includes('admin');
-
-    res.json(formatFullSubmission(submission, isOwner || isAdmin));
+    // The rejection reason and the photos are for the submitter and admins,
+    // not the public.
+    res.json(formatFullSubmission(submission, canSeePrivateFields(submission, req.user)));
   } catch (err) {
     console.error('[submissions/:id] Error:', err);
     res.status(500).json({ error: 'Failed to fetch submission' });

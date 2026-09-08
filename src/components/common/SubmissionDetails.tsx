@@ -11,6 +11,7 @@ import { titleCase } from '../../lib/titleCase';
 import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
 import { BrixDataPoint } from '../../types';
 import { useImageUrls } from '../../hooks/useImageUrls';
+import { imageCountOf } from '../../lib/filterUtils';
 
 interface SubmissionDetailsProps {
   dataPoint: BrixDataPoint;
@@ -38,6 +39,10 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
         : [],
     [dataPoint.images, showImages],
   );
+  // The server withholds photo keys from everyone but the submitter and admins,
+  // while still reporting the count. A reading with photos we cannot open is a
+  // different thing from a reading with no photos, so say so.
+  const imagesArePrivate = imageKeys.length === 0 && imageCountOf(dataPoint) > 0;
   const imageUrlsQuery = useImageUrls(dataPoint.id, imageKeys);
   const imageUrls = imageUrlsQuery.data ?? [];
   const imagesLoading = imageUrlsQuery.isLoading;
@@ -184,6 +189,10 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
                 <Loader2 className="w-8 h-8 animate-spin text-green-mid" />
                 <span className="ml-3 text-text-mid">Loading images...</span>
               </div>
+            ) : imagesArePrivate ? (
+              <p className="text-text-muted-brown italic">
+                Photos for this reading are private to the person who submitted it.
+              </p>
             ) : imageUrls.length === 0 ? (
               <p className="text-text-muted-brown italic">No images available for this reading.</p>
             ) : (
