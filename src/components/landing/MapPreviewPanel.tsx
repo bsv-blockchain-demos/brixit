@@ -48,10 +48,10 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
       {...(prefersReducedMotion ? {} : { initial: { opacity: 0, x: 40 }, whileInView: { opacity: 1, x: 0 }, viewport: { once: true }, transition: { duration: 0.6, delay: 0.2 } })}
     >
       {/* text-on-bg-subtle, not a hand-rolled rgba(255,255,255,0.45): that
-          opacity only clears ~3.3:1 against --blue-deep, well short of the
+          opacity only clears ~3.3:1 against the scrimmed platform blue, short of the
           4.5:1 WCAG AA floor this text-xs caption needs. The on-bg-* scale
           is calibrated to actually pass — see index.css. */}
-      <p className="text-xs font-medium uppercase tracking-widest text-on-bg-subtle">
+      <p className="text-[13px] font-medium uppercase tracking-widest text-on-bg-subtle">
         Where people are testing their food
       </p>
       <div className="relative rounded-2xl overflow-hidden shadow-xl h-[200px] desktop:h-[260px]">
@@ -160,8 +160,8 @@ export function MapPreviewPanel({ mapPreview }: { mapPreview: MapPreview | null 
         )}
       </div>
       {/* text-on-bg-muted, not rgba(255,255,255,0.35): that only clears
-          ~2.6:1 against --blue-deep, badly short of 4.5:1. */}
-      <p className="text-xs text-on-bg-muted">
+          ~2.6:1 against the scrimmed platform blue, badly short of 4.5:1. */}
+      <p className="text-[13px] text-on-bg-muted">
         Verified scores from real growers and shoppers.{' '}
         <button
           onClick={() => navigate('/map')}
