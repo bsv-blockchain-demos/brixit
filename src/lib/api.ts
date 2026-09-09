@@ -1,3 +1,6 @@
+import type { AuthProof } from '@bsv/auth';
+import { authActionForRequest, withProof, PROOF_ERROR_CODE } from './authProofRoutes';
+
 /**
  * Frontend API client for the Express backend.
  *
@@ -22,6 +25,20 @@ export function clearAccessToken() {
 
 export function getAccessToken(): string | null {
   return accessToken;
+}
+
+// --- Authorization proof signer ---
+
+export type AuthProofSigner = (action: string) => Promise<AuthProof>;
+
+/**
+ * Mints a signed proof for a write. Registered by WalletContext, which owns the
+ * wallet; api.ts is a plain module with no access to React context.
+ */
+let authProofSigner: AuthProofSigner | null = null;
+
+export function setAuthProofSigner(signer: AuthProofSigner | null) {
+  authProofSigner = signer;
 }
 
 // --- Token refresh ---
@@ -59,8 +76,10 @@ interface FetchOptions extends RequestInit {
 }
 
 /**
- * Authenticated fetch wrapper. Automatically attaches the JWT Bearer token
- * and retries once on 401 by attempting a cookie-based token refresh.
+ * Authenticated fetch wrapper. Attaches the JWT Bearer token, and for the
+ * writes listed in authProofRoutes attaches a freshly signed authorization
+ * proof. Retries once on 401 by refreshing the token; a rejected proof is not
+ * retried that way, because its nonce is spent on the first attempt.
  */
 export async function apiFetch(path: string, options: FetchOptions = {}): Promise<Response> {
   const { skipAuth, ...fetchOptions } = options;
@@ -79,18 +98,55 @@ export async function apiFetch(path: string, options: FetchOptions = {}): Promis
     headers['Authorization'] = `Bearer ${accessToken}`;
   }
 
-  let res = await fetch(url, { ...fetchOptions, headers, credentials: 'include' });
+  // PUT and DELETE are tunnelled through POST, so the override header decides
+  // which action a path maps to.
+  const effectiveMethod = headers['X-Brixit-Method'] || fetchOptions.method || 'GET';
+  const action = skipAuth ? null : authActionForRequest(path, effectiveMethod);
 
-  // Auto-refresh on 401
+  // Re-run per attempt: a retry needs a fresh nonce, not the spent one.
+  const send = async (): Promise<Response> => {
+    let body = fetchOptions.body;
+    if (action) {
+      if (!authProofSigner) {
+        throw new Error('This action cannot be authorized right now. Reload the page and try again.');
+      }
+      let proof;
+      try {
+        proof = await authProofSigner(action);
+      } catch {
+        throw new Error('Your wallet is not connected. Reconnect it and try again.');
+      }
+      body = withProof(body, proof);
+    }
+    return fetch(url, { ...fetchOptions, body, headers, credentials: 'include' });
+  };
+
+  let res = await send();
+
   if (res.status === 401 && !skipAuth) {
-    const refreshed = await refreshAccessToken();
-    if (refreshed) {
+    const proofRejected = action
+      && (await res.clone().json().catch(() => null))?.code === PROOF_ERROR_CODE;
+
+    if (!proofRejected && await refreshAccessToken()) {
       headers['Authorization'] = `Bearer ${accessToken}`;
-      res = await fetch(url, { ...fetchOptions, headers, credentials: 'include' });
+      res = await send();
     }
   }
 
   return res;
+}
+
+/**
+ * Builds the error thrown for a non-ok response. A rejected auth proof is
+ * reported with a plain-language message rather than the server's protocol
+ * vocabulary (e.g. "Proof already used"), which is not fit for user-facing UI.
+ */
+async function apiError(res: Response): Promise<Error> {
+  const err = await res.json().catch(() => ({ error: res.statusText }));
+  if (err.code === PROOF_ERROR_CODE) {
+    return new Error('Could not verify this action. Please try again.');
+  }
+  return new Error(err.error || `API error ${res.status}`);
 }
 
 /**
@@ -99,8 +155,7 @@ export async function apiFetch(path: string, options: FetchOptions = {}): Promis
 export async function apiGet<T = unknown>(path: string, options: FetchOptions = {}): Promise<T> {
   const res = await apiFetch(path, { method: 'GET', ...options });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || `API error ${res.status}`);
+    throw await apiError(res);
   }
   return res.json();
 }
@@ -117,8 +172,7 @@ export async function apiPost<T = unknown>(path: string, body?: unknown, options
   }
   const res = await apiFetch(path, fetchOptions);
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || `API error ${res.status}`);
+    throw await apiError(res);
   }
   return res.json();
 }
@@ -137,8 +191,7 @@ export async function apiPut<T = unknown>(path: string, body?: unknown, options:
     headers: { ...(optHeaders as Record<string, string> | undefined), 'X-Brixit-Method': 'PUT' },
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || `API error ${res.status}`);
+    throw await apiError(res);
   }
   return res.json();
 }
@@ -155,8 +208,7 @@ export async function apiDelete<T = unknown>(path: string, options: FetchOptions
     headers: { ...(optHeaders as Record<string, string> | undefined), 'X-Brixit-Method': 'DELETE' },
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || `API error ${res.status}`);
+    throw await apiError(res);
   }
   return res.json();
 }

@@ -33,3 +33,6 @@ dist-ssr
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Superpowers specs and plans (local process artefacts)
+docs/superpowers/
