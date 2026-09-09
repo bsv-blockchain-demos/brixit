@@ -20,6 +20,8 @@ import type { Request, Response } from 'express';
 import { P2PKH, PublicKey, Utils, type WalletInterface, type WalletProtocol } from '@bsv/sdk';
 import prisma from '../db/client.js';
 import { requireAuth, optionalAuth, type AuthenticatedRequest } from '../middleware/auth.js';
+import { requireAuthProof } from '../middleware/requireAuthProof.js';
+import { AUTH_ACTIONS } from '../lib/authActions.js';
 import serverWallet, { SERVER_WALLET_CHAIN } from '../serverWallet.js';
 import { createSubmissionTx, type SubmissionEntry } from '../lib/createSubmissionTx.js';
 import { getTransaction } from '../lib/getTransaction.js';
@@ -325,7 +327,7 @@ router.get('/mine/venues', requireAuth as any, async (req: AuthenticatedRequest,
 
 // --- Authenticated: POST /api/submissions/:id/retry-anchor ---
 // Owner-only re-anchor for a submission whose initial anchor never landed.
-router.post('/:id/retry-anchor', requireAuth as any, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:id/retry-anchor', requireAuth as any, requireAuthProof(AUTH_ACTIONS.submissionRetryAnchor) as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.sub;
     const submissionUuid = req.params.id;
@@ -433,7 +435,7 @@ router.post('/:id/retry-anchor', requireAuth as any, async (req: AuthenticatedRe
 // --- Authenticated: POST /api/submissions/:id/resubmit ---
 // Returns a rejected reading to the pending queue. The reading must have
 // changed since it was rejected, otherwise the admin sees the same row again.
-router.post('/:id/resubmit', requireAuth as any, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:id/resubmit', requireAuth as any, requireAuthProof(AUTH_ACTIONS.submissionResubmit) as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const submissionId = req.params.id;
 
@@ -518,7 +520,7 @@ router.get('/:id', optionalAuth as any, async (req: AuthenticatedRequest, res: R
 });
 
 // --- Authenticated: PUT /api/submissions/:id ---
-router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Response) => {
+router.put('/:id', requireAuth as any, requireAuthProof(AUTH_ACTIONS.submissionEdit) as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.sub;
     const roles = req.user!.roles || [];
@@ -689,7 +691,7 @@ router.put('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Re
 });
 
 // --- Authenticated: DELETE /api/submissions/:id ---
-router.delete('/:id', requireAuth as any, async (req: AuthenticatedRequest, res: Response) => {
+router.delete('/:id', requireAuth as any, requireAuthProof(AUTH_ACTIONS.submissionDelete) as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.sub;
     const roles = req.user!.roles || [];

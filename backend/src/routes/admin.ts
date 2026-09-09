@@ -15,6 +15,8 @@ import { Router } from 'express';
 import type { Response } from 'express';
 import prisma from '../db/client.js';
 import { requireAuth, requireAdmin, type AuthenticatedRequest } from '../middleware/auth.js';
+import { requireAuthProof } from '../middleware/requireAuthProof.js';
+import { AUTH_ACTIONS } from '../lib/authActions.js';
 import { submissionHash } from '../lib/submissionHash.js';
 import { validateRejectionMessage } from '../lib/rejectionMessage.js';
 
@@ -257,7 +259,7 @@ router.get('/submissions/unverified', async (req: AuthenticatedRequest, res: Res
 });
 
 // POST /api/admin/roles/grant
-router.post('/roles/grant', async (req: AuthenticatedRequest, res: Response) => {
+router.post('/roles/grant', requireAuthProof(AUTH_ACTIONS.adminRolesGrant) as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { target_user_id, role_to_grant } = req.body;
 
@@ -286,7 +288,7 @@ router.post('/roles/grant', async (req: AuthenticatedRequest, res: Response) => 
 });
 
 // POST /api/admin/roles/revoke
-router.post('/roles/revoke', async (req: AuthenticatedRequest, res: Response) => {
+router.post('/roles/revoke', requireAuthProof(AUTH_ACTIONS.adminRolesRevoke) as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { target_user_id, role_to_revoke } = req.body;
 
@@ -307,7 +309,7 @@ router.post('/roles/revoke', async (req: AuthenticatedRequest, res: Response) =>
 });
 
 // POST /api/admin/submissions/:id/verify
-router.post('/submissions/:id/verify', async (req: AuthenticatedRequest, res: Response) => {
+router.post('/submissions/:id/verify', requireAuthProof(AUTH_ACTIONS.adminVerify) as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const submissionId = req.params.id;
     const verify = req.body.verify !== false; // default true
@@ -349,7 +351,7 @@ router.post('/submissions/:id/verify', async (req: AuthenticatedRequest, res: Re
 // POST /api/admin/submissions/:id/reject
 // Soft decline: keeps the row but flags it rejected and unpublishes it.
 // `reject: false` restores the submission to pending. Distinct from DELETE.
-router.post('/submissions/:id/reject', async (req: AuthenticatedRequest, res: Response) => {
+router.post('/submissions/:id/reject', requireAuthProof(AUTH_ACTIONS.adminReject) as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const submissionId = req.params.id;
     const reject = req.body.reject !== false; // default true
@@ -399,7 +401,7 @@ router.post('/submissions/:id/reject', async (req: AuthenticatedRequest, res: Re
 });
 
 // DELETE /api/admin/submissions/:id
-router.delete('/submissions/:id', async (req: AuthenticatedRequest, res: Response) => {
+router.delete('/submissions/:id', requireAuthProof(AUTH_ACTIONS.adminDelete) as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const submissionId = req.params.id;
 

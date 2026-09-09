@@ -14,6 +14,8 @@ import { corsMiddleware } from './middleware/cors.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
 import { requireAuth, requireContributor } from './middleware/auth.js';
+import { requireAuthProof } from './middleware/requireAuthProof.js';
+import { AUTH_ACTIONS } from './lib/authActions.js';
 import { authLimiter, submissionLimiter, uploadLimiter, imagesLimiter, geonamesLimiter, generalLimiter } from './utils/rateLimiter.js';
 
 // Probe imports
@@ -122,7 +124,7 @@ app.use('/api/map-preview', mapPreviewRoutes);
 // --- Submissions (public GET + authenticated POST/DELETE) ---
 app.use('/api/submissions', submissionsRoutes);
 // POST /api/submissions/create requires auth + contributor (auto-verify handler)
-app.use('/api/submissions/create', requireAuth as any, requireContributor as any, autoVerifySubmissionRoutes);
+app.use('/api/submissions/create', requireAuth as any, requireContributor as any, requireAuthProof(AUTH_ACTIONS.submissionCreate) as any, autoVerifySubmissionRoutes);
 
 // --- GeoNames proxy (username is public, proxy requires auth) ---
 app.use('/api/geonames', geonamesRoutes);
