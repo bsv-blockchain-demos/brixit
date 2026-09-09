@@ -112,8 +112,8 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
   const imagesLoading = imageUrlsQuery.isLoading;
   // No keys but a non-zero count means the server withheld them: photos belong
   // to the submitter and admins only.
-  const imagesArePrivate =
-    imageKeys.length === 0 && !!initialDataPoint && imageCountOf(initialDataPoint) > 0;
+  const imageCount = initialDataPoint ? imageCountOf(initialDataPoint) : 0;
+  const imagesArePrivate = imageKeys.length === 0 && imageCount > 0;
 
   // Remove the isLoading state since we're using staticDataLoading
   const [isInitializing, setIsInitializing] = useState(true);
@@ -547,7 +547,7 @@ const DataPointDetailModal: React.FC<DataPointDetailModalProps> = ({
             </div>
 
             <div className="mt-4">
-              <DetailSection icon={<ImageIcon className="w-3.5 h-3.5 text-text-mid" />} title={`Reference Images (${imageUrls.length})`}>
+              <DetailSection icon={<ImageIcon className="w-3.5 h-3.5 text-text-mid" />} title={`Reference Images (${imageCount})`}>
                 <div className="pt-1 pb-3">
                   {imagesLoading ? (
                     <div className="flex items-center justify-center py-8">
