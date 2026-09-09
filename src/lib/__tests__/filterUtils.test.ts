@@ -236,6 +236,25 @@ describe('applyFilters', () => {
       expect(result).toHaveLength(1);
       expect(result[0].images).toHaveLength(1);
     });
+
+    // Photos are private to the submitter and admins, so most viewers get an
+    // empty `images` with a non-zero `imageCount`. Those readings still have
+    // photos and must survive the filter.
+    it('keeps points whose image keys were withheld but whose count is non-zero', () => {
+      const points = [
+        makePoint({ id: 'no-photos', images: [], imageCount: 0 }),
+        makePoint({ id: 'private-photos', images: [], imageCount: 2 }),
+      ];
+      const result = applyFilters(points, { ...baseFilters(), hasImage: true }, true);
+      expect(result.map((p) => p.id)).toEqual(['private-photos']);
+    });
+
+    it('falls back to the key count when imageCount is absent', () => {
+      const points = [makePoint({ images: [] }), makePoint({ images: ['img.jpg'] })];
+      points.forEach((p) => delete (p as { imageCount?: number }).imageCount);
+      const result = applyFilters(points, { ...baseFilters(), hasImage: true }, true);
+      expect(result).toHaveLength(1);
+    });
   });
 
   describe('submittedBy filter', () => {

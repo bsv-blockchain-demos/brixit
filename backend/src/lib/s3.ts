@@ -53,8 +53,14 @@ export function isSubmissionImageKey(key: unknown): key is string {
   return typeof key === 'string' && key.startsWith(`${SUBMISSION_IMAGE_PREFIX}/`);
 }
 
-/** Extracts the submissionId segment from a key. */
+const UUID_SEGMENT = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
+
+/**
+ * Extracts the submissionId segment from a key, or null when it is not a UUID.
+ * Callers pass the result straight to a uuid-typed column, which rejects any
+ * other shape at the driver rather than as a lookup miss.
+ */
 export function submissionIdFromKey(key: string): string | null {
-  const match = key.match(new RegExp(`^${SUBMISSION_IMAGE_PREFIX}/([^/]+)/`));
+  const match = key.match(new RegExp(`^${SUBMISSION_IMAGE_PREFIX}/(${UUID_SEGMENT})/`));
   return match ? match[1] : null;
 }

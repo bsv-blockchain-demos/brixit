@@ -11,6 +11,7 @@ import { titleCase } from '../../lib/titleCase';
 import { VerifiedBadge, BlockchainBadge } from './StatusBadges';
 import { BrixDataPoint } from '../../types';
 import { useImageUrls } from '../../hooks/useImageUrls';
+import { imageCountOf } from '../../lib/filterUtils';
 
 interface SubmissionDetailsProps {
   dataPoint: BrixDataPoint;
@@ -38,6 +39,11 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
         : [],
     [dataPoint.images, showImages],
   );
+  // The server withholds photo keys from everyone but the submitter and admins,
+  // while still reporting the count. A reading with photos we cannot open is a
+  // different thing from a reading with no photos, so say so.
+  const imageCount = imageCountOf(dataPoint);
+  const imagesArePrivate = imageKeys.length === 0 && imageCount > 0;
   const imageUrlsQuery = useImageUrls(dataPoint.id, imageKeys);
   const imageUrls = imageUrlsQuery.data ?? [];
   const imagesLoading = imageUrlsQuery.isLoading;
@@ -177,13 +183,17 @@ const SubmissionDetails: React.FC<SubmissionDetailsProps> = ({ dataPoint, showIm
           <div className="pt-4 border-t border-hairline">
             <h3 className="flex items-center space-x-2 text-lg font-bold text-text-dark mb-4">
               <ImageIcon className="w-6 h-6 text-text-mid" />
-              <span>Reference Images ({imageUrls.length})</span>
+              <span>Reference Images ({imageCount})</span>
             </h3>
             {imagesLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin text-green-mid" />
                 <span className="ml-3 text-text-mid">Loading images...</span>
               </div>
+            ) : imagesArePrivate ? (
+              <p className="text-text-muted-brown italic">
+                Photos for this reading are private to the person who submitted it.
+              </p>
             ) : imageUrls.length === 0 ? (
               <p className="text-text-muted-brown italic">No images available for this reading.</p>
             ) : (

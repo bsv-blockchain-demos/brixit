@@ -69,17 +69,28 @@ const FAQ = [
     ),
   },
   {
+    // Slug kept as 'certificate' so any existing /faq#certificate link still
+    // lands here, even though the word no longer appears in the copy.
     value: 'certificate',
     icon: ShieldCheck,
-    question: 'What is a certificate and why does BRIX use one?',
+    question: 'How does BRIXit know I am a real person?',
     answer: (
-      <p>
-        A certificate proves you're a genuine member, not a bot. When you create an
-        account, BRIXit issues a membership certificate into your wallet, signed by us, so
-        the app can verify it without any server lookup. It holds only what you choose to
-        share: an optional display name and email. You keep it in your wallet and can
-        remove it anytime.
-      </p>
+      <div className="space-y-3">
+        <p>
+          When you join, BRIXit puts a membership pass in your wallet. Think of it like a
+          library card. It shows you are a real member, not a bot.
+        </p>
+        <p>
+          The pass holds only what you choose to share: a display name and an email, both
+          optional. BRIXit stamps it when it is issued. The app reads that stamp right on
+          your device, so it never has to look you up or ask a server who you are.
+        </p>
+        <p>
+          The pass is yours. It stays in your wallet, and you can remove it whenever you
+          like. This is what keeps the map honest: every reading you see came from a real
+          person.
+        </p>
+      </div>
     ),
   },
   {
