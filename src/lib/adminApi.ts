@@ -294,3 +294,14 @@ export const updateAdminCategory = (id: string, d: Partial<AdminCategory>) =>
 export const deleteAdminCategory = (id: string) =>
   apiDelete(`/api/admin/crud/categories/${id}`);
 
+
+// Engagement
+
+export interface EngagementWeek {
+  week_start: string;
+  new_users: number;
+  new_measurements: number;
+}
+
+export const fetchEngagement = (weeks: number) =>
+  apiGet<{ weeks: EngagementWeek[] }>(`/api/admin/engagement?weeks=${weeks}`);

@@ -6,6 +6,7 @@
  *   GET  /api/admin/users/:id                    → User detail + recent submissions
  *   GET  /api/admin/submissions                  → All submissions (search/filter)
  *   GET  /api/admin/submissions/unverified        → List unverified submissions
+ *   GET  /api/admin/engagement                   → Weekly new users + new measurements
  *   POST /api/admin/roles/grant                   → Grant role to user
  *   POST /api/admin/roles/revoke                  → Revoke role from user
  *   POST /api/admin/submissions/:id/verify        → Verify/unverify a submission
@@ -19,6 +20,7 @@ import { requireAuthProof } from '../middleware/requireAuthProof.js';
 import { AUTH_ACTIONS } from '../lib/authActions.js';
 import { submissionHash } from '../lib/submissionHash.js';
 import { validateRejectionMessage } from '../lib/rejectionMessage.js';
+import { clampWeeks, normalizeEngagementRows } from '../lib/engagement.js';
 
 const router = Router();
 
@@ -255,6 +257,57 @@ router.get('/submissions/unverified', async (req: AuthenticatedRequest, res: Res
   } catch (err) {
     console.error('[admin/submissions/unverified] Error:', err);
     res.status(500).json({ error: 'Failed to fetch unverified submissions' });
+  }
+});
+
+// GET /api/admin/engagement?weeks=12
+// Read-only: the router-level requireAuth + requireAdmin is the whole gate.
+router.get('/engagement', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const weeks = clampWeeks(req.query.weeks);
+
+    // Weeks are generated, not derived from the rows, so empty weeks come back
+    // as zeroes. ISO weeks in the session timezone; both counts key off
+    // created_at, since assessment_date is backdatable.
+    const rows = await prisma.$queryRaw<unknown[]>`
+      WITH bounds AS (
+        SELECT
+          date_trunc('week', CURRENT_TIMESTAMP) AS current_week,
+          date_trunc('week', CURRENT_TIMESTAMP) - make_interval(weeks => ${weeks}::int - 1) AS first_week
+      ),
+      weeks AS (
+        SELECT generate_series(
+          (SELECT first_week FROM bounds),
+          (SELECT current_week FROM bounds),
+          interval '1 week'
+        ) AS week_start
+      ),
+      user_counts AS (
+        SELECT date_trunc('week', created_at) AS week_start, count(*) AS n
+        FROM users
+        WHERE created_at >= (SELECT first_week FROM bounds)
+        GROUP BY 1
+      ),
+      submission_counts AS (
+        SELECT date_trunc('week', created_at) AS week_start, count(*) AS n
+        FROM submissions
+        WHERE created_at >= (SELECT first_week FROM bounds)
+        GROUP BY 1
+      )
+      SELECT
+        w.week_start,
+        COALESCE(uc.n, 0) AS new_users,
+        COALESCE(sc.n, 0) AS new_measurements
+      FROM weeks w
+      LEFT JOIN user_counts uc ON uc.week_start = w.week_start
+      LEFT JOIN submission_counts sc ON sc.week_start = w.week_start
+      ORDER BY w.week_start
+    `;
+
+    res.json({ weeks: normalizeEngagementRows(rows) });
+  } catch (err) {
+    console.error('[admin/engagement] Error:', err);
+    res.status(500).json({ error: 'Failed to fetch engagement stats' });
   }
 });
 
