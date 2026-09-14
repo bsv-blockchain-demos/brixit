@@ -34,7 +34,7 @@ const router = Router();
 // new and legacy clients can mint a cert; require at least one display value.
 const ALLOWED_FIELDS = new Set(['displayName', 'username', 'email']);
 
-function validateFields(fields: Record<string, string>): string | null {
+export function validateFields(fields: Record<string, string>): string | null {
   const extra = Object.keys(fields).filter(k => !ALLOWED_FIELDS.has(k));
   if (extra.length > 0) return `unexpected fields: ${extra.join(', ')}`;
   if (!(fields.displayName?.trim() || fields.username?.trim())) return 'displayName is required';

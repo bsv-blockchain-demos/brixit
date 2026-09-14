@@ -1,19 +1,15 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '@/contexts/WalletContext';
-import { Utils } from '@bsv/sdk';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { API_BASE } from '@/lib/api';
 import { findLoginCertificate } from '@/lib/certConfig';
+import { acquireBrixitCert, BRIXIT_CERTIFIER_KEY, type CertFields } from '@/lib/brixitCert';
 import { AuthBackground } from '@/components/ui/AuthBackground';
 import { BrixLogo } from '@/components/common/BrixLogo';
-
-const BRIXIT_CERT_TYPE = import.meta.env.VITE_CERT_TYPE || 'Brixit Identity';
-const BRIXIT_CERTIFIER_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY;
 
 type Step = 'checking' | 'details' | 'acquiring';
 
@@ -75,7 +71,7 @@ export default function CreateAccount() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  async function acquireCert(fields: Record<string, string>, fallbackStep: Step = 'details') {
+  async function acquireCert(fields: CertFields, fallbackStep: Step = 'details') {
     if (!userWallet || !userPubKey) {
       setError('Wallet not connected. Please go back and try again.');
       return;
@@ -86,15 +82,7 @@ export default function CreateAccount() {
     setError(null);
 
     try {
-      const certType = Utils.toBase64(Utils.toArray(BRIXIT_CERT_TYPE, 'utf8'));
-
-      await (userWallet as any).acquireCertificate({
-        type: certType,
-        fields,
-        acquisitionProtocol: 'issuance',
-        certifier: BRIXIT_CERTIFIER_KEY,
-        certifierUrl: `${API_BASE}/api/certifier`,
-      });
+      await acquireBrixitCert(userWallet as never, BRIXIT_CERTIFIER_KEY, fields);
 
       navigate('/?autocert=1');
     } catch (err: any) {
@@ -108,14 +96,8 @@ export default function CreateAccount() {
 
   async function handleCreateNamed(e: React.FormEvent) {
     e.preventDefault();
-    // The cert's display field follows the `displayName` convention (identityKey
-    // is the real handle; this is pure UI display). Empty → anonymous: fall back
-    // to the wallet identity key.
-    const fields: Record<string, string> = {
-      displayName: username.trim() || userPubKey || '',
-    };
-    if (email.trim()) fields.email = email.trim();
-    await acquireCert(fields);
+    // Blank name → the wallet identity key, per the displayName convention.
+    await acquireCert({ displayName: username, email });
   }
 
   return (

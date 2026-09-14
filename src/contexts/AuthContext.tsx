@@ -17,6 +17,11 @@ import {
 } from "@/lib/api";
 import type { AuthProof } from "@/lib/authProof";
 import { DEV_AUTH_ENABLED, makeDevUser } from "@/lib/devAuth";
+import { useWallet } from "@/contexts/WalletContext";
+import { findLoginCertificate } from "@/lib/certConfig";
+import { getDataFromWallet } from "@/utils/getDataFromWallet";
+import { createAuthProof } from "@/lib/authProof";
+import { applyDisplayNameChange, BRIXIT_CERTIFIER_KEY } from "@/lib/brixitCert";
 
 interface UserProfile {
   id: string;
@@ -53,7 +58,7 @@ interface AuthContextType {
     displayName: string,
     location?: LocationData
   ) => Promise<boolean>;
-  updateUsername: (newUsername: string) => Promise<boolean>;
+  updateUsername: (newUsername: string) => Promise<{ success: boolean; error?: string }>;
   updateLocation: (location: LocationData) => Promise<boolean>;
   walletLogin: (identityKey: string, certificate: unknown, userData: unknown, proof: AuthProof) => Promise<{ success: boolean; error?: string }>;
 }
@@ -106,6 +111,8 @@ async function fetchUserProfile(): Promise<UserProfile | null> {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
+  // WalletProvider wraps AuthProvider, so the wallet is available here.
+  const { userWallet, userPubKey } = useWallet();
 
   // With the DEV bypass on, start already-authenticated and skip both loading
   // gates so ProtectedRoute renders immediately instead of waiting on a
@@ -201,28 +208,61 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const updateUsername = async (newUsername: string): Promise<boolean> => {
+  // The name lives on the certificate as well as in the database, and login
+  // copies the certificate over the database — so a rename has to update both.
+  const updateUsername = async (
+    newUsername: string,
+  ): Promise<{ success: boolean; error?: string }> => {
     if (!user) {
       setAuthError("Not authenticated.");
-      return false;
+      return { success: false };
     }
 
     if (DEV_AUTH_ENABLED) {
       setUser({ ...user, display_name: newUsername });
-      return true;
+      return { success: true };
     }
 
     try {
-      await apiPut("/api/users/me", { display_name: newUsername });
+      await applyDisplayNameChange({
+        currentDisplayName: user.display_name,
+        newDisplayName: newUsername,
+        wallet: userWallet as never,
+        certifier: BRIXIT_CERTIFIER_KEY,
+        loadCurrentCert: async () => {
+          const cert = await findLoginCertificate(userWallet as never);
+          if (!cert) return null;
+          const data = await getDataFromWallet(userWallet, cert);
+          return { cert, email: data?.email };
+        },
+        persistToDb: async (displayName) => {
+          await apiPut("/api/users/me", { display_name: displayName });
+        },
+        // Re-issuing invalidates the stored serial; logging in again repoints it.
+        reLogin: async () => {
+          const cert = await findLoginCertificate(userWallet as never);
+          const data = cert ? await getDataFromWallet(userWallet, cert) : null;
+          if (!cert || !data || !userPubKey) return;
+          const proof = await createAuthProof(userWallet as never, BRIXIT_CERTIFIER_KEY, "login");
+          await walletLogin(userPubKey, cert, data, proof);
+        },
+      });
+
       const refreshedProfile = await fetchUserProfile();
       if (refreshedProfile) setUser(refreshedProfile);
-      return true;
+      return { success: true };
     } catch (err: unknown) {
       // Surface failures as a local form error in the caller, NOT the global
       // authError — that makes ProtectedRoute eject the user to the login page
       // on any transient write failure.
-      console.error("[updateUsername]", err instanceof Error ? err.message : err);
-      return false;
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("[updateUsername]", message);
+      return {
+        success: false,
+        ...(message === "WALLET_REQUIRED" && {
+          error: "Connect your wallet to change your name.",
+        }),
+      };
     }
   };
 
