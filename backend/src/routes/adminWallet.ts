@@ -385,7 +385,7 @@ router.get('/pending', async (req: AuthenticatedRequest, res: Response) => {
           userId: true,
           assessmentDate: true,
           brixValue: true,
-          contributorName: true,
+          user: { select: { displayName: true } },
           crop: { select: { name: true } },
           venue: { select: { name: true, city: true } },
         },
@@ -395,7 +395,14 @@ router.get('/pending', async (req: AuthenticatedRequest, res: Response) => {
       prisma.submission.count({ where: { outpoint: null } }),
     ]);
 
-    res.json({ total, rows });
+    res.json({
+      total,
+      // Flatten the join so the client keeps a plain contributorName field.
+      rows: rows.map(({ user, ...r }: any) => ({
+        ...r,
+        contributorName: user?.displayName ?? null,
+      })),
+    });
   } catch (err: any) {
     console.error('[admin-wallet] /pending failed:', err);
     res.status(500).json({ error: err?.message || 'Failed to fetch pending submissions' });

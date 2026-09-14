@@ -144,8 +144,9 @@ model Submission {
   brixValue       Decimal   @map("brix_value") @db.Decimal(5, 2)
   cropVariety     String?   @map("crop_variety")
   assessmentDate  DateTime  @map("assessment_date") @db.Timestamptz
+  // When the row landed; assessment_date is user-supplied and backdatable.
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
   purchaseDate    DateTime? @map("purchase_date") @db.Date
-  contributorName String?   @map("contributor_name")
   outlierNotes    String?   @map("outlier_notes")
   verified        Boolean   @default(false)
   verifiedBy      String?   @map("verified_by") @db.Uuid
@@ -180,6 +181,7 @@ model Submission {
   @@index([brandId], name: "submissions_brand_id_idx")
   @@index([verified], name: "submissions_verified_idx")
   @@index([outpoint], name: "submissions_outpoint_idx")
+  @@index([createdAt], name: "submissions_created_at_idx")
   @@map("submissions")
 }
 

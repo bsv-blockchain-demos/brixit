@@ -231,13 +231,6 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
-    // ── Look up contributor name (read-only) ───────────────────────────────
-    const userData = await prisma.user.findUnique({
-      where: { id: authedUserId },
-      select: { displayName: true, email: true },
-    });
-    const contributorName: string | null = userData?.displayName || userData?.email || null;
-
     // ── Address parsing ────────────────────────────────────────────────────
     const sanitizedStoreName = sanitizeInput(body.store_name);
     let parsedAddress: ParsedAddress = {};
@@ -354,7 +347,6 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
             cropVariety: null,
             brixValue: brix,
             userId: authedUserId,
-            contributorName,
             assessmentDate: new Date(assessmentDateStr),
             purchaseDate: purchaseDateStr ? new Date(purchaseDateStr) : null,
             outlierNotes: notes,
