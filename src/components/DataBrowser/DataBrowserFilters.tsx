@@ -22,7 +22,7 @@ import { Calendar, Filter, Search, ChevronDown, Check, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMaxWidth } from '@/hooks/use-mobile';
 import { DateField } from '@/components/common/DateField';
-import { useFilters, DEFAULT_MAP_FILTERS } from '../../contexts/FilterContext';
+import { useFilters, DEFAULT_MAP_FILTERS, type SubmissionScope } from '../../contexts/FilterContext';
 import { getFilterSummary, getActiveFilterList } from '../../lib/filterUtils';
 import { titleCase } from '../../lib/titleCase';
 import { useStaticData } from '../../hooks/useStaticData';
@@ -30,6 +30,48 @@ import { fetchCropCategories } from '../../lib/fetchCropCategories';
 import { MapFilter } from '../../types';
 
 // Mobile render branch at the 640px task breakpoint (lazy-init avoids a flash).
+/**
+ * Everyone / Mine segmented control. Inline in the desktop toolbar; a
+ * full-width row on mobile.
+ */
+function ScopeToggle({
+  scope,
+  setScope,
+  fullWidth = false,
+}: {
+  scope: SubmissionScope;
+  setScope: (scope: SubmissionScope) => void;
+  fullWidth?: boolean;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Whose readings to show"
+      className={`inline-flex rounded-lg border border-hairline overflow-hidden ${
+        fullWidth ? 'w-full' : 'shrink-0 self-start md:self-auto'
+      }`}
+    >
+      {(['all', 'mine'] as const).map((s) => (
+        <button
+          key={s}
+          type="button"
+          aria-pressed={scope === s}
+          onClick={() => setScope(s)}
+          className={`px-3 text-sm font-medium transition-colors ${
+            fullWidth ? 'flex-1 min-h-[44px]' : 'py-2'
+          } ${
+            scope === s
+              ? 'bg-select-bg text-select-fg'
+              : 'bg-transparent text-text-mid hover:bg-surface-canvas'
+          }`}
+        >
+          {s === 'all' ? 'Everyone' : 'Mine'}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ─── Brix range (inline) ─────────────────────────────────────────────────────
 const STEP = 0.5;
 const MIN_BRIX = 0;
@@ -426,6 +468,13 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
   if (isNarrow) {
     return (
       <>
+        {/* On the surface, not inside the filter sheet: scope changes what
+            the whole list means. */}
+        {user && (
+          <div className="px-3 pt-3">
+            <ScopeToggle scope={scope} setScope={setScope} fullWidth />
+          </div>
+        )}
         <div className="p-3 border-b border-hairline flex gap-2 items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted-brown" />
@@ -485,29 +534,7 @@ export default function DataBrowserFilters({ fromLeaderboard = false }: { fromLe
           Previously the scope toggle sat in the results header a region below,
           which split one decision across two rows on desktop. */}
       <div className="p-4 border-b border-hairline flex flex-col md:flex-row gap-4 md:items-center">
-        {user && (
-          <div
-            role="group"
-            aria-label="Whose readings to show"
-            className="inline-flex shrink-0 rounded-lg border border-hairline overflow-hidden self-start md:self-auto"
-          >
-            {(['all', 'mine'] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                aria-pressed={scope === s}
-                onClick={() => setScope(s)}
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  scope === s
-                    ? 'bg-select-bg text-select-fg'
-                    : 'bg-transparent text-text-mid hover:bg-surface-canvas'
-                }`}
-              >
-                {s === 'all' ? 'Everyone' : 'Mine'}
-              </button>
-            ))}
-          </div>
-        )}
+        {user && <ScopeToggle scope={scope} setScope={setScope} />}
         {/* Focusing the empty box previously gave a blinking cursor and no
             clue what it matches. This says so, and offers real values from the
             loaded crop and brand lists as one-click starters. */}
