@@ -4,11 +4,18 @@ import { useReducedMotion } from 'framer-motion';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { RefreshCw, TrendingDown, TrendingUp, Users, ClipboardList } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
-import { fetchEngagement, type EngagementWeek } from '@/lib/adminApi';
-import { formatWeekLabel, totalFor, weekOverWeekChange } from '@/lib/engagementFormat';
+import { fetchEngagement, type EngagementWeek, type EngagementRange } from '@/lib/adminApi';
+import {
+  formatWeekLabel,
+  formatFullDate,
+  totalFor,
+  weekOverWeekChange,
+  READINGS_BACKFILL_DATE,
+} from '@/lib/engagementFormat';
 import { describeApiError } from '@/lib/describeApiError';
+import AdminEngagementSummary from './AdminEngagementSummary';
 
-const RANGES = [4, 12, 26, 52] as const;
+const RANGES = [4, 12, 26, 52, 'all'] as const;
 
 // One chart per measure: a shared y-axis would flatten the smaller series.
 const SERIES = [
@@ -28,7 +35,13 @@ const SERIES = [
   },
 ];
 
-function RangePicker({ weeks, onChange }: { weeks: number; onChange: (w: number) => void }) {
+function RangePicker({
+  weeks,
+  onChange,
+}: {
+  weeks: EngagementRange;
+  onChange: (w: EngagementRange) => void;
+}) {
   return (
     <div
       role="group"
@@ -47,7 +60,7 @@ function RangePicker({ weeks, onChange }: { weeks: number; onChange: (w: number)
               : 'bg-transparent text-text-mid hover:bg-surface-canvas'
           }`}
         >
-          {r}w
+          {r === 'all' ? 'All' : `${r}w`}
         </button>
       ))}
     </div>
@@ -111,7 +124,7 @@ function SeriesChart({
           <CartesianGrid vertical={false} stroke="var(--hairline)" />
           <XAxis
             dataKey="week_start"
-            tickFormatter={formatWeekLabel}
+            tickFormatter={(value) => formatWeekLabel(String(value))}
             tickLine={false}
             axisLine={false}
             tickMargin={8}
@@ -147,10 +160,10 @@ function SeriesChart({
 
 export default function AdminEngagement() {
   const queryClient = useQueryClient();
-  const [weeks, setWeeks] = useState(12);
+  const [weeks, setWeeks] = useState<EngagementRange>(12);
 
   const { data, isLoading, isFetching, error } = useQuery({
-    queryKey: ['admin-engagement', weeks],
+    queryKey: ['admin-engagement', 'weekly', weeks],
     queryFn: () => fetchEngagement(weeks),
     staleTime: 5 * 60 * 1000,
   });
@@ -185,7 +198,9 @@ export default function AdminEngagement() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <RangePicker weeks={weeks} onChange={setWeeks} />
         <p className="text-xs text-text-muted">
-          The current week is still in progress, so its bar is partial.
+          Sets the charts, venue locations and categories below. The current week
+          is partial, and readings submitted before {formatFullDate(READINGS_BACKFILL_DATE)}
+          carry a reconstructed date.
         </p>
       </div>
 
@@ -194,6 +209,8 @@ export default function AdminEngagement() {
           <SeriesChart key={s.key} series={s} data={rows} isLoading={isLoading} />
         ))}
       </div>
+
+      <AdminEngagementSummary range={weeks} />
 
       {/* Exact values, and a path that doesn't depend on colour. */}
       <details className="bg-card border border-hairline rounded-2xl shadow-sm">

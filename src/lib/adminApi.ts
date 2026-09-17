@@ -303,5 +303,38 @@ export interface EngagementWeek {
   new_measurements: number;
 }
 
-export const fetchEngagement = (weeks: number) =>
+export type EngagementRange = number | 'all';
+
+export const fetchEngagement = (weeks: EngagementRange) =>
   apiGet<{ weeks: EngagementWeek[] }>(`/api/admin/engagement?weeks=${weeks}`);
+
+export interface EngagementWindow {
+  days: number;
+  /** Denominator behind signup_conversion_pct; the weekly chart shows the trend. */
+  new_users: number;
+  unique_contributors: number;
+  repeat_contributors: number;
+  median_readings_per_contributor: number;
+  converted_users: number;
+  signup_conversion_pct: number | null;
+}
+
+export interface EngagementGeoRow {
+  country: string;
+  state: string;
+  count: number;
+}
+
+export interface EngagementCategoryRow {
+  category: string;
+  readings: number;
+}
+
+export interface EngagementSummary {
+  windows: EngagementWindow[];
+  geography: { by_reading: EngagementGeoRow[]; by_contributor: EngagementGeoRow[] };
+  categories: EngagementCategoryRow[];
+}
+
+export const fetchEngagementSummary = (weeks: EngagementRange) =>
+  apiGet<EngagementSummary>(`/api/admin/engagement/summary?weeks=${weeks}`);

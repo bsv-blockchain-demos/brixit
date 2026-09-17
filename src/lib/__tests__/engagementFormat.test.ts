@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatWeekLabel, totalFor, weekOverWeekChange } from '../engagementFormat';
+import { formatWeekLabel, totalFor, weekOverWeekChange, formatConversion } from '../engagementFormat';
 import type { EngagementWeek } from '../adminApi';
 
 function week(week_start: string, new_users: number, new_measurements: number): EngagementWeek {
@@ -62,5 +62,39 @@ describe('weekOverWeekChange', () => {
   it('returns null when the range is too short to compare', () => {
     expect(weekOverWeekChange([], 'new_users')).toBeNull();
     expect(weekOverWeekChange([week('a', 1, 1), week('b', 2, 2)], 'new_users')).toBeNull();
+  });
+});
+
+describe('formatConversion', () => {
+  it('shows the percentage with the counts behind it', () => {
+    // 50% reads very differently as 1-of-2 than as 500-of-1000.
+    expect(formatConversion(33.3, 4, 12)).toBe('33.3% (4 of 12)');
+  });
+
+  it('renders a dash when nobody signed up in the window', () => {
+    expect(formatConversion(null, 0, 0)).toBe('—');
+  });
+
+  it('shows a zero rate rather than a dash when signups exist', () => {
+    expect(formatConversion(0, 0, 5)).toBe('0% (0 of 5)');
+  });
+
+  it('handles full conversion', () => {
+    expect(formatConversion(100, 5, 5)).toBe('100% (5 of 5)');
+  });
+});
+
+describe('formatWeekLabel across years', () => {
+  it('omits the year for weeks in the reference year', () => {
+    expect(formatWeekLabel('2026-09-07', { referenceYear: 2026 })).not.toContain('2026');
+  });
+
+  it('includes the year for weeks outside it', () => {
+    // At "All" the range can span years, and "Sep 7" twice on one axis is a lie.
+    expect(formatWeekLabel('2024-09-07', { referenceYear: 2026 })).toContain('2024');
+  });
+
+  it('still labels the day when the year is shown', () => {
+    expect(formatWeekLabel('2024-09-07', { referenceYear: 2026 })).toContain('7');
   });
 });
