@@ -13,14 +13,23 @@ import type { EngagementWeek } from './adminApi';
  * read as UTC midnight, so anywhere west of Greenwich it renders as the previous
  * day and every bar sits under the wrong week.
  */
-export function formatWeekLabel(weekStart: string): string {
+export function formatWeekLabel(
+  weekStart: string,
+  opts?: { referenceYear?: number },
+): string {
   const parts = weekStart.split('-');
   if (parts.length !== 3) return weekStart;
   const [y, m, d] = parts.map(Number);
   if (!y || !m || !d) return weekStart;
   const date = new Date(y, m - 1, d);
   if (Number.isNaN(date.getTime())) return weekStart;
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  // At "All" the axis can span years, where a bare "Sep 7" repeats and misleads.
+  const reference = opts?.referenceYear ?? new Date().getFullYear();
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    ...(y !== reference && { year: 'numeric' }),
+  });
 }
 
 /** Sums one series across the visible range. */
@@ -45,4 +54,25 @@ export function weekOverWeekChange(
   const latest = weeks[weeks.length - 2][key];
   if (!previous) return null;
   return Math.round(((latest - previous) / previous) * 100);
+}
+
+/**
+ * Renders a conversion rate with the counts it came from, so the reader can
+ * tell a strong signal from a tiny sample. A dash when nobody signed up.
+ */
+export function formatConversion(
+  pct: number | null,
+  converted: number,
+  total: number,
+): string {
+  if (pct === null) return '—';
+  return `${pct}% (${converted} of ${total})`;
+}
+
+/** Readings created before this date carry a created_at reconstructed by migration. */
+export const READINGS_BACKFILL_DATE = '2026-09-14';
+
+/** Same safe field-by-field parse as formatWeekLabel, but always with the year. */
+export function formatFullDate(iso: string): string {
+  return formatWeekLabel(iso, { referenceYear: 0 });
 }

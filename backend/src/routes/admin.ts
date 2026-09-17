@@ -7,6 +7,7 @@
  *   GET  /api/admin/submissions                  → All submissions (search/filter)
  *   GET  /api/admin/submissions/unverified        → List unverified submissions
  *   GET  /api/admin/engagement                   → Weekly new users + new measurements
+ *   GET  /api/admin/engagement/summary           → Rolling windows, geography, categories
  *   POST /api/admin/roles/grant                   → Grant role to user
  *   POST /api/admin/roles/revoke                  → Revoke role from user
  *   POST /api/admin/submissions/:id/verify        → Verify/unverify a submission
@@ -20,7 +21,14 @@ import { requireAuthProof } from '../middleware/requireAuthProof.js';
 import { AUTH_ACTIONS } from '../lib/authActions.js';
 import { submissionHash } from '../lib/submissionHash.js';
 import { validateRejectionMessage } from '../lib/rejectionMessage.js';
-import { clampWeeks, normalizeEngagementRows } from '../lib/engagement.js';
+import {
+  parseRange,
+  DEFAULT_WEEKS,
+  normalizeEngagementRows,
+  normalizeWindowRows,
+  splitGeoRows,
+  normalizeCategoryRows,
+} from '../lib/engagement.js';
 
 const router = Router();
 
@@ -264,7 +272,23 @@ router.get('/submissions/unverified', async (req: AuthenticatedRequest, res: Res
 // Read-only: the router-level requireAuth + requireAdmin is the whole gate.
 router.get('/engagement', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const weeks = clampWeeks(req.query.weeks);
+    const range = parseRange(req.query.weeks);
+    // "All" resolves to a real week count here so the series query below stays
+    // as it was. Capped so a long-lived deployment can't render 1000 bars.
+    const weeks = range.all
+      ? Number(
+          (
+            await prisma.$queryRaw<Array<{ weeks: number }>>`
+              SELECT GREATEST(1, LEAST(104, ceil(
+                extract(epoch FROM now() - LEAST(
+                  COALESCE((SELECT min(created_at) FROM users), now()),
+                  COALESCE((SELECT min(created_at) FROM submissions), now())
+                )) / 604800.0
+              )::int + 1))::int AS weeks
+            `
+          )[0]?.weeks ?? DEFAULT_WEEKS,
+        )
+      : range.weeks;
 
     // Weeks are generated, not derived from the rows, so empty weeks come back
     // as zeroes. ISO weeks in the session timezone; both counts key off
@@ -308,6 +332,123 @@ router.get('/engagement', async (req: AuthenticatedRequest, res: Response) => {
   } catch (err) {
     console.error('[admin/engagement] Error:', err);
     res.status(500).json({ error: 'Failed to fetch engagement stats' });
+  }
+});
+
+// GET /api/admin/engagement/summary
+// Rolling 7/30/90-day windows plus all-time geography and category breakdowns.
+// Counts every submission, verified or not — unlike the public leaderboard,
+// which shows only verified readings, so the totals here read higher.
+router.get('/engagement/summary', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    // Null means no time gate. The rolling windows below ignore it by design —
+    // their whole point is comparing fixed periods against each other.
+    //
+    // Rejected submissions are counted deliberately: a declined reading is still
+    // a person using the app, and resubmission exists for exactly that case.
+    const range = parseRange(req.query.weeks);
+    const gate: number | null = range.all ? null : range.weeks;
+
+    const [windowRows, geoRows, categoryRows] = await Promise.all([
+      // A contributor is "repeat" on distinct active days, not raw count: five
+      // readings entered in one sitting is one visit, not five.
+      prisma.$queryRaw<unknown[]>`
+        -- NULL is the all-time span: no lower bound, and the only column the
+        -- created_at backfill cannot distort. Sorts last under ASC NULLS LAST.
+        WITH spans AS (SELECT days FROM (VALUES (7), (30), (90), (NULL::int)) AS v(days))
+        SELECT
+          sp.days,
+          u.new_users,
+          u.converted,
+          c.unique_contributors,
+          c.repeat_contributors,
+          c.median_readings
+        FROM spans sp
+        CROSS JOIN LATERAL (
+          SELECT
+            count(*) AS new_users,
+            count(*) FILTER (
+              WHERE EXISTS (SELECT 1 FROM submissions s WHERE s.user_id = us.id)
+            ) AS converted
+          FROM users us
+          WHERE (sp.days IS NULL OR us.created_at >= now() - make_interval(days => sp.days))
+        ) u
+        CROSS JOIN LATERAL (
+          SELECT
+            count(*) AS unique_contributors,
+            count(*) FILTER (WHERE per_user.active_days > 1) AS repeat_contributors,
+            COALESCE(
+              round(percentile_cont(0.5) WITHIN GROUP (ORDER BY per_user.readings::double precision)::numeric, 2),
+              0
+            ) AS median_readings
+          FROM (
+            SELECT
+              s.user_id,
+              count(*) AS readings,
+              count(DISTINCT date_trunc('day', s.created_at AT TIME ZONE 'UTC')) AS active_days
+            FROM submissions s
+            WHERE s.user_id IS NOT NULL
+              AND (sp.days IS NULL OR s.created_at >= now() - make_interval(days => sp.days))
+            GROUP BY s.user_id
+          ) per_user
+        ) c
+        ORDER BY sp.days
+      `,
+
+      // Two different questions: where readings were taken, and where the people
+      // who take them live. Neither substitutes for the other.
+      prisma.$queryRaw<unknown[]>`
+        WITH geo AS (
+          SELECT
+            'reading' AS basis,
+            COALESCE(NULLIF(btrim(v.country), ''), 'Unknown') AS country,
+            COALESCE(NULLIF(btrim(v.state), ''), 'Unknown') AS state,
+            count(*) AS n
+          FROM submissions s
+          JOIN venues v ON v.id = s.venue_id
+          WHERE (${gate}::int IS NULL OR s.created_at >= date_trunc('week', CURRENT_TIMESTAMP)
+               - make_interval(weeks => ${gate}::int - 1))
+          GROUP BY 1, 2, 3
+          UNION ALL
+          SELECT
+            'contributor',
+            COALESCE(NULLIF(btrim(u.country), ''), 'Unknown'),
+            COALESCE(NULLIF(btrim(u.state), ''), 'Unknown'),
+            count(*)
+          FROM users u
+          WHERE EXISTS (SELECT 1 FROM submissions cs WHERE cs.user_id = u.id)
+          GROUP BY 1, 2, 3
+        )
+        SELECT basis, country, state, n
+        FROM (
+          SELECT geo.*, row_number() OVER (PARTITION BY basis ORDER BY n DESC, country, state) AS rn
+          FROM geo
+        ) ranked
+        WHERE rn <= 25
+        ORDER BY basis, n DESC, country, state
+      `,
+
+      prisma.$queryRaw<unknown[]>`
+        SELECT
+          COALESCE(NULLIF(btrim(c.category), ''), 'Uncategorised') AS category,
+          count(*) AS readings
+        FROM submissions s
+        JOIN crops c ON c.id = s.crop_id
+        WHERE (${gate}::int IS NULL OR s.created_at >= date_trunc('week', CURRENT_TIMESTAMP)
+               - make_interval(weeks => ${gate}::int - 1))
+        GROUP BY 1
+        ORDER BY readings DESC
+      `,
+    ]);
+
+    res.json({
+      windows: normalizeWindowRows(windowRows),
+      geography: splitGeoRows(geoRows),
+      categories: normalizeCategoryRows(categoryRows),
+    });
+  } catch (err) {
+    console.error('[admin/engagement/summary] Error:', err);
+    res.status(500).json({ error: 'Failed to fetch engagement summary' });
   }
 });
 
