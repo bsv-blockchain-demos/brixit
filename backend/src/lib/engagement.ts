@@ -65,7 +65,8 @@ function toDateKey(value: unknown): string {
 // ─── Rolling-window summary ──────────────────────────────────────────────────
 
 export interface EngagementWindow {
-  days: number;
+  /** Null is the all-time row, which has no lower bound. */
+  days: number | null;
   /** Kept as the denominator behind signup_conversion_pct, not shown on its own. */
   new_users: number;
   unique_contributors: number;
@@ -100,7 +101,7 @@ export function normalizeWindowRows(rows: unknown[]): EngagementWindow[] {
     const r = row as Record<string, unknown>;
     const newUsers = toCount(r.new_users);
     return {
-      days: toCount(r.days),
+      days: r.days === null || r.days === undefined ? null : toCount(r.days),
       new_users: newUsers,
       unique_contributors: toCount(r.unique_contributors),
       repeat_contributors: toCount(r.repeat_contributors),

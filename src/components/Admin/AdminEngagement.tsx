@@ -198,9 +198,8 @@ export default function AdminEngagement() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <RangePicker weeks={weeks} onChange={setWeeks} />
         <p className="text-xs text-text-muted">
-          Sets the charts, venue locations and categories below. The current week
-          is partial, and readings submitted before {formatFullDate(READINGS_BACKFILL_DATE)}
-          carry a reconstructed date.
+          Applies to the charts, locations and categories below. The current week is
+          partial, and dates before {formatFullDate(READINGS_BACKFILL_DATE)} are approximate.
         </p>
       </div>
 

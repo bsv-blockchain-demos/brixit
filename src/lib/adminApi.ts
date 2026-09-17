@@ -309,7 +309,8 @@ export const fetchEngagement = (weeks: EngagementRange) =>
   apiGet<{ weeks: EngagementWeek[] }>(`/api/admin/engagement?weeks=${weeks}`);
 
 export interface EngagementWindow {
-  days: number;
+  /** Null is the all-time column. */
+  days: number | null;
   /** Denominator behind signup_conversion_pct; the weekly chart shows the trend. */
   new_users: number;
   unique_contributors: number;

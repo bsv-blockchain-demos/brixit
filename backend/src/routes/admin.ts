@@ -353,7 +353,9 @@ router.get('/engagement/summary', async (req: AuthenticatedRequest, res: Respons
       // A contributor is "repeat" on distinct active days, not raw count: five
       // readings entered in one sitting is one visit, not five.
       prisma.$queryRaw<unknown[]>`
-        WITH spans AS (SELECT days FROM (VALUES (7), (30), (90)) AS v(days))
+        -- NULL is the all-time span: no lower bound, and the only column the
+        -- created_at backfill cannot distort. Sorts last under ASC NULLS LAST.
+        WITH spans AS (SELECT days FROM (VALUES (7), (30), (90), (NULL::int)) AS v(days))
         SELECT
           sp.days,
           u.new_users,
@@ -369,7 +371,7 @@ router.get('/engagement/summary', async (req: AuthenticatedRequest, res: Respons
               WHERE EXISTS (SELECT 1 FROM submissions s WHERE s.user_id = us.id)
             ) AS converted
           FROM users us
-          WHERE us.created_at >= now() - make_interval(days => sp.days)
+          WHERE (sp.days IS NULL OR us.created_at >= now() - make_interval(days => sp.days))
         ) u
         CROSS JOIN LATERAL (
           SELECT
@@ -386,7 +388,7 @@ router.get('/engagement/summary', async (req: AuthenticatedRequest, res: Respons
               count(DISTINCT date_trunc('day', s.created_at AT TIME ZONE 'UTC')) AS active_days
             FROM submissions s
             WHERE s.user_id IS NOT NULL
-              AND s.created_at >= now() - make_interval(days => sp.days)
+              AND (sp.days IS NULL OR s.created_at >= now() - make_interval(days => sp.days))
             GROUP BY s.user_id
           ) per_user
         ) c

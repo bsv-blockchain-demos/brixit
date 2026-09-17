@@ -213,3 +213,30 @@ describe('normalizeWindowRows with driver-native types', () => {
     expect(w.signup_conversion_pct).toBe(50);
   });
 });
+
+describe('normalizeWindowRows all-time span', () => {
+  it('keeps a null day-count as null rather than collapsing it to zero', () => {
+    // The all-time row has no lower bound; 0 would render as a "0d" column.
+    const [w] = normalizeWindowRows([
+      {
+        days: null,
+        new_users: 7n,
+        unique_contributors: 3n,
+        repeat_contributors: 1n,
+        median_readings: '2.00',
+        converted: 3n,
+      },
+    ]);
+    expect(w.days).toBeNull();
+    expect(w.unique_contributors).toBe(3);
+    expect(w.median_readings_per_contributor).toBe(2);
+    expect(w.signup_conversion_pct).toBeCloseTo(42.9, 1);
+  });
+
+  it('still reads a numeric day-count', () => {
+    const [w] = normalizeWindowRows([
+      { days: 30, new_users: 0n, unique_contributors: 0n, repeat_contributors: 0n, median_readings: '0', converted: 0n },
+    ]);
+    expect(w.days).toBe(30);
+  });
+});

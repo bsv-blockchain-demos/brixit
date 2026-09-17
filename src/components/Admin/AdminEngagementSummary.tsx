@@ -17,7 +17,7 @@ const METRICS: Array<{
   render?: (w: EngagementWindow) => string;
 }> = [
   { key: 'unique_contributors', label: 'Unique contributors' },
-  { key: 'repeat_contributors', label: 'Repeat contributors' },
+  { key: 'repeat_contributors', label: 'Repeat contributors (2+ days)' },
   { key: 'median_readings_per_contributor', label: 'Readings per contributor (median)' },
   {
     key: 'signup_conversion_pct',
@@ -45,8 +45,12 @@ function WindowTable({ windows, isLoading }: { windows: EngagementWindow[]; isLo
           <tr className="text-xs uppercase tracking-wider text-text-muted">
             <th scope="col" className="text-left font-semibold pb-2">Metric</th>
             {windows.map((w) => (
-              <th key={w.days} scope="col" className="text-right font-semibold pb-2 pl-4 whitespace-nowrap">
-                {w.days}d
+              <th
+                key={w.days ?? 'all'}
+                scope="col"
+                className="text-right font-semibold pb-2 pl-4 whitespace-nowrap"
+              >
+                {w.days === null ? 'All' : `${w.days}d`}
               </th>
             ))}
             {isLoading && windows.length === 0 && <th className="text-right pb-2 pl-4">—</th>}
@@ -59,7 +63,7 @@ function WindowTable({ windows, isLoading }: { windows: EngagementWindow[]; isLo
                 {m.label}
               </th>
               {windows.map((w) => (
-                <td key={w.days} className="py-2 pl-4 text-right tabular-nums text-text-dark">
+                <td key={w.days ?? 'all'} className="py-2 pl-4 text-right tabular-nums text-text-dark">
                   {m.render ? m.render(w) : ((w[m.key] as number | null) ?? 0).toLocaleString()}
                 </td>
               ))}
@@ -145,16 +149,20 @@ export default function AdminEngagementSummary({ range }: { range: EngagementRan
   return (
     <div className="space-y-4">
       <Panel
-        title="Rolling windows"
-        subtitle="Fixed periods, not affected by the range above — comparing them is the point. Every submission counts, verified or not, so totals read higher than the public leaderboard. A repeat contributor submitted on more than one day."
+        title="Contributor activity"
+        subtitle="Fixed periods. The range above doesn't apply here."
       >
         <WindowTable windows={windows} isLoading={isLoading} />
+        <p className="mt-3 text-xs text-text-muted">
+          Includes unverified and rejected readings, so totals run higher than the
+          public leaderboard.
+        </p>
       </Panel>
 
       <div className="grid grid-cols-1 desktop:grid-cols-2 gap-4">
         <Panel
           title="Where readings were taken"
-          subtitle="From the venue on each reading, over the selected range. Readings logged without a venue are absent."
+          subtitle="By venue. Readings logged without one aren't shown."
         >
           <GeoTable
             rows={data?.geography.by_reading ?? []}
@@ -164,7 +172,7 @@ export default function AdminEngagementSummary({ range }: { range: EngagementRan
             isLoading={isLoading}
           />
         </Panel>
-        <Panel title="Where contributors are" subtitle="From each account's own location, set in Settings. Always all time.">
+        <Panel title="Where contributors are" subtitle="From account settings. Always all time.">
           <GeoTable
             rows={data?.geography.by_contributor ?? []}
             unit="Contributors"
@@ -175,7 +183,7 @@ export default function AdminEngagementSummary({ range }: { range: EngagementRan
         </Panel>
       </div>
 
-      <Panel title="Readings by category" subtitle="Over the selected range.">
+      <Panel title="Readings by category">
         {isLoading ? (
           <p className="text-sm text-text-muted">Loading…</p>
         ) : categories.length === 0 ? (
