@@ -672,15 +672,15 @@ export default function WalletLogin() {
         {/* Same platform blue as the hero so the page bookends cleanly. */}
         <footer className="relative py-5" style={{ backgroundColor: 'hsl(var(--background))', paddingBottom: 'calc(1.25rem + var(--bottom-inset))' }}>
           <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ background: 'var(--on-bg-scrim)' }} />
-          <div className="relative max-w-5xl mx-auto px-5 grid grid-cols-3 items-center">
+          <div className="relative max-w-5xl mx-auto px-5 flex flex-col items-center gap-4 desktop:grid desktop:grid-cols-3 desktop:items-center desktop:gap-0">
             <img src="/logos/BRIXit-footer.svg" alt="BRIXit" className="h-6" />
-            <nav className="flex items-center justify-center gap-6 text-sm text-on-bg-muted">
+            <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-on-bg-muted">
               <a href="https://www.bionutrient.org/brix" target="_blank" rel="noopener noreferrer" className="hover:text-white/80 transition-colors">What is Brix?</a>
               <button onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white/80 transition-colors">About</button>
               <button onClick={() => navigate('/faq')} className="hover:text-white/80 transition-colors">FAQ</button>
               <button onClick={() => navigate('/contact')} className="hover:text-white/80 transition-colors">Contact</button>
             </nav>
-            <nav className="flex items-center justify-end gap-4 text-xs text-on-bg-faint">
+            <nav className="flex items-center justify-center gap-4 text-xs text-on-bg-faint desktop:justify-end">
               <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors">Privacy</a>
               <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors">Terms</a>
             </nav>
