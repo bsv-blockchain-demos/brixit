@@ -9,7 +9,10 @@ import {
   formatWeekLabel,
   formatFullDate,
   totalFor,
-  weekOverWeekChange,
+  splitPeriods,
+  comparePeriods,
+  type PeriodComparison,
+  type PeriodSplit,
   READINGS_BACKFILL_DATE,
 } from '@/lib/engagementFormat';
 import { describeApiError } from '@/lib/describeApiError';
@@ -67,25 +70,50 @@ function RangePicker({
   );
 }
 
-function Delta({ change }: { change: number | null }) {
-  if (change === null) return null;
-  const up = change >= 0;
+function Delta({
+  comparison,
+  periodWeeks,
+}: {
+  comparison: PeriodComparison | null;
+  periodWeeks: number | null;
+}) {
+  // All-time has no period before it to compare against.
+  if (comparison === null || periodWeeks === null) {
+    return <span className="text-xs text-text-muted">No earlier period to compare</span>;
+  }
+
+  const diff = comparison.current - comparison.previous;
+  const up = diff >= 0;
   const Icon = up ? TrendingUp : TrendingDown;
+
+  // A percentage needs a non-zero comparison period; the absolute change still
+  // informs when the earlier period was empty.
+  const value =
+    comparison.changePct !== null
+      ? `${up ? '+' : ''}${comparison.changePct}%`
+      : diff === 0
+        ? 'No change'
+        : `${up ? '+' : ''}${diff}`;
+
   return (
     <span className="inline-flex items-center gap-1 text-xs font-medium text-text-mid">
-      <Icon aria-hidden className={`w-3.5 h-3.5 ${up ? 'text-score-excellent' : 'text-score-poor'}`} />
-      {up ? '+' : ''}{change}% vs the week before
+      {diff !== 0 && (
+        <Icon aria-hidden className={`w-3.5 h-3.5 ${up ? 'text-score-excellent' : 'text-score-poor'}`} />
+      )}
+      {value} vs previous {periodWeeks} weeks
     </span>
   );
 }
 
 function SeriesChart({
   series,
-  data,
+  split,
+  periodWeeks,
   isLoading,
 }: {
   series: (typeof SERIES)[number];
-  data: EngagementWeek[];
+  split: PeriodSplit;
+  periodWeeks: number | null;
   isLoading: boolean;
 }) {
   const reduce = useReducedMotion();
@@ -95,8 +123,11 @@ function SeriesChart({
     [series.key]: { label: series.label, color: series.color },
   } satisfies ChartConfig;
 
-  const total = totalFor(data, series.key);
-  const change = weekOverWeekChange(data, series.key);
+  // Hero, chart and delta all describe the selected period. The in-progress
+  // week is drawn but left out of the totals.
+  const total = totalFor(split.current, series.key);
+  const comparison = comparePeriods(split, series.key);
+  const chartData = split.partial ? [...split.current, split.partial] : split.current;
 
   return (
     <section className="bg-card border border-hairline rounded-2xl shadow-sm p-5">
@@ -114,13 +145,13 @@ function SeriesChart({
           <p className="mt-1 text-xs text-text-mid">{series.caption}</p>
         </div>
         <div className="text-right shrink-0">
-          <Delta change={change} />
+          <Delta comparison={comparison} periodWeeks={periodWeeks} />
         </div>
       </div>
 
       {/* Single series — the heading names it, so no legend. */}
       <ChartContainer config={config} className="aspect-auto h-[200px] w-full">
-        <BarChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+        <BarChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
           <CartesianGrid vertical={false} stroke="var(--hairline)" />
           <XAxis
             dataKey="week_start"
@@ -162,13 +193,28 @@ export default function AdminEngagement() {
   const queryClient = useQueryClient();
   const [weeks, setWeeks] = useState<EngagementRange>(12);
 
+  // A period comparison needs the selected weeks and the same number before
+  // them, plus the in-progress week that neither period counts.
+  const periodWeeks = weeks === 'all' ? null : weeks;
+  const requested: EngagementRange = periodWeeks === null ? 'all' : periodWeeks * 2 + 1;
+
   const { data, isLoading, isFetching, error } = useQuery({
-    queryKey: ['admin-engagement', 'weekly', weeks],
-    queryFn: () => fetchEngagement(weeks),
+    queryKey: ['admin-engagement', 'weekly', requested],
+    queryFn: () => fetchEngagement(requested),
     staleTime: 5 * 60 * 1000,
   });
 
-  const rows = useMemo(() => data?.weeks ?? [], [data]);
+  const split = useMemo(
+    () => splitPeriods(data?.weeks ?? [], periodWeeks),
+    [data, periodWeeks],
+  );
+
+  // The table is the chart's accessible twin, so it shows the same weeks — the
+  // selected period plus the in-progress one, not the doubled fetch.
+  const tableRows = useMemo(
+    () => (split.partial ? [...split.current, split.partial] : split.current),
+    [split],
+  );
 
   return (
     <div className="space-y-5">
@@ -205,7 +251,13 @@ export default function AdminEngagement() {
 
       <div className="grid grid-cols-1 desktop:grid-cols-2 gap-4">
         {SERIES.map((s) => (
-          <SeriesChart key={s.key} series={s} data={rows} isLoading={isLoading} />
+          <SeriesChart
+            key={s.key}
+            series={s}
+            split={split}
+            periodWeeks={periodWeeks}
+            isLoading={isLoading}
+          />
         ))}
       </div>
 
@@ -227,7 +279,7 @@ export default function AdminEngagement() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((w) => (
+              {tableRows.map((w) => (
                 <tr key={w.week_start} className="border-t border-hairline">
                   <th scope="row" className="py-2 px-5 font-normal text-text-mid whitespace-nowrap">
                     {formatWeekLabel(w.week_start)}

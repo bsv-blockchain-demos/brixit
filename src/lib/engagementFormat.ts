@@ -37,23 +37,58 @@ export function totalFor(weeks: EngagementWeek[], key: 'new_users' | 'new_measur
   return weeks.reduce((sum, w) => sum + (w[key] || 0), 0);
 }
 
+export interface PeriodSplit {
+  /** The selected period: the most recent complete weeks. */
+  current: EngagementWeek[];
+  /** The equal-length period immediately before it. Empty for all-time. */
+  previous: EngagementWeek[];
+  /** The in-progress week. Drawn on the chart, excluded from both totals. */
+  partial: EngagementWeek | null;
+}
+
 /**
- * Change between the latest complete week and the one before it.
+ * Split a series into the selected period and the one immediately before it.
  *
- * The newest bucket is the in-progress week and is always partial, so comparing
- * against it would report a decline every time. Returns null when there aren't
- * enough weeks, or when the earlier week was zero and a percentage would divide
- * by zero.
+ * The series is expected to carry 2N complete weeks plus the in-progress week,
+ * so the caller requests `2 * periodWeeks + 1`. The in-progress week is held out
+ * of both periods: it is partial, and counting it would report a fall early in
+ * every week. `periodWeeks` of null means all-time, which has nothing before it
+ * to compare against.
  */
-export function weekOverWeekChange(
+export function splitPeriods(
   weeks: EngagementWeek[],
+  periodWeeks: number | null,
+): PeriodSplit {
+  const partial = weeks.length > 0 ? weeks[weeks.length - 1] : null;
+  const complete = weeks.slice(0, -1);
+
+  if (periodWeeks === null) return { current: complete, previous: [], partial };
+
+  const current = complete.slice(-periodWeeks);
+  const previous = complete.slice(Math.max(0, complete.length - periodWeeks * 2), complete.length - current.length);
+  return { current, previous, partial };
+}
+
+export interface PeriodComparison {
+  current: number;
+  previous: number;
+  /** Null when the comparison period was empty and a percentage is undefined. */
+  changePct: number | null;
+}
+
+/** Totals for both periods, or null when there is nothing to compare against. */
+export function comparePeriods(
+  split: PeriodSplit,
   key: 'new_users' | 'new_measurements',
-): number | null {
-  if (weeks.length < 3) return null;
-  const previous = weeks[weeks.length - 3][key];
-  const latest = weeks[weeks.length - 2][key];
-  if (!previous) return null;
-  return Math.round(((latest - previous) / previous) * 100);
+): PeriodComparison | null {
+  if (split.previous.length === 0) return null;
+  const current = totalFor(split.current, key);
+  const previous = totalFor(split.previous, key);
+  return {
+    current,
+    previous,
+    changePct: previous ? Math.round(((current - previous) / previous) * 100) : null,
+  };
 }
 
 /**

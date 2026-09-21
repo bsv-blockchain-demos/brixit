@@ -23,7 +23,8 @@ describe('clampWeeks', () => {
   it('accepts values inside the range', () => {
     expect(clampWeeks('4')).toBe(4);
     expect(clampWeeks(26)).toBe(26);
-    expect(clampWeeks('52')).toBe(MAX_WEEKS);
+    expect(clampWeeks('52')).toBe(52);
+    expect(clampWeeks(String(MAX_WEEKS))).toBe(MAX_WEEKS);
   });
 
   it('clamps out-of-range values rather than rejecting them', () => {

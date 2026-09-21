@@ -9,7 +9,9 @@
 
 export const DEFAULT_WEEKS = 12;
 export const MIN_WEEKS = 1;
-export const MAX_WEEKS = 52;
+// A period comparison needs the selected weeks plus the same number before
+// them, so the longest selectable range (52w) asks for 2 * 52 + 1 buckets.
+export const MAX_WEEKS = 105;
 
 export interface EngagementWeek {
   week_start: string;
