@@ -4,7 +4,7 @@ import { WebviewPage } from '../components/common/WebviewPage';
 
 const About = () => (
   <WebviewPage
-    url="https://www.bionutrient.org/brixit"
+    url="https://www.bionutrient.org/brix"
     title="About BRIX, from the Bionutrient Food Association"
   />
 );
