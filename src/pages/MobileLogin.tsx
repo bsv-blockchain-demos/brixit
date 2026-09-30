@@ -84,7 +84,7 @@ export default function MobileLogin() {
                   <span className="shrink-0 w-6 h-6 rounded-full bg-green-mid text-white text-xs flex items-center justify-center font-semibold mt-0.5">
                     {n}
                   </span>
-                  <p className="text-sm text-text-mid leading-relaxed">{text}</p>
+                  <p className="text-sm text-text-mid leading-relaxed text-balance">{text}</p>
                 </li>
               ))}
             </ol>
@@ -135,7 +135,7 @@ export default function MobileLogin() {
                   <span className="shrink-0 w-10 h-10 rounded-xl bg-warning-bg flex items-center justify-center">
                     <ErrorIcon className="w-5 h-5 text-warning" aria-hidden="true" />
                   </span>
-                  <p className="font-semibold text-text-dark leading-snug">{errorCopy.title}</p>
+                  <p className="font-semibold text-text-dark leading-snug text-balance">{errorCopy.title}</p>
                 </div>
                 <p className="text-sm text-text-mid mt-3 leading-relaxed">{errorCopy.description}</p>
 
@@ -167,7 +167,7 @@ export default function MobileLogin() {
 
                 {loginError && (
                   <Collapsible className="mt-4 pt-4 border-t border-hairline">
-                    <CollapsibleTrigger className="group flex items-center gap-1 text-xs text-text-mid hover:text-text-dark transition-colors">
+                    <CollapsibleTrigger className="group mx-auto flex items-center gap-1 text-xs text-text-mid hover:text-text-dark transition-colors">
                       Technical details
                       <ChevronDown className="w-3.5 h-3.5 transition-transform group-data-[state=open]:rotate-180" aria-hidden="true" />
                     </CollapsibleTrigger>
