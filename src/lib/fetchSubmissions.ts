@@ -36,6 +36,7 @@ interface ApiSubmissionRow {
   user_display_name?: string | null;
   verified_by_display_name?: string | null;
   images?: string[];
+  image_count?: number;
   outpoint?: string | null;
   rejected?: boolean;
   rejection_message?: string | null;
@@ -69,6 +70,8 @@ function formatApiRow(r: ApiSubmissionRow): BrixDataPoint {
     rejectionMessage: r.rejection_message ?? null,
     purchaseDate: r.purchase_date ?? null,
     images: r.images ?? [],
+    // Older payloads predate image_count; fall back to whatever keys came back.
+    imageCount: r.image_count ?? (r.images?.length ?? 0),
     poorBrix: r.poor_brix ?? null,
     averageBrix: r.average_brix ?? null,
     goodBrix: r.good_brix ?? null,
@@ -235,7 +238,9 @@ export async function fetchFormattedSubmissionsPage(
 ): Promise<BrixDataPoint[]> {
   try {
     const qs = buildSubmissionsQueryString(query);
-    const rows = await apiGet<ApiSubmissionRow[]>(`/api/submissions?${qs}`, { skipAuth: true });
+    // Public endpoint, but send the token when we have one: the server only
+    // attaches photo keys to rows the caller submitted (or all rows, for admins).
+    const rows = await apiGet<ApiSubmissionRow[]>(`/api/submissions?${qs}`);
     return rows.map(formatApiRow);
   } catch (error) {
     console.error('Error fetching public submissions page:', error);
@@ -290,7 +295,9 @@ export async function fetchFormattedSubmissionsInBounds(
     if (query.sortBy) params.set('sortBy', query.sortBy);
     if (query.sortOrder) params.set('sortOrder', query.sortOrder);
 
-    const rows = await apiGet<ApiSubmissionRow[]>(`/api/submissions/bounds?${params}`, { skipAuth: true });
+    // Public endpoint, but send the token when we have one: the server only
+    // attaches photo keys to rows the caller submitted (or all rows, for admins).
+    const rows = await apiGet<ApiSubmissionRow[]>(`/api/submissions/bounds?${params}`);
     return rows.map(formatApiRow);
   } catch (error) {
     console.error('Error fetching public submissions in bounds:', error);
@@ -330,7 +337,9 @@ export async function fetchFormattedSubmissionsCount(
 // SAFE public fetch for the map
 export async function fetchFormattedSubmissions(): Promise<BrixDataPoint[]> {
   try {
-    const rows = await apiGet<ApiSubmissionRow[]>('/api/submissions?limit=200', { skipAuth: true });
+    // Public endpoint, but send the token when we have one: the server only
+    // attaches photo keys to rows the caller submitted (or all rows, for admins).
+    const rows = await apiGet<ApiSubmissionRow[]>('/api/submissions?limit=200');
     return rows.map(formatApiRow);
   } catch (error) {
     console.error('Error fetching public submissions:', error);

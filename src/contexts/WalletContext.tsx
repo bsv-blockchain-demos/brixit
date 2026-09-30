@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { WalletClient } from '@bsv/sdk';
 import { useNavigate } from 'react-router-dom';
+import { setAuthProofSigner } from '@/lib/api';
+import { createAuthProof } from '@/lib/authProof';
 
 const MAX_RETRIES = 1;
 const RETRY_BASE_MS = 1000; // 1 retry after 1 s — fast fail if wallet not present
+const BACKEND_PUBLIC_KEY = import.meta.env.VITE_SERVER_PUBLIC_KEY as string | undefined;
 
 type WalletContextType = {
   userWallet: WalletClient | null;
@@ -143,6 +146,19 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     ensurePromiseRef.current = p;
     return p;
   }, [userWallet, userPubKey, acquireWallet]);
+
+  // api.ts mints write proofs through this; it has no access to the wallet itself.
+  // ensureWallet returns the cached handle unvalidated when one exists, and only acquires a new one when none is cached.
+  useEffect(() => {
+    if (!BACKEND_PUBLIC_KEY) return;
+
+    setAuthProofSigner(async (action) => {
+      const { wallet } = await ensureWallet();
+      return createAuthProof(wallet as never, BACKEND_PUBLIC_KEY, action);
+    });
+
+    return () => setAuthProofSigner(null);
+  }, [ensureWallet]);
 
   const resetWalletState = useCallback(() => {
     retryCountRef.current = 0;

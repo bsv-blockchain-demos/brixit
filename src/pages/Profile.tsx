@@ -66,12 +66,14 @@ const Profile = () => {
       return;
     }
     setLoading(prev => ({ ...prev, username: true }));
-    const success = await updateUsername(displayName.trim());
+    const result = await updateUsername(displayName.trim());
     setLoading(prev => ({ ...prev, username: false }));
-    if (success) {
+    if (result.success) {
       toast({ title: 'Name updated!' });
     } else {
-      setFormErrors({ username: 'Could not save your name. Please try again.' });
+      setFormErrors({
+        username: result.error ?? 'Could not save your name. Please try again.',
+      });
     }
   };
 

@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Ban, Calendar, Check, CheckCircle, ChevronLeft, ChevronRight, Clock, Loader2, MapPin, RefreshCw, RotateCcw, Search, Trash2, User } from 'lucide-react';
+import { AlertTriangle, Ban, Calendar, Check, CheckCircle, ChevronLeft, ChevronRight, Clock, Loader2, MapPin, RefreshCw, RotateCcw, Search, Trash2, User } from 'lucide-react';
 import {
   fetchUnverifiedSubmissions,
   fetchAllSubmissions,
@@ -169,7 +169,7 @@ function RatingPill({ brix, crop }: { brix: number; crop?: string | null }) {
 
 // Verification status chip — shared badge so it matches the public tables/cards.
 
-function StatusChip({ verified, timestamped, rejected }: { verified: boolean; timestamped: boolean; rejected?: boolean }) {
+function StatusChip({ verified, timestamped, rejected, anchorFailed }: { verified: boolean; timestamped: boolean; rejected?: boolean; anchorFailed?: boolean }) {
   return (
     <span className="inline-flex flex-wrap items-center gap-1.5">
       {rejected ? (
@@ -180,6 +180,11 @@ function StatusChip({ verified, timestamped, rejected }: { verified: boolean; ti
         <VerifiedBadge verified={verified} />
       )}
       <BlockchainBadge secured={timestamped} />
+      {anchorFailed && (
+        <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap bg-score-average-bg text-score-average">
+          <AlertTriangle className="w-3.5 h-3.5" /> Anchor failed
+        </span>
+      )}
     </span>
   );
 }
@@ -305,7 +310,7 @@ function SubmissionCard({
         <div className="flex-1 min-w-0 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
             {title}
-            <StatusChip verified={verified} timestamped={!!s.timestamped} rejected={rejected} />
+            <StatusChip verified={verified} timestamped={!!s.timestamped} rejected={rejected} anchorFailed={!!s.anchor_failed} />
           </div>
           {meta}
         </div>
@@ -325,7 +330,7 @@ function SubmissionCard({
             </div>
           </div>
           <div>
-            <StatusChip verified={verified} timestamped={!!s.timestamped} rejected={rejected} />
+            <StatusChip verified={verified} timestamped={!!s.timestamped} rejected={rejected} anchorFailed={!!s.anchor_failed} />
           </div>
           {meta}
         </div>

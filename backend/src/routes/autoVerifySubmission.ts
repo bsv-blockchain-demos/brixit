@@ -231,13 +231,6 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
-    // ── Look up contributor name (read-only) ───────────────────────────────
-    const userData = await prisma.user.findUnique({
-      where: { id: authedUserId },
-      select: { displayName: true, email: true },
-    });
-    const contributorName: string | null = userData?.displayName || userData?.email || null;
-
     // ── Address parsing ────────────────────────────────────────────────────
     const sanitizedStoreName = sanitizeInput(body.store_name);
     let parsedAddress: ParsedAddress = {};
@@ -354,7 +347,6 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
             cropVariety: null,
             brixValue: brix,
             userId: authedUserId,
-            contributorName,
             assessmentDate: new Date(assessmentDateStr),
             purchaseDate: purchaseDateStr ? new Date(purchaseDateStr) : null,
             outlierNotes: notes,
@@ -404,13 +396,26 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
           anchor.results.map((r) =>
             prisma.submission.update({
               where: { id: r.submissionUuid },
-              data: { outpoint: r.pushDropOutpoint ?? null },
+              data: { outpoint: r.pushDropOutpoint ?? null, anchorFailedAt: null },
             }),
           ),
         );
         console.log(`[anchor] ${entries.length} reading(s) → ${anchor.txid}`);
       } catch (err) {
         console.error('[anchor] failed for session', entries.map((e) => e.submissionUuid), err);
+        // Guarded: this write must not itself throw out of a fire-and-forget task.
+        try {
+          await prisma.$transaction(
+            entries.map((e) =>
+              prisma.submission.update({
+                where: { id: e.submissionUuid },
+                data: { anchorFailedAt: new Date() },
+              }),
+            ),
+          );
+        } catch (writeErr) {
+          console.error('[anchor] failed to record anchor_failed_at for session', entries.map((e) => e.submissionUuid), writeErr);
+        }
       }
     });
 

@@ -41,7 +41,7 @@ const NAV_LINKS = [
   // Icons follow the renames: Map for the map, Store for the place rankings,
   // Droplets for a refractometer reading. Trophy read as "leaderboard" and
   // Database as "some table", neither of which is what these pages are now.
-  { to: "/map", icon: Map, label: "Explorer" },
+  { to: "/map", icon: Map, label: "Map" },
   { to: "/leaderboard", icon: Store, label: "Places" },
   { to: "/data", icon: Droplets, label: "Readings" },
   { to: "/about", icon: Info, label: "About" },
@@ -443,7 +443,7 @@ const Header = () => {
             <nav className="flex-1 overflow-y-auto px-4 pt-4 flex flex-col">
               <div className="flex-1 flex flex-col justify-center space-y-1">
                 {[
-                  { to: "/map", icon: Map, label: "Explorer" },
+                  { to: "/map", icon: Map, label: "Map" },
                   { to: "/leaderboard", icon: Store, label: "Places" },
                   { to: "/data", icon: Droplets, label: "Readings" },
                   { to: "/about", icon: Info, label: "About" },

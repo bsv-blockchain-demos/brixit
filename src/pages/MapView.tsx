@@ -1,10 +1,11 @@
 ﻿import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Header from '../components/Layout/Header';
 import { PageBackground } from '../components/ui/PageBackground';
 import InteractiveMap from '../components/Map/InteractiveMap';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Locate } from 'lucide-react';
+import { Locate, Plus } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { getMapboxToken } from '../lib/getMapboxToken';
@@ -12,6 +13,10 @@ import { getMapboxToken } from '../lib/getMapboxToken';
 const MapView = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+
+  // Same gate the header uses for its Add button: only contributors (and
+  // admins) can file a reading, so observers never see a dead entry point.
+  const canAddReading = user?.role === 'contributor' || user?.role === 'admin';
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearMeTriggered, setNearMeTriggered] = useState(false);
@@ -102,15 +107,32 @@ const MapView = () => {
         {/* Steel-50 canvas frame separates the white map box from the page background */}
         <div className="bg-surface-canvas rounded-2xl p-2">
           <Card className="rounded-xl border border-hairline overflow-hidden shadow-sm">
-            <div className="flex justify-start p-3 border-b border-hairline">
+            {/* Actions sit on the right. Below the desktop breakpoint they
+                split the row evenly so neither shrinks to an untappable
+                sliver; from 900px up they take their natural width. */}
+            <div className="flex items-center justify-end gap-2 p-3 border-b border-hairline">
               <Button
                 variant="outline"
                 onClick={handleLocationSearch}
-                className="flex items-center space-x-2 border-hairline text-green-fresh hover:bg-surface-canvas"
+                className="flex-1 desktop:flex-none flex items-center justify-center space-x-2 border-hairline text-green-fresh hover:bg-surface-canvas"
               >
-                <Locate className="w-4 h-4" />
+                <Locate className="w-4 h-4 shrink-0" />
                 <span>Near Me</span>
               </Button>
+              {canAddReading && (
+                <Button
+                  asChild
+                  className="flex-1 desktop:flex-none bg-action-primary hover:bg-action-primary-hover text-white hover:text-white"
+                >
+                  <Link
+                    to="/data-entry"
+                    className="flex items-center justify-center space-x-2"
+                  >
+                    <Plus className="w-4 h-4 shrink-0" />
+                    <span>Add Reading</span>
+                  </Link>
+                </Button>
+              )}
             </div>
             <CardContent className="p-0">
               <div className="h-[calc(100vh-16rem)] w-full relative">

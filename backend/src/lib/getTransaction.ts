@@ -19,6 +19,7 @@ export interface OutpointData {
 export async function getTransaction(
   wallet: WalletInterface,
   outpoint: string,
+  submissionUuid: string,
   basket: string = BRIXIT_SUBMISSION_BASKET,
 ): Promise<OutpointData> {
   const [txid, voutStr] = outpoint.split('.');
@@ -27,8 +28,13 @@ export async function getTransaction(
     throw new Error(`Invalid outpoint format: "${outpoint}" (expected "txid.vout")`);
   }
 
+  // Every PushDrop output is tagged uuid_<submissionUuid> at creation time, so
+  // scoping the lookup to that tag keeps the result (and its BEEF) to this one
+  // output regardless of how large the basket grows.
   const result = await wallet.listOutputs({
     basket,
+    tags: [`uuid_${submissionUuid}`],
+    tagQueryMode: 'all',
     include: 'entire transactions',
     includeCustomInstructions: true,
   });

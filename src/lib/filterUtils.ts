@@ -3,6 +3,15 @@
 import { BrixDataPoint, MapFilter } from '../types'; // Removed QueryData from here
 import { DEFAULT_MAP_FILTERS } from '../contexts/FilterContext'; // Import DEFAULT_MAP_FILTERS
 
+/**
+ * Photos a reading has, whether or not this viewer may open them. The server
+ * only sends `images` keys to the submitter and admins but sends `imageCount`
+ * to everyone, so filters and badges must read the count.
+ */
+export function imageCountOf(point: Pick<BrixDataPoint, 'images' | 'imageCount'>): number {
+  return point.imageCount ?? point.images?.length ?? 0;
+}
+
 export function applyFilters(data: BrixDataPoint[], filters: MapFilter, isAdmin: boolean = false): BrixDataPoint[] {
   const filtered = data.filter((point) => {
     // Verified filter - for non-admin users, always filter to verified only
@@ -86,8 +95,10 @@ export function applyFilters(data: BrixDataPoint[], filters: MapFilter, isAdmin:
     }
 
     // Has image filter
-    // Check if hasImage is true AND it's different from the default (false)
-    if (filters.hasImage && filters.hasImage !== DEFAULT_MAP_FILTERS.hasImage && (!point.images || point.images.length === 0)) {
+    // Check if hasImage is true AND it's different from the default (false).
+    // Counts, not keys: photos are private to the submitter and admins, so
+    // `images` is empty for most viewers even when the reading has some.
+    if (filters.hasImage && filters.hasImage !== DEFAULT_MAP_FILTERS.hasImage && imageCountOf(point) === 0) {
       return false;
     }
 

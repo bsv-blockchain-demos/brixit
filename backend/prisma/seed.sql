@@ -302,12 +302,12 @@ RETURNS TABLE (
   average_normalized_score numeric,
   rank bigint
 )
-LANGUAGE sql STABLE AS $$
+LANGUAGE sql STABLE AS $fn$
   WITH filtered_submissions AS (
     SELECT
       s.id,
+      s.user_id,
       s.brix_value,
-      s.contributor_name,
       v.city,
       v.state,
       v.country,
@@ -329,7 +329,9 @@ LANGUAGE sql STABLE AS $$
   ),
   user_stats AS (
     SELECT
-      COALESCE(fs.contributor_name, 'Anonymous User') as user_name,
+      fs.user_id,
+      -- Name, else the identity key: nameless contributors stay distinguishable.
+      COALESCE(NULLIF(btrim(u.display_name), ''), wi.identity_key, 'Anonymous User') as user_name,
       COUNT(*) as total_submissions,
       AVG(fs.brix_value) as avg_brix,
       AVG(
@@ -342,12 +344,15 @@ LANGUAGE sql STABLE AS $$
         END
       ) as avg_normalized_score
     FROM filtered_submissions fs
-    GROUP BY COALESCE(fs.contributor_name, 'Anonymous User')
+    LEFT JOIN users u ON u.id = fs.user_id
+    LEFT JOIN wallet_identities wi ON wi.user_id = fs.user_id
+    -- Rows with no user_id share the NULL group and rank as one entry.
+    GROUP BY fs.user_id, u.display_name, wi.identity_key
   ),
   ranked AS (
     SELECT
       us.user_name::text as entity_name,
-      us.user_name::text as entity_id,
+      COALESCE(us.user_id::text, us.user_name)::text as entity_id,
       'user'::text as entity_type,
       us.total_submissions as submission_count,
       ROUND(us.avg_brix, 2) as average_brix,
@@ -358,4 +363,4 @@ LANGUAGE sql STABLE AS $$
   SELECT * FROM ranked ORDER BY rank
   LIMIT GREATEST(1, LEAST(limit_count, 200))
   OFFSET GREATEST(offset_count, 0);
-$$;
+$fn$;

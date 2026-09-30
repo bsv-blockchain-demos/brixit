@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminUserManagement from '@/components/Admin/AdminUserManagement';
 import AdminSubmissionQueue from '@/components/Admin/AdminSubmissionQueue';
 import AdminOverview from '@/components/Admin/AdminOverview';
+import AdminEngagement from '@/components/Admin/AdminEngagement';
 import AdminCrops from '@/components/Admin/AdminCrops';
 import AdminBrands from '@/components/Admin/AdminBrands';
 import AdminVenues from '@/components/Admin/AdminVenues';
@@ -16,6 +17,7 @@ import { ArrowLeft } from 'lucide-react';
 
 const TABS = [
   { value: 'overview', label: 'Overview' },
+  { value: 'engagement', label: 'Engagement' },
   { value: 'submissions', label: 'Submissions' },
   { value: 'users', label: 'Users' },
   { value: 'crops', label: 'Crops' },
@@ -156,6 +158,10 @@ export default function Admin() {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 pb-[var(--bottom-inset)]">
           <TabsContent value="overview" className="mt-0">
             <AdminOverview onReviewPending={() => setActiveTab('submissions')} />
+          </TabsContent>
+
+          <TabsContent value="engagement" className="mt-0">
+            <AdminEngagement />
           </TabsContent>
 
           <TabsContent value="submissions" className="mt-0">

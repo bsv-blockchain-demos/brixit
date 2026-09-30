@@ -1,9 +1,17 @@
-/** Pins the public submission payload: images survive the mapping, PII does not. */
+/**
+ * Pins the public submission payload: PII stays off it, and photo keys reach
+ * only the submitter and admins while the count reaches everyone.
+ */
 import { describe, it, expect } from 'vitest';
-import { formatPublicSubmission, formatFullSubmission } from '../submissions.js';
+import {
+  formatPublicSubmission,
+  formatFullSubmission,
+  canSeePrivateFields,
+} from '../submissions.js';
 
 const row = {
   id: 'sub-1',
+  userId: 'u1',
   assessmentDate: new Date('2026-05-01T00:00:00Z'),
   brixValue: '19.2',
   verified: true,
@@ -28,20 +36,31 @@ const row = {
 };
 
 describe('formatPublicSubmission', () => {
-  it('maps image rows to a flat array of S3 keys', () => {
-    expect(formatPublicSubmission(row).images).toEqual([
+  it('maps image rows to a flat array of S3 keys for a privileged viewer', () => {
+    expect(formatPublicSubmission(row, true).images).toEqual([
       'submission-images/sub-1/1-a.jpg',
       'submission-images/sub-1/2-b.jpg',
     ]);
   });
 
+  it('withholds the image keys from everyone else', () => {
+    expect(formatPublicSubmission(row).images).toEqual([]);
+  });
+
+  it('reports the image count even when the keys are withheld', () => {
+    expect(formatPublicSubmission(row).image_count).toBe(2);
+    expect(formatPublicSubmission(row, true).image_count).toBe(2);
+  });
+
   it('returns an empty array when the submission has no images', () => {
-    expect(formatPublicSubmission({ ...row, images: [] }).images).toEqual([]);
+    expect(formatPublicSubmission({ ...row, images: [] }, true).images).toEqual([]);
+    expect(formatPublicSubmission({ ...row, images: [] }).image_count).toBe(0);
   });
 
   it('returns an empty array when the images relation was not selected', () => {
     const { images, ...noImages } = row;
-    expect(formatPublicSubmission(noImages).images).toEqual([]);
+    expect(formatPublicSubmission(noImages, true).images).toEqual([]);
+    expect(formatPublicSubmission(noImages).image_count).toBe(0);
   });
 
   it('omits submitter and verifier identity from the public payload', () => {
@@ -67,10 +86,15 @@ describe('formatPublicSubmission', () => {
 });
 
 describe('formatFullSubmission', () => {
-  it('carries the public payload through, images included', () => {
+  it('carries the public payload through', () => {
     const out = formatFullSubmission(row);
     expect(out.images).toEqual(formatPublicSubmission(row).images);
     expect(out.id).toBe('sub-1');
+  });
+
+  it('passes the privilege flag down to the image keys', () => {
+    expect(formatFullSubmission(row, true).images).toHaveLength(2);
+    expect(formatFullSubmission(row).images).toEqual([]);
   });
 
   it('adds the submitter and verifier identity', () => {
@@ -99,11 +123,35 @@ describe('formatFullSubmission', () => {
     expect(out).not.toHaveProperty('rejectionHash');
   });
 
-  it('omits rejection state unless the caller is entitled to it', () => {
+  it('omits the photos and rejection state unless the caller is entitled to them', () => {
     const out = formatFullSubmission(row) as Record<string, unknown>;
     expect(out).not.toHaveProperty('rejected');
     expect(out).not.toHaveProperty('rejected_at');
     expect(out).not.toHaveProperty('rejection_message');
+    expect(out.images).toEqual([]);
     expect(out.user_id).toBe('u1');
+  });
+});
+
+describe('canSeePrivateFields', () => {
+  it('lets the submitter through', () => {
+    expect(canSeePrivateFields(row, { sub: 'u1', roles: [] })).toBe(true);
+  });
+
+  it('lets an admin through', () => {
+    expect(canSeePrivateFields(row, { sub: 'someone-else', roles: ['admin'] })).toBe(true);
+  });
+
+  it('keeps another signed-in user out', () => {
+    expect(canSeePrivateFields(row, { sub: 'u2', roles: ['contributor'] })).toBe(false);
+  });
+
+  it('keeps anonymous callers out', () => {
+    expect(canSeePrivateFields(row, undefined)).toBe(false);
+  });
+
+  it('does not treat a row with no owner as everyone-owned', () => {
+    expect(canSeePrivateFields({ userId: null }, { sub: 'u1', roles: [] })).toBe(false);
+    expect(canSeePrivateFields({}, { sub: 'u1', roles: [] })).toBe(false);
   });
 });

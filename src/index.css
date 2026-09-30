@@ -134,19 +134,18 @@
     --score-ink: #2a2118;          /* text on amber average              */
 
     /* ── On-background text hierarchy ────────────────── *
-     * White-at-opacity scale for text sitting on --blue-deep (the
-     * unconnected/auth flow's hero, mission, and footer surfaces —
-     * see AuthBackground.tsx). Every tier is floored at 0.66, the
-     * minimum opacity that still clears WCAG AA 4.5:1 against
-     * --blue-deep in both themes; below that floor no amount of
-     * white-on-blue-mid ever reaches 4.5:1 (max achievable there is
-     * ~3.9:1 even at 100% opacity), so this hierarchy must never be
-     * applied over --blue-mid or --green-fresh. Change together. */
-    --on-bg-text:   rgba(255,255,255,0.94);  /* nav items, usernames          */
-    --on-bg-body:   rgba(255,255,255,0.86);  /* body paragraphs, subtitles    */
-    --on-bg-subtle: rgba(255,255,255,0.78);  /* eyebrow labels, section labels */
-    --on-bg-muted:  rgba(255,255,255,0.70);  /* footer nav, fine print        */
-    --on-bg-faint:  rgba(255,255,255,0.66);  /* footer legal, fine print      */
+     * White-at-opacity scale for text sitting on the platform blue
+     * (--background / blue-mid) under --on-bg-scrim (hero, mission,
+     * footer, AuthBackground). Blue-mid alone tops out at ~3.9:1 with
+     * white text, so every dark surface MUST layer the scrim first: it
+     * lifts full white to ~5.9:1 and lets the tiers below clear WCAG AA
+     * 4.5:1 down to the 0.85 floor. Change scrim and floors together. */
+    --on-bg-scrim:  rgba(8,16,24,0.22);
+    --on-bg-text:   rgba(255,255,255,0.96);  /* nav items, usernames          */
+    --on-bg-body:   rgba(255,255,255,0.92);  /* body paragraphs, subtitles    */
+    --on-bg-subtle: rgba(255,255,255,0.88);  /* eyebrow labels, section labels */
+    --on-bg-muted:  rgba(255,255,255,0.85);  /* footer nav, fine print        */
+    --on-bg-faint:  rgba(255,255,255,0.85);  /* footer legal, fine print      */
 
     /* ── Typography ───────────────────────────────────── */
     --font-display: 'Lora', Georgia, serif;
