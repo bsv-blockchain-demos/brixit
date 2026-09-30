@@ -131,15 +131,13 @@ export default function MobileLogin() {
                 role="alert"
                 className="w-full max-w-sm rounded-2xl bg-card border border-hairline shadow-lg p-6"
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-3">
                   <span className="shrink-0 w-10 h-10 rounded-xl bg-warning-bg flex items-center justify-center">
                     <ErrorIcon className="w-5 h-5 text-warning" aria-hidden="true" />
                   </span>
-                  <div>
-                    <p className="font-semibold text-text-dark leading-snug">{errorCopy.title}</p>
-                    <p className="text-sm text-text-mid mt-1 leading-relaxed">{errorCopy.description}</p>
-                  </div>
+                  <p className="font-semibold text-text-dark leading-snug">{errorCopy.title}</p>
                 </div>
+                <p className="text-sm text-text-mid mt-3 leading-relaxed">{errorCopy.description}</p>
 
                 <ul className="mt-5 space-y-2">
                   {errorCopy.tips.map((tip) => (
@@ -169,12 +167,12 @@ export default function MobileLogin() {
 
                 {loginError && (
                   <Collapsible className="mt-4 pt-4 border-t border-hairline">
-                    <CollapsibleTrigger className="group flex items-center gap-1 text-xs text-text-muted hover:text-text-mid transition-colors">
+                    <CollapsibleTrigger className="group flex items-center gap-1 text-xs text-text-mid hover:text-text-dark transition-colors">
                       Technical details
                       <ChevronDown className="w-3.5 h-3.5 transition-transform group-data-[state=open]:rotate-180" aria-hidden="true" />
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <code className="mt-2 block rounded-md bg-muted px-2 py-1.5 text-xs text-text-mid break-words">
+                      <code className="mt-2 block rounded-md border border-hairline px-2 py-1.5 font-mono text-xs text-text-dark break-words">
                         {loginError}
                       </code>
                     </CollapsibleContent>
