@@ -78,6 +78,8 @@
     --action-primary:       #eb6e24;   /* orange CTA                          */
     --action-primary-hover: #c85a1a;   /* darker orange on hover              */
     --action-danger: #c0392b;   /* destructive red — decoupled from --score-poor */
+    --warning:    #c85a1a;   /* recoverable problems (connection lost, expired) — not a score */
+    --warning-bg: #fcefe2;
 
     /* ── Badge tiers ──────────────────────────────────── */
     --badge-amber-bg:   #fdf0d8;
@@ -223,6 +225,8 @@
     --action-primary:       #f07830;
     --action-primary-hover: #d46520;
     --action-danger: #e0584a;   /* destructive red (dark) — decoupled */
+    --warning:    #f0a060;
+    --warning-bg: #3a2614;
 
     /* ── Badge tiers (dark) ───────────────────────────── */
     --badge-amber-bg:   #2a1e06;

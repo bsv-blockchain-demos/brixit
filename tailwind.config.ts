@@ -116,6 +116,8 @@ export default {
 				'action-primary': 'var(--action-primary)',
 				'action-primary-hover': 'var(--action-primary-hover)',
 				'action-danger': 'var(--action-danger)',
+				warning: 'var(--warning)',
+				'warning-bg': 'var(--warning-bg)',
 				'table-header': 'var(--table-header)',
 				'table-stripe': 'var(--table-stripe)',
 				'badge-neutral-bg': 'var(--badge-neutral-bg)',
@@ -142,11 +144,18 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				// Light sweep across a pill/button; long idle gap so it reads as a
+				// gentle hint rather than a constant flicker.
+				'sheen': {
+					'0%, 70%': { transform: 'translateX(-120%)' },
+					'100%': { transform: 'translateX(120%)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'sheen': 'sheen 4.5s ease-in-out infinite'
 			}
 		}
 	},
