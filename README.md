@@ -248,7 +248,7 @@ Run from the repository root unless stated otherwise:
 | `npm start --prefix backend` | Run the compiled backend. |
 | `npm run lint` | Run ESLint. |
 | `npm test` | Run frontend Vitest tests. |
-| `npm test --prefix backend` | Run backend Vitest tests. |
+| `npm test --prefix backend` | Run backend Vitest tests; see the backend guide for the wallet-dependent test and offline selection. |
 | `npm run test:watch` | Watch frontend unit tests; add `--prefix backend` for backend tests. |
 | `npm run test:e2e` | Run Playwright browser tests. |
 | `npm run test:e2e:ui` | Open the Playwright test interface. |
@@ -320,4 +320,4 @@ docs/               Design notes and historical documentation
 .github/workflows/  Container builds, browser tests and repository sync
 ```
 
-The [design perspective](docs/Design_Perspective.md), [architecture notes](docs/Architecture.md), [roadmap](docs/Roadmap.md) and [venue registration plan](docs/venue-registration-plan.md) provide additional context. These documents and [`backend/README.md`](backend/README.md) may describe earlier implementations; use the current source, migrations and this setup guide when they differ.
+The [design perspective](docs/Design_Perspective.md), [architecture notes](docs/Architecture.md), [roadmap](docs/Roadmap.md) and [venue registration plan](docs/venue-registration-plan.md) provide additional context. These design documents may describe earlier implementations; use the current source and migrations when they differ. The [backend guide](backend/README.md) covers API setup and component checks.

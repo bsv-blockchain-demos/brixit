@@ -1,119 +1,99 @@
-# Brixit Backend
+# BRIXit Backend
 
-Express + Prisma + PostgreSQL backend for the Brixit brix data platform.
+Express API for BRIXit, the produce-reading platform. The backend stores readings, venues, users and reference data in PostgreSQL; verifies wallet identity and signed submissions; manages photos in S3; and anchors reading payloads through a server treasury wallet.
 
-Authentication is wallet-only via BSV certificate verification — no email/password.
+See the [project README](../README.md) for the application workflow, full environment reference and frontend setup.
 
-## Prerequisites
+## Requirements
 
-- [Node.js](https://nodejs.org/) v20+
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for the local PostgreSQL container)
+- Node.js 22.12 or later on the Node 22 release line, or Node.js 24 and npm.
+- PostgreSQL 16, available through the bundled Docker Compose service.
+- A server wallet private key and access to its remote storage provider.
+- S3 configuration for photos and a GeoNames account for location lookups when using those features.
 
-## Environment
+[serverWallet.ts](src/serverWallet.ts) selects BSV mainnet and `https://store-us-1.bsvb.tech` in code. Startup waits for that wallet storage connection; blockchain writes require treasury funds.
 
-Copy `.env.example` to `.env` and fill in the values before running any commands.
+## Local setup
 
-Key variables:
+Run from the repository root:
 
-| Variable | Description |
-|---|---|
-| `DATABASE_URL` | Prisma connection string (points to the Docker container) |
-| `JWT_SECRET` | Secret used to sign access tokens |
-| `REFRESH_TOKEN_SECRET` | Secret used to sign refresh tokens |
-| `SERVER_PRIVATE_KEY` | Private key for the server wallet (certifier and nonce verification) |
-| `AUTO_VERIFY_USER_ID` | UUID of the system user (populated by `npm run create-superuser`) |
-
-## First-time setup
-
-Run these commands once after cloning:
-
-```bash
-# 1. Start the database (from the repo root or backend/)
-npm run db:up
-
-# 2. Apply Prisma migrations — creates all tables
-npm run db:migrate
-
-# 3. Load SQL functions and views (leaderboard RPCs, etc.)
-npm run db:seed
-
-# 4. Load reference data — crops, brands, store locations
-npm run db:data
-
-# 5. Create the system superuser and patch AUTO_VERIFY_USER_ID in .env
-npm run create-superuser
+```sh
+npm ci --prefix backend
+cp backend/.env.example backend/.env
+cd backend
 ```
 
-## Running the app
+Edit `.env`. For the bundled PostgreSQL service and frontend, use:
 
-Open three terminals:
+```dotenv
+DATABASE_URL=postgresql://brixit:brixit_dev_password@localhost:5432/brixit
+CORS_ORIGINS=http://localhost:8080
+```
 
-```bash
-# Terminal 1 — database
-npm run db:up              # start Docker Postgres
+Set your own `JWT_SECRET`, `SERVER_PRIVATE_KEY` and `FLOAT_BALANCE_TOKEN`. The monitoring token must be at least 16 characters. Set certificate issuer/type values consistently with the frontend, and configure optional services as described in the root guide. Access and refresh tokens both use `JWT_SECRET`; there is no separate `REFRESH_TOKEN_SECRET` setting.
 
-# Terminal 2 — backend (from repo root)
-npm run backend
+Prepare a fresh local database from `backend/`:
 
-# Terminal 3 — frontend (from repo root)
+```sh
+npm run db:up
+node --env-file=.env node_modules/prisma/build/index.js migrate deploy
+npm run db:generate
+npm run db:seed
+npm run db:data
+node --env-file=.env --import tsx scripts/create-superuser.ts
+```
+
+The SQL seed command installs functions and views; the data command loads reference records. Both target the `brixit-postgres` container. For an external PostgreSQL instance, apply [prisma/seed.sql](prisma/seed.sql) and [prisma/data.sql](prisma/data.sql) to that database instead.
+
+The server loads `.env` itself, but Prisma's datasource configuration and the system-user script read the process environment. The explicit `--env-file` commands above cover those cases.
+
+The system-user script sets `AUTO_VERIFY_USER_ID`. That internal account records automatic verification; it does not grant your wallet account admin access. After signing in, an administrator can assign your account the appropriate role. For an isolated local database, the root guide explains using Prisma Studio.
+
+```sh
 npm run dev
 ```
 
-The backend will be available at `http://localhost:3001`.
-Health check: `http://localhost:3001/api/health`
+The API listens on `http://localhost:3001` by default. `GET /health` reports liveness and `GET /ready` checks database readiness. Start the frontend separately from the repository root with `npm run dev`.
 
-## NPM scripts
+## Services and storage
 
-| Script | Description |
-|---|---|
-| `npm run dev` | Start backend in watch mode (tsx) |
-| `npm run build` | Compile TypeScript to `dist/` |
-| `npm run start` | Run compiled production build |
-| `npm run db:up` | Start the Docker PostgreSQL container |
-| `npm run db:down` | Stop the Docker PostgreSQL container |
-| `npm run db:migrate` | Run pending Prisma migrations |
-| `npm run db:seed` | Load SQL functions and views |
-| `npm run db:data` | Load reference data (crops, brands, locations) |
-| `npm run db:generate` | Regenerate the Prisma client |
-| `npm run db:studio` | Open Prisma Studio (database GUI) |
-| `npm run db:reset` | Reset the database and re-run all migrations |
-| `npm run create-superuser` | Create the system user and patch `.env` |
-| `npm run kill-port` | Kill whatever process is holding `$PORT` |
+| Area | Source |
+| --- | --- |
+| Route registration, relay and probes | [src/index.ts](src/index.ts) |
+| Runtime settings | [src/config.ts](src/config.ts) |
+| Session, reading, venue, moderation and treasury handlers | [src/routes/](src/routes/) |
+| Schema and migrations | [prisma/](prisma/) |
+| Signed payloads, transaction construction and wallet queue | [src/lib/](src/lib/) |
 
-## API routes
+Images are uploaded directly to S3 through presigned URLs. There is no backend `/uploads` directory serving photos. Venue routes use `/api/venues`; the root guide contains a current API overview.
 
-| Method | Path | Auth |
-|---|---|---|
-| `POST` | `/api/auth/wallet-login` | — |
-| `POST` | `/api/auth/refresh` | — |
-| `POST` | `/api/auth/logout` | — |
-| `GET` | `/api/auth/me` | required |
-| `GET` | `/api/crops` | — |
-| `GET` | `/api/crops/categories` | — |
-| `GET` | `/api/crops/thresholds` | — |
-| `GET` | `/api/crops/:name` | — |
-| `GET` | `/api/brands` | — |
-| `GET` | `/api/locations` | — |
-| `GET` | `/api/submissions` | — |
-| `GET` | `/api/submissions/count` | — |
-| `GET` | `/api/submissions/bounds` | — |
-| `GET` | `/api/submissions/mine` | required |
-| `GET` | `/api/submissions/:id` | — |
-| `POST` | `/api/submissions/create` | required + contributor |
-| `DELETE` | `/api/submissions/:id` | required |
-| `GET` | `/api/leaderboards/brand` | — |
-| `GET` | `/api/leaderboards/crop` | — |
-| `GET` | `/api/leaderboards/location` | — |
-| `GET` | `/api/leaderboards/user` | — |
-| `GET` | `/api/geonames` | — |
-| `GET` | `/api/users/me` | required |
-| `PUT` | `/api/users/me` | required |
-| `GET` | `/api/admin/users` | admin |
-| `GET` | `/api/admin/submissions/unverified` | admin |
-| `POST` | `/api/admin/roles/grant` | admin |
-| `POST` | `/api/admin/roles/revoke` | admin |
-| `POST` | `/api/admin/submissions/:id/verify` | admin |
-| `DELETE` | `/api/admin/submissions/:id` | admin |
-| `POST` | `/api/upload` | required |
+## Builds and tests
 
-Uploaded files are served statically at `/uploads/<filename>`.
+Run from `backend/`:
+
+```sh
+npm run build
+npm start
+```
+
+`build` compiles TypeScript into `dist/`; generate the Prisma client first on a fresh checkout.
+
+The Vitest suite includes `certifierSignFields.test.ts` and `formatSubmission.test.ts`, which import the real server wallet. For the other unit tests without initialising remote wallet storage:
+
+```sh
+npm test -- --exclude '**/certifierSignFields.test.ts' --exclude '**/formatSubmission.test.ts'
+```
+
+Review environment and wallet dependencies before running the complete `npm test` suite. Unit tests do not establish live database, photo-upload or blockchain compatibility.
+
+## Containers
+
+From the repository root:
+
+```sh
+docker compose -f backend/docker-compose.yml up -d --build
+```
+
+The entrypoint waits for PostgreSQL, applies migrations and seed SQL, prepares the system account and starts the API. `npm run db:up` from `backend/` starts only PostgreSQL; the root command with that name starts the full backend Compose stack.
+
+Preserve the PostgreSQL volume and treasury key when updating an existing instance. `db:reset` resets the configured database and is only appropriate for disposable development data.
