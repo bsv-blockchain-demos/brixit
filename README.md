@@ -321,3 +321,7 @@ docs/               Design notes and historical documentation
 ```
 
 The [design perspective](docs/Design_Perspective.md), [architecture notes](docs/Architecture.md), [roadmap](docs/Roadmap.md) and [venue registration plan](docs/venue-registration-plan.md) provide additional context. These design documents may describe earlier implementations; use the current source and migrations when they differ. The [backend guide](backend/README.md) covers API setup and component checks.
+
+## Licence
+
+**Open BSV Licence v6.** See [LICENSE.txt](LICENSE.txt) for the full terms. The licence applies to this project's original code and documentation and restricts use to the BSV blockchain defined in the licence. Third-party code, assets and referenced standards retain their respective terms. The [country data](src/data/countries.ts) retains its recorded upstream MIT attribution.

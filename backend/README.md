@@ -97,3 +97,7 @@ docker compose -f backend/docker-compose.yml up -d --build
 The entrypoint waits for PostgreSQL, applies migrations and seed SQL, prepares the system account and starts the API. `npm run db:up` from `backend/` starts only PostgreSQL; the root command with that name starts the full backend Compose stack.
 
 Preserve the PostgreSQL volume and treasury key when updating an existing instance. `db:reset` resets the configured database and is only appropriate for disposable development data.
+
+## Licence
+
+**Open BSV Licence v6.** See [LICENSE.txt](../LICENSE.txt) for the full terms. The licence applies to this project's original code and documentation and restricts use to the BSV blockchain defined in the licence. Third-party code, assets and referenced standards retain their respective terms. The [country data](../src/data/countries.ts) retains its recorded upstream MIT attribution.
