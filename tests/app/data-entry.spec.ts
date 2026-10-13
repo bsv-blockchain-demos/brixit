@@ -11,7 +11,9 @@ async function advanceToCropsStep(page: Page) {
   // (anchored under the field at the top) can't overlay the pills. "Next" lives
   // in the fixed bottom footer, clear of the dropdown.
   await page.getByRole('button', { name: 'Supermarket' }).click();
-  await page.locator('#purchaseDate').fill('2026-06-20');
+  // DateField is a popover calendar; it opens focused on today, so Enter picks it.
+  await page.locator('#purchaseDate').click();
+  await page.keyboard.press('Enter');
   await page.getByPlaceholder('Enter an address or store name').fill('Test Market');
   await page.getByRole('button', { name: /next: crops/i }).click();
 }
@@ -29,7 +31,7 @@ test.describe('Data entry — Step 1 (shop)', () => {
   });
 
   test('renders the shop step', async ({ authedPage }) => {
-    await expect(authedPage.getByRole('heading', { name: /new measurement entry/i }).first()).toBeVisible();
+    await expect(authedPage.getByRole('heading', { name: /new reading/i }).first()).toBeVisible();
     await expect(authedPage.getByRole('heading', { name: /where did you shop/i })).toBeVisible();
   });
 
@@ -43,7 +45,7 @@ test.describe('Data entry — Step 1 (shop)', () => {
 
   test('Next surfaces a location error when the field is empty', async ({ authedPage }) => {
     await authedPage.getByRole('button', { name: /next: crops/i }).click();
-    await expect(authedPage.getByText(/please enter a location/i)).toBeVisible();
+    await expect(authedPage.getByText('Please enter a place', { exact: true })).toBeVisible();
   });
 
   test('selecting a purchase-type pill clears its validation error', async ({ authedPage }) => {
