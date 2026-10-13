@@ -10,7 +10,7 @@
  */
 import { Router } from 'express';
 import type { Response } from 'express';
-import { Beef, P2PKH, PrivateKey, PublicKey, Utils, type WalletProtocol } from '@bsv/sdk';
+import { Beef, P2PKH, PublicKey, Utils, type WalletProtocol } from '@bsv/sdk';
 import prisma from '../db/client.js';
 import { requireAuth, requireAdmin, type AuthenticatedRequest } from '../middleware/auth.js';
 import serverWallet, {
@@ -83,9 +83,8 @@ router.get('/info', async (_req: AuthenticatedRequest, res: Response) => {
 
     const [{ publicKey: identityKey }, { publicKey: topupPubKey }] = await Promise.all([
       serverWallet.getPublicKey({ identityKey: true }),
-      // TODO: when a real top-up scheme exists, replace 'self' with the
-      // sender's identity key and pass the same prefix/suffix to
-      // internalizeAction({ paymentRemittance }).
+      // 'self' is intentional: external payers have no identity key to derive
+      // with. Wallet-to-wallet BRC-29 payments go through /topup/internalize.
       serverWallet.getPublicKey({
         protocolID: BRC29_PROTOCOL,
         keyID: derivation.keyID,
@@ -123,10 +122,6 @@ const WOC_BY_CHAIN = {
   main: 'https://api.whatsonchain.com/v1/bsv/main',
   test: 'https://api.whatsonchain.com/v1/bsv/test',
 } as const;
-
-// Placeholder for paymentRemittance.senderIdentityKey when funds came from an
-// arbitrary external wallet with no known BRC-29 peer
-const EXTERNAL_SENDER_PLACEHOLDER = new PrivateKey(1).toPublicKey().toString();
 
 /**
  * Local-wallet top-up. The admin's browser built a wallet-payment tx targeting
@@ -212,12 +207,15 @@ router.post('/topup/sweep', async (req: AuthenticatedRequest, res: Response) => 
     const derivation = currentTopupDerivation(baseDate);
 
     // Re-derive the address (same call /info uses).
-    const { publicKey: topupPubKey } = await enqueueWalletTask(() =>
-      serverWallet.getPublicKey({
-        protocolID: BRC29_PROTOCOL,
-        keyID: derivation.keyID,
-        counterparty: BRC29_COUNTERPARTY,
-      }),
+    const [{ publicKey: topupPubKey }, { publicKey: identityKey }] = await enqueueWalletTask(() =>
+      Promise.all([
+        serverWallet.getPublicKey({
+          protocolID: BRC29_PROTOCOL,
+          keyID: derivation.keyID,
+          counterparty: BRC29_COUNTERPARTY,
+        }),
+        serverWallet.getPublicKey({ identityKey: true }),
+      ]),
     );
     const network = SERVER_WALLET_CHAIN === 'main' ? 'mainnet' : 'testnet';
     const address = PublicKey.fromString(topupPubKey).toAddress(network);
@@ -297,7 +295,9 @@ router.post('/topup/sweep', async (req: AuthenticatedRequest, res: Response) => 
               paymentRemittance: {
                 derivationPrefix: derivation.derivationPrefix,
                 derivationSuffix: derivation.derivationSuffix,
-                senderIdentityKey: EXTERNAL_SENDER_PLACEHOLDER,
+                // internalizeAction derives with senderIdentityKey as counterparty;
+                // our own identity key is what BRC29_COUNTERPARTY 'self' resolves to.
+                senderIdentityKey: identityKey,
               },
             })),
             description: `BRIXit treasury sweep from ${address}`,
