@@ -31,13 +31,14 @@ test.describe('Leaderboard', () => {
     await expect(authedPage.getByText("Olivia's Organics").filter({ visible: true }).first()).toBeVisible();
   });
 
-  test('scores display as a quality rating, not raw BRIX', async ({ authedPage }) => {
+  test('scores display as a quality rating beside the raw average', async ({ authedPage }) => {
     await expect(authedPage.getByText('Loading...').first()).not.toBeVisible({ timeout: 5000 });
-    // Aggregate scores render as a crop-relative quality rating (ScoreGauge tier
-    // label), never raw BRIX. Brand "Olivia's Organics" has average_brix 16.1.
+    // The Score column is a crop-relative quality rating (ScoreGauge tier label).
+    // Place and brand boards also show raw Avg BRIX in its own column as the
+    // evidence behind it. Brand "Olivia's Organics" has average_brix 16.1.
     const rating = authedPage.getByText(/^(Poor|Average|Good|Excellent)$/).filter({ visible: true });
     await expect(rating.first()).toBeVisible();
-    await expect(authedPage.getByText('16.1', { exact: true })).toHaveCount(0);
+    await expect(authedPage.getByText('16.1', { exact: true }).filter({ visible: true }).first()).toBeVisible();
   });
 
   test('aggregate scores never show a percentage', async ({ authedPage }) => {
@@ -51,7 +52,8 @@ test.describe('Leaderboard', () => {
     // Scope to <main> — "Test Contributor" also appears in the header user menu.
     const main = authedPage.getByRole('main');
     await expect(main.getByText('Test Contributor').filter({ visible: true }).first()).toBeVisible();
-    await expect(main.getByText('5 readings', { exact: true }).filter({ visible: true }).first()).toBeVisible();
+    // The count is a bare number in the Readings column.
+    await expect(main.getByText('5', { exact: true }).filter({ visible: true }).first()).toBeVisible();
   });
 
   test('unauthenticated user is redirected to the landing page', async ({ page }) => {

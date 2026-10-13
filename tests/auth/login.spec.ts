@@ -36,7 +36,7 @@ test.describe('FAQ page', () => {
     await page.goto('/faq');
     await expect(page.getByText(/what is brix/i)).toBeVisible();
     await expect(page.getByText(/why do we use a wallet/i)).toBeVisible();
-    await expect(page.getByText(/what is a certificate/i)).toBeVisible();
+    await expect(page.getByText(/what is an identity key/i)).toBeVisible();
     await expect(page.getByText(/what is the mycelia app/i)).toBeVisible();
   });
 
