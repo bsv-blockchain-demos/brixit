@@ -421,6 +421,7 @@ const LeaderboardPage: React.FC = () => {
       hasMore={cfg.hasMore}
       isFirstLoad={isFirstLoad}
       hasActiveFilters={hasActiveFilters}
+      cropFilterActive={!!crop}
       onResetFilters={resetFilters}
       isFetching={isFetching}
       isLoadingMore={cfg.isLoadingMore}

@@ -18,6 +18,8 @@ interface LeaderboardCardProps {
   hasMore: boolean;
   isFirstLoad: boolean;
   hasActiveFilters?: boolean;
+  /** A crop filter is set, so average_brix is one crop's mean and comparable. */
+  cropFilterActive?: boolean;
   onResetFilters?: () => void;
   isFetching: boolean;
   isLoadingMore: boolean;
@@ -134,12 +136,14 @@ function LeaderboardMobileList({
 
 
 /**
- * Desktop tracks. The place and brand boards get two extra columns: the
- * reading count, which says how much evidence the rating rests on, and the
- * mean BRIX behind it. The contributor board already ranks by count, so
- * adding it again would just repeat the last column.
+ * Desktop tracks. The place and brand boards get the reading count, which says
+ * how much evidence the rating rests on. With a crop filter they also get the
+ * mean BRIX behind it; across crops a raw mean is meaningless, so it is hidden.
+ * The contributor board already ranks by count, so adding it again would just
+ * repeat the last column.
  */
-const COLS_WITH_DETAIL = 'grid-cols-[3.5rem_1fr_6rem_6rem_5.5rem]';
+const COLS_WITH_AVG = 'grid-cols-[3.5rem_1fr_6rem_6rem_5.5rem]';
+const COLS_WITH_COUNT = 'grid-cols-[3.5rem_1fr_6rem_5.5rem]';
 const COLS_PLAIN = 'grid-cols-[3.5rem_1fr_5.5rem]';
 
 export function LeaderboardCard({
@@ -154,6 +158,7 @@ export function LeaderboardCard({
   onLoadMore,
   onNavigate,
   hasActiveFilters = false,
+  cropFilterActive = false,
   onResetFilters,
 }: LeaderboardCardProps) {
   // Names what this specific board ranks, so three empty cards do not all read
@@ -162,7 +167,8 @@ export function LeaderboardCard({
   // Contributors are ranked by reading count already, so the detail columns
   // would restate the last column.
   const showDetailColumns = labelKey !== 'user';
-  const DESKTOP_COLS = showDetailColumns ? COLS_WITH_DETAIL : COLS_PLAIN;
+  const showAvgBrix = showDetailColumns && cropFilterActive;
+  const DESKTOP_COLS = showAvgBrix ? COLS_WITH_AVG : showDetailColumns ? COLS_WITH_COUNT : COLS_PLAIN;
 
   const noun =
     labelKey === 'location' ? 'places'
@@ -231,9 +237,11 @@ export function LeaderboardCard({
                     <span className="text-center">
                       <ColumnHint help="How many readings this average is based on. A high score from two readings is weaker evidence than the same score from fifty.">Readings</ColumnHint>
                     </span>
-                    <span className="text-center">
-                      <ColumnHint help="The mean raw refractometer value across those readings. Not comparable across crops on its own, which is what the rating is for.">Avg BRIX</ColumnHint>
-                    </span>
+                    {showAvgBrix && (
+                      <span className="text-center">
+                        <ColumnHint help="The mean raw refractometer value for the selected crop across those readings.">Avg BRIX</ColumnHint>
+                      </span>
+                    )}
                   </>
                 )}
                 <span className="text-center">
@@ -301,11 +309,13 @@ export function LeaderboardCard({
                             <div className="text-center tabular-nums text-text-mid">
                               {entry.submission_count ?? 0}
                             </div>
-                            <div className="text-center font-mono tabular-nums text-text-mid">
-                              {typeof entry.average_brix === 'number'
-                                ? entry.average_brix.toFixed(1)
-                                : <span className="text-text-muted-brown">--</span>}
-                            </div>
+                            {showAvgBrix && (
+                              <div className="text-center font-mono tabular-nums text-text-mid">
+                                {typeof entry.average_brix === 'number'
+                                  ? entry.average_brix.toFixed(1)
+                                  : <span className="text-text-muted-brown">--</span>}
+                              </div>
+                            )}
                           </>
                         )}
 
