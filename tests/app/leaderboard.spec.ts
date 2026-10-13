@@ -31,13 +31,21 @@ test.describe('Leaderboard', () => {
     await expect(authedPage.getByText("Olivia's Organics").filter({ visible: true }).first()).toBeVisible();
   });
 
-  test('scores display as a quality rating beside the raw average', async ({ authedPage }) => {
+  test('scores display as a quality rating, not raw BRIX', async ({ authedPage }) => {
     await expect(authedPage.getByText('Loading...').first()).not.toBeVisible({ timeout: 5000 });
-    // The Score column is a crop-relative quality rating (ScoreGauge tier label).
-    // Place and brand boards also show raw Avg BRIX in its own column as the
-    // evidence behind it. Brand "Olivia's Organics" has average_brix 16.1.
+    // Without a crop filter the average spans crops, so only the crop-relative
+    // rating (ScoreGauge tier label) shows. Brand "Olivia's Organics" has average_brix 16.1.
     const rating = authedPage.getByText(/^(Poor|Average|Good|Excellent)$/).filter({ visible: true });
     await expect(rating.first()).toBeVisible();
+    await expect(authedPage.getByText('Avg BRIX', { exact: true }).filter({ visible: true })).toHaveCount(0);
+    await expect(authedPage.getByText('16.1', { exact: true }).filter({ visible: true })).toHaveCount(0);
+  });
+
+  test('a crop filter adds the raw Avg BRIX column', async ({ authedPage }) => {
+    await expect(authedPage.getByText('Loading...').first()).not.toBeVisible({ timeout: 5000 });
+    await authedPage.locator('#crop').click();
+    await authedPage.getByRole('option', { name: 'Apple' }).click();
+    await expect(authedPage.getByText('Avg BRIX', { exact: true }).filter({ visible: true }).first()).toBeVisible();
     await expect(authedPage.getByText('16.1', { exact: true }).filter({ visible: true }).first()).toBeVisible();
   });
 
