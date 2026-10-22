@@ -1,4 +1,4 @@
-FROM node:22-alpine AS build
+FROM node:22.23.4-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -11,7 +11,7 @@ COPY scripts/ scripts/
 RUN npm run build
 RUN npx tsc -p tsconfig.scripts.json
 
-FROM node:22-alpine
+FROM node:22.23.4-alpine
 RUN apk add --no-cache postgresql-client
 WORKDIR /app
 COPY package.json package-lock.json ./
