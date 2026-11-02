@@ -20,7 +20,7 @@
   "dependencies": {
     "@bsv/auth": "^0.0.1",
     "@bsv/sdk": "^2.1.4",
-    "@bsv/wallet-relay": "github:kjartan221/wallet-relay-lib",
+    "@bsv/wallet-relay": "^0.7.0",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
