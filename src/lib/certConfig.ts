@@ -1,8 +1,12 @@
-import { Utils } from '@bsv/sdk';
+import { Utils, Hash } from '@bsv/sdk';
 
 /** base64-encode a cert type string the way the wallet stores/queries it. */
 export const toTypeB64 = (type: string): string =>
   Utils.toBase64(Utils.toArray(type, 'utf8'));
+
+/** A certificate type id: base64 SHA-256 of the type name, the 32 bytes the SDK signs. */
+export const certTypeId = (type: string): string =>
+  Utils.toBase64(Hash.sha256(Utils.toArray(type, 'utf8')));
 
 export interface AcceptedCert {
   /** Human-readable cert type, e.g. 'Mycelia Identity'. */
@@ -27,14 +31,20 @@ export interface CertEnv {
  * A cert type is accepted only when a certifier is supplied for it; the caller
  * owns any fallback. Order matters — the first accepted pair the wallet holds
  * wins the login, and only that certifier can re-issue its own certificates.
+ *
+ * BRIXit certs are issued under the 32-byte hashed type. Those issued earlier
+ * carry the raw type name and rank last, so login finds them only when the
+ * wallet holds nothing newer, and re-issues them.
  */
 export function buildAcceptedCerts(env: CertEnv): AcceptedCert[] {
+  const brixitType = env.brixitType || 'Brixit Identity';
   return [
-    { type: env.myceliaType || 'Mycelia Identity', certifier: env.myceliaCertifier },
-    { type: env.brixitType || 'Brixit Identity', certifier: env.brixitCertifier },
+    { type: env.myceliaType || 'Mycelia Identity', certifier: env.myceliaCertifier, encode: toTypeB64 },
+    { type: brixitType, certifier: env.brixitCertifier, encode: certTypeId },
+    { type: brixitType, certifier: env.brixitCertifier, encode: toTypeB64 },
   ]
-    .filter((c): c is { type: string; certifier: string } => Boolean(c.certifier))
-    .map((c) => ({ type: c.type, certifier: c.certifier, typeB64: toTypeB64(c.type) }));
+    .filter((c): c is typeof c & { certifier: string } => Boolean(c.certifier))
+    .map((c) => ({ type: c.type, certifier: c.certifier, typeB64: c.encode(c.type) }));
 }
 
 // Mycelia certificates were issued ahead of that app's release, so deployments

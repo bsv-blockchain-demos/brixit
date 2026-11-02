@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@bsv/auth": "^0.0.1",
-    "@bsv/sdk": "^2.1.4",
+    "@bsv/sdk": "^4.0.1",
     "@bsv/wallet-relay": "^0.7.0",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",

@@ -10,11 +10,14 @@
  * is signed by a different certifier, so its holder keeps the database change
  * and no certificate is touched.
  */
-import { Utils } from '@bsv/sdk';
 import { API_BASE } from './api';
+import { certTypeId, toTypeB64 } from './certConfig';
 
 export const BRIXIT_CERT_TYPE: string = (import.meta.env.VITE_CERT_TYPE as string) || 'Brixit Identity';
-export const BRIXIT_CERT_TYPE_B64: string = Utils.toBase64(Utils.toArray(BRIXIT_CERT_TYPE, 'utf8'));
+export const BRIXIT_CERT_TYPE_B64: string = certTypeId(BRIXIT_CERT_TYPE);
+/** The raw-name type BRIXit certificates carried before types had to be 32 bytes. */
+export const BRIXIT_LEGACY_CERT_TYPE_B64: string = toTypeB64(BRIXIT_CERT_TYPE);
+const BRIXIT_CERT_TYPES = [BRIXIT_CERT_TYPE_B64, BRIXIT_LEGACY_CERT_TYPE_B64];
 export const BRIXIT_CERTIFIER_KEY: string = import.meta.env.VITE_SERVER_PUBLIC_KEY as string;
 
 export interface CertFields {
@@ -46,13 +49,13 @@ export function buildBrixitCertFields(fields: CertFields, identityKey: string): 
   return certFields;
 }
 
-/** True when a certificate is one of ours — both certifier and type must match. */
+/** True when a certificate is one of ours, current or legacy — certifier and type must both match. */
 export function isBrixitCert(
   cert: { certifier?: string; type?: string } | null | undefined,
   certifier: string,
 ): boolean {
   if (!cert) return false;
-  return cert.certifier === certifier && cert.type === BRIXIT_CERT_TYPE_B64;
+  return cert.certifier === certifier && BRIXIT_CERT_TYPES.includes(cert.type ?? '');
 }
 
 /** Issue a BRIXit identity certificate for the wallet's identity key. */
@@ -85,8 +88,7 @@ export async function reissueBrixitCert(
 ): Promise<void> {
   const { certificates } = await wallet.listCertificates({
     certifiers: [certifier],
-    types: [BRIXIT_CERT_TYPE_B64],
-    limit: 1,
+    types: BRIXIT_CERT_TYPES,
   });
   const old = (certificates ?? []).find((c) => isBrixitCert(c, certifier));
 
@@ -94,10 +96,42 @@ export async function reissueBrixitCert(
 
   if (old?.serialNumber) {
     await wallet.relinquishCertificate({
-      type: BRIXIT_CERT_TYPE_B64,
+      type: old.type,
       serialNumber: old.serialNumber,
       certifier,
     });
+  }
+}
+
+/**
+ * Move a legacy BRIXit certificate to the 32-byte type at login, carrying its
+ * fields over so the user is not asked for their profile again.
+ *
+ * Returns the certificate to log in with. Any failure — including the user
+ * declining the wallet prompt — returns the legacy certificate unchanged: the
+ * backend still accepts it, and the next login tries again.
+ */
+export async function migrateLegacyBrixitCert<C extends { certifier?: string; type?: string }>(
+  wallet: CertWallet,
+  certifier: string,
+  cert: C | null,
+  readProfile: (cert: C) => Promise<CertFields | null>,
+): Promise<C | null> {
+  if (!cert || cert.type !== BRIXIT_LEGACY_CERT_TYPE_B64 || !isBrixitCert(cert, certifier)) {
+    return cert;
+  }
+  try {
+    const fields = await readProfile(cert);
+    if (!fields) return cert;
+    await reissueBrixitCert(wallet, certifier, fields);
+    const { certificates } = await wallet.listCertificates({
+      certifiers: [certifier],
+      types: [BRIXIT_CERT_TYPE_B64],
+    });
+    return (certificates?.[0] as C | undefined) ?? cert;
+  } catch (err) {
+    console.warn('[brixitCert] legacy certificate migration failed:', err);
+    return cert;
   }
 }
 

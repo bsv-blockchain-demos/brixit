@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useWalletRelay } from '@/contexts/WalletRelayContext';
 import { findLoginCertificate } from '@/lib/certConfig';
+import { migrateLegacyBrixitCert } from '@/lib/brixitCert';
 import { createAuthProof } from '@/lib/authProof';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/contexts/WalletContext';
@@ -63,7 +64,12 @@ export function useMobileWalletLogin() {
         // Inject into WalletContext now so CreateAccount can use it if we redirect there
         setRelayWallet(wallet as unknown as WalletClient, identityKey);
 
-        const certificate = await findLoginCertificate(wallet);
+        const certificate = await migrateLegacyBrixitCert(
+          wallet as never,
+          BACKEND_PUBLIC_KEY!,
+          await findLoginCertificate(wallet),
+          (cert) => getDataFromWallet(wallet, cert),
+        );
         if (!certificate) {
           throw new Error('NO_CERTIFICATE');
         }
