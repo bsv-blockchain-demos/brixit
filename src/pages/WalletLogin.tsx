@@ -13,6 +13,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { getMapboxToken } from '@/lib/getMapboxToken';
 import { apiGet } from '@/lib/api';
 import { findLoginCertificate } from '@/lib/certConfig';
+import { migrateLegacyBrixitCert } from '@/lib/brixitCert';
 import { MapPreviewPanel, type MapPreview, type MapCluster } from '@/components/landing/MapPreviewPanel';
 import { FeedCard } from '@/components/landing/FeedCard';
 import { ScoreThresholdBar } from '@/components/common/ScoreThresholdBar';
@@ -147,7 +148,12 @@ export default function WalletLogin() {
     setCertificateError(null);
 
     try {
-      const certificate = await findLoginCertificate(userWallet);
+      const certificate = await migrateLegacyBrixitCert(
+        userWallet as never,
+        BACKEND_PUBLIC_KEY,
+        await findLoginCertificate(userWallet),
+        (cert) => getDataFromWallet(userWallet, cert),
+      );
       if (!certificate) {
         navigate('/create-account');
         return;
